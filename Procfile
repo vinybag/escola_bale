@@ -1,1 +1,1 @@
-web: gunicorn config.wsgi --bind 0.0.0.0:$PORT --log-file - --access-logfile - --error-logfile -
+web: web: python manage.py migrate && gunicorn config.wsgi --bind 0.0.0.0:$PORT
