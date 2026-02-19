@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Área dos Pais{% endblock %}
+
+{% block content %}
+<div class="container dashboard">
+    <h1>Bem-vindo(a), {{ user.get_full_name|default:user.username }}!</h1>
+    
+    <div class="dashboard-grid">
+        <div class="card">
+            <h3>Minhas Alunas</h3>
+            {% if alunas %}
+                <ul class="alunas-list">
+                    {% for aluna in alunas %}
+                        <li>
+                            <strong>{{ aluna.nome }}</strong> - {{ aluna.idade }} anos
+                            {% if aluna.turma_atual %}
+                                <br><small>Turma: {{ aluna.turma_atual }}</small>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>Nenhuma aluna cadastrada ainda.</p>
+            {% endif %}
+        </div>
+        
+        <div class="card">
+            <h3>Atalhos Rápidos</h3>
+            <ul class="quick-links">
+                <li><a href="{% url 'mensalidades' %}">💳 Ver Mensalidades</a></li>
+                <li><a href="{% url 'calendario' %}">📅 Avisos e Calendário</a></li>
+                <li><a href="{% url 'perfil' %}">👤 Meu Perfil</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

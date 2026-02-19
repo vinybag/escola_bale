@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block title %}Pagamento - Mensalidade{% endblock %}
+
+{% block content %}
+<div class="container dashboard">
+    <h1>Realizar Pagamento</h1>
+    
+    <div class="card">
+        <h3>Detalhes da Mensalidade</h3>
+        <p><strong>Aluna:</strong> {{ mensalidade.aluna.nome }}</p>
+        <p><strong>Mês:</strong> {{ mensalidade.mes_referencia|date:"m/Y" }}</p>
+        <p><strong>Valor:</strong> R$ {{ mensalidade.valor }}</p>
+        <p><strong>Vencimento:</strong> {{ mensalidade.data_vencimento|date:"d/m/Y" }}</p>
+    </div>
+    
+    {% if erro %}
+        <div class="alert alert-error" style="margin-top: 1rem;">
+            {{ erro }}
+        </div>
+    {% endif %}
+    
+    <div class="metodos-pagamento" style="margin-top: 2rem;">
+        <h3 style="margin-bottom: 1.5rem;">Escolha a forma de pagamento:</h3>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+            <!-- Cartão de Crédito -->
+            <div class="card metodo-card">
+                <div style="text-align: center; margin-bottom: 1rem;">
+                    <span style="font-size: 3rem;">💳</span>
+                    <h3>Cartão de Crédito</h3>
+                </div>
+                <p style="text-align: center; color: #666; margin-bottom: 1.5rem;">
+                    Pagamento instantâneo e seguro
+                </p>
+                <a href="{% url 'pagar_cartao' mensalidade.id %}" class="btn btn-primary" style="width: 100%;">
+                    Pagar com Cartão
+                </a>
+            </div>
+            
+            <!-- PIX -->
+            <div class="card metodo-card">
+                <div style="text-align: center; margin-bottom: 1rem;">
+                    <span style="font-size: 3rem;">🇧🇷</span>
+                    <h3>PIX</h3>
+                </div>
+                <p style="text-align: center; color: #666; margin-bottom: 1.5rem;">
+                    Aprovação em até 2 horas
+                </p>
+                <a href="{% url 'pagar_pix' mensalidade.id %}" class="btn btn-primary" style="width: 100%; background: #32BCAD;">
+                    Pagar com PIX
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <a href="{% url 'mensalidades' %}" class="btn btn-secondary" style="margin-top: 2rem; display: inline-block;">
+        Voltar
+    </a>
+</div>
+
+<style>
+.metodo-card {
+    border: 2px solid #e0c0c3;
+    transition: all 0.3s;
+}
+
+.metodo-card:hover {
+    border-color: #b07a84;
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(176, 122, 132, 0.2);
+}
+</style>
+{% endblock %}

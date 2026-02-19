@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}Meu perfil{% endblock %}
+
+{% block content %}
+<div class="container dashboard">
+    <h1>Meu Perfil</h1>
+
+    <div class ="card">
+        <h3>Informações Pessoais</h3>
+        <p><strong>Nome:</strong> {{ user.get_full_name|default:user.username }}</p>
+        <p><strong>Email:</strong> {{ user.email }}</p>
+
+        {% if user.perfil %}
+           <p><strong>Telefone:</strong> {{ user.perfil.telefone }}</p>
+           <p><strong>CPF:</strong> {{ user.perfil.cpf }}</p>
+           {% if user.perfil.endereco %}
+              <p><strong>Endereço:</strong> {{ user.perfil.endereco }}</p>
+           {% endif %}
+        {% endif %}    
+    </div>
+
+    <div class="card" style="margin-top: 2rem;">
+        <h3>Minhas Alunas</h3>
+        {% if user.alunas.all %}
+            <ul class="alunas-list">
+                {% for aluna in user.alunas.all %}
+                   <li>
+                       <strong>{{ aluna.nome }}</strong><br>
+                       <small>Data de nascimento: {{ aluna.data_nascimento|date:"d/m/Y" }}</small><br>
+                       <small>Idade: {{ aluna.idade }} anos</small>
+                       {% if aluna.turma_atual %}
+                           <br><small>Turma: {{ aluna.turma_atual }}</small>
+                       {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>Nenhuma aluna cadastrada.</p>
+        {% endif %}        
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block title %}Bem-vindo - BAILAH - Corpo e Cia{% endblock %}
+
+{% block content %}
+<div class="hero">
+    <div class="container">
+        <h1>Bem-vindo à BAILAH - Corpo e Cia</h1>
+        <p>Transformando sonhos em movimentos desde 20XX</p>
+        <div class="cta-buttons">
+            <a href="{% url 'agendar' %}" class="btn btn-primary">Agendar Aula Experimental</a>
+            <a href="#sobre" class="btn btn-secondary">Saiba Mais</a>
+        </div>
+    </div>
+</div>
+
+<section id="sobre" class="sobre">
+    <div class="container">
+        <h2>Sobre Nossa Escola</h2>
+        <p>Aqui você pode adicionar informações sobre a escola, metodologia, professores, etc.</p>
+        
+        <div class="turmas">
+            <h3>Nossas Turmas</h3>
+            <div class="turmas-grid">
+                <div class="turma-card">
+                    <h4>Baby Class (3-5 anos)</h4>
+                    <p>Introdução lúdica ao ballet</p>
+                </div>
+                <div class="turma-card">
+                    <h4>Infantil (6-10 anos)</h4>
+                    <p>Desenvolvimento da técnica clássica</p>
+                </div>
+                <div class="turma-card">
+                    <h4>Juvenil (11-16 anos)</h4>
+                    <p>Aprimoramento técnico avançado</p>
+                </div>
+                <div class="turma-card">
+                    <h4>Adulto</h4>
+                    <p>Ballet para todas as idades</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="contato">
+    <div class="container">
+        <h2>Entre em Contato</h2>
+        <p>📍 Endereço: [Seu endereço]</p>
+        <p>📞 Telefone: [15 99751-7185]</p>
+        <p>📧 Email: [Seu email]</p>
+    </div>
+</section>
+{% endblock %}

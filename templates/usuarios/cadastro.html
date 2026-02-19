@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block title %}Cadastro - BAILAH - Corpo e Cia{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-box">
+        <h2>Cadastro Desabilitado</h2>
+        <p>O cadastro de novos usuários é feito diretamente pela escola.</p>
+        <p>Se você é aluna(o) ou responsável, entre em contato conosco para receber suas credenciais de acesso.</p>
+
+        <div style="text-align: center; margin-top: 2rem;">
+            <p>📞 Telefone: [Seu telefone]</p>
+            <p>📧 Email: [Seu email]</p>
+        </div>
+
+        <p class="auth-link">
+            Já tem conta? <a href="{% url 'login' %}">Faça login</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

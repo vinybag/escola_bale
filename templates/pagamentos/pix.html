@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block title %}Pagamento PIX{% endblock %}
+
+{% block content %}
+<div class="container dashboard">
+    <h1>Pagamento via PIX</h1>
+    
+    <div class="card">
+        <h3>Detalhes da Mensalidade</h3>
+        <p><strong>Aluna:</strong> {{ mensalidade.aluna.nome }}</p>
+        <p><strong>Valor:</strong> R$ {{ mensalidade.valor }}</p>
+        <p><strong>Mês:</strong> {{ mensalidade.mes_referencia|date:"m/Y" }}</p>
+    </div>
+    
+    <div class="card" style="margin-top: 2rem; text-align: center;">
+        <h3 style="color: #32BCAD; margin-bottom: 1.5rem;">🇧🇷 Pague com PIX</h3>
+        
+        {% if pix_data %}
+            <div class="pix-info">
+                <p style="margin-bottom: 1rem;"><strong>Escaneie o QR Code abaixo:</strong></p>
+                
+                {% if pix_data.encodedImage %}
+                <div style="background: white; padding: 1rem; display: inline-block; border-radius: 10px; margin-bottom: 1rem;">
+                    <img src="data:image/png;base64,{{ pix_data.encodedImage }}" alt="QR Code PIX" style="max-width: 300px;">
+                </div>
+                {% endif %}
+                
+                <p style="color: #666; margin-top: 1rem;">
+                    <small>Ou copie o código PIX Copia e Cola:</small>
+                </p>
+                
+                {% if pix_data.payload %}
+                <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin: 1rem 0; word-break: break-all; max-width: 600px; margin-left: auto; margin-right: auto;">
+                    <code id="pix-code" style="font-size: 0.85rem;">{{ pix_data.payload }}</code>
+                </div>
+                
+                <button onclick="copiarPix()" class="btn btn-secondary" style="margin-bottom: 1rem;">
+                    📋 Copiar Código PIX
+                </button>
+                {% endif %}
+                
+                {% if pix_data.expirationDate %}
+                <p style="color: #999; font-size: 0.9rem; margin-top: 1rem;">
+                    Válido até: {{ pix_data.expirationDate }}
+                </p>
+                {% endif %}
+                
+                <div id="status-pagamento" style="margin-top: 2rem; padding: 1rem; background: #fff3cd; border-radius: 8px;">
+                    <p style="margin: 0;">⏳ Aguardando pagamento...</p>
+                    <p style="margin: 0.5rem 0 0 0; font-size: 0.9rem; color: #666;">
+                        Verificando automaticamente a cada 5 segundos
+                    </p>
+                </div>
+            </div>
+        {% else %}
+            <div class="pix-erro">
+                <p style="color: #dc3545;">❌ Não foi possível gerar o código PIX</p>
+                <p>Por favor, tente novamente ou entre em contato com a escola.</p>
+                <a href="{% url 'pagar' mensalidade.id %}" class="btn btn-primary" style="margin-top: 1rem;">
+                    Tentar Novamente
+                </a>
+            </div>
+        {% endif %}
+    </div>
+    
+    <a href="{% url 'pagar' mensalidade.id %}" class="btn btn-secondary" style="margin-top: 2rem; display: inline-block;">
+        Voltar
+    </a>
+</div>
+
+{% if pix_data and payment_id %}
+<script>
+function copiarPix() {
+    const codigo = document.getElementById('pix-code').textContent;
+    navigator.clipboard.writeText(codigo).then(() => {
+        alert('Código PIX copiado! Cole no seu aplicativo do banco.');
+    });
+}
+
+// Verificar status do pagamento a cada 5 segundos
+const paymentId = '{{ payment_id }}';
+let verificacaoInterval;
+
+function verificarPagamento() {
+    fetch(`/pagamentos/verificar-pix/${paymentId}/`)
+        .then(response => response.json())
+        .then(data => {
+            console.log('Status:', data.status);
+            if (data.status === 'paid') {
+                clearInterval(verificacaoInterval);
+                document.getElementById('status-pagamento').innerHTML = `
+                    <p style="margin: 0; color: #28a745; font-weight: bold;">✅ Pagamento confirmado!</p>
+                    <p style="margin: 0.5rem 0 0 0; font-size: 0.9rem;">Redirecionando...</p>
+                `;
+                setTimeout(() => {
+                    window.location.href = data.redirect;
+                }, 2000);
+            }
+        })
+        .catch(error => console.error('Erro ao verificar pagamento:', error));
+}
+
+// Verificar a cada 5 segundos
+verificacaoInterval = setInterval(verificarPagamento, 5000);
+
+// Verificar imediatamente também
+verificarPagamento();
+</script>
+{% endif %}
+{% endblock %}

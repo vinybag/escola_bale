@@ -1,20 +1,40 @@
+# Python
+*.pyc
+__pycache__/
+*.py[cod]
+*$py.class
+
 # Ambiente virtual
 venv/
 env/
+ENV/
 
-# Arquivos Python
-__pycache__/
-*.pyc
-
-# Banco de dados
+# Django
+*.log
 db.sqlite3
+db.sqlite3-journal
+staticfiles/
+media/
 
-# Variáveis de ambiente
+# Secrets e credenciais
 .env
-
-# Credenciais Google
+config/credentials/
 credentials/
 *.json
 
-# Arquivos do sistema
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+
+# Sistema Operacional
 .DS_Store
+Thumbs.db
+desktop.ini
+
+# Outros
+*.bak
+*.tmp

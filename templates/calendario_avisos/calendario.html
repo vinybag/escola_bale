@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}Avisos e Calendário{% endblock %}
+
+{% block content %}
+<div class="container dashboard">
+    <h1>Avisos e Calendário</h1>
+    
+    {% if avisos %}
+        <div class="avisos-list">
+            {% for aviso in avisos %}
+                <div class="card aviso-card aviso-{{ aviso.tipo }}">
+                    <div class="aviso-header">
+                        <h3>{{ aviso.titulo }}</h3>
+                        <span class="tipo-badge">{{ aviso.get_tipo_display }}</span>
+                    </div>
+                    
+                    <div class="aviso-content">
+                        <p>{{ aviso.descricao }}</p>
+                        
+                        {% if aviso.data_evento %}
+                            <p class="aviso-data">
+                                📅 Data do evento: {{ aviso.data_evento|date:"d/m/Y" }}
+                            </p>
+                        {% endif %}
+                        
+                        <p class="aviso-publicacao">
+                            <small>Publicado em: {{ aviso.data_publicacao|date:"d/m/Y às H:i" }}</small>
+                        </p>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="card">
+            <p>Nenhum aviso no momento.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

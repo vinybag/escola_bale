@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}Mensalidades{% endblock %}
+
+{% block content %}
+<div class="container dashboard">
+    <h1>Mensalidades</h1>
+    
+    {% if mensalidades %}
+        <div class="mensalidades-list">
+            {% for mensalidade in mensalidades %}
+                <div class="card mensalidade-card">
+                    <div class="mensalidade-header">
+                        <h3>{{ mensalidade.aluna.nome }}</h3>
+                        <span class="status-badge status-{{ mensalidade.status }}">
+                            {% if mensalidade.status == 'pago' %}
+                                ✅ Pago
+                            {% elif mensalidade.status == 'atrasado' %}
+                                🔴 Atrasado
+                            {% else %}
+                                ⏳ Pendente
+                            {% endif %}
+                        </span>
+                    </div>
+                    
+                    <div class="mensalidade-info">
+                        <p><strong>Mês de referência:</strong> {{ mensalidade.mes_referencia|date:"m/Y" }}</p>
+                        <p><strong>Valor:</strong> R$ {{ mensalidade.valor }}</p>
+                        <p><strong>Vencimento:</strong> {{ mensalidade.data_vencimento|date:"d/m/Y" }}</p>
+                        
+                        {% if mensalidade.data_pagamento %}
+                            <p><strong>Pago em:</strong> {{ mensalidade.data_pagamento|date:"d/m/Y" }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    {% if mensalidade.status == 'pendente' or mensalidade.status == 'atrasado' %}
+                        <a href="{% url 'pagar' mensalidade.id %}" class="btn btn-primary">Pagar Agora</a>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="card">
+            <p>Nenhuma mensalidade encontrada.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

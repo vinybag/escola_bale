@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}Pagamento Aprovado!{% endblock %}
+
+{% block content %}
+<div class="container dashboard">
+    <div class="card" style="text-align: center; padding: 3rem;">
+        <h1 style="color: #28a745; font-size: 3rem;">✅</h1>
+        <h2 style="color: #28a745;">Pagamento Aprovado!</h2>
+        <p style="font-size: 1.2rem; margin: 2rem 0;">
+            A mensalidade de <strong>{{ mensalidade.aluna.nome }}</strong> foi paga com sucesso!
+        </p>
+        
+        <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 10px; margin: 2rem 0;">
+            <p><strong>Valor pago:</strong> R$ {{ mensalidade.valor }}</p>
+            <p><strong>Data:</strong> {{ mensalidade.data_pagamento|date:"d/m/Y às H:i" }}</p>
+            <p><strong>Referente a:</strong> {{ mensalidade.mes_referencia|date:"m/Y" }}</p>
+        </div>
+        
+        <a href="{% url 'mensalidades' %}" class="btn btn-primary">Ver Todas as Mensalidades</a>
+        <a href="{% url 'dashboard' %}" class="btn btn-secondary" style="margin-left: 1rem;">Voltar ao Dashboard</a>
+    </div>
+</div>
+{% endblock %}

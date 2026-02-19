@@ -1,16 +1,226 @@
 * {
+    margin: 0;
+    padding: 0;
     box-sizing: border-box;
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, sans-serif;
-    background-color: #e0c0c3;
-    margin: 0;
-    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
     color: #333;
+    background-color: #f5f5f5;
 }
 
+/* ==================== NAVBAR ==================== */
+.navbar {
+    background: #b07a84;
+    color: white;
+    padding: 1rem 0;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.navbar .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.navbar .logo {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: white !important;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+}
+
+.navbar .logo img {
+    height: 70px;
+    width: auto;
+    display: block;
+}
+
+.nav-links {
+    display: flex;
+    list-style: none;
+    gap: 2rem;
+    align-items: center;
+}
+
+.nav-links a {
+    color: white !important;
+    text-decoration: none;
+    transition: opacity 0.3s;
+    font-weight: 500;
+}
+
+.nav-links a:hover {
+    opacity: 0.8;
+}
+
+.btn-login {
+    background: #d9b3b8 !important;
+    color: #333 !important;
+    padding: 0.6rem 1.2rem !important;
+    border-radius: 8px;
+    font-weight: 600;
+}
+
+.btn-login:hover {
+    background: #e0c0c3 !important;
+}
+
+/* ==================== HERO ==================== */
+.hero {
+    background: linear-gradient(135deg, #e0c0c3 0%, #b07a84 100%);
+    color: white;
+    padding: 5rem 0;
+    text-align: center;
+}
+
+.hero h1 {
+    font-size: 2.8rem;
+    margin-bottom: 1rem;
+    color: white;
+    font-weight: 600;
+}
+
+.hero p {
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+    opacity: 0.95;
+}
+
+.cta-buttons {
+    margin-top: 2rem;
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.btn {
+    padding: 1rem 2rem;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s;
+    display: inline-block;
+    border: 2px solid transparent;
+}
+
+.btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.btn-primary {
+    background: #b07a84;
+    color: white !important;
+}
+
+.btn-primary:hover {
+    background: #9d6a74;
+}
+
+.btn-secondary {
+    background: white;
+    color: #b07a84 !important;
+    border: 2px solid white;
+}
+
+.btn-secondary:hover {
+    background: transparent;
+    color: white !important;
+}
+
+/* ==================== SECTIONS ==================== */
 .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.sobre, .contato {
+    padding: 4rem 0;
+}
+
+.sobre {
+    background: white;
+}
+
+.contato {
+    background: #faf8f9;
+}
+
+.sobre h2, .contato h2 {
+    text-align: center;
+    margin-bottom: 1rem;
+    color: #b07a84;
+    font-size: 2.2rem;
+    font-weight: 600;
+}
+
+.sobre h3 {
+    color: #b07a84;
+    margin-top: 3rem;
+    margin-bottom: 2rem;
+    text-align: center;
+    font-size: 1.8rem;
+}
+
+.sobre p, .contato p {
+    text-align: center;
+    font-size: 1.1rem;
+    color: #555;
+    max-width: 800px;
+    margin: 0 auto 2rem;
+}
+
+.turmas-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.turma-card {
+    background: #faf8f9;
+    padding: 2rem;
+    border-radius: 12px;
+    text-align: center;
+    border: 2px solid #e0c0c3;
+    transition: all 0.3s;
+}
+
+.turma-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(176, 122, 132, 0.2);
+    border-color: #b07a84;
+}
+
+.turma-card h4 {
+    color: #b07a84;
+    margin-bottom: 0.8rem;
+    font-size: 1.3rem;
+}
+
+.turma-card p {
+    color: #666;
+    font-size: 0.95rem;
+}
+
+.contato p {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+}
+
+/* ==================== FORMULÁRIO DE AGENDAMENTO ==================== */
+.container.form-agendamento {
     max-width: 520px;
     margin: 60px auto;
     background: #ffffff;
@@ -19,16 +229,16 @@ body {
     box-shadow: 0 15px 30px rgba(0,0,0,0.08);
 }
 
-.logo {
+.logo-form {
     text-align: center;
     margin-bottom: 25px;
 }
 
-.logo img {
-    max-width: 220px;
+.logo-form img {
+    max-width: 350px;
 }
 
-h1 {
+form h1 {
     text-align: center;
     color: #b07a84;
     margin-bottom: 30px;
@@ -63,7 +273,7 @@ select:focus {
     box-shadow: 0 0 0 2px rgba(176,122,132,0.2);
 }
 
-button {
+button[type="submit"] {
     margin-top: 20px;
     padding: 12px;
     background-color: #e0c0c3;
@@ -76,53 +286,13 @@ button {
     transition: background-color 0.2s ease, transform 0.1s ease;
 }
 
-button:hover {
+button[type="submit"]:hover {
     background-color: #d3aeb2;
     transform: translateY(-1px);
 }
 
-button:active {
+button[type="submit"]:active {
     transform: translateY(0);
-}
-
-/* =========================
-   RESPONSIVO – CELULAR
-   ========================= */
-@media (max-width: 600px) {
-
-    body {
-        padding: 10px;
-    }
-
-    .container {
-        margin: 20px auto;
-        padding: 25px 20px;
-        border-radius: 12px;
-    }
-
-    .logo img {
-        max-width: 180px;
-    }
-
-    h1 {
-        font-size: 1.4rem;
-        margin-bottom: 25px;
-    }
-
-    label {
-        font-size: 13px;
-    }
-
-    input,
-    select {
-        font-size: 15px;
-        padding: 12px;
-    }
-
-    button {
-        font-size: 16px;
-        padding: 14px;
-    }
 }
 
 .alerta-erro {
@@ -137,3 +307,334 @@ button:active {
     text-align: center;
 }
 
+/* ==================== AUTH ==================== */
+.auth-container {
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #faf8f9 0%, #e0c0c3 100%);
+}
+
+.auth-box {
+    background: white;
+    padding: 2.5rem;
+    border-radius: 16px;
+    box-shadow: 0 15px 30px rgba(176, 122, 132, 0.15);
+    max-width: 400px;
+    width: 100%;
+}
+
+.auth-box h2 {
+    color: #b07a84;
+    margin-bottom: 0.5rem;
+    text-align: center;
+}
+
+.auth-box p {
+    text-align: center;
+    color: #666;
+    margin-bottom: 2rem;
+}
+
+.form-group {
+    margin-bottom: 1.2rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #555;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.8rem;
+    border: 1px solid #d9b3b8;
+    border-radius: 8px;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #b07a84;
+    box-shadow: 0 0 0 2px rgba(176,122,132,0.2);
+}
+
+.auth-box button {
+    width: 100%;
+    padding: 0.9rem;
+    background-color: #b07a84;
+    color: white;
+    font-size: 15px;
+    font-weight: 600;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.auth-box button:hover {
+    background-color: #9d6a74;
+    transform: translateY(-1px);
+}
+
+.auth-link {
+    text-align: center;
+    margin-top: 1.5rem;
+    color: #666;
+}
+
+.auth-link a {
+    color: #b07a84;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.auth-link a:hover {
+    text-decoration: underline;
+}
+
+/* ==================== DASHBOARD ==================== */
+.dashboard {
+    padding: 3rem 0;
+    min-height: 70vh;
+}
+
+.dashboard h1 {
+    margin-bottom: 2rem;
+    color: #b07a84;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.card {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(176, 122, 132, 0.1);
+    border: 1px solid #e0c0c3;
+}
+
+.card h3 {
+    color: #b07a84;
+    margin-bottom: 1.5rem;
+    font-size: 1.4rem;
+}
+
+.quick-links {
+    list-style: none;
+    padding: 0;
+}
+
+.quick-links li {
+    margin: 1rem 0;
+}
+
+.quick-links a {
+    color: #b07a84;
+    text-decoration: none;
+    font-size: 1.1rem;
+    transition: color 0.3s;
+}
+
+.quick-links a:hover {
+    color: #9d6a74;
+    text-decoration: underline;
+}
+
+.alunas-list {
+    list-style: none;
+    padding: 0;
+}
+
+.alunas-list li {
+    padding: 1rem;
+    background: #faf8f9;
+    margin-bottom: 0.8rem;
+    border-radius: 8px;
+    border-left: 4px solid #b07a84;
+}
+
+/* ==================== FOOTER ==================== */
+footer {
+    background: #b07a84;
+    color: white;
+    text-align: center;
+    padding: 2rem 0;
+    margin-top: 4rem;
+}
+
+/* ==================== MENSAGENS/ALERTAS ==================== */
+.messages {
+    max-width: 800px;
+    margin: 2rem auto;
+}
+
+.alert {
+    padding: 1rem 1.5rem;
+    border-radius: 10px;
+    margin-bottom: 1rem;
+}
+
+.alert-success {
+    background-color: #d4edda;
+    color: #155724;
+    border-left: 4px solid #28a745;
+}
+
+.alert-error {
+    background-color: #f8d7dc;
+    color: #8a2c3b;
+    border-left: 4px solid #b07a84;
+}
+
+.alert-warning {
+    background-color: #fff3cd;
+    color: #856404;
+    border-left: 4px solid #ffc107;
+}
+
+/* ==================== MENSALIDADES ==================== */
+.mensalidades-list {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.mensalidade-card {
+    position: relative;
+}
+
+.mensalidade-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #e0c0c3;
+}
+
+.mensalidade-header h3 {
+    margin: 0;
+    color: #b07a84;
+}
+
+.status-badge {
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.status-pago {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-pendente {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-atrasado {
+    background: #f8d7dc;
+    color: #8a2c3b;
+}
+
+.mensalidade-info p {
+    margin: 0.5rem 0;
+}
+
+/* ==================== AVISOS ==================== */
+.avisos-list {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.aviso-card {
+    border-left: 4px solid #b07a84;
+}
+
+.aviso-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 1rem;
+}
+
+.aviso-header h3 {
+    margin: 0;
+    color: #b07a84;
+}
+
+.tipo-badge {
+    background: #e0c0c3;
+    padding: 0.3rem 0.8rem;
+    border-radius: 15px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.aviso-data {
+    background: #faf8f9;
+    padding: 0.8rem;
+    border-radius: 8px;
+    margin-top: 1rem;
+    font-weight: 600;
+}
+
+.aviso-publicacao {
+    margin-top: 1rem;
+    color: #999;
+}
+
+/* ==================== RESPONSIVO ==================== */
+@media (max-width: 768px) {
+    .hero h1 {
+        font-size: 2rem;
+    }
+
+    .hero p {
+        font-size: 1rem;
+    }
+
+    .cta-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .btn {
+        width: 100%;
+        max-width: 300px;
+    }
+
+    .nav-links {
+        gap: 1rem;
+        flex-wrap: wrap;
+        font-size: 0.9rem;
+    }
+
+    .navbar .logo img {
+        height: 40px;
+    }
+
+    .container.form-agendamento {
+        margin: 20px auto;
+        padding: 25px 20px;
+    }
+
+    .logo-form img {
+    width: 180px;
+    height: auto;
+}
+
+    .turmas-grid {
+        grid-template-columns: 1fr;
+    }
+}

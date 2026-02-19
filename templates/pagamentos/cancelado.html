@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block title %}Pagamento Cancelado{% endblock %}
+
+{% block content %}
+<div class="container dashboard">
+    <div class="card" style="text-align: center; padding: 3rem;">
+        <h1 style="color: #ffc107; font-size: 3rem;">⚠️</h1>
+        <h2 style="color: #856404;">Pagamento Cancelado</h2>
+        <p style="font-size: 1.2rem; margin: 2rem 0;">
+            Você cancelou o processo de pagamento. Nenhuma cobrança foi realizada.
+        </p>
+        
+        <a href="{% url 'mensalidades' %}" class="btn btn-primary">Voltar para Mensalidades</a>
+    </div>
+</div>
+{% endblock %}
