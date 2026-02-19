@@ -1,1 +1,2 @@
-web: python manage.py migrate && gunicorn config.wsgi --bind 0.0.0.0:$PORT
+release: python init_db.py
+web: gunicorn config.wsgi --bind 0.0.0.0:$PORT
