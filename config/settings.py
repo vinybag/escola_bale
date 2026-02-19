@@ -130,18 +130,29 @@ if not DEBUG:
     SECURE_CONTENT_TYPE_NOSNIFF = True
     X_FRAME_OPTIONS = 'DENY'
 
-    # Criar superusuário automaticamente (apenas em produção vazia)
+    # Criar superusuário automaticamente (apenas em produção)
 if not DEBUG:
     import sys
     if 'runserver' not in sys.argv and 'migrate' not in sys.argv:
-        try:
-            from django.contrib.auth.models import User
-            if not User.objects.filter(username='admin').exists():
-                User.objects.create_superuser(
-                    username='admin',
-                    email='vinybag@gmail.com',
-                    password='Pomboobeso9798!'
-                )
-                print('✅ Superusuário admin criado!')
-        except Exception as e:
-            print(f'Erro ao criar superusuário: {e}')
+        def criar_superuser():
+            try:
+                import django
+                django.setup()
+                from django.contrib.auth.models import User
+                
+                if not User.objects.filter(username='admin').exists():
+                    User.objects.create_superuser(
+                        username='admin',
+                        email='vinybag@gmail.com',
+                        password='Pomboobeso9798!'
+                    )
+                    print('✅ Superusuário admin criado com sucesso!')
+                else:
+                    print('⚠️ Superusuário admin já existe!')
+            except Exception as e:
+                print(f'⚠️ Não foi possível criar superusuário: {e}')
+        
+        # Executa após apps carregarem
+        from django.apps import apps
+        if apps.ready:
+            criar_superuser()
