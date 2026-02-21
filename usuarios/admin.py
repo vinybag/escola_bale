@@ -2,11 +2,20 @@ from django.contrib import admin
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import Perfil, Aluna
+import random
+import string
 
-# Desregistra o User padrão para customizar
+# Desregistra o User padrão
 admin.site.unregister(User)
 
-# Inline para criar Perfil junto com User
+# Função para gerar senha
+def gerar_senha_aleatoria():
+    palavras = ['Bale', 'Danca', 'Ballet', 'Aluna', 'Rosa']
+    numeros = ''.join(random.choices(string.digits, k=4))
+    palavra = random.choice(palavras)
+    return f"{palavra}{numeros}!"
+
+# Inline para mostrar o Perfil junto com o User
 class PerfilInline(admin.StackedInline):
     model = Perfil
     can_delete = False
@@ -14,7 +23,6 @@ class PerfilInline(admin.StackedInline):
     verbose_name_plural = 'Informações do Responsável'
     fk_name = 'user'
 
-# Inline para criar Alunas junto com User
 class AlunaInline(admin.TabularInline):
     model = Aluna
     extra = 1
@@ -22,7 +30,7 @@ class AlunaInline(admin.TabularInline):
     verbose_name_plural = 'Alunas da Família'
     fk_name = 'responsavel'
 
-# Customiza o admin de User
+# Customiza o UserAdmin
 class UserAdmin(BaseUserAdmin):
     inlines = (PerfilInline, AlunaInline)
     list_display = ['username', 'email', 'first_name', 'last_name', 'get_telefone', 'get_qtd_alunas', 'is_active']
@@ -39,11 +47,27 @@ class UserAdmin(BaseUserAdmin):
     def get_qtd_alunas(self, obj):
         return obj.alunas.count()
     get_qtd_alunas.short_description = 'Nº Alunas'
+    
+    # Sobrescreve o formulário de criação para gerar senha
+    def save_model(self, request, obj, form, change):
+        if not change:  # Novo usuário
+            # Gera senha aleatória
+            senha_temp = gerar_senha_aleatoria()
+            obj.set_password(senha_temp)
+            obj.save()
+            
+            # Mostra a senha gerada para o admin
+            self.message_user(
+                request,
+                f'✅ Usuário criado! Senha temporária: {senha_temp} (anote e envie ao responsável)',
+                level='SUCCESS'
+            )
+        else:
+            super().save_model(request, obj, form, change)
 
 # Registra o User customizado
 admin.site.register(User, UserAdmin)
 
-# Mantém o admin de Aluna separado também (para acesso rápido)
 @admin.register(Aluna)
 class AlunaAdmin(admin.ModelAdmin):
     list_display = ['nome', 'responsavel', 'idade', 'turma_atual', 'ativa', 'data_matricula']
