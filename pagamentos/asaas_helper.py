@@ -43,7 +43,9 @@ class AsaasAPI:
             "value": float(valor),
             "dueDate": self._get_due_date(),
             "description": descricao,
-            "externalReference": descricao,  # Para identificar depois
+            "externalReference": descricao,
+            "postalService": False,
+            "notificationDisabled": True,
         }
         
         print(f"[Asaas] URL: {url}")
