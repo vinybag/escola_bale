@@ -75,12 +75,7 @@ class AsaasAPI:
     
     def criar_cliente(self, customer_data):
         """
-        Cria um cliente no Asaas
-        customer_data = {
-            'name': 'Nome completo',
-            'email': 'email@example.com',
-            'cpfCnpj': '12345678900'
-        }
+        Cria um cliente no Asaas com notificações desabilitadas
         """
         url = f"{self.base_url}/customers"
         
@@ -88,6 +83,9 @@ class AsaasAPI:
             "access_token": self.api_key,
             "Content-Type": "application/json",
         }
+        
+        # Adiciona configuração de notificações desabilitadas
+        customer_data['notificationDisabled'] = True
         
         print(f"[Asaas] Criando cliente: {customer_data}")
         
