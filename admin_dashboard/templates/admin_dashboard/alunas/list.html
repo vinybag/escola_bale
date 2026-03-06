@@ -1,0 +1,108 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Alunas{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
+    <div>
+        <h2>Alunas</h2>
+        <p>{{ total_alunas }} aluna{{ total_alunas|pluralize }}</p>
+    </div>
+    <a href="#" class="btn btn-primary">+ Nova Aluna</a>
+</div>
+
+<!-- Filtros -->
+<div style="background: white; padding: 1.5rem; border-radius: 10px; margin-bottom: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+    <form method="get" style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 1rem; align-items: end;">
+        
+        <!-- Busca -->
+        <div>
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Buscar</label>
+            <input type="text" 
+                   name="busca" 
+                   value="{{ busca }}"
+                   placeholder="Nome da aluna ou responsavel..."
+                   style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+        </div>
+        
+        <!-- Filtro Turma -->
+        <div>
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Turma</label>
+            <select name="turma" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                <option value="">Todas</option>
+                {% for t in turmas %}
+                    <option value="{{ t }}" {% if t == turma_filtro %}selected{% endif %}>{{ t }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <!-- Filtro Status -->
+        <div>
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Status</label>
+            <select name="status" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                <option value="">Todas</option>
+                <option value="ativas" {% if status_filtro == 'ativas' %}selected{% endif %}>Ativas</option>
+                <option value="inativas" {% if status_filtro == 'inativas' %}selected{% endif %}>Inativas</option>
+            </select>
+        </div>
+        
+        <div style="display: flex; gap: 0.5rem;">
+            <button type="submit" class="btn btn-primary">Filtrar</button>
+            <a href="{% url 'admin_dashboard:alunas_list' %}" style="padding: 0.75rem 1.5rem; background: #f5f5f5; color: #333; border-radius: 5px; text-decoration: none;">Limpar</a>
+        </div>
+    </form>
+</div>
+
+<!-- Tabela -->
+<div style="background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead style="background: #f8f9fa;">
+            <tr>
+                <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Aluna</th>
+                <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Responsavel</th>
+                <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Turma</th>
+                <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Idade</th>
+                <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Status</th>
+                <th style="padding: 1rem; text-align: right; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Acoes</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for aluna in alunas %}
+            <tr style="border-top: 1px solid #eee;">
+                <td style="padding: 1rem;">
+                    <strong style="color: #2c3e50;">{{ aluna.nome }}</strong>
+                </td>
+                <td style="padding: 1rem; color: #666;">
+                    {{ aluna.responsavel.get_full_name|default:aluna.responsavel.username }}
+                </td>
+                <td style="padding: 1rem;">
+                    <span style="background: #e8d5f2; color: #6b2d8f; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">
+                        {{ aluna.turma_atual|default:"Sem turma" }}
+                    </span>
+                </td>
+                <td style="padding: 1rem; color: #666;">
+                    {{ aluna.idade }} anos
+                </td>
+                <td style="padding: 1rem;">
+                    {% if aluna.ativa %}
+                        <span style="background: #d4edda; color: #155724; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">Ativa</span>
+                    {% else %}
+                        <span style="background: #f8d7da; color: #721c24; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">Inativa</span>
+                    {% endif %}
+                </td>
+                <td style="padding: 1rem; text-align: right;">
+                    <a href="#" style="color: #b07a84; text-decoration: none; margin-right: 1rem;">Ver</a>
+                    <a href="#" style="color: #2c3e50; text-decoration: none;">Editar</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" style="padding: 3rem; text-align: center; color: #999;">
+                    Nenhuma aluna encontrada.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

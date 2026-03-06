@@ -209,7 +209,7 @@
                 <a href="{% url 'admin_dashboard:dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
                     Dashboard
                 </a>
-                <a href="#" class="{% if 'alunas' in request.path %}active{% endif %}">
+                <a href="{% url 'admin_dashboard:alunas_list' %}" class="{% if 'alunas' in request.path %}active{% endif %}">
                     Alunas
                 </a>
                 <a href="#" class="{% if 'mensalidades' in request.path %}active{% endif %}">
