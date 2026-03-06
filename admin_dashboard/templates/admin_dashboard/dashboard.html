@@ -1,90 +1,36 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - BKN Tech</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 1200px;
-            margin: 50px auto;
-            padding: 20px;
-            background: #f5f5f5;
-        }
-        .header {
-            background: linear-gradient(135deg, #2c3e50, #b07a84);
-            color: white;
-            padding: 30px;
-            border-radius: 10px;
-            margin-bottom: 30px;
-        }
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-        }
-        .stat-card {
-            background: white;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .stat-card h3 {
-            margin: 0 0 10px 0;
-            color: #666;
-            font-size: 14px;
-        }
-        .stat-card .number {
-            font-size: 32px;
-            font-weight: bold;
-            color: #2c3e50;
-        }
-        .logout {
-            display: inline-block;
-            margin-top: 20px;
-            padding: 10px 20px;
-            background: rgba(255,255,255,0.2);
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-        }
-        .logout:hover {
-            background: rgba(255,255,255,0.3);
-        }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h1>BKN Tech - Admin Dashboard</h1>
-        <p>Bem-vindo, {{ request.user.get_full_name|default:request.user.username }}</p>
-        <a href="{% url 'logout' %}" class="logout">Sair</a>
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Dashboard</h2>
+    <p>Visao geral - {{ mes_atual }}</p>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <h3>Alunas Ativas</h3>
+        <div class="number">{{ total_alunas }}</div>
     </div>
     
-    <div class="stats">
-        <div class="stat-card">
-            <h3>Total de Alunas</h3>
-            <div class="number">{{ total_alunas }}</div>
-        </div>
-        
-        <div class="stat-card">
-            <h3>Recebido no Mes</h3>
-            <div class="number">R$ {{ total_recebido|floatformat:2 }}</div>
-        </div>
-        
-        <div class="stat-card">
-            <h3>Mensalidades Pendentes</h3>
-            <div class="number">{{ mensalidades_pendentes }}</div>
-        </div>
-        
-        <div class="stat-card">
-            <h3>Mensalidades Pagas</h3>
-            <div class="number">{{ mensalidades_pagas }}</div>
-        </div>
+    <div class="stat-card">
+        <h3>Recebido no Mes</h3>
+        <div class="number">R$ {{ total_recebido|floatformat:2 }}</div>
     </div>
     
-    <p style="margin-top: 30px; text-align: center; color: #666;">
-        Dashboard com dados reais do banco! ({{ mes_atual }})
-    </p>
-</body>
-</html>
+    <div class="stat-card">
+        <h3>Pendentes</h3>
+        <div class="number">{{ mensalidades_pendentes }}</div>
+    </div>
+    
+    <div class="stat-card">
+        <h3>Pagas</h3>
+        <div class="number">{{ mensalidades_pagas }}</div>
+    </div>
+</div>
+
+<p style="color: #666; text-align: center; margin-top: 2rem;">
+    Dashboard com dados reais! Proximos passos: lista de alunas, graficos, etc.
+</p>
+{% endblock %}
