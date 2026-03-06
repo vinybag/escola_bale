@@ -1,0 +1,111 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Editar {{ aluna.nome }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Editar Aluna</h2>
+    <p>{{ aluna.nome }}</p>
+</div>
+
+<div style="background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); max-width: 800px;">
+    <form method="post">
+        {% csrf_token %}
+        
+        <div style="display: grid; gap: 1.5rem;">
+            
+            <!-- Nome -->
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                    Nome da Aluna <span style="color: red;">*</span>
+                </label>
+                <input type="text" 
+                       name="nome" 
+                       value="{{ aluna.nome }}"
+                       required
+                       style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+            </div>
+            
+            <!-- Data de Nascimento -->
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                    Data de Nascimento <span style="color: red;">*</span>
+                </label>
+                <input type="date" 
+                       name="data_nascimento" 
+                       value="{{ aluna.data_nascimento|date:'Y-m-d' }}"
+                       required
+                       style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+            </div>
+            
+            <!-- Responsável -->
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                    Responsavel <span style="color: red;">*</span>
+                </label>
+                <select name="responsavel" 
+                        required
+                        style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                    {% for resp in responsaveis %}
+                        <option value="{{ resp.id }}" {% if resp.id == aluna.responsavel.id %}selected{% endif %}>
+                            {{ resp.get_full_name|default:resp.username }} - {{ resp.email }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <!-- Turma -->
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                    Turma Atual
+                </label>
+                <select name="turma_atual" 
+                        style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                    <option value="" {% if not aluna.turma_atual %}selected{% endif %}>Sem turma</option>
+                    <option value="Baby Class" {% if aluna.turma_atual == "Baby Class" %}selected{% endif %}>Baby Class</option>
+                    <option value="Little Star" {% if aluna.turma_atual == "Little Star" %}selected{% endif %}>Little Star</option>
+                    <option value="Star I" {% if aluna.turma_atual == "Star I" %}selected{% endif %}>Star I</option>
+                    <option value="Star II" {% if aluna.turma_atual == "Star II" %}selected{% endif %}>Star II</option>
+                    <option value="Star III" {% if aluna.turma_atual == "Star III" %}selected{% endif %}>Star III</option>
+                    <option value="Jovem" {% if aluna.turma_atual == "Jovem" %}selected{% endif %}>Jovem</option>
+                    <option value="Contemporaneo" {% if aluna.turma_atual == "Contemporaneo" %}selected{% endif %}>Contemporaneo</option>
+                    <option value="Adulto" {% if aluna.turma_atual == "Adulto" %}selected{% endif %}>Adulto</option>
+                </select>
+            </div>
+            
+            <!-- Ativa -->
+            <div>
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                    <input type="checkbox" 
+                           name="ativa" 
+                           {% if aluna.ativa %}checked{% endif %}
+                           style="width: 20px; height: 20px; cursor: pointer;">
+                    <span style="font-weight: 500; color: #333;">Aluna ativa</span>
+                </label>
+            </div>
+            
+            <!-- Observações -->
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                    Observacoes
+                </label>
+                <textarea name="observacoes" 
+                          rows="4"
+                          style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem; font-family: inherit; resize: vertical;">{{ aluna.observacoes }}</textarea>
+            </div>
+            
+            <!-- Botões -->
+            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                <button type="submit" class="btn btn-primary">
+                    Salvar Alteracoes
+                </button>
+                <a href="{% url 'admin_dashboard:aluna_detalhes' aluna.pk %}" 
+                   style="padding: 0.75rem 1.5rem; background: #f5f5f5; color: #333; border-radius: 5px; text-decoration: none; font-weight: 500;">
+                    Cancelar
+                </a>
+            </div>
+            
+        </div>
+    </form>
+</div>
+{% endblock %}

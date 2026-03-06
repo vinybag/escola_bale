@@ -180,3 +180,99 @@ def aluna_criar(request):
     }
     
     return render(request, 'admin_dashboard/alunas/criar.html', context)
+
+@login_required
+def aluna_detalhes(request, pk):
+    """Detalhes de uma aluna"""
+    
+    if not request.user.is_staff:
+        return redirect('home')
+    
+    try:
+        from usuarios.models import Aluna
+        from pagamentos.models import Mensalidade
+        from django.db.models import Sum
+        
+        aluna = Aluna.objects.select_related('responsavel').get(pk=pk)
+        
+        # Mensalidades da aluna
+        mensalidades = Mensalidade.objects.filter(aluna=aluna).order_by('-mes_referencia')
+        
+        # Estatisticas
+        total_pago = mensalidades.filter(status='pago').aggregate(
+            total=Sum('valor')
+        )['total'] or Decimal('0.00')
+        
+        total_pendente = mensalidades.filter(status='pendente').count()
+        
+    except Exception as e:
+        from django.contrib import messages
+        messages.error(request, f'Aluna nao encontrada: {e}')
+        return redirect('admin_dashboard:alunas_list')
+    
+    context = {
+        'aluna': aluna,
+        'mensalidades': mensalidades[:12],  # Ultimas 12 mensalidades
+        'total_pago': total_pago,
+        'total_pendente': total_pendente,
+    }
+    
+    return render(request, 'admin_dashboard/alunas/detalhes.html', context)
+
+
+@login_required
+def aluna_editar(request, pk):
+    """Editar aluna existente"""
+    
+    if not request.user.is_staff:
+        return redirect('home')
+    
+    try:
+        from usuarios.models import Aluna
+        aluna = Aluna.objects.get(pk=pk)
+    except Exception as e:
+        from django.contrib import messages
+        messages.error(request, f'Aluna nao encontrada: {e}')
+        return redirect('admin_dashboard:alunas_list')
+    
+    if request.method == 'POST':
+        try:
+            from django.contrib.auth.models import User
+            from django.contrib import messages
+            
+            # Atualiza dados
+            aluna.nome = request.POST.get('nome')
+            aluna.data_nascimento = request.POST.get('data_nascimento')
+            aluna.turma_atual = request.POST.get('turma_atual')
+            aluna.ativa = request.POST.get('ativa') == 'on'
+            aluna.observacoes = request.POST.get('observacoes', '')
+            
+            # Atualiza responsavel se mudou
+            responsavel_id = request.POST.get('responsavel')
+            if responsavel_id:
+                aluna.responsavel = User.objects.get(id=responsavel_id)
+            
+            aluna.save()
+            
+            messages.success(request, f'Aluna {aluna.nome} atualizada com sucesso!')
+            return redirect('admin_dashboard:aluna_detalhes', pk=aluna.pk)
+            
+        except Exception as e:
+            from django.contrib import messages
+            messages.error(request, f'Erro ao atualizar aluna: {e}')
+            return redirect('admin_dashboard:aluna_editar', pk=pk)
+    
+    # GET - mostra form preenchido
+    try:
+        from django.contrib.auth.models import User
+        responsaveis = User.objects.filter(is_staff=False).order_by('first_name')
+    except Exception as e:
+        print(f"Erro ao buscar responsaveis: {e}")
+        responsaveis = []
+    
+    context = {
+        'aluna': aluna,
+        'responsaveis': responsaveis,
+    }
+    
+    return render(request, 'admin_dashboard/alunas/editar.html', context)

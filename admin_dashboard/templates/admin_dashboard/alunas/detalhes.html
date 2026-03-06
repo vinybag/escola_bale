@@ -1,0 +1,117 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}{{ aluna.nome }}{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
+    <div>
+        <h2>{{ aluna.nome }}</h2>
+        <p>Detalhes da aluna</p>
+    </div>
+    <div style="display: flex; gap: 1rem;">
+        <a href="{% url 'admin_dashboard:aluna_editar' aluna.pk %}" class="btn btn-primary">Editar</a>
+        <a href="{% url 'admin_dashboard:alunas_list' %}" style="padding: 0.75rem 1.5rem; background: #f5f5f5; color: #333; border-radius: 5px; text-decoration: none; font-weight: 500;">Voltar</a>
+    </div>
+</div>
+
+<!-- Informações básicas -->
+<div style="background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 1.5rem;">
+    <h3 style="margin-bottom: 1.5rem; color: #2c3e50;">Informacoes Basicas</h3>
+    
+    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem;">
+        <div>
+            <strong style="color: #666; display: block; margin-bottom: 0.25rem;">Nome:</strong>
+            <span style="color: #2c3e50;">{{ aluna.nome }}</span>
+        </div>
+        
+        <div>
+            <strong style="color: #666; display: block; margin-bottom: 0.25rem;">Idade:</strong>
+            <span style="color: #2c3e50;">{{ aluna.idade }} anos</span>
+        </div>
+        
+        <div>
+            <strong style="color: #666; display: block; margin-bottom: 0.25rem;">Data de Nascimento:</strong>
+            <span style="color: #2c3e50;">{{ aluna.data_nascimento|date:"d/m/Y" }}</span>
+        </div>
+        
+        <div>
+            <strong style="color: #666; display: block; margin-bottom: 0.25rem;">Turma:</strong>
+            <span style="background: #e8d5f2; color: #6b2d8f; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">
+                {{ aluna.turma_atual|default:"Sem turma" }}
+            </span>
+        </div>
+        
+        <div>
+            <strong style="color: #666; display: block; margin-bottom: 0.25rem;">Responsavel:</strong>
+            <span style="color: #2c3e50;">{{ aluna.responsavel.get_full_name|default:aluna.responsavel.username }}</span>
+        </div>
+        
+        <div>
+            <strong style="color: #666; display: block; margin-bottom: 0.25rem;">Status:</strong>
+            {% if aluna.ativa %}
+                <span style="background: #d4edda; color: #155724; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">Ativa</span>
+            {% else %}
+                <span style="background: #f8d7da; color: #721c24; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">Inativa</span>
+            {% endif %}
+        </div>
+    </div>
+    
+    {% if aluna.observacoes %}
+        <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #eee;">
+            <strong style="color: #666; display: block; margin-bottom: 0.5rem;">Observacoes:</strong>
+            <p style="color: #2c3e50; line-height: 1.6;">{{ aluna.observacoes }}</p>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Estatísticas -->
+<div class="stats-grid" style="margin-bottom: 1.5rem;">
+    <div class="stat-card">
+        <h3>Total Pago</h3>
+        <div class="number">R$ {{ total_pago|floatformat:2 }}</div>
+    </div>
+    
+    <div class="stat-card">
+        <h3>Mensalidades Pendentes</h3>
+        <div class="number">{{ total_pendente }}</div>
+    </div>
+</div>
+
+<!-- Histórico de mensalidades -->
+<div style="background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+    <h3 style="margin-bottom: 1.5rem; color: #2c3e50;">Historico de Mensalidades</h3>
+    
+    {% if mensalidades %}
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead style="background: #f8f9fa;">
+                <tr>
+                    <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Mes</th>
+                    <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Valor</th>
+                    <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Vencimento</th>
+                    <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for mens in mensalidades %}
+                <tr style="border-top: 1px solid #eee;">
+                    <td style="padding: 1rem; color: #2c3e50;">{{ mens.mes_referencia|date:"F/Y" }}</td>
+                    <td style="padding: 1rem; color: #2c3e50;">R$ {{ mens.valor|floatformat:2 }}</td>
+                    <td style="padding: 1rem; color: #666;">{{ mens.data_vencimento|date:"d/m/Y" }}</td>
+                    <td style="padding: 1rem;">
+                        {% if mens.status == 'pago' %}
+                            <span style="background: #d4edda; color: #155724; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">Paga</span>
+                        {% elif mens.status == 'pendente' %}
+                            <span style="background: #fff3cd; color: #856404; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">Pendente</span>
+                        {% else %}
+                            <span style="background: #f8d7da; color: #721c24; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">Vencida</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p style="text-align: center; color: #999; padding: 2rem;">Nenhuma mensalidade cadastrada.</p>
+    {% endif %}
+</div>
+{% endblock %}
