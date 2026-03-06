@@ -6,4 +6,5 @@ app_name = 'admin_dashboard'
 urlpatterns = [
     path('', views.dashboard, name='dashboard'),
     path('alunas/', views.alunas_list, name='alunas_list'),
+    path('alunas/criar/', views.aluna_criar, name='aluna_criar'),  # ADICIONA
 ]

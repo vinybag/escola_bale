@@ -1,0 +1,112 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Nova Aluna{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Nova Aluna</h2>
+    <p>Cadastrar nova aluna no sistema</p>
+</div>
+
+<div style="background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); max-width: 800px;">
+    <form method="post">
+        {% csrf_token %}
+        
+        <div style="display: grid; gap: 1.5rem;">
+            
+            <!-- Nome -->
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                    Nome da Aluna <span style="color: red;">*</span>
+                </label>
+                <input type="text" 
+                       name="nome" 
+                       required
+                       placeholder="Ex: Maria Silva"
+                       style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+            </div>
+            
+            <!-- Data de Nascimento -->
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                    Data de Nascimento <span style="color: red;">*</span>
+                </label>
+                <input type="date" 
+                       name="data_nascimento" 
+                       required
+                       style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+            </div>
+            
+            <!-- Responsável -->
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                    Responsavel <span style="color: red;">*</span>
+                </label>
+                <select name="responsavel" 
+                        required
+                        style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                    <option value="">Selecione...</option>
+                    {% for resp in responsaveis %}
+                        <option value="{{ resp.id }}">
+                            {{ resp.get_full_name|default:resp.username }} - {{ resp.email }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <!-- Turma -->
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                    Turma Atual
+                </label>
+                <select name="turma_atual" 
+                        style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                    <option value="">Sem turma</option>
+                    <option value="Baby Class">Baby Class</option>
+                    <option value="Little Star">Little Star</option>
+                    <option value="Star I">Star I</option>
+                    <option value="Star II">Star II</option>
+                    <option value="Star III">Star III</option>
+                    <option value="Jovem">Jovem</option>
+                    <option value="Contemporaneo">Contemporaneo</option>
+                    <option value="Adulto">Adulto</option>
+                </select>
+            </div>
+            
+            <!-- Ativa -->
+            <div>
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                    <input type="checkbox" 
+                           name="ativa" 
+                           checked
+                           style="width: 20px; height: 20px; cursor: pointer;">
+                    <span style="font-weight: 500; color: #333;">Aluna ativa</span>
+                </label>
+            </div>
+            
+            <!-- Observações -->
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                    Observacoes
+                </label>
+                <textarea name="observacoes" 
+                          rows="4"
+                          placeholder="Informacoes adicionais sobre a aluna..."
+                          style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem; font-family: inherit; resize: vertical;"></textarea>
+            </div>
+            
+            <!-- Botões -->
+            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                <button type="submit" class="btn btn-primary">
+                    Criar Aluna
+                </button>
+                <a href="{% url 'admin_dashboard:alunas_list' %}" 
+                   style="padding: 0.75rem 1.5rem; background: #f5f5f5; color: #333; border-radius: 5px; text-decoration: none; font-weight: 500;">
+                    Cancelar
+                </a>
+            </div>
+            
+        </div>
+    </form>
+</div>
+{% endblock %}

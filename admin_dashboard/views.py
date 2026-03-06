@@ -122,3 +122,61 @@ def alunas_list(request):
     }
     
     return render(request, 'admin_dashboard/alunas/list.html', context)
+
+@login_required
+def aluna_criar(request):
+    """Criar nova aluna"""
+    
+    if not request.user.is_staff:
+        return redirect('home')
+    
+    if request.method == 'POST':
+        try:
+            from usuarios.models import Aluna
+            from django.contrib.auth.models import User
+            from django.contrib import messages
+            
+            # Pega dados do form
+            nome = request.POST.get('nome')
+            data_nascimento = request.POST.get('data_nascimento')
+            turma_atual = request.POST.get('turma_atual')
+            responsavel_id = request.POST.get('responsavel')
+            ativa = request.POST.get('ativa') == 'on'
+            observacoes = request.POST.get('observacoes', '')
+            
+            # Validacao basica
+            if not all([nome, data_nascimento, responsavel_id]):
+                messages.error(request, 'Preencha todos os campos obrigatorios!')
+                return redirect('admin_dashboard:aluna_criar')
+            
+            # Cria aluna
+            responsavel = User.objects.get(id=responsavel_id)
+            aluna = Aluna.objects.create(
+                nome=nome,
+                data_nascimento=data_nascimento,
+                turma_atual=turma_atual,
+                responsavel=responsavel,
+                ativa=ativa,
+                observacoes=observacoes
+            )
+            
+            messages.success(request, f'Aluna {nome} criada com sucesso!')
+            return redirect('admin_dashboard:alunas_list')
+            
+        except Exception as e:
+            messages.error(request, f'Erro ao criar aluna: {e}')
+            return redirect('admin_dashboard:aluna_criar')
+    
+    # GET - mostra form
+    try:
+        from django.contrib.auth.models import User
+        responsaveis = User.objects.filter(is_staff=False).order_by('first_name')
+    except Exception as e:
+        print(f"Erro ao buscar responsaveis: {e}")
+        responsaveis = []
+    
+    context = {
+        'responsaveis': responsaveis,
+    }
+    
+    return render(request, 'admin_dashboard/alunas/criar.html', context)

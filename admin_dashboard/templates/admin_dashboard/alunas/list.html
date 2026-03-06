@@ -8,7 +8,7 @@
         <h2>Alunas</h2>
         <p>{{ total_alunas }} aluna{{ total_alunas|pluralize }}</p>
     </div>
-    <a href="#" class="btn btn-primary">+ Nova Aluna</a>
+    <a href="{% url 'admin_dashboard:aluna_criar' %}" class="btn btn-primary">+ Nova Aluna</a>
 </div>
 
 <!-- Filtros -->
