@@ -357,15 +357,18 @@ def mensalidade_criar(request):
                 messages.error(request, 'Preencha todos os campos obrigatorios!')
                 return redirect('admin_dashboard:mensalidade_criar')
             
-            # Converte mes_referencia de "2026-03" para data "2026-03-01"
+            # Converte mes_referencia de "2026-03" para date "2026-03-01"
             mes_ref_date = datetime.strptime(mes_referencia + '-01', '%Y-%m-%d').date()
+            
+            # Converte data_vencimento de string para date
+            data_venc_date = datetime.strptime(data_vencimento, '%Y-%m-%d').date()
             
             # Cria mensalidade
             aluna = Aluna.objects.get(id=aluna_id)
             mensalidade = Mensalidade.objects.create(
                 aluna=aluna,
-                mes_referencia=mes_ref_date,  # ← MUDOU AQUI
-                data_vencimento=data_vencimento,
+                mes_referencia=mes_ref_date,
+                data_vencimento=data_venc_date,  # ← MUDOU AQUI TAMBÉM
                 valor=Decimal(valor),
                 status=status,
             )
@@ -376,7 +379,9 @@ def mensalidade_criar(request):
         except Exception as e:
             from django.contrib import messages
             messages.error(request, f'Erro ao criar mensalidade: {e}')
-            print(f"Erro detalhado: {e}")  # Para debug
+            print(f"Erro detalhado: {e}")
+            import traceback
+            traceback.print_exc()  # Mostra traceback completo no console
             return redirect('admin_dashboard:mensalidade_criar')
     
     # GET - mostra form
