@@ -1,0 +1,117 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Mensalidades{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
+    <div>
+        <h2>Mensalidades</h2>
+        <p>{{ total_mensalidades }} mensalidade{{ total_mensalidades|pluralize }}</p>
+    </div>
+    <a href="{% url 'admin_dashboard:mensalidade_criar' %}" class="btn btn-primary">+ Nova Mensalidade</a>
+</div>
+
+<!-- Filtros -->
+<div style="background: white; padding: 1.5rem; border-radius: 10px; margin-bottom: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+    <form method="get" style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 1rem; align-items: end;">
+        
+        <!-- Busca -->
+        <div>
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Buscar</label>
+            <input type="text" 
+                   name="busca" 
+                   value="{{ busca }}"
+                   placeholder="Nome da aluna ou responsavel..."
+                   style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+        </div>
+        
+        <!-- Filtro Status -->
+        <div>
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Status</label>
+            <select name="status" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                <option value="">Todos</option>
+                <option value="pendente" {% if status_filtro == 'pendente' %}selected{% endif %}>Pendente</option>
+                <option value="pago" {% if status_filtro == 'pago' %}selected{% endif %}>Pago</option>
+                <option value="vencido" {% if status_filtro == 'vencido' %}selected{% endif %}>Vencido</option>
+            </select>
+        </div>
+        
+        <!-- Filtro Mês -->
+        <div>
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Mes</label>
+            <select name="mes" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                <option value="">Todos</option>
+                <option value="1" {% if mes_filtro == '1' %}selected{% endif %}>Janeiro</option>
+                <option value="2" {% if mes_filtro == '2' %}selected{% endif %}>Fevereiro</option>
+                <option value="3" {% if mes_filtro == '3' %}selected{% endif %}>Marco</option>
+                <option value="4" {% if mes_filtro == '4' %}selected{% endif %}>Abril</option>
+                <option value="5" {% if mes_filtro == '5' %}selected{% endif %}>Maio</option>
+                <option value="6" {% if mes_filtro == '6' %}selected{% endif %}>Junho</option>
+                <option value="7" {% if mes_filtro == '7' %}selected{% endif %}>Julho</option>
+                <option value="8" {% if mes_filtro == '8' %}selected{% endif %}>Agosto</option>
+                <option value="9" {% if mes_filtro == '9' %}selected{% endif %}>Setembro</option>
+                <option value="10" {% if mes_filtro == '10' %}selected{% endif %}>Outubro</option>
+                <option value="11" {% if mes_filtro == '11' %}selected{% endif %}>Novembro</option>
+                <option value="12" {% if mes_filtro == '12' %}selected{% endif %}>Dezembro</option>
+            </select>
+        </div>
+        
+        <div style="display: flex; gap: 0.5rem;">
+            <button type="submit" class="btn btn-primary">Filtrar</button>
+            <a href="{% url 'admin_dashboard:mensalidades_list' %}" style="padding: 0.75rem 1.5rem; background: #f5f5f5; color: #333; border-radius: 5px; text-decoration: none;">Limpar</a>
+        </div>
+    </form>
+</div>
+
+<!-- Tabela -->
+<div style="background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead style="background: #f8f9fa;">
+            <tr>
+                <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Aluna</th>
+                <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Mes Referencia</th>
+                <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Vencimento</th>
+                <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Valor</th>
+                <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Status</th>
+                <th style="padding: 1rem; text-align: right; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Acoes</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for mens in mensalidades %}
+            <tr style="border-top: 1px solid #eee;">
+                <td style="padding: 1rem;">
+                    <strong style="color: #2c3e50;">{{ mens.aluna.nome }}</strong>
+                </td>
+                <td style="padding: 1rem; color: #666;">
+                    {{ mens.mes_referencia|date:"F/Y" }}
+                </td>
+                <td style="padding: 1rem; color: #666;">
+                    {{ mens.data_vencimento|date:"d/m/Y" }}
+                </td>
+                <td style="padding: 1rem; color: #2c3e50;">
+                    <strong>R$ {{ mens.valor|floatformat:2 }}</strong>
+                </td>
+                <td style="padding: 1rem;">
+                    {% if mens.status == 'pago' %}
+                        <span style="background: #d4edda; color: #155724; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">Paga</span>
+                    {% elif mens.status == 'pendente' %}
+                        <span style="background: #fff3cd; color: #856404; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">Pendente</span>
+                    {% else %}
+                        <span style="background: #f8d7da; color: #721c24; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">Vencida</span>
+                    {% endif %}
+                </td>
+                <td style="padding: 1rem; text-align: right;">
+                    <a href="{% url 'admin_dashboard:aluna_detalhes' mens.aluna.pk %}" style="color: #b07a84; text-decoration: none;">Ver Aluna</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" style="padding: 3rem; text-align: center; color: #999;">
+                    Nenhuma mensalidade encontrada.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

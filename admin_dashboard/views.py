@@ -276,3 +276,117 @@ def aluna_editar(request, pk):
     }
     
     return render(request, 'admin_dashboard/alunas/editar.html', context)
+
+@login_required
+def mensalidades_list(request):
+    """Lista de mensalidades com filtros"""
+    
+    if not request.user.is_staff:
+        return redirect('home')
+    
+    try:
+        from pagamentos.models import Mensalidade
+        from django.db.models import Q
+        
+        # Query base
+        mensalidades = Mensalidade.objects.select_related('aluna', 'aluna__responsavel').all()
+        
+        # Busca
+        busca = request.GET.get('busca', '')
+        if busca:
+            mensalidades = mensalidades.filter(
+                Q(aluna__nome__icontains=busca) |
+                Q(aluna__responsavel__first_name__icontains=busca) |
+                Q(aluna__responsavel__last_name__icontains=busca)
+            )
+        
+        # Filtro por status
+        status = request.GET.get('status', '')
+        if status:
+            mensalidades = mensalidades.filter(status=status)
+        
+        # Filtro por mes
+        mes = request.GET.get('mes', '')
+        if mes:
+            mensalidades = mensalidades.filter(mes_referencia__month=mes)
+        
+        # Ordenacao
+        mensalidades = mensalidades.order_by('-mes_referencia', 'aluna__nome')
+        
+    except Exception as e:
+        print(f"Erro ao buscar mensalidades: {e}")
+        mensalidades = []
+        busca = ''
+        status = ''
+        mes = ''
+    
+    context = {
+        'mensalidades': mensalidades,
+        'busca': busca,
+        'status_filtro': status,
+        'mes_filtro': mes,
+        'total_mensalidades': mensalidades.count() if mensalidades else 0,
+    }
+    
+    return render(request, 'admin_dashboard/mensalidades/list.html', context)
+
+
+@login_required
+def mensalidade_criar(request):
+    """Criar mensalidade manual"""
+    
+    if not request.user.is_staff:
+        return redirect('home')
+    
+    if request.method == 'POST':
+        try:
+            from pagamentos.models import Mensalidade
+            from usuarios.models import Aluna
+            from django.contrib import messages
+            from datetime import datetime
+            
+            # Pega dados do form
+            aluna_id = request.POST.get('aluna')
+            mes_referencia = request.POST.get('mes_referencia')
+            data_vencimento = request.POST.get('data_vencimento')
+            valor = request.POST.get('valor')
+            status = request.POST.get('status', 'pendente')
+            observacoes = request.POST.get('observacoes', '')
+            
+            # Validacao
+            if not all([aluna_id, mes_referencia, data_vencimento, valor]):
+                messages.error(request, 'Preencha todos os campos obrigatorios!')
+                return redirect('admin_dashboard:mensalidade_criar')
+            
+            # Cria mensalidade
+            aluna = Aluna.objects.get(id=aluna_id)
+            mensalidade = Mensalidade.objects.create(
+                aluna=aluna,
+                mes_referencia=mes_referencia,
+                data_vencimento=data_vencimento,
+                valor=Decimal(valor),
+                status=status,
+                observacoes=observacoes
+            )
+            
+            messages.success(request, f'Mensalidade criada com sucesso!')
+            return redirect('admin_dashboard:mensalidades_list')
+            
+        except Exception as e:
+            from django.contrib import messages
+            messages.error(request, f'Erro ao criar mensalidade: {e}')
+            return redirect('admin_dashboard:mensalidade_criar')
+    
+    # GET - mostra form
+    try:
+        from usuarios.models import Aluna
+        alunas = Aluna.objects.filter(ativa=True).order_by('nome')
+    except Exception as e:
+        print(f"Erro ao buscar alunas: {e}")
+        alunas = []
+    
+    context = {
+        'alunas': alunas,
+    }
+    
+    return render(request, 'admin_dashboard/mensalidades/criar.html', context)

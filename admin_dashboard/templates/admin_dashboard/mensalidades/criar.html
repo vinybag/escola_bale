@@ -1,0 +1,106 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Nova Mensalidade{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Nova Mensalidade</h2>
+    <p>Criar mensalidade manual</p>
+</div>
+
+<div style="background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); max-width: 800px;">
+    <form method="post">
+        {% csrf_token %}
+        
+        <div style="display: grid; gap: 1.5rem;">
+            
+            <!-- Aluna -->
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                    Aluna <span style="color: red;">*</span>
+                </label>
+                <select name="aluna" 
+                        required
+                        style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                    <option value="">Selecione...</option>
+                    {% for aluna in alunas %}
+                        <option value="{{ aluna.id }}">{{ aluna.nome }} - {{ aluna.turma_atual|default:"Sem turma" }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <!-- Mês Referência -->
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                    Mes de Referencia <span style="color: red;">*</span>
+                </label>
+                <input type="month" 
+                       name="mes_referencia" 
+                       required
+                       style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                <small style="color: #666;">Ex: 2026-03 para Marco/2026</small>
+            </div>
+            
+            <!-- Data Vencimento -->
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                    Data de Vencimento <span style="color: red;">*</span>
+                </label>
+                <input type="date" 
+                       name="data_vencimento" 
+                       required
+                       style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+            </div>
+            
+            <!-- Valor -->
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                    Valor (R$) <span style="color: red;">*</span>
+                </label>
+                <input type="number" 
+                       name="valor" 
+                       step="0.01"
+                       min="0"
+                       placeholder="150.00"
+                       required
+                       style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+            </div>
+            
+            <!-- Status -->
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                    Status
+                </label>
+                <select name="status" 
+                        style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                    <option value="pendente">Pendente</option>
+                    <option value="pago">Pago</option>
+                </select>
+            </div>
+            
+            <!-- Observações -->
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                    Observacoes
+                </label>
+                <textarea name="observacoes" 
+                          rows="3"
+                          placeholder="Informacoes adicionais..."
+                          style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem; font-family: inherit; resize: vertical;"></textarea>
+            </div>
+            
+            <!-- Botões -->
+            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                <button type="submit" class="btn btn-primary">
+                    Criar Mensalidade
+                </button>
+                <a href="{% url 'admin_dashboard:mensalidades_list' %}" 
+                   style="padding: 0.75rem 1.5rem; background: #f5f5f5; color: #333; border-radius: 5px; text-decoration: none; font-weight: 500;">
+                    Cancelar
+                </a>
+            </div>
+            
+        </div>
+    </form>
+</div>
+{% endblock %}
