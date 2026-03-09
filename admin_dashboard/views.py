@@ -357,18 +357,21 @@ def mensalidade_criar(request):
                 messages.error(request, 'Preencha todos os campos obrigatorios!')
                 return redirect('admin_dashboard:mensalidade_criar')
             
+            # Busca aluna
+            aluna = Aluna.objects.get(id=aluna_id)
+            
             # Converte mes_referencia de "2026-03" para date "2026-03-01"
             mes_ref_date = datetime.strptime(mes_referencia + '-01', '%Y-%m-%d').date()
             
             # Converte data_vencimento de string para date
             data_venc_date = datetime.strptime(data_vencimento, '%Y-%m-%d').date()
             
-            # Cria mensalidade
-            aluna = Aluna.objects.get(id=aluna_id)
+            # Cria mensalidade COM RESPONSAVEL
             mensalidade = Mensalidade.objects.create(
                 aluna=aluna,
+                responsavel=aluna.responsavel,  # ← ADICIONA ESSA LINHA!
                 mes_referencia=mes_ref_date,
-                data_vencimento=data_venc_date,  # ← MUDOU AQUI TAMBÉM
+                data_vencimento=data_venc_date,
                 valor=Decimal(valor),
                 status=status,
             )
@@ -381,7 +384,7 @@ def mensalidade_criar(request):
             messages.error(request, f'Erro ao criar mensalidade: {e}')
             print(f"Erro detalhado: {e}")
             import traceback
-            traceback.print_exc()  # Mostra traceback completo no console
+            traceback.print_exc()
             return redirect('admin_dashboard:mensalidade_criar')
     
     # GET - mostra form
