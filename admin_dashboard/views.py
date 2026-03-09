@@ -351,7 +351,7 @@ def mensalidade_criar(request):
             data_vencimento = request.POST.get('data_vencimento')
             valor = request.POST.get('valor')
             status = request.POST.get('status', 'pendente')
-            observacoes = request.POST.get('observacoes', '')
+            # observacoes = request.POST.get('observacoes', '')
             
             # Validacao
             if not all([aluna_id, mes_referencia, data_vencimento, valor]):
@@ -365,8 +365,7 @@ def mensalidade_criar(request):
                 mes_referencia=mes_referencia,
                 data_vencimento=data_vencimento,
                 valor=Decimal(valor),
-                status=status,
-                observacoes=observacoes
+                status=status,  
             )
             
             messages.success(request, f'Mensalidade criada com sucesso!')
