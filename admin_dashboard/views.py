@@ -6,7 +6,7 @@ from decimal import Decimal
 
 @login_required
 def dashboard(request):
-    """Dashboard com dados reais do banco"""
+    """Dashboard com dados reais do banco e graficos"""
     
     # Apenas staff pode acessar
     if not request.user.is_staff:
@@ -19,11 +19,20 @@ def dashboard(request):
     mensalidades_pagas = 0
     mes_atual = datetime.now().strftime('%B %Y')
     
+    # Dados para gráficos
+    faturamento_meses = []
+    faturamento_valores = []
+    turmas_labels = []
+    turmas_valores = []
+    status_labels = ['Pagas', 'Pendentes', 'Vencidas']
+    status_valores = [0, 0, 0]
+    
     try:
         # Imports DENTRO do try (evita quebrar o Django se der erro)
         from usuarios.models import Aluna
         from pagamentos.models import Mensalidade
-        from django.db.models import Sum
+        from django.db.models import Sum, Count
+        from datetime import timedelta
         
         # Estatisticas
         hoje = datetime.now().date()
@@ -48,10 +57,39 @@ def dashboard(request):
         mensalidades_pendentes = mensalidades_mes.filter(status='pendente').count()
         mensalidades_pagas = mensalidades_mes.filter(status='pago').count()
         
+        # GRAFICO 1 - Faturamento ultimos 6 meses
+        for i in range(5, -1, -1):
+            mes_calc = hoje - timedelta(days=30 * i)
+            mes_nome = mes_calc.strftime('%b/%y')
+            
+            valor = Mensalidade.objects.filter(
+                mes_referencia__month=mes_calc.month,
+                mes_referencia__year=mes_calc.year,
+                status='pago'
+            ).aggregate(total=Sum('valor'))['total'] or 0
+            
+            faturamento_meses.append(mes_nome)
+            faturamento_valores.append(float(valor))
+        
+        # GRAFICO 2 - Alunas por turma
+        turmas = Aluna.objects.filter(ativa=True).values('turma_atual').annotate(
+            total=Count('id')
+        ).order_by('-total')
+        
+        for turma in turmas:
+            turmas_labels.append(turma['turma_atual'] or 'Sem turma')
+            turmas_valores.append(turma['total'])
+        
+        # GRAFICO 3 - Status mensalidades mes atual
+        status_valores[0] = mensalidades_mes.filter(status='pago').count()
+        status_valores[1] = mensalidades_mes.filter(status='pendente').count()
+        status_valores[2] = mensalidades_mes.filter(status='vencido').count()
+        
     except Exception as e:
         # Se der erro, mostra no console mas nao quebra
         print(f"Erro no dashboard: {e}")
-        # Usa os valores default ja definidos acima
+        import traceback
+        traceback.print_exc()
     
     context = {
         'total_alunas': total_alunas,
@@ -59,6 +97,14 @@ def dashboard(request):
         'mensalidades_pendentes': mensalidades_pendentes,
         'mensalidades_pagas': mensalidades_pagas,
         'mes_atual': mes_atual,
+        
+        # Dados para graficos
+        'faturamento_meses': faturamento_meses,
+        'faturamento_valores': faturamento_valores,
+        'turmas_labels': turmas_labels,
+        'turmas_valores': turmas_valores,
+        'status_labels': status_labels,
+        'status_valores': status_valores,
     }
     
     return render(request, 'admin_dashboard/dashboard.html', context)
