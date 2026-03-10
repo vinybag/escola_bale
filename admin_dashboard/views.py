@@ -597,3 +597,102 @@ def aviso_excluir(request, pk):
             messages.error(request, f'Erro ao excluir aviso: {e}')
     
     return redirect('admin_dashboard:avisos_list')
+
+@login_required
+def aluna_excluir(request, pk):
+    """Excluir aluna"""
+    
+    if not request.user.is_staff:
+        return redirect('home')
+    
+    if request.method == 'POST':
+        try:
+            from usuarios.models import Aluna
+            from django.contrib import messages
+            
+            aluna = Aluna.objects.get(pk=pk)
+            nome = aluna.nome
+            aluna.delete()
+            
+            messages.success(request, f'Aluna "{nome}" excluida com sucesso!')
+            
+        except Exception as e:
+            from django.contrib import messages
+            messages.error(request, f'Erro ao excluir aluna: {e}')
+    
+    return redirect('admin_dashboard:alunas_list')
+
+
+@login_required
+def mensalidade_editar(request, pk):
+    """Editar mensalidade (principalmente status)"""
+    
+    if not request.user.is_staff:
+        return redirect('home')
+    
+    try:
+        from pagamentos.models import Mensalidade
+        mensalidade = Mensalidade.objects.get(pk=pk)
+    except Exception as e:
+        from django.contrib import messages
+        messages.error(request, f'Mensalidade nao encontrada: {e}')
+        return redirect('admin_dashboard:mensalidades_list')
+    
+    if request.method == 'POST':
+        try:
+            from django.contrib import messages
+            from datetime import datetime
+            
+            # Atualiza dados
+            mes_referencia = request.POST.get('mes_referencia')
+            data_vencimento = request.POST.get('data_vencimento')
+            valor = request.POST.get('valor')
+            status = request.POST.get('status')
+            
+            # Converte datas
+            mensalidade.mes_referencia = datetime.strptime(mes_referencia + '-01', '%Y-%m-%d').date()
+            mensalidade.data_vencimento = datetime.strptime(data_vencimento, '%Y-%m-%d').date()
+            mensalidade.valor = Decimal(valor)
+            mensalidade.status = status
+            
+            mensalidade.save()
+            
+            messages.success(request, 'Mensalidade atualizada com sucesso!')
+            return redirect('admin_dashboard:mensalidades_list')
+            
+        except Exception as e:
+            from django.contrib import messages
+            messages.error(request, f'Erro ao atualizar mensalidade: {e}')
+            return redirect('admin_dashboard:mensalidade_editar', pk=pk)
+    
+    # GET - mostra form preenchido
+    context = {
+        'mensalidade': mensalidade,
+    }
+    
+    return render(request, 'admin_dashboard/mensalidades/editar.html', context)
+
+
+@login_required
+def mensalidade_excluir(request, pk):
+    """Excluir mensalidade"""
+    
+    if not request.user.is_staff:
+        return redirect('home')
+    
+    if request.method == 'POST':
+        try:
+            from pagamentos.models import Mensalidade
+            from django.contrib import messages
+            
+            mensalidade = Mensalidade.objects.get(pk=pk)
+            aluna_nome = mensalidade.aluna.nome
+            mensalidade.delete()
+            
+            messages.success(request, f'Mensalidade de {aluna_nome} excluida com sucesso!')
+            
+        except Exception as e:
+            from django.contrib import messages
+            messages.error(request, f'Erro ao excluir mensalidade: {e}')
+    
+    return redirect('admin_dashboard:mensalidades_list')

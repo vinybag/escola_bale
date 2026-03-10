@@ -11,7 +11,12 @@
     <div style="display: flex; gap: 1rem;">
         <a href="{% url 'admin_dashboard:aluna_editar' aluna.pk %}" class="btn btn-primary">Editar</a>
         <a href="{% url 'admin_dashboard:alunas_list' %}" style="padding: 0.75rem 1.5rem; background: #f5f5f5; color: #333; border-radius: 5px; text-decoration: none; font-weight: 500;">Voltar</a>
-    </div>
+        <form method="post" action="{% url 'admin_dashboard:aluna_excluir' aluna.pk %}" style="display: inline;" onsubmit="return confirm('ATENÇÃO: Excluir a aluna também excluirá TODAS as mensalidades dela! Tem certeza?');">
+        {% csrf_token %}
+        <button type="submit" style="padding: 0.75rem 1.5rem; background: #dc3545; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: 500;">
+            Excluir Aluna
+        </button>
+    </form>
 </div>
 
 <!-- Informações básicas -->

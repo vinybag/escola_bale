@@ -1,0 +1,96 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Editar Mensalidade{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Editar Mensalidade</h2>
+    <p>{{ mensalidade.aluna.nome }} - {{ mensalidade.mes_referencia|date:"F/Y" }}</p>
+</div>
+
+<div style="background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); max-width: 800px;">
+    <form method="post">
+        {% csrf_token %}
+        
+        <div style="display: grid; gap: 1.5rem;">
+            
+            <!-- Aluna (readonly) -->
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                    Aluna
+                </label>
+                <input type="text" 
+                       value="{{ mensalidade.aluna.nome }}"
+                       disabled
+                       style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem; background: #f5f5f5;">
+            </div>
+            
+            <!-- Mês Referência -->
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                    Mes de Referencia <span style="color: red;">*</span>
+                </label>
+                <input type="month" 
+                       name="mes_referencia" 
+                       value="{{ mensalidade.mes_referencia|date:'Y-m' }}"
+                       required
+                       style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+            </div>
+            
+            <!-- Data Vencimento -->
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                    Data de Vencimento <span style="color: red;">*</span>
+                </label>
+                <input type="date" 
+                       name="data_vencimento" 
+                       value="{{ mensalidade.data_vencimento|date:'Y-m-d' }}"
+                       required
+                       style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+            </div>
+            
+            <!-- Valor -->
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                    Valor (R$) <span style="color: red;">*</span>
+                </label>
+                <input type="number" 
+                       name="valor" 
+                       step="0.01"
+                       min="0"
+                       value="{{ mensalidade.valor }}"
+                       required
+                       style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+            </div>
+            
+            <!-- Status (PRINCIPAL!) -->
+            <div style="background: #fff3cd; padding: 1rem; border-radius: 5px; border-left: 4px solid #ffc107;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #333;">
+                    Status do Pagamento <span style="color: red;">*</span>
+                </label>
+                <select name="status" 
+                        style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem; font-weight: 500;">
+                    <option value="pendente" {% if mensalidade.status == 'pendente' %}selected{% endif %}>Pendente</option>
+                    <option value="pago" {% if mensalidade.status == 'pago' %}selected{% endif %}>Pago (Dinheiro/Transferencia)</option>
+                    <option value="vencido" {% if mensalidade.status == 'vencido' %}selected{% endif %}>Vencido</option>
+                </select>
+                <small style="display: block; margin-top: 0.5rem; color: #856404;">
+                    💡 Use "Pago" para marcar pagamentos em dinheiro ou transferencia
+                </small>
+            </div>
+            
+            <!-- Botões -->
+            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                <button type="submit" class="btn btn-primary">
+                    Salvar Alteracoes
+                </button>
+                <a href="{% url 'admin_dashboard:mensalidades_list' %}" 
+                   style="padding: 0.75rem 1.5rem; background: #f5f5f5; color: #333; border-radius: 5px; text-decoration: none; font-weight: 500;">
+                    Cancelar
+                </a>
+            </div>
+            
+        </div>
+    </form>
+</div>
+{% endblock %}

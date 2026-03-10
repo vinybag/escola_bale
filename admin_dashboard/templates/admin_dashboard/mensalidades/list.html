@@ -101,8 +101,13 @@
                     {% endif %}
                 </td>
                 <td style="padding: 1rem; text-align: right;">
-                    <a href="{% url 'admin_dashboard:aluna_detalhes' mens.aluna.pk %}" style="color: #b07a84; text-decoration: none;">Ver Aluna</a>
-                </td>
+                    <a href="{% url 'admin_dashboard:mensalidade_editar' mens.pk %}" style="color: #2c3e50; text-decoration: none; margin-right: 1rem;">Editar</a>
+                    <a href="{% url 'admin_dashboard:aluna_detalhes' mens.aluna.pk %}" style="color: #b07a84; text-decoration: none; margin-right: 1rem;">Ver Aluna</a>
+                    <form method="post" action="{% url 'admin_dashboard:mensalidade_excluir' mens.pk %}" style="display: inline;" onsubmit="return confirm('Tem certeza que deseja excluir esta mensalidade?');">
+                    {% csrf_token %}
+                <button type="submit" style="background: none; border: none; color: #dc3545; cursor: pointer; text-decoration: underline;">Excluir</button>
+            </form>
+        </td>
             </tr>
             {% empty %}
             <tr>
