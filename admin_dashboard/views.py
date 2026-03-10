@@ -457,16 +457,22 @@ def avisos_list(request):
     try:
         from calendario_avisos.models import Aviso
         
-        # Query base - ordena por data (mais recentes primeiro)
-        avisos = Aviso.objects.all().order_by('-data_evento', '-criado_em')
+        # Query base - ordena por criado_em (mais recentes primeiro)
+        avisos = Aviso.objects.all().order_by('-criado_em')
+        
+        # Debug - mostra quantos avisos existem
+        print(f"Total de avisos no banco: {avisos.count()}")
         
         # Filtro por tipo
         tipo = request.GET.get('tipo', '')
         if tipo:
             avisos = avisos.filter(tipo=tipo)
+            print(f"Avisos apos filtro por tipo '{tipo}': {avisos.count()}")
         
     except Exception as e:
         print(f"Erro ao buscar avisos: {e}")
+        import traceback
+        traceback.print_exc()
         avisos = []
         tipo = ''
     
