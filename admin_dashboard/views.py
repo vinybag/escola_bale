@@ -457,8 +457,8 @@ def avisos_list(request):
     try:
         from calendario_avisos.models import Aviso
         
-        # Query base - ordena por criado_em (mais recentes primeiro)
-        avisos = Aviso.objects.all().order_by('-criado_em')
+        # Query base - ordena por data_publicacao (campo correto!)
+        avisos = Aviso.objects.all().order_by('-data_publicacao', '-data_evento')
         
         # Debug - mostra quantos avisos existem
         print(f"Total de avisos no banco: {avisos.count()}")
