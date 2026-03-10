@@ -215,7 +215,7 @@
                 <a href="{% url 'admin_dashboard:mensalidades_list' %}" class="{% if 'mensalidades' in request.path %}active{% endif %}">
                     Mensalidades
                 </a>
-                <a href="#" class="{% if 'avisos' in request.path %}active{% endif %}">
+                <a href="{% url 'admin_dashboard:avisos_list' %}" class="{% if 'avisos' in request.path %}active{% endif %}">
                     Avisos
                 </a>
                 <a href="#" class="{% if 'relatorios' in request.path %}active{% endif %}">

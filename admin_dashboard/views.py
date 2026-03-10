@@ -446,3 +446,148 @@ def mensalidade_criar(request):
     }
     
     return render(request, 'admin_dashboard/mensalidades/criar.html', context)
+
+@login_required
+def avisos_list(request):
+    """Lista de avisos"""
+    
+    if not request.user.is_staff:
+        return redirect('home')
+    
+    try:
+        from calendario_avisos.models import Aviso
+        
+        # Query base - ordena por data (mais recentes primeiro)
+        avisos = Aviso.objects.all().order_by('-data_evento', '-criado_em')
+        
+        # Filtro por tipo
+        tipo = request.GET.get('tipo', '')
+        if tipo:
+            avisos = avisos.filter(tipo=tipo)
+        
+    except Exception as e:
+        print(f"Erro ao buscar avisos: {e}")
+        avisos = []
+        tipo = ''
+    
+    context = {
+        'avisos': avisos,
+        'tipo_filtro': tipo,
+        'total_avisos': avisos.count() if avisos else 0,
+    }
+    
+    return render(request, 'admin_dashboard/avisos/list.html', context)
+
+
+@login_required
+def aviso_criar(request):
+    """Criar novo aviso"""
+    
+    if not request.user.is_staff:
+        return redirect('home')
+    
+    if request.method == 'POST':
+        try:
+            from calendario_avisos.models import Aviso
+            from django.contrib import messages
+            
+            # Pega dados do form
+            titulo = request.POST.get('titulo')
+            descricao = request.POST.get('descricao')
+            data_evento = request.POST.get('data_evento')
+            tipo = request.POST.get('tipo', 'geral')
+            
+            # Validacao
+            if not all([titulo, descricao, data_evento]):
+                messages.error(request, 'Preencha todos os campos obrigatorios!')
+                return redirect('admin_dashboard:aviso_criar')
+            
+            # Cria aviso
+            aviso = Aviso.objects.create(
+                titulo=titulo,
+                descricao=descricao,
+                data_evento=data_evento,
+                tipo=tipo
+            )
+            
+            messages.success(request, f'Aviso "{titulo}" criado com sucesso!')
+            return redirect('admin_dashboard:avisos_list')
+            
+        except Exception as e:
+            from django.contrib import messages
+            messages.error(request, f'Erro ao criar aviso: {e}')
+            print(f"Erro detalhado: {e}")
+            import traceback
+            traceback.print_exc()
+            return redirect('admin_dashboard:aviso_criar')
+    
+    # GET - mostra form
+    context = {}
+    return render(request, 'admin_dashboard/avisos/criar.html', context)
+
+
+@login_required
+def aviso_editar(request, pk):
+    """Editar aviso existente"""
+    
+    if not request.user.is_staff:
+        return redirect('home')
+    
+    try:
+        from calendario_avisos.models import Aviso
+        aviso = Aviso.objects.get(pk=pk)
+    except Exception as e:
+        from django.contrib import messages
+        messages.error(request, f'Aviso nao encontrado: {e}')
+        return redirect('admin_dashboard:avisos_list')
+    
+    if request.method == 'POST':
+        try:
+            from django.contrib import messages
+            
+            # Atualiza dados
+            aviso.titulo = request.POST.get('titulo')
+            aviso.descricao = request.POST.get('descricao')
+            aviso.data_evento = request.POST.get('data_evento')
+            aviso.tipo = request.POST.get('tipo', 'geral')
+            
+            aviso.save()
+            
+            messages.success(request, f'Aviso "{aviso.titulo}" atualizado com sucesso!')
+            return redirect('admin_dashboard:avisos_list')
+            
+        except Exception as e:
+            from django.contrib import messages
+            messages.error(request, f'Erro ao atualizar aviso: {e}')
+            return redirect('admin_dashboard:aviso_editar', pk=pk)
+    
+    # GET - mostra form preenchido
+    context = {
+        'aviso': aviso,
+    }
+    
+    return render(request, 'admin_dashboard/avisos/editar.html', context)
+
+
+@login_required
+def aviso_excluir(request, pk):
+    """Excluir aviso"""
+    
+    if not request.user.is_staff:
+        return redirect('home')
+    
+    if request.method == 'POST':
+        try:
+            from calendario_avisos.models import Aviso
+            from django.contrib import messages
+            
+            aviso = Aviso.objects.get(pk=pk)
+            titulo = aviso.titulo
+            aviso.delete()
+            
+            messages.success(request, f'Aviso "{titulo}" excluido com sucesso!')
+            
+        except Exception as e:
+            messages.error(request, f'Erro ao excluir aviso: {e}')
+    
+    return redirect('admin_dashboard:avisos_list')
