@@ -1,0 +1,180 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Novo Espetáculo{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Novo Espetáculo</h2>
+    <p>Criar espetaculo de fim de ano</p>
+</div>
+
+<div style="background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); max-width: 900px;">
+    <form method="post">
+        {% csrf_token %}
+        
+        <div style="display: grid; gap: 2rem;">
+            
+            <!-- Informações Básicas -->
+            <div style="border-left: 4px solid #b07a84; padding-left: 1rem;">
+                <h3 style="color: #2c3e50; margin-bottom: 1rem;">Informacoes Basicas</h3>
+                
+                <div style="display: grid; gap: 1rem;">
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                            Titulo <span style="color: red;">*</span>
+                        </label>
+                        <input type="text" name="titulo" required
+                               placeholder="Ex: O Quebra-Nozes"
+                               style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                    </div>
+                    
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                            Subtitulo
+                        </label>
+                        <input type="text" name="subtitulo"
+                               placeholder="Ex: Espetaculo de Fim de Ano 2026"
+                               style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                    </div>
+                    
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                            Descricao <span style="color: red;">*</span>
+                        </label>
+                        <textarea name="descricao" rows="6" required
+                                  placeholder="Descreva o espetaculo..."
+                                  style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem; font-family: inherit; resize: vertical;"></textarea>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Data e Local -->
+            <div style="border-left: 4px solid #2c3e50; padding-left: 1rem;">
+                <h3 style="color: #2c3e50; margin-bottom: 1rem;">Data e Local</h3>
+                
+                <div style="display: grid; gap: 1rem;">
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                            Data e Horario da Apresentacao <span style="color: red;">*</span>
+                        </label>
+                        <input type="datetime-local" name="data_apresentacao" required
+                               style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                    </div>
+                    
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                            Local <span style="color: red;">*</span>
+                        </label>
+                        <input type="text" name="local" required
+                               placeholder="Ex: Teatro Municipal de Ipero"
+                               style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                    </div>
+                    
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                            Endereco <span style="color: red;">*</span>
+                        </label>
+                        <textarea name="endereco" rows="3" required
+                                  placeholder="Rua, numero, bairro..."
+                                  style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem; font-family: inherit; resize: vertical;"></textarea>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Audição -->
+            <div style="border-left: 4px solid #b07a84; padding-left: 1rem;">
+                <h3 style="color: #2c3e50; margin-bottom: 1rem;">Audicao</h3>
+                
+                <div style="display: grid; gap: 1rem;">
+                    <div>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            <input type="checkbox" name="audicao_aberta"
+                                   style="width: 20px; height: 20px; cursor: pointer;">
+                            <span style="font-weight: 500; color: #333;">Audicao aberta</span>
+                        </label>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                                Data Inicio
+                            </label>
+                            <input type="date" name="audicao_data_inicio"
+                                   style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                                Data Fim
+                            </label>
+                            <input type="date" name="audicao_data_fim"
+                                   style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                            Instrucoes para Audicao
+                        </label>
+                        <textarea name="audicao_instrucoes" rows="4"
+                                  placeholder="Instrucoes para as alunas..."
+                                  style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem; font-family: inherit; resize: vertical;"></textarea>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Venda de Ingressos -->
+            <div style="border-left: 4px solid #28a745; padding-left: 1rem;">
+                <h3 style="color: #2c3e50; margin-bottom: 1rem;">Venda de Ingressos</h3>
+                
+                <div style="display: grid; gap: 1rem;">
+                    <div>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            <input type="checkbox" name="venda_aberta"
+                                   style="width: 20px; height: 20px; cursor: pointer;">
+                            <span style="font-weight: 500; color: #333;">Vendas abertas</span>
+                        </label>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                                Data Inicio das Vendas
+                            </label>
+                            <input type="date" name="venda_data_inicio"
+                                   style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                                Preco do Ingresso (R$)
+                            </label>
+                            <input type="number" name="preco_ingresso" step="0.01" min="0" value="30.00"
+                                   style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Ativo -->
+            <div>
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                    <input type="checkbox" name="ativo" checked
+                           style="width: 20px; height: 20px; cursor: pointer;">
+                    <span style="font-weight: 500; color: #333;">Espetaculo ativo (visivel no site)</span>
+                </label>
+            </div>
+            
+            <!-- Botões -->
+            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                <button type="submit" class="btn btn-primary">
+                    Criar Espetaculo
+                </button>
+                <a href="{% url 'admin_dashboard:espetaculos_list' %}" 
+                   style="padding: 0.75rem 1.5rem; background: #f5f5f5; color: #333; border-radius: 5px; text-decoration: none; font-weight: 500;">
+                    Cancelar
+                </a>
+            </div>
+            
+        </div>
+    </form>
+</div>
+{% endblock %}
