@@ -19,11 +19,13 @@
                     <li><a href="{% url 'dashboard' %}">Dashboard</a></li>
                     <li><a href="{% url 'mensalidades' %}">Mensalidades</a></li>
                     <li><a href="{% url 'calendario' %}">Avisos</a></li>
+                    <li><a href="{% url 'espetaculo:home' %}">Espetáculo</a></li>  <!-- ADICIONA -->
                     <li><a href="{% url 'perfil' %}">Perfil</a></li>
                     <li><a href="{% url 'logout' %}">Sair</a></li>
                 {% else %}
                     <li><a href="{% url 'home' %}">Início</a></li>
                     <li><a href="{% url 'agendar' %}">Aula Experimental</a></li>
+                    <li><a href="{% url 'espetaculo:home' %}">Espetáculo</a></li>  <!-- ADICIONA -->
                     <li><a href="{% url 'login' %}" class="btn-login">Área dos Pais</a></li>
                 {% endif %}
             </ul>

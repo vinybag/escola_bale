@@ -10,7 +10,8 @@ urlpatterns = [
     path('conta/', include('usuarios.urls')),
     path('agenda/', include('agenda.urls')),
     path('pagamentos/', include('pagamentos.urls')),
-    path('avisos/', include('calendario_avisos.urls')),  # NÃO ESQUECE!
+    path('avisos/', include('calendario_avisos.urls')),
+    path('espetaculo/', include('espetaculo.urls')),  # ← NOVO
 ]
 
 if settings.DEBUG:

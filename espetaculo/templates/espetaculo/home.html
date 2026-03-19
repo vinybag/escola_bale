@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block title %}Espetáculo - BAILAH{% endblock %}
+
+{% block content %}
+
+{% if espetaculo %}
+<div style="max-width: 1200px; margin: 2rem auto; padding: 0 1rem;">
+    
+    <!-- Hero -->
+    <div style="background: linear-gradient(135deg, #2c3e50, #b07a84); color: white; padding: 4rem 2rem; border-radius: 15px; text-align: center; margin-bottom: 3rem;">
+        <h1 style="font-size: 3rem; margin-bottom: 1rem;">{{ espetaculo.titulo }}</h1>
+        {% if espetaculo.subtitulo %}
+            <p style="font-size: 1.5rem; opacity: 0.9;">{{ espetaculo.subtitulo }}</p>
+        {% endif %}
+        <p style="font-size: 1.25rem; margin-top: 2rem;">
+            📅 {{ espetaculo.data_apresentacao|date:"d/m/Y" }} às {{ espetaculo.data_apresentacao|date:"H:i" }}
+        </p>
+        <p style="font-size: 1.25rem;">
+            📍 {{ espetaculo.local }}
+        </p>
+    </div>
+    
+    <!-- Menu de navegação -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 3rem;">
+        
+        <a href="#informacoes" style="background: white; padding: 2rem; border-radius: 10px; text-align: center; text-decoration: none; box-shadow: 0 2px 10px rgba(0,0,0,0.1); transition: transform 0.3s;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">ℹ️</div>
+            <h3 style="color: #2c3e50; margin-bottom: 0.5rem;">Informações Gerais</h3>
+            <p style="color: #666; font-size: 0.875rem;">Detalhes do espetáculo</p>
+        </a>
+        
+        {% if espetaculo.audicao_aberta %}
+        <a href="#" style="background: white; padding: 2rem; border-radius: 10px; text-align: center; text-decoration: none; box-shadow: 0 2px 10px rgba(0,0,0,0.1); transition: transform 0.3s;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">🎭</div>
+            <h3 style="color: #2c3e50; margin-bottom: 0.5rem;">Audição</h3>
+            <p style="color: #666; font-size: 0.875rem;">Inscreva-se aqui</p>
+        </a>
+        {% endif %}
+        
+        <a href="#" style="background: white; padding: 2rem; border-radius: 10px; text-align: center; text-decoration: none; box-shadow: 0 2px 10px rgba(0,0,0,0.1); transition: transform 0.3s;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">📖</div>
+            <h3 style="color: #2c3e50; margin-bottom: 0.5rem;">Sinopse</h3>
+            <p style="color: #666; font-size: 0.875rem;">História e personagens</p>
+        </a>
+        
+        {% if espetaculo.venda_aberta %}
+        <a href="#" style="background: white; padding: 2rem; border-radius: 10px; text-align: center; text-decoration: none; box-shadow: 0 2px 10px rgba(0,0,0,0.1); transition: transform 0.3s;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">🎫</div>
+            <h3 style="color: #2c3e50; margin-bottom: 0.5rem;">Ingressos</h3>
+            <p style="color: #666; font-size: 0.875rem;">Compre seu assento</p>
+        </a>
+        {% endif %}
+        
+    </div>
+    
+    <!-- Informações Gerais -->
+    <div id="informacoes" style="background: white; padding: 3rem 2rem; border-radius: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+        <h2 style="color: #2c3e50; margin-bottom: 2rem; font-size: 2rem;">Informações Gerais</h2>
+        
+        <div style="line-height: 1.8; color: #333; margin-bottom: 2rem;">
+            {{ espetaculo.descricao|linebreaks }}
+        </div>
+        
+        <div style="background: #f8f9fa; padding: 2rem; border-radius: 10px; border-left: 4px solid #b07a84;">
+            <h3 style="color: #2c3e50; margin-bottom: 1rem;">Local do Evento</h3>
+            <p style="font-size: 1.125rem; margin-bottom: 0.5rem;"><strong>{{ espetaculo.local }}</strong></p>
+            <p style="color: #666;">{{ espetaculo.endereco|linebreaks }}</p>
+        </div>
+    </div>
+    
+</div>
+
+{% else %}
+<div style="max-width: 800px; margin: 4rem auto; padding: 3rem; text-align: center; background: white; border-radius: 15px;">
+    <h2 style="color: #2c3e50; margin-bottom: 1rem;">Nenhum espetáculo disponível no momento</h2>
+    <p style="color: #666;">Em breve teremos novidades! Fique atento às nossas redes sociais.</p>
+</div>
+{% endif %}
+
+{% endblock %}

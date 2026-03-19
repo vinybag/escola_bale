@@ -25,7 +25,8 @@ INSTALLED_APPS = [
     'agenda',
     'pagamentos',
     'calendario_avisos',
-    'admin_dashboard',  # ADICIONA
+    'admin_dashboard',
+    'espetaculo',  
 ]
 
 MIDDLEWARE = [
