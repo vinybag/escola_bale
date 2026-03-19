@@ -24,4 +24,9 @@ urlpatterns = [
     path('avisos/criar/', views.aviso_criar, name='aviso_criar'),
     path('avisos/<int:pk>/editar/', views.aviso_editar, name='aviso_editar'),
     path('avisos/<int:pk>/excluir/', views.aviso_excluir, name='aviso_excluir'),
+
+    # Espetáculos
+    path('espetaculos/', views.espetaculos_list, name='espetaculos_list'),
+    path('espetaculos/criar/', views.espetaculo_criar, name='espetaculo_criar'),
+    path('espetaculos/<int:pk>/editar/', views.espetaculo_editar, name='espetaculo_editar'),
 ]

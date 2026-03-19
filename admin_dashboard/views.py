@@ -696,3 +696,163 @@ def mensalidade_excluir(request, pk):
             messages.error(request, f'Erro ao excluir mensalidade: {e}')
     
     return redirect('admin_dashboard:mensalidades_list')
+
+@login_required
+def espetaculos_list(request):
+    """Lista de espetaculos"""
+    
+    if not request.user.is_staff:
+        return redirect('home')
+    
+    try:
+        from espetaculo.models import Espetaculo
+        
+        espetaculos = Espetaculo.objects.all().order_by('-data_apresentacao')
+        
+    except Exception as e:
+        print(f"Erro ao buscar espetaculos: {e}")
+        espetaculos = []
+    
+    context = {
+        'espetaculos': espetaculos,
+        'total_espetaculos': espetaculos.count() if espetaculos else 0,
+    }
+    
+    return render(request, 'admin_dashboard/espetaculos/list.html', context)
+
+
+@login_required
+def espetaculo_criar(request):
+    """Criar novo espetaculo"""
+    
+    if not request.user.is_staff:
+        return redirect('home')
+    
+    if request.method == 'POST':
+        try:
+            from espetaculo.models import Espetaculo
+            from django.contrib import messages
+            from datetime import datetime
+            
+            # Pega dados do form
+            titulo = request.POST.get('titulo')
+            subtitulo = request.POST.get('subtitulo', '')
+            descricao = request.POST.get('descricao')
+            data_apresentacao = request.POST.get('data_apresentacao')
+            local = request.POST.get('local')
+            endereco = request.POST.get('endereco')
+            
+            audicao_aberta = request.POST.get('audicao_aberta') == 'on'
+            audicao_data_inicio = request.POST.get('audicao_data_inicio')
+            audicao_data_fim = request.POST.get('audicao_data_fim')
+            audicao_instrucoes = request.POST.get('audicao_instrucoes', '')
+            
+            venda_aberta = request.POST.get('venda_aberta') == 'on'
+            venda_data_inicio = request.POST.get('venda_data_inicio')
+            preco_ingresso = request.POST.get('preco_ingresso', '0')
+            
+            ativo = request.POST.get('ativo') == 'on'
+            
+            # Validacao
+            if not all([titulo, descricao, data_apresentacao, local, endereco]):
+                messages.error(request, 'Preencha todos os campos obrigatorios!')
+                return redirect('admin_dashboard:espetaculo_criar')
+            
+            # Converte data_apresentacao
+            data_apres = datetime.strptime(data_apresentacao, '%Y-%m-%dT%H:%M')
+            
+            # Cria espetaculo
+            espetaculo = Espetaculo.objects.create(
+                titulo=titulo,
+                subtitulo=subtitulo,
+                descricao=descricao,
+                data_apresentacao=data_apres,
+                local=local,
+                endereco=endereco,
+                audicao_aberta=audicao_aberta,
+                audicao_data_inicio=audicao_data_inicio if audicao_data_inicio else None,
+                audicao_data_fim=audicao_data_fim if audicao_data_fim else None,
+                audicao_instrucoes=audicao_instrucoes,
+                venda_aberta=venda_aberta,
+                venda_data_inicio=venda_data_inicio if venda_data_inicio else None,
+                preco_ingresso=preco_ingresso,
+                ativo=ativo
+            )
+            
+            messages.success(request, f'Espetaculo "{titulo}" criado com sucesso!')
+            return redirect('admin_dashboard:espetaculos_list')
+            
+        except Exception as e:
+            from django.contrib import messages
+            messages.error(request, f'Erro ao criar espetaculo: {e}')
+            print(f"Erro detalhado: {e}")
+            import traceback
+            traceback.print_exc()
+            return redirect('admin_dashboard:espetaculo_criar')
+    
+    # GET - mostra form
+    context = {}
+    return render(request, 'admin_dashboard/espetaculos/criar.html', context)
+
+
+@login_required
+def espetaculo_editar(request, pk):
+    """Editar espetaculo existente"""
+    
+    if not request.user.is_staff:
+        return redirect('home')
+    
+    try:
+        from espetaculo.models import Espetaculo
+        espetaculo = Espetaculo.objects.get(pk=pk)
+    except Exception as e:
+        from django.contrib import messages
+        messages.error(request, f'Espetaculo nao encontrado: {e}')
+        return redirect('admin_dashboard:espetaculos_list')
+    
+    if request.method == 'POST':
+        try:
+            from django.contrib import messages
+            from datetime import datetime
+            
+            # Atualiza dados
+            espetaculo.titulo = request.POST.get('titulo')
+            espetaculo.subtitulo = request.POST.get('subtitulo', '')
+            espetaculo.descricao = request.POST.get('descricao')
+            
+            data_apresentacao = request.POST.get('data_apresentacao')
+            espetaculo.data_apresentacao = datetime.strptime(data_apresentacao, '%Y-%m-%dT%H:%M')
+            
+            espetaculo.local = request.POST.get('local')
+            espetaculo.endereco = request.POST.get('endereco')
+            
+            espetaculo.audicao_aberta = request.POST.get('audicao_aberta') == 'on'
+            audicao_data_inicio = request.POST.get('audicao_data_inicio')
+            espetaculo.audicao_data_inicio = audicao_data_inicio if audicao_data_inicio else None
+            audicao_data_fim = request.POST.get('audicao_data_fim')
+            espetaculo.audicao_data_fim = audicao_data_fim if audicao_data_fim else None
+            espetaculo.audicao_instrucoes = request.POST.get('audicao_instrucoes', '')
+            
+            espetaculo.venda_aberta = request.POST.get('venda_aberta') == 'on'
+            venda_data_inicio = request.POST.get('venda_data_inicio')
+            espetaculo.venda_data_inicio = venda_data_inicio if venda_data_inicio else None
+            espetaculo.preco_ingresso = request.POST.get('preco_ingresso', '0')
+            
+            espetaculo.ativo = request.POST.get('ativo') == 'on'
+            
+            espetaculo.save()
+            
+            messages.success(request, f'Espetaculo "{espetaculo.titulo}" atualizado com sucesso!')
+            return redirect('admin_dashboard:espetaculos_list')
+            
+        except Exception as e:
+            from django.contrib import messages
+            messages.error(request, f'Erro ao atualizar espetaculo: {e}')
+            return redirect('admin_dashboard:espetaculo_editar', pk=pk)
+    
+    # GET - mostra form preenchido
+    context = {
+        'espetaculo': espetaculo,
+    }
+    
+    return render(request, 'admin_dashboard/espetaculos/editar.html', context)
