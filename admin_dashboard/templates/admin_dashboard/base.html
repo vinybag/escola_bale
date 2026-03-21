@@ -278,6 +278,46 @@
                 padding: 1rem;
             }
         }
+        /* TABELAS RESPONSIVAS */
+        .table-container {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+        }
+        
+        @media (max-width: 768px) {
+            table {
+                font-size: 0.875rem;
+            }
+            
+            table th,
+            table td {
+                padding: 0.75rem 0.5rem !important;
+                white-space: nowrap;
+            }
+            
+            /* Ajusta larguras especificas */
+            table th:first-child,
+            table td:first-child {
+                min-width: 120px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            table {
+                font-size: 0.8rem;
+            }
+            
+            table th,
+            table td {
+                padding: 0.5rem 0.25rem !important;
+            }
+        }
     </style>
     
     {% block extra_css %}{% endblock %}

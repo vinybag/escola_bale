@@ -65,50 +65,43 @@
 
 <!-- Tabela -->
 <div style="background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
-    <table style="width: 100%; border-collapse: collapse;">
+    <div class="table-container">
+        <table style="width: 100%; border-collapse: collapse;">
         <thead style="background: #f8f9fa;">
             <tr>
-                <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Aluna</th>
-                <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Mes Referencia</th>
-                <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Vencimento</th>
-                <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Valor</th>
-                <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Status</th>
-                <th style="padding: 1rem; text-align: right; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Acoes</th>
+                <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600; white-space: nowrap;">Aluna</th>
+                <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600; white-space: nowrap;">Mês</th>
+                <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600; white-space: nowrap;">Valor</th>
+                <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600; white-space: nowrap;">Vencimento</th>
+                <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600; white-space: nowrap;">Status</th>
+                <th style="padding: 1rem; text-align: right; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600; white-space: nowrap;">Ações</th>
             </tr>
         </thead>
         <tbody>
             {% for mens in mensalidades %}
-            <tr style="border-top: 1px solid #eee;">
-                <td style="padding: 1rem;">
-                    <strong style="color: #2c3e50;">{{ mens.aluna.nome }}</strong>
-                </td>
-                <td style="padding: 1rem; color: #666;">
-                    {{ mens.mes_referencia|date:"F/Y" }}
-                </td>
-                <td style="padding: 1rem; color: #666;">
-                    {{ mens.data_vencimento|date:"d/m/Y" }}
-                </td>
-                <td style="padding: 1rem; color: #2c3e50;">
-                    <strong>R$ {{ mens.valor|floatformat:2 }}</strong>
-                </td>
-                <td style="padding: 1rem;">
-                    {% if mens.status == 'pago' %}
-                        <span style="background: #d4edda; color: #155724; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">Paga</span>
-                    {% elif mens.status == 'pendente' %}
-                        <span style="background: #fff3cd; color: #856404; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">Pendente</span>
-                    {% else %}
-                        <span style="background: #f8d7da; color: #721c24; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">Vencida</span>
-                    {% endif %}
-                </td>
-                <td style="padding: 1rem; text-align: right;">
-                    <a href="{% url 'admin_dashboard:mensalidade_editar' mens.pk %}" style="color: #2c3e50; text-decoration: none; margin-right: 1rem;">Editar</a>
-                    <a href="{% url 'admin_dashboard:aluna_detalhes' mens.aluna.pk %}" style="color: #b07a84; text-decoration: none; margin-right: 1rem;">Ver Aluna</a>
-                    <form method="post" action="{% url 'admin_dashboard:mensalidade_excluir' mens.pk %}" style="display: inline;" onsubmit="return confirm('Tem certeza que deseja excluir esta mensalidade?');">
-                    {% csrf_token %}
-                <button type="submit" style="background: none; border: none; color: #dc3545; cursor: pointer; text-decoration: underline;">Excluir</button>
-            </form>
-        </td>
-            </tr>
+           <tr style="border-top: 1px solid #eee;">
+    <td style="padding: 1rem; color: #2c3e50; white-space: nowrap;">{{ mens.aluna.nome }}</td>
+    <td style="padding: 1rem; color: #666; white-space: nowrap;">{{ mens.mes_referencia|date:"m/Y" }}</td>
+    <td style="padding: 1rem; color: #2c3e50; white-space: nowrap;">R$ {{ mens.valor|floatformat:2 }}</td>
+    <td style="padding: 1rem; color: #666; white-space: nowrap;">{{ mens.data_vencimento|date:"d/m/y" }}</td>
+    <td style="padding: 1rem;">
+        {% if mens.status == 'pago' %}
+            <span style="background: #d4edda; color: #155724; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; display: inline-block; white-space: nowrap;">Paga</span>
+        {% elif mens.status == 'pendente' %}
+            <span style="background: #fff3cd; color: #856404; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; display: inline-block; white-space: nowrap;">Pendente</span>
+        {% else %}
+            <span style="background: #f8d7da; color: #721c24; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; display: inline-block; white-space: nowrap;">Vencida</span>
+        {% endif %}
+    </td>
+    <td style="padding: 1rem; text-align: right; white-space: nowrap;">
+        <a href="{% url 'admin_dashboard:mensalidade_editar' mens.pk %}" style="color: #2c3e50; text-decoration: none; margin-right: 1rem;">Editar</a>
+        <a href="{% url 'admin_dashboard:aluna_detalhes' mens.aluna.pk %}" style="color: #b07a84; text-decoration: none; margin-right: 1rem;">Ver Aluna</a>
+        <form method="post" action="{% url 'admin_dashboard:mensalidade_excluir' mens.pk %}" style="display: inline;" onsubmit="return confirm('Tem certeza que deseja excluir esta mensalidade?');">
+            {% csrf_token %}
+            <button type="submit" style="background: none; border: none; color: #dc3545; cursor: pointer; text-decoration: underline;">Excluir</button>
+        </form>
+    </td>
+</tr>
             {% empty %}
             <tr>
                 <td colspan="6" style="padding: 3rem; text-align: center; color: #999;">
