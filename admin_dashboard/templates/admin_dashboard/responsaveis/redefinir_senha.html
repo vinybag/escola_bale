@@ -1,0 +1,52 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Redefinir Senha{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Redefinir Senha</h2>
+    <p>{{ responsavel.get_full_name|default:responsavel.username }}</p>
+</div>
+
+<div style="background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); max-width: 600px;">
+    <form method="post">
+        {% csrf_token %}
+        
+        <div style="background: #fff3cd; padding: 1rem; border-radius: 5px; border-left: 4px solid #ffc107; margin-bottom: 2rem;">
+            <p style="margin: 0; color: #856404;">
+                <strong>⚠️ Atenção:</strong> Você está redefinindo a senha de <strong>{{ responsavel.get_full_name }}</strong>.
+            </p>
+        </div>
+        
+        <div style="display: grid; gap: 1.5rem;">
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                    Nova Senha <span style="color: red;">*</span>
+                </label>
+                <input type="password" name="nova_senha" required minlength="6"
+                       placeholder="Minimo 6 caracteres"
+                       style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+            </div>
+            
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                    Confirmar Senha <span style="color: red;">*</span>
+                </label>
+                <input type="password" name="confirma_senha" required minlength="6"
+                       placeholder="Digite a senha novamente"
+                       style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+            </div>
+            
+            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                <button type="submit" class="btn btn-primary">
+                    Redefinir Senha
+                </button>
+                <a href="{% url 'admin_dashboard:responsaveis_list' %}" 
+                   style="padding: 0.75rem 1.5rem; background: #f5f5f5; color: #333; border-radius: 5px; text-decoration: none; font-weight: 500;">
+                    Cancelar
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

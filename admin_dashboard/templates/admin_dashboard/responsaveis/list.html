@@ -1,0 +1,69 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Responsáveis{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Responsáveis</h2>
+    <p>{{ total_responsaveis }} responsave{{ total_responsaveis|pluralize:"l,is" }}</p>
+</div>
+
+<!-- Busca -->
+<div style="background: white; padding: 1.5rem; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 1.5rem;">
+    <form method="get" style="display: flex; gap: 1rem;">
+        <input type="text" 
+               name="busca" 
+               value="{{ busca }}"
+               placeholder="Buscar por nome ou email..."
+               style="flex: 1; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+        <button type="submit" class="btn btn-primary">Buscar</button>
+        {% if busca %}
+            <a href="{% url 'admin_dashboard:responsaveis_list' %}" 
+               style="padding: 0.75rem 1.5rem; background: #f5f5f5; color: #333; border-radius: 5px; text-decoration: none; font-weight: 500;">
+                Limpar
+            </a>
+        {% endif %}
+    </form>
+</div>
+
+<!-- Lista -->
+<div class="table-container">
+    <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+        <thead style="background: #f8f9fa;">
+            <tr>
+                <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600; white-space: nowrap;">Nome</th>
+                <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600; white-space: nowrap;">Email</th>
+                <th style="padding: 1rem; text-align: center; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600; white-space: nowrap;">Alunas</th>
+                <th style="padding: 1rem; text-align: right; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600; white-space: nowrap;">Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for resp in responsaveis %}
+            <tr style="border-top: 1px solid #eee;">
+                <td style="padding: 1rem; color: #2c3e50; white-space: nowrap;">
+                    <strong>{{ resp.get_full_name|default:resp.username }}</strong>
+                </td>
+                <td style="padding: 1rem; color: #666; white-space: nowrap;">{{ resp.email }}</td>
+                <td style="padding: 1rem; text-align: center;">
+                    <span style="background: #e8f5e9; color: #2e7d32; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem; display: inline-block;">
+                        {{ resp.total_alunas }}
+                    </span>
+                </td>
+                <td style="padding: 1rem; text-align: right; white-space: nowrap;">
+                    <a href="{% url 'admin_dashboard:responsavel_redefinir_senha' resp.pk %}" 
+                       style="color: #2c3e50; text-decoration: none; margin-right: 1rem;">
+                        🔑 Redefinir Senha
+                    </a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" style="padding: 3rem; text-align: center; color: #999;">
+                    Nenhum responsavel encontrado.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

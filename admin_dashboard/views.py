@@ -865,3 +865,91 @@ def espetaculo_editar(request, pk):
     }
     
     return render(request, 'admin_dashboard/espetaculos/editar.html', context)
+
+@login_required
+def responsaveis_list(request):
+    """Lista de responsaveis"""
+    
+    if not request.user.is_staff:
+        return redirect('home')
+    
+    try:
+        from django.contrib.auth.models import User
+        from usuarios.models import Aluna
+        from django.db.models import Count
+        
+        # Pega todos os responsáveis (não-staff)
+        responsaveis = User.objects.filter(is_staff=False).annotate(
+            total_alunas=Count('aluna')
+        ).order_by('first_name', 'last_name')
+        
+        # Busca
+        busca = request.GET.get('busca', '')
+        if busca:
+            from django.db.models import Q
+            responsaveis = responsaveis.filter(
+                Q(first_name__icontains=busca) |
+                Q(last_name__icontains=busca) |
+                Q(email__icontains=busca)
+            )
+        
+    except Exception as e:
+        print(f"Erro ao buscar responsaveis: {e}")
+        responsaveis = []
+        busca = ''
+    
+    context = {
+        'responsaveis': responsaveis,
+        'busca': busca,
+        'total_responsaveis': responsaveis.count() if responsaveis else 0,
+    }
+    
+    return render(request, 'admin_dashboard/responsaveis/list.html', context)
+
+
+@login_required
+def responsavel_redefinir_senha(request, pk):
+    """Redefinir senha de um responsavel"""
+    
+    if not request.user.is_staff:
+        return redirect('home')
+    
+    try:
+        from django.contrib.auth.models import User
+        from django.contrib import messages
+        
+        responsavel = User.objects.get(pk=pk, is_staff=False)
+        
+        if request.method == 'POST':
+            nova_senha = request.POST.get('nova_senha')
+            confirma_senha = request.POST.get('confirma_senha')
+            
+            if not nova_senha or not confirma_senha:
+                messages.error(request, 'Preencha todos os campos!')
+                return redirect('admin_dashboard:responsavel_redefinir_senha', pk=pk)
+            
+            if nova_senha != confirma_senha:
+                messages.error(request, 'As senhas nao coincidem!')
+                return redirect('admin_dashboard:responsavel_redefinir_senha', pk=pk)
+            
+            if len(nova_senha) < 6:
+                messages.error(request, 'A senha deve ter no minimo 6 caracteres!')
+                return redirect('admin_dashboard:responsavel_redefinir_senha', pk=pk)
+            
+            # Redefine a senha
+            responsavel.set_password(nova_senha)
+            responsavel.save()
+            
+            messages.success(request, f'Senha de {responsavel.get_full_name()} redefinida com sucesso!')
+            return redirect('admin_dashboard:responsaveis_list')
+        
+        # GET - mostra form
+        context = {
+            'responsavel': responsavel,
+        }
+        return render(request, 'admin_dashboard/responsaveis/redefinir_senha.html', context)
+        
+    except Exception as e:
+        from django.contrib import messages
+        messages.error(request, f'Responsavel nao encontrado: {e}')
+        return redirect('admin_dashboard:responsaveis_list')
