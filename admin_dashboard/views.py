@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from datetime import datetime
 from decimal import Decimal
@@ -415,7 +415,7 @@ def mensalidade_criar(request):
             # Cria mensalidade COM RESPONSAVEL
             mensalidade = Mensalidade.objects.create(
                 aluna=aluna,
-                responsavel=aluna.responsavel,  # ← ADICIONA ESSA LINHA!
+                responsavel=aluna.responsavel,
                 mes_referencia=mes_ref_date,
                 data_vencimento=data_venc_date,
                 valor=Decimal(valor),
@@ -753,6 +753,9 @@ def espetaculo_criar(request):
             
             ativo = request.POST.get('ativo') == 'on'
             
+            # ADICIONA: Pega o arquivo PDF
+            arquivo_informacoes = request.FILES.get('arquivo_informacoes')
+            
             # Validacao
             if not all([titulo, descricao, data_apresentacao, local, endereco]):
                 messages.error(request, 'Preencha todos os campos obrigatorios!')
@@ -769,6 +772,7 @@ def espetaculo_criar(request):
                 data_apresentacao=data_apres,
                 local=local,
                 endereco=endereco,
+                arquivo_informacoes=arquivo_informacoes,  # ADICIONA
                 audicao_aberta=audicao_aberta,
                 audicao_data_inicio=audicao_data_inicio if audicao_data_inicio else None,
                 audicao_data_fim=audicao_data_fim if audicao_data_fim else None,
@@ -839,6 +843,11 @@ def espetaculo_editar(request, pk):
             espetaculo.preco_ingresso = request.POST.get('preco_ingresso', '0')
             
             espetaculo.ativo = request.POST.get('ativo') == 'on'
+            
+            # ADICIONA: Atualiza arquivo PDF se enviado
+            arquivo_informacoes = request.FILES.get('arquivo_informacoes')
+            if arquivo_informacoes:
+                espetaculo.arquivo_informacoes = arquivo_informacoes
             
             espetaculo.save()
             

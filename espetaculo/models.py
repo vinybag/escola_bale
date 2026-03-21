@@ -14,6 +14,9 @@ class Espetaculo(models.Model):
     # Imagem (opcional)
     imagem = models.ImageField(upload_to='espetaculos/', blank=True, null=True)
     
+    # PDF com informações completas - ADICIONA ESSA LINHA
+    arquivo_informacoes = models.FileField(upload_to='espetaculos/pdfs/', blank=True, null=True, help_text='PDF com sinopse, personagens, audição, etc.')
+    
     # Audição
     audicao_aberta = models.BooleanField(default=False)
     audicao_data_inicio = models.DateField(blank=True, null=True)
