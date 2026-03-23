@@ -1,3 +1,6 @@
+import secrets
+from datetime import timedelta
+from django.utils import timezone
 from django.db import models
 from django.contrib.auth.models import User
 
@@ -29,3 +32,24 @@ class Aluna(models.Model):
         from datetime import date
         hoje = date.today()
         return hoje.year - self.data_nascimento.year - ((hoje.month, hoje.day) < (self.data_nascimento.month, self.data_nascimento.day))
+    
+    class RecuperacaoSenha(models.Model):
+      """Token para recuperacao de senha"""
+      user = models.ForeignKey(User, on_delete=models.CASCADE)
+      token = models.CharField(max_length=100, unique=True)
+      criado_em = models.DateTimeField(auto_now_add=True)
+      usado = models.BooleanField(default=False)
+    
+      def __str__(self):
+          return f"Token de {self.user.email}"
+    
+      def is_valido(self):
+        """Verifica se token ainda e valido (24h)"""
+        expiracao = self.criado_em + timedelta(hours=24)
+        return not self.usado and timezone.now() < expiracao
+    
+    @classmethod
+    def criar_token(cls, user):
+        """Cria um novo token de recuperacao"""
+        token = secrets.token_urlsafe(32)
+        return cls.objects.create(user=user, token=token)
