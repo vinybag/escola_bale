@@ -11,5 +11,6 @@ urlpatterns = [
 
     # Recuperação de senha - ADICIONA
     path('esqueci-senha/', views.esqueci_senha, name='esqueci_senha'),
+    path('validar-codigo/<str:token>/', views.validar_codigo, name='validar_codigo'),  # ADICIONA
     path('redefinir-senha/<str:token>/', views.redefinir_senha, name='redefinir_senha'),
 ]

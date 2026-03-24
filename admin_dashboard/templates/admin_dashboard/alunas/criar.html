@@ -5,100 +5,179 @@
 {% block content %}
 <div class="page-header">
     <h2>Nova Aluna</h2>
-    <p>Cadastrar nova aluna no sistema</p>
+    <p>Cadastrar nova aluna</p>
 </div>
 
-<div style="background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); max-width: 800px;">
+<div style="background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); max-width: 900px;">
     <form method="post">
         {% csrf_token %}
         
-        <div style="display: grid; gap: 1.5rem;">
+        <div style="display: grid; gap: 2rem;">
             
-            <!-- Nome -->
-            <div>
-                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
-                    Nome da Aluna <span style="color: red;">*</span>
-                </label>
-                <input type="text" 
-                       name="nome" 
-                       required
-                       placeholder="Ex: Maria Silva"
-                       style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
-            </div>
-            
-            <!-- Data de Nascimento -->
-            <div>
-                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
-                    Data de Nascimento <span style="color: red;">*</span>
-                </label>
-                <input type="date" 
-                       name="data_nascimento" 
-                       required
-                       style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+            <!-- Dados da Aluna -->
+            <div style="border-left: 4px solid #b07a84; padding-left: 1rem;">
+                <h3 style="color: #2c3e50; margin-bottom: 1rem;">Dados da Aluna</h3>
+                
+                <div style="display: grid; gap: 1rem;">
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                            Nome Completo <span style="color: red;">*</span>
+                        </label>
+                        <input type="text" name="nome" required
+                               placeholder="Ex: Maria Silva"
+                               style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                                Data de Nascimento <span style="color: red;">*</span>
+                            </label>
+                            <input type="date" name="data_nascimento" required
+                                   style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                        </div>
+                        
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                                Turma
+                            </label>
+                            <select name="turma_atual"
+                                    style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                                <option value="">Sem turma</option>
+                                <option value="Baby Class">Baby Class</option>
+                                <option value="Little Star">Little Star</option>
+                                <option value="Star I">Star I</option>
+                                <option value="Star II">Star II</option>
+                                <option value="Star III">Star III</option>
+                                <option value="Jovem">Jovem</option>
+                                <option value="Contemporaneo">Contemporaneo</option>
+                                <option value="Adulto">Adulto</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                            Observações
+                        </label>
+                        <textarea name="observacoes" rows="3"
+                                  placeholder="Informações adicionais sobre a aluna..."
+                                  style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem; font-family: inherit; resize: vertical;"></textarea>
+                    </div>
+                    
+                    <div>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            <input type="checkbox" name="ativa" checked
+                                   style="width: 20px; height: 20px; cursor: pointer;">
+                            <span style="font-weight: 500; color: #333;">Aluna ativa</span>
+                        </label>
+                    </div>
+                </div>
             </div>
             
             <!-- Responsável -->
-            <div>
-                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
-                    Responsavel <span style="color: red;">*</span>
-                </label>
-                <select name="responsavel" 
-                        required
-                        style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
-                    <option value="">Selecione...</option>
-                    {% for resp in responsaveis %}
-                        <option value="{{ resp.id }}">
-                            {{ resp.get_full_name|default:resp.username }} - {{ resp.email }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-            
-            <!-- Turma -->
-            <div>
-                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
-                    Turma Atual
-                </label>
-                <select name="turma_atual" 
-                        style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
-                    <option value="">Sem turma</option>
-                    <option value="Baby Class">Baby Class</option>
-                    <option value="Little Star">Little Star</option>
-                    <option value="Star I">Star I</option>
-                    <option value="Star II">Star II</option>
-                    <option value="Star III">Star III</option>
-                    <option value="Jovem">Jovem</option>
-                    <option value="Contemporaneo">Contemporaneo</option>
-                    <option value="Adulto">Adulto</option>
-                </select>
-            </div>
-            
-            <!-- Ativa -->
-            <div>
-                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                    <input type="checkbox" 
-                           name="ativa" 
-                           checked
-                           style="width: 20px; height: 20px; cursor: pointer;">
-                    <span style="font-weight: 500; color: #333;">Aluna ativa</span>
-                </label>
-            </div>
-            
-            <!-- Observações -->
-            <div>
-                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
-                    Observacoes
-                </label>
-                <textarea name="observacoes" 
-                          rows="4"
-                          placeholder="Informacoes adicionais sobre a aluna..."
-                          style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem; font-family: inherit; resize: vertical;"></textarea>
+            <div style="border-left: 4px solid #2c3e50; padding-left: 1rem;">
+                <h3 style="color: #2c3e50; margin-bottom: 1rem;">Responsável</h3>
+                
+                <!-- Escolher: Existente ou Novo -->
+                <div style="background: #f8f9fa; padding: 1rem; border-radius: 5px; margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                        Selecione uma opção:
+                    </label>
+                    <div style="display: flex; gap: 2rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            <input type="radio" name="tipo_responsavel" value="existente" checked onchange="toggleResponsavel()"
+                                   style="cursor: pointer;">
+                            <span>Responsável existente</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            <input type="radio" name="tipo_responsavel" value="novo" onchange="toggleResponsavel()"
+                                   style="cursor: pointer;">
+                            <span>Cadastrar novo responsável</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Responsável Existente -->
+                <div id="responsavel-existente">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                        Selecione o responsável <span style="color: red;">*</span>
+                    </label>
+                    <select name="responsavel_existente" id="select-responsavel"
+                            style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                        <option value="">-- Selecione --</option>
+                        {% for resp in responsaveis %}
+                            <option value="{{ resp.id }}">{{ resp.get_full_name|default:resp.username }} - {{ resp.email }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Novo Responsável -->
+                <div id="responsavel-novo" style="display: none;">
+                    <div style="display: grid; gap: 1rem;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div>
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                                    Nome <span style="color: red;">*</span>
+                                </label>
+                                <input type="text" name="responsavel_nome" id="resp-nome"
+                                       placeholder="Ex: João"
+                                       style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                            </div>
+                            
+                            <div>
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                                    Sobrenome <span style="color: red;">*</span>
+                                </label>
+                                <input type="text" name="responsavel_sobrenome" id="resp-sobrenome"
+                                       placeholder="Ex: Silva"
+                                       style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                                Email <span style="color: red;">*</span>
+                            </label>
+                            <input type="email" name="responsavel_email" id="resp-email"
+                                   placeholder="Ex: joao@email.com"
+                                   style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                            <small style="display: block; margin-top: 0.25rem; color: #666;">
+                                O email será usado como login
+                            </small>
+                        </div>
+                        
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                                Telefone <span style="color: red;">*</span>
+                            </label>
+                            <input type="tel" name="responsavel_telefone" id="resp-telefone" required
+                                   placeholder="(15) 99999-9999"
+                                   style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                            <small style="display: block; margin-top: 0.25rem; color: #666;">
+                                Será usado para recuperação de senha
+                            </small>
+                        </div>
+                        
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                                Senha inicial <span style="color: red;">*</span>
+                            </label>
+                            <input type="password" name="responsavel_senha" id="resp-senha"
+                                   placeholder="Mínimo 6 caracteres"
+                                   style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                            <small style="display: block; margin-top: 0.25rem; color: #666;">
+                                O responsável poderá alterar depois
+                            </small>
+                        </div>
+                    </div>
+                </div>
             </div>
             
             <!-- Botões -->
             <div style="display: flex; gap: 1rem; margin-top: 1rem;">
                 <button type="submit" class="btn btn-primary">
-                    Criar Aluna
+                    Cadastrar Aluna
                 </button>
                 <a href="{% url 'admin_dashboard:alunas_list' %}" 
                    style="padding: 0.75rem 1.5rem; background: #f5f5f5; color: #333; border-radius: 5px; text-decoration: none; font-weight: 500;">
@@ -109,4 +188,39 @@
         </div>
     </form>
 </div>
+
+<script>
+function toggleResponsavel() {
+    const tipo = document.querySelector('input[name="tipo_responsavel"]:checked').value;
+    const divExistente = document.getElementById('responsavel-existente');
+    const divNovo = document.getElementById('responsavel-novo');
+    const selectResp = document.getElementById('select-responsavel');
+    
+    // Campos do novo responsável
+    const camposNovo = ['resp-nome', 'resp-sobrenome', 'resp-email', 'resp-telefone', 'resp-senha'];
+    
+    if (tipo === 'existente') {
+        divExistente.style.display = 'block';
+        divNovo.style.display = 'none';
+        selectResp.required = true;
+        
+        // Remove required dos campos novos
+        camposNovo.forEach(id => {
+            const campo = document.getElementById(id);
+            if (campo) campo.required = false;
+        });
+    } else {
+        divExistente.style.display = 'none';
+        divNovo.style.display = 'block';
+        selectResp.required = false;
+        
+        // Adiciona required nos campos novos
+        camposNovo.forEach(id => {
+            const campo = document.getElementById(id);
+            if (campo) campo.required = true;
+        });
+    }
+}
+</script>
+
 {% endblock %}

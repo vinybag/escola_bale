@@ -182,21 +182,76 @@ def aluna_criar(request):
             from django.contrib.auth.models import User
             from django.contrib import messages
             
-            # Pega dados do form
+            # Pega dados da aluna
             nome = request.POST.get('nome')
             data_nascimento = request.POST.get('data_nascimento')
             turma_atual = request.POST.get('turma_atual')
-            responsavel_id = request.POST.get('responsavel')
             ativa = request.POST.get('ativa') == 'on'
             observacoes = request.POST.get('observacoes', '')
             
-            # Validacao basica
-            if not all([nome, data_nascimento, responsavel_id]):
-                messages.error(request, 'Preencha todos os campos obrigatorios!')
+            # Valida dados básicos
+            if not all([nome, data_nascimento]):
+                messages.error(request, 'Preencha todos os campos obrigatorios da aluna!')
                 return redirect('admin_dashboard:aluna_criar')
             
-            # Cria aluna
-            responsavel = User.objects.get(id=responsavel_id)
+            # VERIFICA TIPO DE RESPONSÁVEL
+            tipo_responsavel = request.POST.get('tipo_responsavel')
+            
+            if tipo_responsavel == 'existente':
+                # Usa responsável existente
+                responsavel_id = request.POST.get('responsavel_existente')
+                if not responsavel_id:
+                    messages.error(request, 'Selecione um responsavel!')
+                    return redirect('admin_dashboard:aluna_criar')
+                responsavel = User.objects.get(id=responsavel_id)
+                
+            else:
+                # Cria novo responsável
+                resp_nome = request.POST.get('responsavel_nome')
+                resp_sobrenome = request.POST.get('responsavel_sobrenome')
+                resp_email = request.POST.get('responsavel_email')
+                resp_senha = request.POST.get('responsavel_senha')
+                resp_telefone = request.POST.get('responsavel_telefone', '')
+                
+                # Valida campos do responsável (TELEFONE OBRIGATÓRIO)
+                if not all([resp_nome, resp_sobrenome, resp_email, resp_senha, resp_telefone]):
+                    messages.error(request, 'Preencha todos os campos obrigatorios do responsavel (incluindo telefone)!')
+                    return redirect('admin_dashboard:aluna_criar')
+                
+                # Verifica se email já existe
+                if User.objects.filter(email=resp_email).exists():
+                    messages.error(request, f'Ja existe um usuario com o email {resp_email}!')
+                    return redirect('admin_dashboard:aluna_criar')
+                
+                # Cria username a partir do email
+                username = resp_email.split('@')[0]
+                
+                # Se username já existe, adiciona número
+                base_username = username
+                counter = 1
+                while User.objects.filter(username=username).exists():
+                    username = f"{base_username}{counter}"
+                    counter += 1
+                
+                # Cria o responsável
+                responsavel = User.objects.create_user(
+                    username=username,
+                    email=resp_email,
+                    password=resp_senha,
+                    first_name=resp_nome,
+                    last_name=resp_sobrenome
+                )
+                
+                # Cria perfil com telefone
+                from usuarios.models import Perfil
+                Perfil.objects.create(
+                user=responsavel,
+                telefone=resp_telefone
+            )
+                
+                messages.success(request, f'Responsavel {resp_nome} {resp_sobrenome} cadastrado! Login: {resp_email} / Senha: {resp_senha}')
+            
+            # Cria a aluna
             aluna = Aluna.objects.create(
                 nome=nome,
                 data_nascimento=data_nascimento,
@@ -211,6 +266,9 @@ def aluna_criar(request):
             
         except Exception as e:
             messages.error(request, f'Erro ao criar aluna: {e}')
+            print(f"Erro detalhado: {e}")
+            import traceback
+            traceback.print_exc()
             return redirect('admin_dashboard:aluna_criar')
     
     # GET - mostra form

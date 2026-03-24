@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.contrib.auth import logout
 from django.contrib import messages
 from .models import Perfil, Aluna
 
@@ -20,69 +21,104 @@ def dashboard(request):
 def perfil(request):
     return render(request, 'usuarios/perfil.html')
 
-from django.contrib.auth import logout
-from django.shortcuts import redirect
-
 def logout_view(request):
     logout(request)
     return redirect('home')
 
 def esqueci_senha(request):
-    """Página de esqueci minha senha"""
+    """Pagina de esqueci minha senha - via SMS"""
     
     if request.method == 'POST':
-        email = request.POST.get('email')
+        telefone = request.POST.get('telefone')
+        
+        # Remove caracteres não numéricos
+        telefone_limpo = ''.join(filter(str.isdigit, telefone))
         
         try:
-            user = User.objects.get(email=email, is_staff=False)
+            from usuarios.models import Perfil, RecuperacaoSenha
             
-            # Cria token de recuperação
-            from usuarios.models import RecuperacaoSenha
+            # Busca pelo telefone
+            perfil = Perfil.objects.get(telefone__icontains=telefone_limpo)
+            user = perfil.user
+            
+            # Cria token de recuperacao
             recuperacao = RecuperacaoSenha.criar_token(user)
             
-            # Gera link de recuperação
-            link = request.build_absolute_uri(
-                f'/conta/redefinir-senha/{recuperacao.token}/'
-            )
+            # Gera código de 6 dígitos
+            import random
+            codigo = str(random.randint(100000, 999999))
             
-            # AQUI VOCÊ ENVIARIA EMAIL (por enquanto mostra na tela)
+            # Salva código no token
+            recuperacao.codigo_sms = codigo
+            recuperacao.save()
+            
+            # AQUI VOCÊ ENVIARIA SMS (por enquanto mostra na tela)
             messages.success(
                 request, 
-                f'Link de recuperacao gerado! Copie e envie para o responsavel: {link}'
+                f'CODIGO DE RECUPERACAO: {codigo} - Envie este codigo para o telefone {perfil.telefone}'
             )
             
-            # Em produção, você enviaria email assim:
-            # send_mail(
-            #     'Recuperação de Senha - BAILAH',
-            #     f'Clique no link para redefinir sua senha: {link}',
-            #     'noreply@bailah.com',
-            #     [email],
-            # )
+            # Redireciona para página de inserir código
+            return redirect('validar_codigo', token=recuperacao.token)
             
-        except User.DoesNotExist:
-            # Por segurança, não revela se email existe ou não
-            messages.success(
+        except Perfil.DoesNotExist:
+            # Por segurança, não revela se telefone existe
+            messages.error(
                 request,
-                'Se o email existir em nossa base, você receberá as instruções.'
+                'Telefone nao encontrado em nossa base de dados.'
             )
         except Exception as e:
-            messages.error(request, f'Erro ao processar solicitação: {e}')
+            messages.error(request, f'Erro ao processar solicitacao: {e}')
+            import traceback
+            traceback.print_exc()
         
         return redirect('esqueci_senha')
     
     return render(request, 'usuarios/esqueci_senha.html')
 
 
-def redefinir_senha(request, token):
-    """Página de redefinir senha com token"""
+def validar_codigo(request, token):
+    """Valida codigo SMS"""
     
     try:
         from usuarios.models import RecuperacaoSenha
         recuperacao = RecuperacaoSenha.objects.get(token=token)
         
-        # Verifica se token é válido
         if not recuperacao.is_valido():
-            messages.error(request, 'Link expirado ou já utilizado!')
+            messages.error(request, 'Codigo expirado!')
+            return redirect('esqueci_senha')
+        
+        if request.method == 'POST':
+            codigo = request.POST.get('codigo')
+            
+            if codigo == recuperacao.codigo_sms:
+                # Código correto - vai para redefinir senha
+                return redirect('redefinir_senha', token=token)
+            else:
+                messages.error(request, 'Codigo incorreto! Tente novamente.')
+                return redirect('validar_codigo', token=token)
+        
+        context = {
+            'token': token,
+            'telefone': recuperacao.user.perfil.telefone if hasattr(recuperacao.user, 'perfil') else '',
+        }
+        return render(request, 'usuarios/validar_codigo.html', context)
+        
+    except RecuperacaoSenha.DoesNotExist:
+        messages.error(request, 'Link invalido!')
+        return redirect('esqueci_senha')
+
+
+def redefinir_senha(request, token):
+    """Pagina de redefinir senha com token"""
+    
+    try:
+        from usuarios.models import RecuperacaoSenha
+        recuperacao = RecuperacaoSenha.objects.get(token=token)
+        
+        # Verifica se token e valido
+        if not recuperacao.is_valido():
+            messages.error(request, 'Link expirado ou ja utilizado!')
             return redirect('login')
         
         if request.method == 'POST':
@@ -94,11 +130,11 @@ def redefinir_senha(request, token):
                 return redirect('redefinir_senha', token=token)
             
             if nova_senha != confirma_senha:
-                messages.error(request, 'As senhas não coincidem!')
+                messages.error(request, 'As senhas nao coincidem!')
                 return redirect('redefinir_senha', token=token)
             
             if len(nova_senha) < 6:
-                messages.error(request, 'A senha deve ter no mínimo 6 caracteres!')
+                messages.error(request, 'A senha deve ter no minimo 6 caracteres!')
                 return redirect('redefinir_senha', token=token)
             
             # Redefine a senha
@@ -110,7 +146,7 @@ def redefinir_senha(request, token):
             recuperacao.usado = True
             recuperacao.save()
             
-            messages.success(request, 'Senha redefinida com sucesso! Faça login.')
+            messages.success(request, 'Senha redefinida com sucesso! Faca login.')
             return redirect('login')
         
         context = {
@@ -120,5 +156,5 @@ def redefinir_senha(request, token):
         return render(request, 'usuarios/redefinir_senha.html', context)
         
     except RecuperacaoSenha.DoesNotExist:
-        messages.error(request, 'Link inválido!')
+        messages.error(request, 'Link invalido!')
         return redirect('login')
