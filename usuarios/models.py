@@ -49,10 +49,9 @@ class Aluna(models.Model):
 
 
 class RecuperacaoSenha(models.Model):
-    """Token para recuperacao de senha via SMS"""
+    """Token para recuperacao de senha via email"""
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     token = models.CharField(max_length=100, unique=True)
-    codigo_sms = models.CharField(max_length=6, blank=True)
     criado_em = models.DateTimeField(auto_now_add=True)
     usado = models.BooleanField(default=False)
     
@@ -69,3 +68,7 @@ class RecuperacaoSenha(models.Model):
         """Cria um novo token de recuperacao"""
         token = secrets.token_urlsafe(32)
         return cls.objects.create(user=user, token=token)
+    
+    class Meta:
+        verbose_name = 'Recuperacao de Senha'
+        verbose_name_plural = 'Recuperacoes de Senha'

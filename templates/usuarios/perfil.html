@@ -6,7 +6,7 @@
 <div class="container dashboard">
     <h1>Meu Perfil</h1>
 
-    <div class ="card">
+    <div class="card">
         <h3>Informações Pessoais</h3>
         <p><strong>Nome:</strong> {{ user.get_full_name|default:user.username }}</p>
         <p><strong>Email:</strong> {{ user.email }}</p>
@@ -17,7 +17,14 @@
            {% if user.perfil.endereco %}
               <p><strong>Endereço:</strong> {{ user.perfil.endereco }}</p>
            {% endif %}
-        {% endif %}    
+        {% endif %}
+        
+        <div style="margin-top: 1.5rem;">
+            <a href="{% url 'alterar_senha' %}" 
+               style="display: inline-block; padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #2c3e50, #b07a84); color: white; border-radius: 5px; text-decoration: none; font-weight: 500;">
+                🔒 Alterar Senha
+            </a>
+        </div>
     </div>
 
     <div class="card" style="margin-top: 2rem;">

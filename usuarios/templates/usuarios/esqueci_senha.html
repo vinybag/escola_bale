@@ -26,23 +26,20 @@
             {% csrf_token %}
             
             <div style="margin-bottom: 1.5rem;">
-    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
-        Telefone cadastrado
-    </label>
-    <input type="tel" 
-           name="telefone" 
-           required
-           placeholder="(15) 99999-9999"
-           style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
-    <small style="display: block; margin-top: 0.5rem; color: #666;">
-        Digite o telefone cadastrado para receber o codigo
-    </small>
-</div>
-
-<button type="submit" 
-        style="width: 100%; padding: 0.75rem; background: linear-gradient(135deg, #2c3e50, #b07a84); color: white; border: none; border-radius: 5px; font-size: 1rem; font-weight: 600; cursor: pointer; margin-bottom: 1rem;">
-    Enviar codigo SMS
-</button>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                    Email cadastrado
+                </label>
+                <input type="email" 
+                       name="email" 
+                       required
+                       placeholder="seu@email.com"
+                       style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+            </div>
+            
+            <button type="submit" 
+                    style="width: 100%; padding: 0.75rem; background: linear-gradient(135deg, #2c3e50, #b07a84); color: white; border: none; border-radius: 5px; font-size: 1rem; font-weight: 600; cursor: pointer; margin-bottom: 1rem;">
+                Enviar link de recuperacao
+            </button>
             
             <div style="text-align: center;">
                 <a href="{% url 'login' %}" style="color: #b07a84; text-decoration: none;">

@@ -244,10 +244,13 @@ def aluna_criar(request):
                 
                 # Cria perfil com telefone
                 from usuarios.models import Perfil
-                Perfil.objects.create(
-                user=responsavel,
-                telefone=resp_telefone
-            )
+                perfil, created = Perfil.objects.get_or_create(
+                    user=responsavel,
+                    defaults={'telefone': resp_telefone}
+                )
+                if not created:
+                    perfil.telefone = resp_telefone
+                    perfil.save()
                 
                 messages.success(request, f'Responsavel {resp_nome} {resp_sobrenome} cadastrado! Login: {resp_email} / Senha: {resp_senha}')
             
@@ -830,7 +833,7 @@ def espetaculo_criar(request):
                 data_apresentacao=data_apres,
                 local=local,
                 endereco=endereco,
-                arquivo_informacoes=arquivo_informacoes,  # ADICIONA
+                arquivo_informacoes=arquivo_informacoes,
                 audicao_aberta=audicao_aberta,
                 audicao_data_inicio=audicao_data_inicio if audicao_data_inicio else None,
                 audicao_data_fim=audicao_data_fim if audicao_data_fim else None,
@@ -938,7 +941,7 @@ def responsaveis_list(request):
         
         # Pega todos os responsáveis (não-staff)
         responsaveis = User.objects.filter(is_staff=False).annotate(
-            total_alunas=Count('aluna')
+            total_alunas=Count('alunas')
         ).order_by('first_name', 'last_name')
         
         # Busca

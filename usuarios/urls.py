@@ -1,16 +1,15 @@
 from django.urls import path
-from django.contrib.auth import views as auth_views
 from . import views
 
 urlpatterns = [
-    path('login/', auth_views.LoginView.as_view(template_name='usuarios/login.html'), name='login'),
-    path('logout/', views.logout_view, name='logout'),
+    path('login/', views.user_login, name='login'),
+    path('logout/', views.user_logout, name='logout'),
     path('cadastro/', views.cadastro, name='cadastro'),
     path('dashboard/', views.dashboard, name='dashboard'),
     path('perfil/', views.perfil, name='perfil'),
-
-    # Recuperação de senha - ADICIONA
+    path('alterar-senha/', views.alterar_senha, name='alterar_senha'),
+    
+    # Recuperação de senha por email
     path('esqueci-senha/', views.esqueci_senha, name='esqueci_senha'),
-    path('validar-codigo/<str:token>/', views.validar_codigo, name='validar_codigo'),  # ADICIONA
     path('redefinir-senha/<str:token>/', views.redefinir_senha, name='redefinir_senha'),
 ]

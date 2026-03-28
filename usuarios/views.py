@@ -1,9 +1,41 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.contrib.auth import logout
+from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib import messages
-from .models import Perfil, Aluna
+from django.core.mail import send_mail
+from django.conf import settings
+from .models import Perfil, Aluna, RecuperacaoSenha
+
+def user_login(request):
+    """Pagina de login"""
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        
+        # Tenta autenticar pelo username
+        user = authenticate(request, username=username, password=password)
+        
+        # Se não funcionar, tenta pelo email
+        if user is None:
+            try:
+                user_obj = User.objects.get(email=username)
+                user = authenticate(request, username=user_obj.username, password=password)
+            except User.DoesNotExist:
+                pass
+        
+        if user is not None:
+            login(request, user)
+            return redirect('dashboard')
+        else:
+            messages.error(request, 'Usuario ou senha incorretos!')
+    
+    return render(request, 'usuarios/login.html')
+
+def user_logout(request):
+    """Logout"""
+    logout(request)
+    return redirect('home')
 
 def cadastro(request):
     if request.method == 'POST':
@@ -13,107 +45,127 @@ def cadastro(request):
 
 @login_required
 def dashboard(request):
-    # Busca as alunas do responsável logado
+    """Dashboard do responsavel"""
     alunas = Aluna.objects.filter(responsavel=request.user, ativa=True)
     return render(request, 'usuarios/dashboard.html', {'alunas': alunas})
 
 @login_required
 def perfil(request):
+    """Perfil do responsavel"""
     return render(request, 'usuarios/perfil.html')
 
-def logout_view(request):
-    logout(request)
-    return redirect('home')
-
-def esqueci_senha(request):
-    """Pagina de esqueci minha senha - via SMS"""
+@login_required
+def alterar_senha(request):
+    """Responsavel altera sua propria senha (logado)"""
     
     if request.method == 'POST':
-        telefone = request.POST.get('telefone')
+        senha_atual = request.POST.get('senha_atual')
+        nova_senha = request.POST.get('nova_senha')
+        confirma_senha = request.POST.get('confirma_senha')
         
-        # Remove caracteres não numéricos
-        telefone_limpo = ''.join(filter(str.isdigit, telefone))
+        # Validacoes
+        if not all([senha_atual, nova_senha, confirma_senha]):
+            messages.error(request, 'Preencha todos os campos!')
+            return redirect('alterar_senha')
+        
+        # Verifica se senha atual esta correta
+        if not request.user.check_password(senha_atual):
+            messages.error(request, 'Senha atual incorreta!')
+            return redirect('alterar_senha')
+        
+        # Verifica se senhas novas coincidem
+        if nova_senha != confirma_senha:
+            messages.error(request, 'As senhas novas nao coincidem!')
+            return redirect('alterar_senha')
+        
+        # Verifica tamanho minimo
+        if len(nova_senha) < 6:
+            messages.error(request, 'A senha deve ter no minimo 6 caracteres!')
+            return redirect('alterar_senha')
+        
+        # Altera a senha
+        request.user.set_password(nova_senha)
+        request.user.save()
+        
+        # Mantem usuario logado apos trocar senha
+        update_session_auth_hash(request, request.user)
+        
+        messages.success(request, 'Senha alterada com sucesso!')
+        return redirect('dashboard')
+    
+    return render(request, 'usuarios/alterar_senha.html')
+
+def esqueci_senha(request):
+    """Recuperacao de senha via email"""
+    
+    if request.method == 'POST':
+        email = request.POST.get('email')
         
         try:
-            from usuarios.models import Perfil, RecuperacaoSenha
-            
-            # Busca pelo telefone
-            perfil = Perfil.objects.get(telefone__icontains=telefone_limpo)
-            user = perfil.user
+            # Busca usuario pelo email
+            user = User.objects.get(email=email, is_staff=False)
             
             # Cria token de recuperacao
             recuperacao = RecuperacaoSenha.criar_token(user)
             
-            # Gera código de 6 dígitos
-            import random
-            codigo = str(random.randint(100000, 999999))
-            
-            # Salva código no token
-            recuperacao.codigo_sms = codigo
-            recuperacao.save()
-            
-            # AQUI VOCÊ ENVIARIA SMS (por enquanto mostra na tela)
-            messages.success(
-                request, 
-                f'CODIGO DE RECUPERACAO: {codigo} - Envie este codigo para o telefone {perfil.telefone}'
+            # Gera link de recuperacao
+            link = request.build_absolute_uri(
+                f'/conta/redefinir-senha/{recuperacao.token}/'
             )
             
-            # Redireciona para página de inserir código
-            return redirect('validar_codigo', token=recuperacao.token)
+            # Envia email
+            try:
+                send_mail(
+                    subject='Recuperacao de Senha - BAILAH',
+                    message=f'''Ola {user.get_full_name() or user.username},
+
+Recebemos uma solicitacao para redefinir sua senha.
+
+Clique no link abaixo para criar uma nova senha:
+{link}
+
+Este link expira em 24 horas.
+
+Se voce nao solicitou esta alteracao, ignore este email.
+
+Atenciosamente,
+Equipe BAILAH
+''',
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[email],
+                    fail_silently=False,
+                )
+                
+                messages.success(
+                    request,
+                    'Email enviado! Verifique sua caixa de entrada.'
+                )
+                
+            except Exception as e:
+                print(f"Erro ao enviar email: {e}")
+                messages.error(
+                    request,
+                    'Erro ao enviar email. Contate o suporte.'
+                )
             
-        except Perfil.DoesNotExist:
-            # Por segurança, não revela se telefone existe
-            messages.error(
+        except User.DoesNotExist:
+            # Por seguranca, nao revela se email existe
+            messages.success(
                 request,
-                'Telefone nao encontrado em nossa base de dados.'
+                'Se o email existir, voce recebera as instrucoes.'
             )
         except Exception as e:
-            messages.error(request, f'Erro ao processar solicitacao: {e}')
-            import traceback
-            traceback.print_exc()
+            print(f"Erro: {e}")
+            messages.error(request, 'Erro ao processar solicitacao.')
         
         return redirect('esqueci_senha')
     
     return render(request, 'usuarios/esqueci_senha.html')
 
-
-def validar_codigo(request, token):
-    """Valida codigo SMS"""
-    
-    try:
-        from usuarios.models import RecuperacaoSenha
-        recuperacao = RecuperacaoSenha.objects.get(token=token)
-        
-        if not recuperacao.is_valido():
-            messages.error(request, 'Codigo expirado!')
-            return redirect('esqueci_senha')
-        
-        if request.method == 'POST':
-            codigo = request.POST.get('codigo')
-            
-            if codigo == recuperacao.codigo_sms:
-                # Código correto - vai para redefinir senha
-                return redirect('redefinir_senha', token=token)
-            else:
-                messages.error(request, 'Codigo incorreto! Tente novamente.')
-                return redirect('validar_codigo', token=token)
-        
-        context = {
-            'token': token,
-            'telefone': recuperacao.user.perfil.telefone if hasattr(recuperacao.user, 'perfil') else '',
-        }
-        return render(request, 'usuarios/validar_codigo.html', context)
-        
-    except RecuperacaoSenha.DoesNotExist:
-        messages.error(request, 'Link invalido!')
-        return redirect('esqueci_senha')
-
-
 def redefinir_senha(request, token):
-    """Pagina de redefinir senha com token"""
+    """Redefine senha com token do email"""
     
     try:
-        from usuarios.models import RecuperacaoSenha
         recuperacao = RecuperacaoSenha.objects.get(token=token)
         
         # Verifica se token e valido
