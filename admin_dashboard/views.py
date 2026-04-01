@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from datetime import datetime
 from decimal import Decimal
+from django.db import models
 
 
 @login_required
@@ -18,6 +19,7 @@ def dashboard(request):
     mensalidades_pendentes = 0
     mensalidades_pagas = 0
     mes_atual = datetime.now().strftime('%B %Y')
+    total_turmas = 0
     
     # Dados para gráficos
     faturamento_meses = []
@@ -29,7 +31,7 @@ def dashboard(request):
     
     try:
         # Imports DENTRO do try (evita quebrar o Django se der erro)
-        from usuarios.models import Aluna
+        from usuarios.models import Aluna, Turma
         from pagamentos.models import Mensalidade
         from django.db.models import Sum, Count
         from datetime import timedelta
@@ -41,6 +43,9 @@ def dashboard(request):
         
         # Total de alunas ativas
         total_alunas = Aluna.objects.filter(ativa=True).count()
+        
+        # Total de turmas ativas
+        total_turmas = Turma.objects.filter(ativa=True).count()
         
         # Mensalidades do mes atual
         mensalidades_mes = Mensalidade.objects.filter(
@@ -72,13 +77,13 @@ def dashboard(request):
             faturamento_valores.append(float(valor))
         
         # GRAFICO 2 - Alunas por turma
-        turmas = Aluna.objects.filter(ativa=True).values('turma_atual').annotate(
-            total=Count('id')
+        turmas = Turma.objects.filter(ativa=True).annotate(
+            total=Count('alunas', filter=models.Q(alunas__ativa=True))
         ).order_by('-total')
         
         for turma in turmas:
-            turmas_labels.append(turma['turma_atual'] or 'Sem turma')
-            turmas_valores.append(turma['total'])
+            turmas_labels.append(turma.nome)
+            turmas_valores.append(turma.total)
         
         # GRAFICO 3 - Status mensalidades mes atual
         status_valores[0] = mensalidades_mes.filter(status='pago').count()
@@ -93,6 +98,7 @@ def dashboard(request):
     
     context = {
         'total_alunas': total_alunas,
+        'total_turmas': total_turmas,
         'total_recebido': total_recebido,
         'mensalidades_pendentes': mensalidades_pendentes,
         'mensalidades_pagas': mensalidades_pagas,
@@ -178,14 +184,14 @@ def aluna_criar(request):
     
     if request.method == 'POST':
         try:
-            from usuarios.models import Aluna
+            from usuarios.models import Aluna, Turma
             from django.contrib.auth.models import User
             from django.contrib import messages
             
             # Pega dados da aluna
             nome = request.POST.get('nome')
             data_nascimento = request.POST.get('data_nascimento')
-            turma_atual = request.POST.get('turma_atual')
+            turma_id = request.POST.get('turma')
             ativa = request.POST.get('ativa') == 'on'
             observacoes = request.POST.get('observacoes', '')
             
@@ -254,11 +260,19 @@ def aluna_criar(request):
                 
                 messages.success(request, f'Responsavel {resp_nome} {resp_sobrenome} cadastrado! Login: {resp_email} / Senha: {resp_senha}')
             
+            # Busca turma se foi selecionada
+            turma = None
+            if turma_id:
+                try:
+                    turma = Turma.objects.get(id=turma_id)
+                except Turma.DoesNotExist:
+                    pass
+            
             # Cria a aluna
             aluna = Aluna.objects.create(
                 nome=nome,
                 data_nascimento=data_nascimento,
-                turma_atual=turma_atual,
+                turma=turma,
                 responsavel=responsavel,
                 ativa=ativa,
                 observacoes=observacoes
@@ -277,13 +291,19 @@ def aluna_criar(request):
     # GET - mostra form
     try:
         from django.contrib.auth.models import User
+        from usuarios.models import Turma
+        
         responsaveis = User.objects.filter(is_staff=False).order_by('first_name')
+        turmas = Turma.objects.filter(ativa=True).order_by('nome')
+        
     except Exception as e:
-        print(f"Erro ao buscar responsaveis: {e}")
+        print(f"Erro ao buscar dados: {e}")
         responsaveis = []
+        turmas = []
     
     context = {
         'responsaveis': responsaveis,
+        'turmas': turmas,
     }
     
     return render(request, 'admin_dashboard/alunas/criar.html', context)
@@ -345,12 +365,12 @@ def aluna_editar(request, pk):
     if request.method == 'POST':
         try:
             from django.contrib.auth.models import User
+            from usuarios.models import Turma
             from django.contrib import messages
             
             # Atualiza dados
             aluna.nome = request.POST.get('nome')
             aluna.data_nascimento = request.POST.get('data_nascimento')
-            aluna.turma_atual = request.POST.get('turma_atual')
             aluna.ativa = request.POST.get('ativa') == 'on'
             aluna.observacoes = request.POST.get('observacoes', '')
             
@@ -358,6 +378,16 @@ def aluna_editar(request, pk):
             responsavel_id = request.POST.get('responsavel')
             if responsavel_id:
                 aluna.responsavel = User.objects.get(id=responsavel_id)
+            
+            # Atualiza turma
+            turma_id = request.POST.get('turma')
+            if turma_id:
+                try:
+                    aluna.turma = Turma.objects.get(id=turma_id)
+                except Turma.DoesNotExist:
+                    aluna.turma = None
+            else:
+                aluna.turma = None
             
             aluna.save()
             
@@ -372,14 +402,20 @@ def aluna_editar(request, pk):
     # GET - mostra form preenchido
     try:
         from django.contrib.auth.models import User
+        from usuarios.models import Turma
+        
         responsaveis = User.objects.filter(is_staff=False).order_by('first_name')
+        turmas = Turma.objects.filter(ativa=True).order_by('nome')
+        
     except Exception as e:
-        print(f"Erro ao buscar responsaveis: {e}")
+        print(f"Erro ao buscar dados: {e}")
         responsaveis = []
+        turmas = []
     
     context = {
         'aluna': aluna,
         'responsaveis': responsaveis,
+        'turmas': turmas,
     }
     
     return render(request, 'admin_dashboard/alunas/editar.html', context)
@@ -1014,3 +1050,163 @@ def responsavel_redefinir_senha(request, pk):
         from django.contrib import messages
         messages.error(request, f'Responsavel nao encontrado: {e}')
         return redirect('admin_dashboard:responsaveis_list')
+    
+@login_required
+def turmas_list(request):
+    """Lista de turmas"""
+    
+    if not request.user.is_staff:
+        return redirect('home')
+    
+    try:
+        from usuarios.models import Turma
+        
+        turmas = Turma.objects.all().order_by('nome')
+        
+        # Busca
+        busca = request.GET.get('busca', '')
+        if busca:
+            turmas = turmas.filter(nome__icontains=busca)
+        
+        # Filtro por status
+        status = request.GET.get('status', '')
+        if status == 'ativas':
+            turmas = turmas.filter(ativa=True)
+        elif status == 'inativas':
+            turmas = turmas.filter(ativa=False)
+        
+    except Exception as e:
+        print(f"Erro ao buscar turmas: {e}")
+        turmas = []
+        busca = ''
+        status = ''
+    
+    context = {
+        'turmas': turmas,
+        'busca': busca,
+        'status_filtro': status,
+        'total_turmas': turmas.count() if turmas else 0,
+    }
+    
+    return render(request, 'admin_dashboard/turmas/list.html', context)
+
+
+@login_required
+def turma_criar(request):
+    """Criar nova turma"""
+    
+    if not request.user.is_staff:
+        return redirect('home')
+    
+    if request.method == 'POST':
+        try:
+            from usuarios.models import Turma
+            from django.contrib import messages
+            
+            nome = request.POST.get('nome')
+            descricao = request.POST.get('descricao', '')
+            horario = request.POST.get('horario', '')
+            professor = request.POST.get('professor', '')
+            capacidade_maxima = request.POST.get('capacidade_maxima', 20)
+            ativa = request.POST.get('ativa') == 'on'
+            
+            if not nome:
+                messages.error(request, 'O nome da turma e obrigatorio!')
+                return redirect('admin_dashboard:turma_criar')
+            
+            turma = Turma.objects.create(
+                nome=nome,
+                descricao=descricao,
+                horario=horario,
+                professor=professor,
+                capacidade_maxima=int(capacidade_maxima),
+                ativa=ativa
+            )
+            
+            messages.success(request, f'Turma "{nome}" criada com sucesso!')
+            return redirect('admin_dashboard:turmas_list')
+            
+        except Exception as e:
+            from django.contrib import messages
+            messages.error(request, f'Erro ao criar turma: {e}')
+            print(f"Erro detalhado: {e}")
+            import traceback
+            traceback.print_exc()
+            return redirect('admin_dashboard:turma_criar')
+    
+    return render(request, 'admin_dashboard/turmas/criar.html')
+
+
+@login_required
+def turma_editar(request, pk):
+    """Editar turma existente"""
+    
+    if not request.user.is_staff:
+        return redirect('home')
+    
+    try:
+        from usuarios.models import Turma
+        turma = Turma.objects.get(pk=pk)
+    except Exception as e:
+        from django.contrib import messages
+        messages.error(request, f'Turma nao encontrada: {e}')
+        return redirect('admin_dashboard:turmas_list')
+    
+    if request.method == 'POST':
+        try:
+            from django.contrib import messages
+            
+            turma.nome = request.POST.get('nome')
+            turma.descricao = request.POST.get('descricao', '')
+            turma.horario = request.POST.get('horario', '')
+            turma.professor = request.POST.get('professor', '')
+            turma.capacidade_maxima = int(request.POST.get('capacidade_maxima', 20))
+            turma.ativa = request.POST.get('ativa') == 'on'
+            
+            turma.save()
+            
+            messages.success(request, f'Turma "{turma.nome}" atualizada com sucesso!')
+            return redirect('admin_dashboard:turmas_list')
+            
+        except Exception as e:
+            from django.contrib import messages
+            messages.error(request, f'Erro ao atualizar turma: {e}')
+            return redirect('admin_dashboard:turma_editar', pk=pk)
+    
+    context = {
+        'turma': turma,
+    }
+    
+    return render(request, 'admin_dashboard/turmas/editar.html', context)
+
+
+@login_required
+def turma_excluir(request, pk):
+    """Excluir turma"""
+    
+    if not request.user.is_staff:
+        return redirect('home')
+    
+    if request.method == 'POST':
+        try:
+            from usuarios.models import Turma
+            from django.contrib import messages
+            
+            turma = Turma.objects.get(pk=pk)
+            
+            # Verifica se tem alunas
+            if turma.total_alunas > 0:
+                messages.error(request, f'Nao e possivel excluir a turma "{turma.nome}" pois ela possui {turma.total_alunas} alunas!')
+                return redirect('admin_dashboard:turmas_list')
+            
+            nome = turma.nome
+            turma.delete()
+            
+            messages.success(request, f'Turma "{nome}" excluida com sucesso!')
+            
+        except Exception as e:
+            from django.contrib import messages
+            messages.error(request, f'Erro ao excluir turma: {e}')
+    
+    return redirect('admin_dashboard:turmas_list')
+    

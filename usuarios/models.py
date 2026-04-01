@@ -21,12 +21,48 @@ class Perfil(models.Model):
         verbose_name_plural = 'Perfis'
 
 
+class Turma(models.Model):
+    """Turmas de ballet"""
+    nome = models.CharField(max_length=100, unique=True)
+    descricao = models.TextField(blank=True)
+    horario = models.CharField(max_length=100, blank=True, help_text="Ex: Segunda e Quarta 14h-15h")
+    professor = models.CharField(max_length=100, blank=True)
+    capacidade_maxima = models.IntegerField(default=20, help_text="Número máximo de alunas")
+    ativa = models.BooleanField(default=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return self.nome
+    
+    @property
+    def total_alunas(self):
+        """Total de alunas ativas na turma"""
+        return self.alunas.filter(ativa=True).count()
+    
+    @property
+    def vagas_disponiveis(self):
+        """Vagas disponíveis"""
+        return self.capacidade_maxima - self.total_alunas
+    
+    @property
+    def percentual_ocupacao(self):
+        """Percentual de ocupação da turma"""
+        if self.capacidade_maxima == 0:
+            return 0
+        return int((self.total_alunas / self.capacidade_maxima) * 100)
+    
+    class Meta:
+        verbose_name = 'Turma'
+        verbose_name_plural = 'Turmas'
+        ordering = ['nome']
+
+
 class Aluna(models.Model):
     """Modelo para as alunas de ballet"""
     responsavel = models.ForeignKey(User, on_delete=models.CASCADE, related_name='alunas')
     nome = models.CharField(max_length=100)
     data_nascimento = models.DateField()
-    turma_atual = models.CharField(max_length=50, blank=True)
+    turma = models.ForeignKey(Turma, on_delete=models.SET_NULL, null=True, blank=True, related_name='alunas')
     ativa = models.BooleanField(default=True)
     data_matricula = models.DateField(auto_now_add=True)
     observacoes = models.TextField(blank=True)

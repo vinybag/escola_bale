@@ -56,54 +56,61 @@
 <!-- Tabela -->
 <div style="background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
     <div class="table-container">
-         <table style="width: 100%; border-collapse: collapse;">
-        <thead style="background: #f8f9fa;">
-            <tr>
-                <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Aluna</th>
-                <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Responsavel</th>
-                <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Turma</th>
-                <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Idade</th>
-                <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Status</th>
-                <th style="padding: 1rem; text-align: right; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Acoes</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for aluna in alunas %}
-            <tr style="border-top: 1px solid #eee;">
-                <td style="padding: 1rem;">
-                    <strong style="color: #2c3e50;">{{ aluna.nome }}</strong>
-                </td>
-                <td style="padding: 1rem; color: #666;">
-                    {{ aluna.responsavel.get_full_name|default:aluna.responsavel.username }}
-                </td>
-                <td style="padding: 1rem;">
-                    <span style="background: #e8d5f2; color: #6b2d8f; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">
-                        {{ aluna.turma_atual|default:"Sem turma" }}
-                    </span>
-                </td>
-                <td style="padding: 1rem; color: #666;">
-                    {{ aluna.idade }} anos
-                </td>
-                <td style="padding: 1rem;">
-                    {% if aluna.ativa %}
-                        <span style="background: #d4edda; color: #155724; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">Ativa</span>
-                    {% else %}
-                        <span style="background: #f8d7da; color: #721c24; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">Inativa</span>
-                    {% endif %}
-                </td>
-                <td style="padding: 1rem; text-align: right;">
-                    <a href="{% url 'admin_dashboard:aluna_detalhes' aluna.pk %}" style="color: #b07a84; text-decoration: none; margin-right: 1rem;">Ver</a>
-                    <a href="{% url 'admin_dashboard:aluna_editar' aluna.pk %}" style="color: #2c3e50; text-decoration: none;">Editar</a>
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="6" style="padding: 3rem; text-align: center; color: #999;">
-                    Nenhuma aluna encontrada.
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead style="background: #f8f9fa;">
+                <tr>
+                    <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Aluna</th>
+                    <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Responsavel</th>
+                    <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Turma</th>
+                    <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Idade</th>
+                    <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Status</th>
+                    <th style="padding: 1rem; text-align: right; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Acoes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for aluna in alunas %}
+                <tr style="border-top: 1px solid #eee;">
+                    <td style="padding: 1rem;">
+                        <strong style="color: #2c3e50;">{{ aluna.nome }}</strong>
+                    </td>
+                    <td style="padding: 1rem; color: #666;">
+                        {{ aluna.responsavel.get_full_name|default:aluna.responsavel.username }}
+                    </td>
+                    <td style="padding: 1rem;">
+                        {% if aluna.turma %}
+                            <span style="background: #e8d5f2; color: #6b2d8f; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">
+                                {{ aluna.turma.nome }}
+                            </span>
+                        {% else %}
+                            <span style="background: #f5f5f5; color: #999; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">
+                                Sem turma
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td style="padding: 1rem; color: #666;">
+                        {{ aluna.idade }} anos
+                    </td>
+                    <td style="padding: 1rem;">
+                        {% if aluna.ativa %}
+                            <span style="background: #d4edda; color: #155724; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">Ativa</span>
+                        {% else %}
+                            <span style="background: #f8d7da; color: #721c24; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">Inativa</span>
+                        {% endif %}
+                    </td>
+                    <td style="padding: 1rem; text-align: right;">
+                        <a href="{% url 'admin_dashboard:aluna_detalhes' aluna.pk %}" style="color: #b07a84; text-decoration: none; margin-right: 1rem;">Ver</a>
+                        <a href="{% url 'admin_dashboard:aluna_editar' aluna.pk %}" style="color: #2c3e50; text-decoration: none;">Editar</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" style="padding: 3rem; text-align: center; color: #999;">
+                        Nenhuma aluna encontrada.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}

@@ -1,0 +1,120 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Turmas{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
+    <div>
+        <h2>Turmas</h2>
+        <p>{{ total_turmas }} turma{{ total_turmas|pluralize }}</p>
+    </div>
+    <a href="{% url 'admin_dashboard:turma_criar' %}" class="btn btn-primary">+ Nova Turma</a>
+</div>
+
+<!-- Filtros -->
+<div style="background: white; padding: 1.5rem; border-radius: 10px; margin-bottom: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+    <form method="get" style="display: grid; grid-template-columns: 2fr 1fr auto; gap: 1rem; align-items: end;">
+        
+        <!-- Busca -->
+        <div>
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Buscar</label>
+            <input type="text" 
+                   name="busca" 
+                   value="{{ busca }}"
+                   placeholder="Nome da turma..."
+                   style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+        </div>
+        
+        <!-- Filtro Status -->
+        <div>
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Status</label>
+            <select name="status" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                <option value="">Todas</option>
+                <option value="ativas" {% if status_filtro == 'ativas' %}selected{% endif %}>Ativas</option>
+                <option value="inativas" {% if status_filtro == 'inativas' %}selected{% endif %}>Inativas</option>
+            </select>
+        </div>
+        
+        <div style="display: flex; gap: 0.5rem;">
+            <button type="submit" class="btn btn-primary">Filtrar</button>
+            <a href="{% url 'admin_dashboard:turmas_list' %}" style="padding: 0.75rem 1.5rem; background: #f5f5f5; color: #333; border-radius: 5px; text-decoration: none;">Limpar</a>
+        </div>
+    </form>
+</div>
+
+<!-- Tabela -->
+<div style="background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+    <div class="table-container">
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead style="background: #f8f9fa;">
+                <tr>
+                    <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Turma</th>
+                    <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Professor</th>
+                    <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Horário</th>
+                    <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Alunas</th>
+                    <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Ocupação</th>
+                    <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Status</th>
+                    <th style="padding: 1rem; text-align: right; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for turma in turmas %}
+                <tr style="border-top: 1px solid #eee;">
+                    <td style="padding: 1rem;">
+                        <strong style="color: #2c3e50;">{{ turma.nome }}</strong>
+                        {% if turma.descricao %}
+                            <br><small style="color: #999;">{{ turma.descricao|truncatewords:8 }}</small>
+                        {% endif %}
+                    </td>
+                    <td style="padding: 1rem; color: #666;">
+                        {{ turma.professor|default:"—" }}
+                    </td>
+                    <td style="padding: 1rem; color: #666;">
+                        {{ turma.horario|default:"—" }}
+                    </td>
+                    <td style="padding: 1rem;">
+                        <strong style="color: #2c3e50;">{{ turma.total_alunas }}</strong> / {{ turma.capacidade_maxima }}
+                        <br><small style="color: #999;">{{ turma.vagas_disponiveis }} vagas</small>
+                    </td>
+                    <td style="padding: 1rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <div style="flex: 1; background: #e0e0e0; height: 8px; border-radius: 4px; overflow: hidden; max-width: 100px;">
+                                <div style="width: {{ turma.percentual_ocupacao }}%; background: {% if turma.percentual_ocupacao >= 90 %}#dc3545{% elif turma.percentual_ocupacao >= 70 %}#ffc107{% else %}#28a745{% endif %}; height: 100%;"></div>
+                            </div>
+                            <span style="font-size: 0.875rem; font-weight: 500; color: #666;">{{ turma.percentual_ocupacao }}%</span>
+                        </div>
+                    </td>
+                    <td style="padding: 1rem;">
+                        {% if turma.ativa %}
+                            <span style="background: #d4edda; color: #155724; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">Ativa</span>
+                        {% else %}
+                            <span style="background: #f8d7da; color: #721c24; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">Inativa</span>
+                        {% endif %}
+                    </td>
+                    <td style="padding: 1rem; text-align: right;">
+                        <a href="{% url 'admin_dashboard:turma_editar' turma.pk %}" style="color: #2c3e50; text-decoration: none; margin-right: 1rem;">Editar</a>
+                        <form method="post" 
+                              action="{% url 'admin_dashboard:turma_excluir' turma.pk %}" 
+                              style="display: inline;"
+                              onsubmit="return confirm('Tem certeza que deseja excluir a turma {{ turma.nome }}?');">
+                            {% csrf_token %}
+                            <button type="submit" 
+                                    style="background: none; border: none; color: #dc3545; cursor: pointer; text-decoration: none; font-size: 1rem; padding: 0;"
+                                    {% if turma.total_alunas > 0 %}disabled title="Não é possível excluir turma com alunas"{% endif %}>
+                                Excluir
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" style="padding: 3rem; text-align: center; color: #999;">
+                        Nenhuma turma encontrada.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

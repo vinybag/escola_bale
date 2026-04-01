@@ -1,0 +1,93 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Criar Turma{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
+    <div>
+        <h2>Nova Turma</h2>
+    </div>
+    <a href="{% url 'admin_dashboard:turmas_list' %}" class="btn btn-outline">← Voltar</a>
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+        <div style="background: {% if message.tags == 'success' %}#d4edda{% else %}#f8d7da{% endif %}; color: {% if message.tags == 'success' %}#155724{% else %}#721c24{% endif %}; padding: 1rem; border-radius: 5px; margin-bottom: 1.5rem;">
+            {{ message }}
+        </div>
+    {% endfor %}
+{% endif %}
+
+<div style="background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+    <form method="post">
+        {% csrf_token %}
+        
+        <div style="margin-bottom: 2rem;">
+            <h3 style="margin-bottom: 1rem; color: #2c3e50;">Informações Básicas</h3>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Nome da Turma *</label>
+                    <input type="text" 
+                           name="nome" 
+                           required
+                           placeholder="Ex: Ballet Infantil I"
+                           style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                </div>
+                
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Capacidade Máxima *</label>
+                    <input type="number" 
+                           name="capacidade_maxima" 
+                           value="20"
+                           min="1"
+                           required
+                           style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Descrição</label>
+                <textarea name="descricao" 
+                          rows="3"
+                          placeholder="Descrição da turma..."
+                          style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;"></textarea>
+            </div>
+        </div>
+        
+        <div style="margin-bottom: 2rem;">
+            <h3 style="margin-bottom: 1rem; color: #2c3e50;">Detalhes</h3>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Professor(a)</label>
+                    <input type="text" 
+                           name="professor" 
+                           placeholder="Nome do professor"
+                           style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                </div>
+                
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Horário</label>
+                    <input type="text" 
+                           name="horario" 
+                           placeholder="Ex: Segunda e Quarta 14h-15h"
+                           style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                </div>
+            </div>
+        </div>
+        
+        <div style="margin-bottom: 2rem;">
+            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                <input type="checkbox" name="ativa" checked>
+                <span style="font-weight: 500; color: #333;">Turma ativa</span>
+            </label>
+        </div>
+        
+        <div style="display: flex; gap: 1rem;">
+            <button type="submit" class="btn btn-primary">Criar Turma</button>
+            <a href="{% url 'admin_dashboard:turmas_list' %}" style="padding: 0.75rem 1.5rem; background: #f5f5f5; color: #333; border-radius: 5px; text-decoration: none;">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

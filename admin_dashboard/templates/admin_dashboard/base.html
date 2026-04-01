@@ -346,6 +346,11 @@
                 <a href="{% url 'admin_dashboard:alunas_list' %}" class="{% if 'alunas' in request.path %}active{% endif %}">
                     Alunas
                 </a>
+                <li>
+                <a href="{% url 'admin_dashboard:turmas_list' %}" {% if 'turmas' in request.path %}class="active"{% endif %}>
+                    Turmas
+                </a>
+                </li>
                 <a href="{% url 'admin_dashboard:responsaveis_list' %}" class="{% if 'responsaveis' in request.path %}active{% endif %}">
                     Responsáveis
                 </a>
