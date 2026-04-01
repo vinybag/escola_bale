@@ -33,7 +33,7 @@ def dashboard(request):
         # Imports DENTRO do try (evita quebrar o Django se der erro)
         from usuarios.models import Aluna, Turma
         from pagamentos.models import Mensalidade
-        from django.db.models import Sum, Count
+        from django.db.models import Sum, Count, Q
         from datetime import timedelta
         
         # Estatisticas
@@ -76,14 +76,18 @@ def dashboard(request):
             faturamento_meses.append(mes_nome)
             faturamento_valores.append(float(valor))
         
-        # GRAFICO 2 - Alunas por turma
-        turmas = Turma.objects.filter(ativa=True).annotate(
-            total=Count('alunas', filter=models.Q(alunas__ativa=True))
-        ).order_by('-total')
+        # GRAFICO 2 - Alunas por turma (CORRIGIDO!)
+        turmas = Turma.objects.filter(ativa=True).order_by('nome')
         
         for turma in turmas:
-            turmas_labels.append(turma.nome)
-            turmas_valores.append(turma.total)
+            total_alunas_turma = Aluna.objects.filter(
+                turma=turma,
+                ativa=True
+            ).count()
+            
+            if total_alunas_turma > 0:  # Só adiciona turmas com alunas
+                turmas_labels.append(turma.nome)
+                turmas_valores.append(total_alunas_turma)
         
         # GRAFICO 3 - Status mensalidades mes atual
         status_valores[0] = mensalidades_mes.filter(status='pago').count()
@@ -123,11 +127,14 @@ def alunas_list(request):
         return redirect('home')
     
     try:
-        from usuarios.models import Aluna
+        from usuarios.models import Aluna, Turma
         from django.db.models import Q
         
         # Query base
-        alunas = Aluna.objects.select_related('responsavel').all()
+        alunas = Aluna.objects.select_related('responsavel', 'turma').all()
+        
+        # Debug - mostra no console
+        print(f"Total de alunas no banco: {alunas.count()}")
         
         # Busca
         busca = request.GET.get('busca', '')
@@ -137,27 +144,35 @@ def alunas_list(request):
                 Q(responsavel__first_name__icontains=busca) |
                 Q(responsavel__last_name__icontains=busca)
             )
+            print(f"Alunas após busca: {alunas.count()}")
         
         # Filtro por turma
         turma = request.GET.get('turma', '')
         if turma:
-            alunas = alunas.filter(turma_atual=turma)
+            alunas = alunas.filter(turma__nome=turma)
+            print(f"Alunas após filtro turma: {alunas.count()}")
         
         # Filtro por status
         status = request.GET.get('status', '')
         if status == 'ativas':
             alunas = alunas.filter(ativa=True)
+            print(f"Alunas após filtro ativas: {alunas.count()}")
         elif status == 'inativas':
             alunas = alunas.filter(ativa=False)
+            print(f"Alunas após filtro inativas: {alunas.count()}")
         
         # Ordenacao
         alunas = alunas.order_by('nome')
         
         # Turmas unicas para o filtro
-        turmas = Aluna.objects.values_list('turma_atual', flat=True).distinct()
+        turmas = Turma.objects.filter(ativa=True).values_list('nome', flat=True).distinct()
+        
+        print(f"Turmas disponíveis: {list(turmas)}")
         
     except Exception as e:
         print(f"Erro ao buscar alunas: {e}")
+        import traceback
+        traceback.print_exc()
         alunas = []
         turmas = []
         busca = ''
