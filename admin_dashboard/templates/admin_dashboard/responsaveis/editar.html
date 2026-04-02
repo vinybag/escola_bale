@@ -1,0 +1,104 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Editar Responsável{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
+    <div>
+        <h2>Editar Responsável</h2>
+    </div>
+    <a href="{% url 'admin_dashboard:responsaveis_list' %}" class="btn btn-outline">← Voltar</a>
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+        <div style="background: {% if message.tags == 'success' %}#d4edda{% else %}#f8d7da{% endif %}; color: {% if message.tags == 'success' %}#155724{% else %}#721c24{% endif %}; padding: 1rem; border-radius: 5px; margin-bottom: 1.5rem;">
+            {{ message }}
+        </div>
+    {% endfor %}
+{% endif %}
+
+<div style="background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+    <form method="post">
+        {% csrf_token %}
+        
+        <div style="margin-bottom: 2rem;">
+            <h3 style="margin-bottom: 1rem; color: #2c3e50;">Dados Pessoais</h3>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Nome *</label>
+                    <input type="text" 
+                           name="first_name" 
+                           value="{{ responsavel.first_name }}"
+                           required
+                           style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                </div>
+                
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Sobrenome *</label>
+                    <input type="text" 
+                           name="last_name" 
+                           value="{{ responsavel.last_name }}"
+                           required
+                           style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                </div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Email *</label>
+                    <input type="email" 
+                           name="email" 
+                           value="{{ responsavel.email }}"
+                           required
+                           style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                </div>
+                
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Telefone *</label>
+                    <input type="text" 
+                           name="telefone" 
+                           value="{{ perfil.telefone }}"
+                           required
+                           placeholder="(15) 99999-9999"
+                           style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                </div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">CPF</label>
+                    <input type="text" 
+                           name="cpf" 
+                           value="{{ perfil.cpf }}"
+                           placeholder="000.000.000-00"
+                           style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                </div>
+                
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Data de Nascimento</label>
+                    <input type="date" 
+                           name="data_nascimento" 
+                           value="{{ perfil.data_nascimento|date:'Y-m-d' }}"
+                           style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Endereço</label>
+                <input type="text" 
+                       name="endereco" 
+                       value="{{ perfil.endereco }}"
+                       placeholder="Rua, número, bairro, cidade"
+                       style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+            </div>
+        </div>
+        
+        <div style="display: flex; gap: 1rem;">
+            <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+            <a href="{% url 'admin_dashboard:responsaveis_list' %}" style="padding: 0.75rem 1.5rem; background: #f5f5f5; color: #333; border-radius: 5px; text-decoration: none;">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

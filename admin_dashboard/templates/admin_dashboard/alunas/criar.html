@@ -21,20 +21,12 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label for="nome">Nome completo *</label>
-                        <input type="text" 
-                               id="nome" 
-                               name="nome" 
-                               required
-                               class="form-control">
+                        <input type="text" id="nome" name="nome" required class="form-control">
                     </div>
                     
                     <div class="form-group">
                         <label for="data_nascimento">Data de nascimento *</label>
-                        <input type="date" 
-                               id="data_nascimento" 
-                               name="data_nascimento" 
-                               required
-                               class="form-control">
+                        <input type="date" id="data_nascimento" name="data_nascimento" required class="form-control">
                     </div>
                 </div>
                 
@@ -53,10 +45,7 @@
                     
                     <div class="form-group">
                         <label for="observacoes">Observações</label>
-                        <textarea id="observacoes" 
-                                  name="observacoes" 
-                                  rows="3"
-                                  class="form-control"></textarea>
+                        <textarea id="observacoes" name="observacoes" rows="3" class="form-control"></textarea>
                     </div>
                 </div>
                 
@@ -68,100 +57,73 @@
                 </div>
             </div>
             
-            <!-- Responsável -->
-            <div style="border-left: 4px solid #2c3e50; padding-left: 1rem;">
-                <h3 style="color: #2c3e50; margin-bottom: 1rem;">Responsável</h3>
+            <!-- RESPONSÁVEL NOVO BLOCO -->
+            <div style="margin-bottom: 2rem;">
+                <h3 style="margin-bottom: 1rem; color: #2c3e50;">Responsável</h3>
                 
-                <!-- Escolher: Existente ou Novo -->
-                <div style="background: #f8f9fa; padding: 1rem; border-radius: 5px; margin-bottom: 1rem;">
-                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
-                        Selecione uma opção:
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; margin-bottom: 1rem;">
+                        <input type="radio" name="tipo_responsavel" value="novo" checked onchange="toggleResponsavel()">
+                        <span style="font-weight: 500; color: #333;">Criar novo responsável</span>
                     </label>
-                    <div style="display: flex; gap: 2rem;">
-                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                            <input type="radio" name="tipo_responsavel" value="existente" checked onchange="toggleResponsavel()"
-                                   style="cursor: pointer;">
-                            <span>Responsável existente</span>
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                            <input type="radio" name="tipo_responsavel" value="novo" onchange="toggleResponsavel()"
-                                   style="cursor: pointer;">
-                            <span>Cadastrar novo responsável</span>
-                        </label>
-                    </div>
+                    
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                        <input type="radio" name="tipo_responsavel" value="existente" onchange="toggleResponsavel()">
+                        <span style="font-weight: 500; color: #333;">Usar responsável existente</span>
+                    </label>
                 </div>
                 
                 <!-- Responsável Existente -->
-                <div id="responsavel-existente">
+                <div id="responsavel-existente" style="display: none; margin-bottom: 1.5rem;">
                     <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
-                        Selecione o responsável <span style="color: red;">*</span>
+                        Selecione o responsável
                     </label>
                     <select name="responsavel_existente" id="select-responsavel"
                             style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
-                        <option value="">-- Selecione --</option>
+                        <option value="">Selecione...</option>
                         {% for resp in responsaveis %}
-                            <option value="{{ resp.id }}">{{ resp.get_full_name|default:resp.username }} - {{ resp.email }}</option>
+                            <option value="{{ resp.id }}">
+                                {{ resp.get_full_name|default:resp.username }} - {{ resp.email }} ({{ resp.alunas.count }} aluna{{ resp.alunas.count|pluralize }})
+                            </option>
                         {% endfor %}
                     </select>
                 </div>
                 
                 <!-- Novo Responsável -->
-                <div id="responsavel-novo" style="display: none;">
-                    <div style="display: grid; gap: 1rem;">
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                            <div>
-                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
-                                    Nome <span style="color: red;">*</span>
-                                </label>
-                                <input type="text" name="responsavel_nome" id="resp-nome"
-                                       placeholder="Ex: João"
-                                       style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
-                            </div>
-                            
-                            <div>
-                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
-                                    Sobrenome <span style="color: red;">*</span>
-                                </label>
-                                <input type="text" name="responsavel_sobrenome" id="resp-sobrenome"
-                                       placeholder="Ex: Silva"
-                                       style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
-                            </div>
-                        </div>
-                        
+                <div id="novo-responsavel">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                         <div>
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
-                                Email <span style="color: red;">*</span>
-                            </label>
-                            <input type="email" name="responsavel_email" id="resp-email"
-                                   placeholder="Ex: joao@email.com"
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Nome *</label>
+                            <input type="text" name="responsavel_nome" id="responsavel_nome"
                                    style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
-                            <small style="display: block; margin-top: 0.25rem; color: #666;">
-                                O email será usado como login
-                            </small>
                         </div>
                         
                         <div>
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
-                                Telefone <span style="color: red;">*</span>
-                            </label>
-                            <input type="tel" name="responsavel_telefone" id="resp-telefone" required
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Sobrenome *</label>
+                            <input type="text" name="responsavel_sobrenome" id="responsavel_sobrenome"
+                                   style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                        </div>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Email *</label>
+                            <input type="email" name="responsavel_email" id="responsavel_email"
+                                   style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                        </div>
+                        
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Telefone *</label>
+                            <input type="text" name="responsavel_telefone" id="responsavel_telefone"
                                    placeholder="(15) 99999-9999"
                                    style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
-                            <small style="display: block; margin-top: 0.25rem; color: #666;">
-                                Será usado para recuperação de senha
-                            </small>
                         </div>
                         
                         <div>
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
-                                Senha inicial <span style="color: red;">*</span>
-                            </label>
-                            <input type="password" name="responsavel_senha" id="resp-senha"
-                                   placeholder="Mínimo 6 caracteres"
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Senha *</label>
+                            <input type="text" name="responsavel_senha" id="responsavel_senha"
+                                   placeholder="Senha inicial"
                                    style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
-                            <small style="display: block; margin-top: 0.25rem; color: #666;">
-                                O responsável poderá alterar depois
-                            </small>
                         </div>
                     </div>
                 </div>
@@ -185,35 +147,45 @@
 <script>
 function toggleResponsavel() {
     const tipo = document.querySelector('input[name="tipo_responsavel"]:checked').value;
-    const divExistente = document.getElementById('responsavel-existente');
-    const divNovo = document.getElementById('responsavel-novo');
-    const selectResp = document.getElementById('select-responsavel');
     
-    // Campos do novo responsável
-    const camposNovo = ['resp-nome', 'resp-sobrenome', 'resp-email', 'resp-telefone', 'resp-senha'];
+    const novoDiv = document.getElementById('novo-responsavel');
+    const existenteDiv = document.getElementById('responsavel-existente');
+    const selectResp = document.getElementById('select-responsavel');
+
+    const camposNovo = [
+        'responsavel_nome',
+        'responsavel_sobrenome',
+        'responsavel_email',
+        'responsavel_telefone',
+        'responsavel_senha'
+    ];
     
     if (tipo === 'existente') {
-        divExistente.style.display = 'block';
-        divNovo.style.display = 'none';
-        selectResp.required = true;
-        
-        // Remove required dos campos novos
+        novoDiv.style.display = 'none';
+        existenteDiv.style.display = 'block';
+
+        if (selectResp) selectResp.required = true;
+
         camposNovo.forEach(id => {
             const campo = document.getElementById(id);
             if (campo) campo.required = false;
         });
+
     } else {
-        divExistente.style.display = 'none';
-        divNovo.style.display = 'block';
-        selectResp.required = false;
-        
-        // Adiciona required nos campos novos
+        novoDiv.style.display = 'block';
+        existenteDiv.style.display = 'none';
+
+        if (selectResp) selectResp.required = false;
+
         camposNovo.forEach(id => {
             const campo = document.getElementById(id);
             if (campo) campo.required = true;
         });
     }
 }
+
+// Inicializa ao carregar
+document.addEventListener('DOMContentLoaded', toggleResponsavel);
 </script>
 
 {% endblock %}

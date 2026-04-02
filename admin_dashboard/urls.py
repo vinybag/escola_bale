@@ -39,5 +39,7 @@ urlpatterns = [
     
     # Responsáveis
     path('responsaveis/', views.responsaveis_list, name='responsaveis_list'),
+    path('responsaveis/<int:pk>/editar/', views.responsavel_editar, name='responsavel_editar'),
     path('responsaveis/<int:pk>/redefinir-senha/', views.responsavel_redefinir_senha, name='responsavel_redefinir_senha'),
+    path('responsaveis/<int:pk>/excluir/', views.responsavel_excluir, name='responsavel_excluir'),
 ]

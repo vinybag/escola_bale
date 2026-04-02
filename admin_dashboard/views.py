@@ -1018,6 +1018,92 @@ def responsaveis_list(request):
     
     return render(request, 'admin_dashboard/responsaveis/list.html', context)
 
+@login_required
+def responsavel_editar(request, pk):
+    """Editar dados do responsavel"""
+    
+    if not request.user.is_staff:
+        return redirect('home')
+    
+    try:
+        from django.contrib.auth.models import User
+        from usuarios.models import Perfil
+        from django.contrib import messages
+        
+        responsavel = User.objects.get(pk=pk, is_staff=False)
+        
+        # Pega ou cria perfil
+        perfil, created = Perfil.objects.get_or_create(user=responsavel)
+        
+        if request.method == 'POST':
+            # Atualiza dados do User
+            responsavel.first_name = request.POST.get('first_name')
+            responsavel.last_name = request.POST.get('last_name')
+            responsavel.email = request.POST.get('email')
+            responsavel.save()
+            
+            # Atualiza dados do Perfil
+            perfil.telefone = request.POST.get('telefone', '')
+            perfil.cpf = request.POST.get('cpf', '')
+            perfil.endereco = request.POST.get('endereco', '')
+            
+            data_nascimento = request.POST.get('data_nascimento')
+            if data_nascimento:
+                perfil.data_nascimento = data_nascimento
+            
+            perfil.save()
+            
+            messages.success(request, f'Dados de {responsavel.get_full_name()} atualizados com sucesso!')
+            return redirect('admin_dashboard:responsaveis_list')
+        
+        # GET - mostra form
+        context = {
+            'responsavel': responsavel,
+            'perfil': perfil,
+        }
+        return render(request, 'admin_dashboard/responsaveis/editar.html', context)
+        
+    except Exception as e:
+        from django.contrib import messages
+        messages.error(request, f'Responsavel nao encontrado: {e}')
+        return redirect('admin_dashboard:responsaveis_list')
+    
+@login_required
+def responsavel_excluir(request, pk):
+    """Excluir responsavel"""
+    
+    if not request.user.is_staff:
+        return redirect('home')
+    
+    if request.method == 'POST':
+        try:
+            from django.contrib.auth.models import User
+            from django.contrib import messages
+            from usuarios.models import Aluna
+            
+            responsavel = User.objects.get(pk=pk, is_staff=False)
+            
+            # Verifica se o responsável tem alunas vinculadas
+            total_alunas = Aluna.objects.filter(responsavel=responsavel).count()
+            
+            if total_alunas > 0:
+                messages.error(
+                    request, 
+                    f'Não é possível excluir {responsavel.get_full_name()} pois ele(a) tem {total_alunas} aluna(s) vinculada(s).'
+                )
+                return redirect('admin_dashboard:responsaveis_list')
+            
+            nome = responsavel.get_full_name() or responsavel.username
+            responsavel.delete()
+            
+            messages.success(request, f'Responsável "{nome}" excluído com sucesso!')
+            
+        except Exception as e:
+            from django.contrib import messages
+            messages.error(request, f'Erro ao excluir responsável: {e}')
+    
+    return redirect('admin_dashboard:responsaveis_list')    
+
 
 @login_required
 def responsavel_redefinir_senha(request, pk):

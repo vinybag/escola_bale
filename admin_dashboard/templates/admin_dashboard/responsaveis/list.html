@@ -10,7 +10,7 @@
 
 <!-- Busca -->
 <div style="background: white; padding: 1.5rem; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 1.5rem;">
-    <form method="get" style="display: flex; gap: 1rem;">
+    <form method="get" style="display: flex; gap: 1rem; flex-wrap: wrap;">
         <input type="text" 
                name="busca" 
                value="{{ busca }}"
@@ -27,34 +27,65 @@
 </div>
 
 <!-- Lista -->
-<div class="table-container">
-    <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+<div class="table-container" style="overflow-x: auto;">
+    <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05); min-width: 500px;">
         <thead style="background: #f8f9fa;">
             <tr>
-                <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600; white-space: nowrap;">Nome</th>
-                <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600; white-space: nowrap;">Email</th>
-                <th style="padding: 1rem; text-align: center; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600; white-space: nowrap;">Alunas</th>
-                <th style="padding: 1rem; text-align: right; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600; white-space: nowrap;">Ações</th>
+                <th style="padding: 1rem; text-align: left;">Nome</th>
+                <th style="padding: 1rem; text-align: left;">Email</th>
+                <th style="padding: 1rem; text-align: center;">Alunas</th>
+                <th style="padding: 1rem; text-align: right;">Ações</th>
             </tr>
         </thead>
         <tbody>
             {% for resp in responsaveis %}
             <tr style="border-top: 1px solid #eee;">
-                <td style="padding: 1rem; color: #2c3e50; white-space: nowrap;">
+                
+                <td style="padding: 1rem;">
                     <strong>{{ resp.get_full_name|default:resp.username }}</strong>
                 </td>
-                <td style="padding: 1rem; color: #666; white-space: nowrap;">{{ resp.email }}</td>
+                
+                <td style="padding: 1rem; color: #666;">
+                    {{ resp.email }}
+                </td>
+                
                 <td style="padding: 1rem; text-align: center;">
-                    <span style="background: #e8f5e9; color: #2e7d32; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem; display: inline-block;">
+                    <span style="background: #e8f5e9; color: #2e7d32; padding: 0.25rem 0.75rem; border-radius: 20px;">
                         {{ resp.total_alunas }}
                     </span>
                 </td>
-                <td style="padding: 1rem; text-align: right; white-space: nowrap;">
-                    <a href="{% url 'admin_dashboard:responsavel_redefinir_senha' resp.pk %}" 
-                       style="color: #2c3e50; text-decoration: none; margin-right: 1rem;">
-                        🔑 Redefinir Senha
-                    </a>
+                
+                <!-- AÇÕES RESPONSIVAS -->
+                <td style="padding: 1rem; text-align: right;">
+                    <div style="display: flex; gap: 0.5rem; justify-content: flex-end; flex-wrap: wrap;">
+                        
+                        {% if resp.pk %}
+                            <a href="{% url 'admin_dashboard:responsavel_editar' resp.pk %}" 
+                               style="padding: 0.4rem 0.8rem; background: #f0f0f0; border-radius: 5px; text-decoration: none; color: #2c3e50; font-size: 0.875rem;">
+                                 Editar
+                            </a>
+
+                            <a href="{% url 'admin_dashboard:responsavel_redefinir_senha' resp.pk %}" 
+                               style="padding: 0.4rem 0.8rem; background: #f0f0f0; border-radius: 5px; text-decoration: none; color: #b07a84; font-size: 0.875rem;">
+                                 Senha
+                            </a>
+                            
+                            <!-- BOTÃO EXCLUIR -->
+                            <form method="post" 
+                                  action="{% url 'admin_dashboard:responsavel_excluir' resp.pk %}" 
+                                  style="display: inline-block;"
+                                  onsubmit="return confirmarExclusao('{{ resp.get_full_name|default:resp.username }}');">
+                                {% csrf_token %}
+                                <button type="submit" 
+                                        style="padding: 0.4rem 0.8rem; background: #fee; border: none; border-radius: 5px; color: #e74c3c; cursor: pointer; font-size: 0.875rem;">
+                                     Excluir
+                                </button>
+                            </form>
+                        {% endif %}
+                        
+                    </div>
                 </td>
+
             </tr>
             {% empty %}
             <tr>
@@ -66,4 +97,12 @@
         </tbody>
     </table>
 </div>
+
+<!-- Script de confirmação -->
+<script>
+function confirmarExclusao(nome) {
+    return confirm(`Tem certeza que deseja excluir o responsável "${nome}"?\n\nEsta ação não poderá ser desfeita.`);
+}
+</script>
+
 {% endblock %}

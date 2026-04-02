@@ -40,11 +40,16 @@
             <span style="color: #2c3e50;">{{ aluna.data_nascimento|date:"d/m/Y" }}</span>
         </div>
         
+        <!-- ✅ TURMA AJUSTADA -->
         <div>
-            <strong style="color: #666; display: block; margin-bottom: 0.25rem;">Turma:</strong>
-            <span style="background: #e8d5f2; color: #6b2d8f; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem; display: inline-block;">
-                {{ aluna.turma_atual|default:"Sem turma" }}
-            </span>
+            <strong style="color: #666; display: block; margin-bottom: 0.25rem;">Turma atual:</strong>
+            {% if aluna.turma %}
+                <span style="background: #e8d5f2; color: #6b2d8f; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem; display: inline-block;">
+                    {{ aluna.turma.nome }}
+                </span>
+            {% else %}
+                <span style="color: #999;">Sem turma</span>
+            {% endif %}
         </div>
         
         <div>
@@ -106,11 +111,11 @@
                         <td style="padding: 1rem; color: #666;">{{ mens.data_vencimento|date:"d/m/Y" }}</td>
                         <td style="padding: 1rem;">
                             {% if mens.status == 'pago' %}
-                                <span style="background: #d4edda; color: #155724; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem; display: inline-block;">Paga</span>
+                                <span style="background: #d4edda; color: #155724; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">Paga</span>
                             {% elif mens.status == 'pendente' %}
-                                <span style="background: #fff3cd; color: #856404; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem; display: inline-block;">Pendente</span>
+                                <span style="background: #fff3cd; color: #856404; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">Pendente</span>
                             {% else %}
-                                <span style="background: #f8d7da; color: #721c24; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem; display: inline-block;">Vencida</span>
+                                <span style="background: #f8d7da; color: #721c24; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">Vencida</span>
                             {% endif %}
                         </td>
                     </tr>
