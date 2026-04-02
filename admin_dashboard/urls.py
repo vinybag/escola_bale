@@ -17,6 +17,7 @@ urlpatterns = [
     # Turmas - NOVO
     path('turmas/', views.turmas_list, name='turmas_list'),
     path('turmas/criar/', views.turma_criar, name='turma_criar'),
+    path('turmas/<int:pk>/', views.turma_detalhes, name='turma_detalhes'),
     path('turmas/<int:pk>/editar/', views.turma_editar, name='turma_editar'),
     path('turmas/<int:pk>/excluir/', views.turma_excluir, name='turma_excluir'),
     

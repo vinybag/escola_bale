@@ -6,7 +6,7 @@
 <div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
     <div>
         <h2>Turmas</h2>
-        <p>{{ total_turmas }} turma{{ total_turmas|pluralize }}</p>
+        <p>{{ total_turmas }} turma{{ total_turmas|pluralize:"s" }}</p>
     </div>
     <a href="{% url 'admin_dashboard:turma_criar' %}" class="btn btn-primary">+ Nova Turma</a>
 </div>
@@ -49,11 +49,10 @@
             <thead style="background: #f8f9fa;">
                 <tr>
                     <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Turma</th>
-                    <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Professor</th>
                     <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Horário</th>
-                    <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Alunas</th>
-                    <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Ocupação</th>
-                    <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Status</th>
+                    <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Professora</th>
+                    <th style="padding: 1rem; text-align: center; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Alunas</th>
+                    <th style="padding: 1rem; text-align: center; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Status</th>
                     <th style="padding: 1rem; text-align: right; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Ações</th>
                 </tr>
             </thead>
@@ -63,28 +62,22 @@
                     <td style="padding: 1rem;">
                         <strong style="color: #2c3e50;">{{ turma.nome }}</strong>
                         {% if turma.descricao %}
-                            <br><small style="color: #999;">{{ turma.descricao|truncatewords:8 }}</small>
+                            <br>
+                            <small style="color: #888; font-size: 0.75rem;">{{ turma.descricao|truncatechars:40 }}</small>
                         {% endif %}
                     </td>
                     <td style="padding: 1rem; color: #666;">
-                        {{ turma.professor|default:"—" }}
+                        {{ turma.horario|default:"-" }}
                     </td>
                     <td style="padding: 1rem; color: #666;">
-                        {{ turma.horario|default:"—" }}
+                        {{ turma.professor|default:"-" }}
                     </td>
-                    <td style="padding: 1rem;">
-                        <strong style="color: #2c3e50;">{{ turma.total_alunas }}</strong> / {{ turma.capacidade_maxima }}
-                        <br><small style="color: #999;">{{ turma.vagas_disponiveis }} vagas</small>
+                    <td style="padding: 1rem; text-align: center;">
+                        <span style="background: #e8f5e9; color: #2e7d32; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">
+                            {{ turma.total_alunas }} / {{ turma.capacidade_maxima }}
+                        </span>
                     </td>
-                    <td style="padding: 1rem;">
-                        <div style="display: flex; align-items: center; gap: 0.5rem;">
-                            <div style="flex: 1; background: #e0e0e0; height: 8px; border-radius: 4px; overflow: hidden; max-width: 100px;">
-                                <div style="width: {{ turma.percentual_ocupacao }}%; background: {% if turma.percentual_ocupacao >= 90 %}#dc3545{% elif turma.percentual_ocupacao >= 70 %}#ffc107{% else %}#28a745{% endif %}; height: 100%;"></div>
-                            </div>
-                            <span style="font-size: 0.875rem; font-weight: 500; color: #666;">{{ turma.percentual_ocupacao }}%</span>
-                        </div>
-                    </td>
-                    <td style="padding: 1rem;">
+                    <td style="padding: 1rem; text-align: center;">
                         {% if turma.ativa %}
                             <span style="background: #d4edda; color: #155724; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">Ativa</span>
                         {% else %}
@@ -92,23 +85,13 @@
                         {% endif %}
                     </td>
                     <td style="padding: 1rem; text-align: right;">
-                        <a href="{% url 'admin_dashboard:turma_editar' turma.pk %}" style="color: #2c3e50; text-decoration: none; margin-right: 1rem;">Editar</a>
-                        <form method="post" 
-                              action="{% url 'admin_dashboard:turma_excluir' turma.pk %}" 
-                              style="display: inline;"
-                              onsubmit="return confirm('Tem certeza que deseja excluir a turma {{ turma.nome }}?');">
-                            {% csrf_token %}
-                            <button type="submit" 
-                                    style="background: none; border: none; color: #dc3545; cursor: pointer; text-decoration: none; font-size: 1rem; padding: 0;"
-                                    {% if turma.total_alunas > 0 %}disabled title="Não é possível excluir turma com alunas"{% endif %}>
-                                Excluir
-                            </button>
-                        </form>
+                        <a href="{% url 'admin_dashboard:turma_detalhes' turma.pk %}" style="color: #b07a84; text-decoration: none; margin-right: 1rem;">Ver</a>
+                        <a href="{% url 'admin_dashboard:turma_editar' turma.pk %}" style="color: #2c3e50; text-decoration: none;">Editar</a>
                     </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="7" style="padding: 3rem; text-align: center; color: #999;">
+                    <td colspan="6" style="padding: 3rem; text-align: center; color: #999;">
                         Nenhuma turma encontrada.
                     </td>
                 </tr>

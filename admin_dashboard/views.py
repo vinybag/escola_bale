@@ -1067,42 +1067,6 @@ def responsavel_editar(request, pk):
         from django.contrib import messages
         messages.error(request, f'Responsavel nao encontrado: {e}')
         return redirect('admin_dashboard:responsaveis_list')
-    
-@login_required
-def responsavel_excluir(request, pk):
-    """Excluir responsavel"""
-    
-    if not request.user.is_staff:
-        return redirect('home')
-    
-    if request.method == 'POST':
-        try:
-            from django.contrib.auth.models import User
-            from django.contrib import messages
-            from usuarios.models import Aluna
-            
-            responsavel = User.objects.get(pk=pk, is_staff=False)
-            
-            # Verifica se o responsável tem alunas vinculadas
-            total_alunas = Aluna.objects.filter(responsavel=responsavel).count()
-            
-            if total_alunas > 0:
-                messages.error(
-                    request, 
-                    f'Não é possível excluir {responsavel.get_full_name()} pois ele(a) tem {total_alunas} aluna(s) vinculada(s).'
-                )
-                return redirect('admin_dashboard:responsaveis_list')
-            
-            nome = responsavel.get_full_name() or responsavel.username
-            responsavel.delete()
-            
-            messages.success(request, f'Responsável "{nome}" excluído com sucesso!')
-            
-        except Exception as e:
-            from django.contrib import messages
-            messages.error(request, f'Erro ao excluir responsável: {e}')
-    
-    return redirect('admin_dashboard:responsaveis_list')    
 
 
 @login_required
@@ -1151,7 +1115,45 @@ def responsavel_redefinir_senha(request, pk):
         from django.contrib import messages
         messages.error(request, f'Responsavel nao encontrado: {e}')
         return redirect('admin_dashboard:responsaveis_list')
+
+
+@login_required
+def responsavel_excluir(request, pk):
+    """Excluir responsavel"""
     
+    if not request.user.is_staff:
+        return redirect('home')
+    
+    if request.method == 'POST':
+        try:
+            from django.contrib.auth.models import User
+            from django.contrib import messages
+            from usuarios.models import Aluna
+            
+            responsavel = User.objects.get(pk=pk, is_staff=False)
+            
+            # Verifica se o responsável tem alunas vinculadas
+            total_alunas = Aluna.objects.filter(responsavel=responsavel).count()
+            
+            if total_alunas > 0:
+                messages.error(
+                    request, 
+                    f'Não é possível excluir {responsavel.get_full_name()} pois ele(a) tem {total_alunas} aluna(s) vinculada(s).'
+                )
+                return redirect('admin_dashboard:responsaveis_list')
+            
+            nome = responsavel.get_full_name() or responsavel.username
+            responsavel.delete()
+            
+            messages.success(request, f'Responsável "{nome}" excluído com sucesso!')
+            
+        except Exception as e:
+            from django.contrib import messages
+            messages.error(request, f'Erro ao excluir responsável: {e}')
+    
+    return redirect('admin_dashboard:responsaveis_list')
+
+
 @login_required
 def turmas_list(request):
     """Lista de turmas"""
@@ -1310,4 +1312,74 @@ def turma_excluir(request, pk):
             messages.error(request, f'Erro ao excluir turma: {e}')
     
     return redirect('admin_dashboard:turmas_list')
+
+
+@login_required
+def turma_detalhes(request, pk):
+    """Detalhes da turma com lista de alunas matriculadas"""
     
+    if not request.user.is_staff:
+        return redirect('home')
+    
+    try:
+        from usuarios.models import Turma, Aluna
+        from datetime import date
+        
+        turma = Turma.objects.get(pk=pk)
+        
+        # Busca todas as alunas da turma
+        alunas = Aluna.objects.filter(
+            turma=turma,
+            ativa=True
+        ).order_by('nome')
+        
+        # Calcula tempo de matrícula para cada aluna
+        hoje = date.today()
+        for aluna in alunas:
+            if aluna.data_matricula:
+                # Cálculo manual de anos e meses
+                anos = hoje.year - aluna.data_matricula.year
+                meses = hoje.month - aluna.data_matricula.month
+                
+                if meses < 0:
+                    anos -= 1
+                    meses += 12
+                
+                # Ajuste de dias
+                if hoje.day < aluna.data_matricula.day:
+                    meses -= 1
+                    if meses < 0:
+                        meses += 12
+                        anos -= 1
+                
+                if anos > 0:
+                    aluna.tempo_matricula = f"{anos} ano{'s' if anos > 1 else ''}"
+                    if meses > 0:
+                        aluna.tempo_matricula += f" e {meses} mes{'es' if meses > 1 else ''}"
+                elif meses > 0:
+                    aluna.tempo_matricula = f"{meses} mes{'es' if meses > 1 else ''}"
+                else:
+                    aluna.tempo_matricula = "Recém matriculada"
+            else:
+                aluna.tempo_matricula = "Data não registrada"
+        
+        total_alunas = alunas.count()
+        
+        # Estatísticas
+        if turma.capacidade_maxima > 0:
+            turma.capacidade_percentual = int((total_alunas / turma.capacidade_maxima) * 100)
+        else:
+            turma.capacidade_percentual = 0
+        
+    except Exception as e:
+        from django.contrib import messages
+        messages.error(request, f'Turma não encontrada: {e}')
+        return redirect('admin_dashboard:turmas_list')
+    
+    context = {
+        'turma': turma,
+        'alunas': alunas,
+        'total_alunas': total_alunas,
+    }
+    
+    return render(request, 'admin_dashboard/turmas/detalhes.html', context)
