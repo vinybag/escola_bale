@@ -20,6 +20,20 @@
             <div>
                 <h3 style="margin-bottom: 1rem; color: #2c3e50; font-size: 1rem; text-transform: uppercase; font-weight: 600;">Dados da Aluna</h3>
                 
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Tipo de Aluna *</label>
+                    <div style="display: flex; gap: 1.5rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            <input type="radio" name="tipo_aluna" value="infantil" checked onchange="toggleTipoAluna()">
+                            <span style="font-weight: 500; color: #333;">Infantil (com responsável)</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            <input type="radio" name="tipo_aluna" value="adulto" onchange="toggleTipoAluna()">
+                            <span style="font-weight: 500; color: #333;">Adulto (sem responsável)</span>
+                        </label>
+                    </div>
+                </div>
+                
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                     <div>
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Nome completo *</label>
@@ -63,8 +77,8 @@
                 </div>
             </div>
             
-            <!-- Responsável -->
-            <div>
+            <!-- Responsável (apenas para infantil) -->
+            <div id="bloco-responsavel">
                 <h3 style="margin-bottom: 1rem; color: #2c3e50; font-size: 1rem; text-transform: uppercase; font-weight: 600;">Responsável</h3>
                 
                 <div style="margin-bottom: 1.5rem;">
@@ -151,6 +165,28 @@
 </div>
 
 <script>
+function toggleTipoAluna() {
+    const tipo = document.querySelector('input[name="tipo_aluna"]:checked').value;
+    const blocoResponsavel = document.getElementById('bloco-responsavel');
+    
+    if (tipo === 'adulto') {
+        blocoResponsavel.style.display = 'none';
+        // Remove required dos campos de responsável
+        const camposResponsavel = [
+            'responsavel_nome', 'responsavel_sobrenome', 'responsavel_email',
+            'responsavel_telefone', 'responsavel_senha', 'select-responsavel'
+        ];
+        camposResponsavel.forEach(id => {
+            const campo = document.getElementById(id);
+            if (campo) campo.required = false;
+        });
+    } else {
+        blocoResponsavel.style.display = 'block';
+        // Reaplica required baseado no tipo de responsável selecionado
+        toggleResponsavel();
+    }
+}
+
 function toggleResponsavel() {
     const tipo = document.querySelector('input[name="tipo_responsavel"]:checked').value;
     
@@ -191,7 +227,10 @@ function toggleResponsavel() {
 }
 
 // Inicializa ao carregar
-document.addEventListener('DOMContentLoaded', toggleResponsavel);
+document.addEventListener('DOMContentLoaded', function() {
+    toggleTipoAluna();
+    toggleResponsavel();
+});
 </script>
 
 {% endblock %}

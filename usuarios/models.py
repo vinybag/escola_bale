@@ -58,30 +58,19 @@ class Turma(models.Model):
 
 
 class Aluna(models.Model):
-    """Modelo para as alunas de ballet"""
-    responsavel = models.ForeignKey(User, on_delete=models.CASCADE, related_name='alunas')
+    TIPO_ALUNAS = [
+        ('infantil', 'Infantil (com responsável)'),
+        ('adulto', 'Adulto (sem responsável)'),
+    ]
+    
+    responsavel = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='alunas')
+    tipo_aluna = models.CharField(max_length=20, choices=TIPO_ALUNAS, default='infantil')
     nome = models.CharField(max_length=100)
     data_nascimento = models.DateField()
     turma = models.ForeignKey(Turma, on_delete=models.SET_NULL, null=True, blank=True, related_name='alunas')
     ativa = models.BooleanField(default=True)
     data_matricula = models.DateField(auto_now_add=True)
     observacoes = models.TextField(blank=True)
-    
-    def __str__(self):
-        return self.nome
-    
-    @property
-    def idade(self):
-        from datetime import date
-        hoje = date.today()
-        return hoje.year - self.data_nascimento.year - (
-            (hoje.month, hoje.day) < (self.data_nascimento.month, self.data_nascimento.day)
-        )
-    
-    class Meta:
-        verbose_name = 'Aluna'
-        verbose_name_plural = 'Alunas'
-        ordering = ['nome']
 
 
 class RecuperacaoSenha(models.Model):
