@@ -71,6 +71,25 @@ class Aluna(models.Model):
     ativa = models.BooleanField(default=True)
     data_matricula = models.DateField(auto_now_add=True)
     observacoes = models.TextField(blank=True)
+    
+    def __str__(self):
+        return self.nome
+    
+    @property
+    def idade(self):
+        """Calcula a idade da aluna com base na data de nascimento"""
+        from datetime import date
+        hoje = date.today()
+        idade = hoje.year - self.data_nascimento.year
+        # Ajusta se ainda não fez aniversário este ano
+        if (hoje.month, hoje.day) < (self.data_nascimento.month, self.data_nascimento.day):
+            idade -= 1
+        return idade
+    
+    class Meta:
+        verbose_name = 'Aluna'
+        verbose_name_plural = 'Alunas'
+        ordering = ['nome']
 
 
 class RecuperacaoSenha(models.Model):
