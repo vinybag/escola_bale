@@ -6,7 +6,7 @@
 <style>
     .chart-container {
         background: white;
-        padding: 2rem;
+        padding: 1.5rem;
         border-radius: 10px;
         box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         margin-bottom: 1.5rem;
@@ -14,7 +14,9 @@
     .chart-container h3 {
         margin-bottom: 1.5rem;
         color: #2c3e50;
-        font-size: 1.25rem;
+        font-size: 1rem;
+        text-transform: uppercase;
+        font-weight: 600;
     }
     .charts-grid {
         display: grid;
@@ -26,39 +28,39 @@
 {% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <h2>Dashboard</h2>
-    <p>Visao geral - {{ mes_atual }}</p>
+<div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
+    <div>
+        <h2>Dashboard</h2>
+        <p>Visão geral - {{ mes_atual }}</p>
+    </div>
 </div>
 
-<!-- Cards de estatísticas -->
-<div class="stats-grid">
-    <div class="stat-card">
-        <h3>Alunas Ativas</h3>
-        <div class="number">{{ total_alunas }}</div>
+<!-- Cards de estatísticas padronizados -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem;">
+    
+    <div style="background: white; border-radius: 10px; padding: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+        <h3 style="margin: 0 0 0.5rem 0; color: #2c3e50; font-size: 0.875rem; text-transform: uppercase; font-weight: 600;">Alunas Ativas</h3>
+        <div style="font-size: 2rem; font-weight: bold; color: #b07a84;">{{ total_alunas }}</div>
     </div>
 
-    <div class="stat-card">
-        <div class="stat-icon">📚</div>
-        <div class="stat-info">
-            <div class="stat-number">{{ total_turmas }}</div>
-            <div class="stat-label">Turmas Ativas</div>
-        </div>
+    <div style="background: white; border-radius: 10px; padding: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+        <h3 style="margin: 0 0 0.5rem 0; color: #2c3e50; font-size: 0.875rem; text-transform: uppercase; font-weight: 600;">Turmas Ativas</h3>
+        <div style="font-size: 2rem; font-weight: bold; color: #b07a84;">{{ total_turmas }}</div>
     </div>
     
-    <div class="stat-card">
-        <h3>Recebido no Mes</h3>
-        <div class="number">R$ {{ total_recebido|floatformat:2 }}</div>
+    <div style="background: white; border-radius: 10px; padding: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+        <h3 style="margin: 0 0 0.5rem 0; color: #2c3e50; font-size: 0.875rem; text-transform: uppercase; font-weight: 600;">Recebido no Mês</h3>
+        <div style="font-size: 1.5rem; font-weight: bold; color: #b07a84;">R$ {{ total_recebido|floatformat:2 }}</div>
     </div>
     
-    <div class="stat-card">
-        <h3>Pendentes</h3>
-        <div class="number">{{ mensalidades_pendentes }}</div>
+    <div style="background: white; border-radius: 10px; padding: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+        <h3 style="margin: 0 0 0.5rem 0; color: #2c3e50; font-size: 0.875rem; text-transform: uppercase; font-weight: 600;">Mensalidades Pendentes</h3>
+        <div style="font-size: 2rem; font-weight: bold; color: #b07a84;">{{ mensalidades_pendentes }}</div>
     </div>
     
-    <div class="stat-card">
-        <h3>Pagas</h3>
-        <div class="number">{{ mensalidades_pagas }}</div>
+    <div style="background: white; border-radius: 10px; padding: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+        <h3 style="margin: 0 0 0.5rem 0; color: #2c3e50; font-size: 0.875rem; text-transform: uppercase; font-weight: 600;">Mensalidades Pagas</h3>
+        <div style="font-size: 2rem; font-weight: bold; color: #b07a84;">{{ mensalidades_pagas }}</div>
     </div>
 </div>
 
@@ -67,7 +69,7 @@
     
     <!-- Gráfico 1 - Faturamento -->
     <div class="chart-container" style="grid-column: 1 / -1;">
-        <h3>Faturamento - Ultimos 6 Meses</h3>
+        <h3>Faturamento - Últimos 6 Meses</h3>
         <canvas id="faturamentoChart" height="80"></canvas>
     </div>
     
@@ -99,7 +101,7 @@ const turmasValores = {{ turmas_valores|safe }};
 const statusLabels = {{ status_labels|safe }};
 const statusValores = {{ status_valores|safe }};
 
-// Cores BKN Tech
+// Cores padronizadas
 const primaryColor = '#b07a84';
 const secondaryColor = '#2c3e50';
 const colors = [
@@ -112,7 +114,7 @@ const colors = [
     '#c4c4c4'
 ];
 
-// GRAFICO 1 - Faturamento (Linha)
+// Gráfico 1 - Faturamento (Linha)
 const faturamentoCtx = document.getElementById('faturamentoChart').getContext('2d');
 new Chart(faturamentoCtx, {
     type: 'line',
@@ -149,7 +151,7 @@ new Chart(faturamentoCtx, {
     }
 });
 
-// GRAFICO 2 - Alunas por Turma (Barra)
+// Gráfico 2 - Alunas por Turma (Barra)
 const turmasCtx = document.getElementById('turmasChart').getContext('2d');
 new Chart(turmasCtx, {
     type: 'bar',
@@ -181,7 +183,7 @@ new Chart(turmasCtx, {
     }
 });
 
-// GRAFICO 3 - Status Mensalidades (Pizza)
+// Gráfico 3 - Status Mensalidades (Doughnut)
 const statusCtx = document.getElementById('statusChart').getContext('2d');
 new Chart(statusCtx, {
     type: 'doughnut',
