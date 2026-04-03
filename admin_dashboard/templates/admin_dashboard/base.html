@@ -278,6 +278,7 @@
                 padding: 1rem;
             }
         }
+        
         /* TABELAS RESPONSIVAS */
         .table-container {
             overflow-x: auto;
@@ -346,11 +347,9 @@
                 <a href="{% url 'admin_dashboard:alunas_list' %}" class="{% if 'alunas' in request.path %}active{% endif %}">
                     Alunas
                 </a>
-                <li>
-                <a href="{% url 'admin_dashboard:turmas_list' %}" {% if 'turmas' in request.path %}class="active"{% endif %}>
+                <a href="{% url 'admin_dashboard:turmas_list' %}" class="{% if 'turmas' in request.path %}active{% endif %}">
                     Turmas
                 </a>
-                </li>
                 <a href="{% url 'admin_dashboard:responsaveis_list' %}" class="{% if 'responsaveis' in request.path %}active{% endif %}">
                     Responsáveis
                 </a>
@@ -361,10 +360,10 @@
                     Avisos
                 </a>
                 <a href="{% url 'admin_dashboard:espetaculos_list' %}" class="{% if 'espetaculos' in request.path %}active{% endif %}">
-                    Espetaculos
+                    Espetáculos
                 </a>
                 <a href="#">
-                    Relatorios
+                    Relatórios
                 </a>
                 <hr style="margin: 1rem 0; border: none; border-top: 1px solid #eee;">
                 <a href="{% url 'admin:index' %}">
