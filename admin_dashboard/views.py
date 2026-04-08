@@ -1389,3 +1389,36 @@ def turma_detalhes(request, pk):
     }
     
     return render(request, 'admin_dashboard/turmas/detalhes.html', context)
+
+@login_required
+def inscricoes_audicao_list(request):
+    """Lista de inscrições para audição"""
+    if not request.user.is_staff:
+        return redirect('home')
+    
+    from espetaculo.models import InscricaoAudicao
+    inscricoes = InscricaoAudicao.objects.all().order_by('-data_inscricao')
+    return render(request, 'admin_dashboard/espetaculos/inscricoes.html', {'inscricoes': inscricoes})
+
+@login_required
+def inscricao_audicao_excluir(request, pk):
+    """Excluir inscrição para audição"""
+    if not request.user.is_staff:
+        return redirect('home')
+    
+    if request.method == 'POST':
+        try:
+            from espetaculo.models import InscricaoAudicao
+            from django.contrib import messages
+            
+            inscricao = InscricaoAudicao.objects.get(pk=pk)
+            nome = inscricao.nome_completo
+            inscricao.delete()
+            
+            messages.success(request, f'Inscrição de {nome} excluída com sucesso!')
+            
+        except Exception as e:
+            from django.contrib import messages
+            messages.error(request, f'Erro ao excluir inscrição: {e}')
+    
+    return redirect('admin_dashboard:inscricoes_audicao')

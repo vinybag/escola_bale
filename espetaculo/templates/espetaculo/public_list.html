@@ -1,0 +1,39 @@
+{% extends 'base_public.html' %}
+{% load static %}
+
+{% block title %}Espetáculos - BKN Tech{% endblock %}
+
+{% block content %}
+<div style="max-width: 1200px; margin: 0 auto; padding: 2rem;">
+    <h1 style="color: #2c3e50; text-align: center; margin-bottom: 2rem;">Nossos Espetáculos</h1>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2rem;">
+        {% for espetaculo in espetaculos %}
+        <div style="background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+            {% if espetaculo.arquivo_informacoes %}
+            <div style="height: 200px; background: linear-gradient(135deg, #2c3e50, #b07a84); display: flex; align-items: center; justify-content: center;">
+                <span style="font-size: 3rem;">🎭</span>
+            </div>
+            {% endif %}
+            <div style="padding: 1.5rem;">
+                <h2 style="color: #2c3e50; margin-bottom: 0.5rem;">{{ espetaculo.titulo }}</h2>
+                {% if espetaculo.subtitulo %}
+                    <p style="color: #b07a84; margin-bottom: 1rem;">{{ espetaculo.subtitulo }}</p>
+                {% endif %}
+                <p style="color: #666; margin-bottom: 0.5rem;">📅 {{ espetaculo.data_apresentacao|date:"d/m/Y" }} às {{ espetaculo.data_apresentacao|date:"H:i" }}</p>
+                <p style="color: #666; margin-bottom: 1rem;">📍 {{ espetaculo.local }}</p>
+                <p style="color: #555; margin-bottom: 1.5rem;">{{ espetaculo.descricao|truncatechars:150 }}</p>
+                <a href="{% url 'espetaculo:detalhes_publico' espetaculo.pk %}" 
+                   style="display: inline-block; background: #b07a84; color: white; padding: 0.75rem 1.5rem; border-radius: 5px; text-decoration: none;">
+                    Saiba mais →
+                </a>
+            </div>
+        </div>
+        {% empty %}
+        <div style="text-align: center; padding: 3rem; color: #999;">
+            Nenhum espetáculo disponível no momento.
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

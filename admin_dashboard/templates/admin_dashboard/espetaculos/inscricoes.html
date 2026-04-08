@@ -1,0 +1,80 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Inscrições para Audição{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
+    <div>
+        <h2>Inscrições para Audição</h2>
+        <p>{{ inscricoes.count }} inscriç{{ inscricoes.count|pluralize:"ão,ões" }}</p>
+    </div>
+</div>
+
+<div style="background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+    <div class="table-container">
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead style="background: #f8f9fa;">
+                <tr>
+                    <th style="padding: 1rem; text-align: left;">Nome</th>
+                    <th style="padding: 1rem; text-align: left;">Whatsapp</th>
+                    <th style="padding: 1rem; text-align: center;">Idade</th>
+                    <th style="padding: 1rem; text-align: left;">Personagens</th>
+                    <th style="padding: 1rem; text-align: center;">Data</th>
+                    <th style="padding: 1rem; text-align: center;">Status</th>
+                    <th style="padding: 1rem; text-align: center;">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for inscricao in inscricoes %}
+                <tr style="border-top: 1px solid #eee;">
+                    <td style="padding: 1rem;">
+                        <strong>{{ inscricao.nome_completo }}</strong>
+                    </td>
+                    <td style="padding: 1rem;">
+                        <a href="https://wa.me/55{{ inscricao.whatsapp|cut:' '|cut:'('|cut:')'|cut:'-' }}" 
+                           target="_blank"
+                           style="color: #25D366; text-decoration: none;">
+                            {{ inscricao.whatsapp }}
+                        </a>
+                    </td>
+                    <td style="padding: 1rem; text-align: center;">
+                        {{ inscricao.idade }} anos
+                    </td>
+                    <td style="padding: 1rem;">
+                        {{ inscricao.personagens }}
+                    </td>
+                    <td style="padding: 1rem; text-align: center;">
+                        {{ inscricao.data_inscricao|date:"d/m/Y H:i" }}
+                    </td>
+                    <td style="padding: 1rem; text-align: center;">
+                        {% if inscricao.lida %}
+                            <span style="background: #d4edda; color: #155724; padding: 0.25rem 0.75rem; border-radius: 20px;">Lida</span>
+                        {% else %}
+                            <span style="background: #f8d7da; color: #721c24; padding: 0.25rem 0.75rem; border-radius: 20px;">Nova</span>
+                        {% endif %}
+                    </td>
+                    <td style="padding: 1rem; text-align: center;">
+                        <form method="post" 
+                              action="{% url 'admin_dashboard:inscricao_audicao_excluir' inscricao.pk %}" 
+                              style="display: inline-block;"
+                              onsubmit="return confirm('Tem certeza que deseja excluir a inscrição de {{ inscricao.nome_completo }}?');">
+                            {% csrf_token %}
+                            <button type="submit" 
+                                    style="background: #e74c3c; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 5px; cursor: pointer; font-size: 0.75rem;">
+                                Excluir
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr style="border-top: 1px solid #eee;">
+                    <td colspan="7" style="padding: 3rem; text-align: center; color: #999;">
+                        Nenhuma inscrição ainda.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
