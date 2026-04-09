@@ -1,7 +1,7 @@
 {% extends 'base_public.html' %}
 {% load static %}
 
-{% block title %}{{ espetaculo.titulo }} - BKN Tech{% endblock %}
+{% block title %}{{ espetaculo.titulo }} - BAILAH{% endblock %}
 
 {% block content %}
 <div style="max-width: 800px; margin: 0 auto; padding: 2rem;">
@@ -28,7 +28,7 @@
         
         {% if espetaculo.audicao_aberta %}
         <div style="background: #e8f5e9; padding: 1rem; border-radius: 5px; margin-bottom: 1.5rem;">
-            <h3 style="color: #2e7d32; margin-bottom: 0.5rem;">🎭 Audição Aberta!</h3>
+            <h3 style="color: #2e7d32; margin-bottom: 0.5rem;">Audição Aberta!</h3>
             <p>Período: {{ espetaculo.audicao_data_inicio|date:"d/m/Y" }} a {{ espetaculo.audicao_data_fim|date:"d/m/Y" }}</p>
             <p>{{ espetaculo.audicao_instrucoes }}</p>
             <a href="{% url 'espetaculo:personagens_publicos' %}" 
@@ -38,13 +38,14 @@
         </div>
         {% endif %}
         
+        <!-- Link direto para o PDF na pasta static -->
         <div style="text-align: center; margin-top: 1rem;">
-        <a href="{% static 'apresentacao_espetaculo_2026.pdf' %}" 
-        target="_blank"
-        style="display: inline-block; background: #b07a84; color: white; padding: 0.75rem 1.5rem; border-radius: 5px; text-decoration: none;">
-        Baixar informações do espetáculo
-    </a>
-</div>
+            <a href="/static/apresentacao_espetaculo_2026.pdf" 
+               target="_blank"
+               style="display: inline-block; background: #b07a84; color: white; padding: 0.75rem 1.5rem; border-radius: 5px; text-decoration: none;">
+                Baixar informações do espetáculo
+            </a>
+        </div>
         
     </div>
 </div>
