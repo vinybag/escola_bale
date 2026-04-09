@@ -38,14 +38,15 @@
         </div>
         {% endif %}
         
-        <!-- Link direto para o PDF na pasta static - SEM condição -->
-        <div style="text-align: center; margin-top: 1rem;">
-            <a href="/static/apresentacao_espetaculo_2026.pdf" 
-            target="_blank"
-            style="display: inline-block; background: #b07a84; color: white; padding: 0.75rem 1.5rem; border-radius: 5px; text-decoration: none;">
-        Baixar informações do espetáculo
-       </a>
-    </div>
+        {% if espetaculo.arquivo_informacoes %}
+<div style="text-align: center; margin-top: 1rem;">
+    <a href="{{ espetaculo.arquivo_informacoes.url }}" 
+       target="_blank"
+       style="display: inline-block; background: #b07a84; color: white; padding: 0.75rem 1.5rem; border-radius: 5px; text-decoration: none;">
+        📄 Baixar informações do espetáculo
+    </a>
+</div>
+{% endif %}
         
     </div>
 </div>
