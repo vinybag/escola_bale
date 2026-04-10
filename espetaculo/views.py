@@ -34,7 +34,9 @@ def espetaculo_detalhes_publico(request, pk):
 
 def personagens_publicos(request):
     """Página pública com os personagens clicáveis"""
-    return render(request, 'espetaculo/personagens_publicos.html')
+    from .models import Espetaculo
+    espetaculo = Espetaculo.objects.filter(ativo=True).first()
+    return render(request, 'espetaculo/personagens_publicos.html', {'espetaculo': espetaculo})
 
 def inscricao_audicao(request):
     """Processa a inscrição para audição"""

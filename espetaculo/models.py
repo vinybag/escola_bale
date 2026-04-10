@@ -17,6 +17,9 @@ class Espetaculo(models.Model):
     # PDF com informações completas
     arquivo_informacoes = models.FileField(upload_to='espetaculos/pdfs/', blank=True, null=True, help_text='PDF com sinopse, personagens, audição, etc.')
 
+    # NOVO CAMPO - Edital/Arquivo para download
+    arquivo_edital = models.FileField(upload_to='espetaculos/editais/', blank=True, null=True, help_text='PDF com edital, regulamento ou material de apoio')
+
     # Audição
     audicao_aberta = models.BooleanField(default=False)
     audicao_data_inicio = models.DateField(blank=True, null=True)

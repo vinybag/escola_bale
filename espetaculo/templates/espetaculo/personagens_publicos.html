@@ -4,7 +4,7 @@
 {% block title %}Personagens - Audição{% endblock %}
 
 {% block content %}
-<div style="max-width: 1200px; margin: 0 auto;">
+<div style="max-width: 1200px; margin: 0 auto; padding: 0 1rem;">
     
     <a href="{% url 'espetaculo:lista_publica' %}" style="color: #b07a84; text-decoration: none;">← Voltar para espetáculos</a>
     
@@ -14,61 +14,77 @@
         <h1 style="color: #2c3e50; margin-bottom: 1rem;">Personagens da Audição</h1>
         <p style="color: #666; margin-bottom: 2rem;">Clique nos personagens para ver os detalhes</p>
         
-        <!-- Imagem responsiva sem barra de rolagem -->
-        <div style="position: relative; display: inline-block; width: 100%;">
+        <!-- Imagem responsiva - sem barra de rolagem -->
+        <div style="text-align: center;">
             <img src="{% static 'imagens/Personagens.png' %}" 
                  alt="Personagens do Espetáculo"
                  usemap="#image-map"
-                 id="mapa-personagens-img"
-                 style="width: 100%; height: auto; display: block;">
+                 style="width: 100%; height: auto; max-width: 100%; display: inline-block;">
         </div>
         
-        <map name="image-map" id="image-map">
+        <map name="image-map">
             <area target="_blank" alt="Thessália" title="Thessália" 
                   href="{% static 'personagens/thessalia.pdf' %}" 
-                  data-coords="276,289,528,637" shape="rect">
+                  coords="276,289,528,637" shape="rect">
             
             <area target="_blank" alt="Zyara" title="Zyara" 
                   href="{% static 'personagens/zyara.pdf' %}" 
-                  data-coords="602,289,837,640" shape="rect">
+                  coords="602,289,837,640" shape="rect">
             
             <area target="_blank" alt="Zyar" title="Zyar" 
                   href="{% static 'personagens/zyar.pdf' %}" 
-                  data-coords="889,285,1128,635" shape="rect">
+                  coords="889,285,1128,635" shape="rect">
             
             <area target="_blank" alt="Astela Nur" title="Astela Nur" 
                   href="{% static 'personagens/astela_nur.pdf' %}" 
-                  data-coords="278,717,530,1072" shape="rect">
+                  coords="278,717,530,1072" shape="rect">
             
             <area target="_blank" alt="Kai Ignus" title="Kai Ignus" 
                   href="{% static 'personagens/kai_ignus.pdf' %}" 
-                  data-coords="907,720,1154,1066" shape="rect">
+                  coords="907,720,1154,1066" shape="rect">
             
             <area target="_blank" alt="Eldrick Felicius" title="Eldrick Felicius" 
                   href="{% static 'personagens/eldrick_felicius.pdf' %}" 
-                  data-coords="281,1141,527,1491" shape="rect">
+                  coords="281,1141,527,1491" shape="rect">
             
             <area target="_blank" alt="Florine" title="Florine" 
                   href="{% static 'personagens/florine.pdf' %}" 
-                  data-coords="590,1137,841,1491" shape="rect">
+                  coords="590,1137,841,1491" shape="rect">
             
             <area target="_blank" alt="Odessa" title="Odessa" 
                   href="{% static 'personagens/odessa.pdf' %}" 
-                  data-coords="910,1137,1157,1486" shape="rect">
+                  coords="910,1137,1157,1486" shape="rect">
             
             <area target="_blank" alt="Aurélia" title="Aurélia" 
                   href="{% static 'personagens/aurelia.pdf' %}" 
-                  data-coords="282,1561,532,1918" shape="rect">
+                  coords="282,1561,532,1918" shape="rect">
             
             <area target="_blank" alt="Cora del Amour" title="Cora del Amour" 
                   href="{% static 'personagens/cora_del_amour.pdf' %}" 
-                  data-coords="588,1561,842,1915" shape="rect">
+                  coords="588,1561,842,1915" shape="rect">
             
             <area target="_blank" alt="3 Marias" title="3 Marias" 
                   href="{% static 'personagens/3_marias.pdf' %}" 
-                  data-coords="909,1559,1158,1913" shape="rect">
+                  coords="909,1559,1158,1913" shape="rect">
         </map>
+        
+        <p style="margin-top: 1rem; color: #888; font-size: 0.875rem;">
+            Dica: Passe o mouse sobre os personagens para ver os nomes. Clique para abrir o PDF.
+        </p>
     </div>
+    
+    <!-- Arquivo para download (Edital/Regulamento) -->
+    {% if espetaculo.arquivo_edital %}
+    <div style="background: #f0f8ff; border-radius: 10px; padding: 1.5rem; margin-bottom: 2rem; box-shadow: 0 2px 10px rgba(0,0,0,0.1); text-align: center; border-left: 4px solid #b07a84;">
+        <h3 style="color: #2c3e50; margin-bottom: 0.5rem;">Material de Apoio</h3>
+        <p style="color: #666; margin-bottom: 1rem;">Confira o edital/regulamento completo da audição</p>
+        <a href="{{ espetaculo.arquivo_edital.url }}" 
+           target="_blank"
+           style="display: inline-block; background: #b07a84; color: white; padding: 0.75rem 1.5rem; border-radius: 5px; text-decoration: none;">
+            Baixar Arquivo
+        </a>
+    </div>
+    {% endif %}
     
     <!-- Formulário de Inscrição -->
     <div style="background: white; border-radius: 10px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
@@ -117,44 +133,6 @@
 </div>
 
 <script>
-// Ajusta as coordenadas do mapa quando a imagem é redimensionada
-function ajustarMapa() {
-    const img = document.getElementById('mapa-personagens-img');
-    const map = document.getElementById('image-map');
-    const areas = map.querySelectorAll('area');
-    
-    if (!img.complete) {
-        img.addEventListener('load', ajustarMapa);
-        return;
-    }
-    
-    const originalWidth = 1414;
-    const originalHeight = 2000;
-    
-    const scaleX = img.clientWidth / originalWidth;
-    const scaleY = img.clientHeight / originalHeight;
-    
-    areas.forEach(area => {
-        const coordsOriginais = area.getAttribute('data-coords');
-        if (coordsOriginais) {
-            const coordsArray = coordsOriginais.split(',').map(Number);
-            const novasCoords = coordsArray.map((coord, index) => {
-                if (index % 2 === 0) {
-                    return Math.round(coord * scaleX);
-                } else {
-                    return Math.round(coord * scaleY);
-                }
-            });
-            area.coords = novasCoords.join(',');
-        }
-    });
-}
-
-// Aguarda o carregamento da imagem
-window.addEventListener('load', ajustarMapa);
-window.addEventListener('resize', ajustarMapa);
-
-// Filtro de personagens por idade
 document.getElementById('idade').addEventListener('input', function() {
     const idade = this.value;
     const selectPersonagens = document.getElementById('personagens');
@@ -183,6 +161,45 @@ document.getElementById('idade').addEventListener('input', function() {
         selectPersonagens.innerHTML = '<option value="">Digite sua idade primeiro</option>';
     }
 });
+</script>
+
+<script>
+// Ajusta as coordenadas do mapa quando a imagem é redimensionada
+function ajustarMapa() {
+    const img = document.querySelector('img[usemap="#image-map"]');
+    const map = document.querySelector('map[name="image-map"]');
+    if (!img || !map) return;
+    
+    const areas = map.querySelectorAll('area');
+    const originalWidth = 1414;
+    const originalHeight = 2000;
+    
+    // Aguarda a imagem carregar
+    if (!img.complete) {
+        img.addEventListener('load', ajustarMapa);
+        return;
+    }
+    
+    const scaleX = img.clientWidth / originalWidth;
+    const scaleY = img.clientHeight / originalHeight;
+    
+    areas.forEach(area => {
+        if (!area.hasAttribute('data-coords')) {
+            area.setAttribute('data-coords', area.coords);
+        }
+        const origCoords = area.getAttribute('data-coords');
+        if (origCoords) {
+            const coords = origCoords.split(',').map(Number);
+            const newCoords = coords.map((c, i) => {
+                return Math.round(c * (i % 2 === 0 ? scaleX : scaleY));
+            });
+            area.coords = newCoords.join(',');
+        }
+    });
+}
+
+window.addEventListener('load', ajustarMapa);
+window.addEventListener('resize', ajustarMapa);
 </script>
 
 {% endblock %}

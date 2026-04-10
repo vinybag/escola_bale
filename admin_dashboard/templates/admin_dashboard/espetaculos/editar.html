@@ -42,6 +42,7 @@
                         <textarea name="descricao" rows="6" required
                                   style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem; font-family: inherit; resize: vertical;">{{ espetaculo.descricao }}</textarea>
                     </div>
+                    
                     <div>
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
                             PDF com Informacoes Completas
@@ -50,7 +51,7 @@
                         {% if espetaculo.arquivo_informacoes %}
                             <div style="background: #e8f5e9; padding: 1rem; border-radius: 5px; margin-bottom: 0.5rem;">
                                 <p style="margin: 0; color: #2e7d32;">
-                                    ✅ Arquivo atual: <a href="{{ espetaculo.arquivo_informacoes.url }}" target="_blank" style="color: #1976d2;">Ver PDF</a>
+                                    Arquivo atual: <a href="{{ espetaculo.arquivo_informacoes.url }}" target="_blank" style="color: #1976d2;">Ver PDF</a>
                                 </p>
                            </div>
                        {% endif %}
@@ -58,9 +59,32 @@
                        <input type="file" name="arquivo_informacoes" accept=".pdf"
                               style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
                        <small style="display: block; margin-top: 0.5rem; color: #666;">
-                           📄 Deixe em branco para manter o arquivo atual
+                           Deixe em branco para manter o arquivo atual
                        </small>
                     </div>
+                    
+                    <!-- NOVO CAMPO: ARQUIVO EDITAL -->
+                    <div style="margin-top: 0.5rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                            Arquivo Edital / Regulamento
+                        </label>
+    
+                        {% if espetaculo.arquivo_edital %}
+                            <div style="background: #e8f5e9; padding: 1rem; border-radius: 5px; margin-bottom: 0.5rem;">
+                                <p style="margin: 0; color: #2e7d32;">
+                                    Arquivo atual: <a href="{{ espetaculo.arquivo_edital.url }}" target="_blank" style="color: #1976d2;">Ver PDF</a>
+                                </p>
+                           </div>
+                       {% endif %}
+    
+                       <input type="file" name="arquivo_edital" accept=".pdf"
+                              style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                       <small style="display: block; margin-top: 0.5rem; color: #666;">
+                           PDF com edital, regulamento ou material de apoio para download
+                       </small>
+                    </div>
+                    <!-- FIM DO NOVO CAMPO -->
+                    
                 </div>
             </div>
             

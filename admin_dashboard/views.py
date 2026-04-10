@@ -962,10 +962,15 @@ def espetaculo_editar(request, pk):
             
             espetaculo.ativo = request.POST.get('ativo') == 'on'
             
-            # ADICIONA: Atualiza arquivo PDF se enviado
+            # Arquivo informações (já existente)
             arquivo_informacoes = request.FILES.get('arquivo_informacoes')
             if arquivo_informacoes:
                 espetaculo.arquivo_informacoes = arquivo_informacoes
+            
+            # NOVO: Arquivo Edital
+            arquivo_edital = request.FILES.get('arquivo_edital')
+            if arquivo_edital:
+                espetaculo.arquivo_edital = arquivo_edital
             
             espetaculo.save()
             
