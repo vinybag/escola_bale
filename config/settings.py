@@ -8,7 +8,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY
 SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='').split(',')
+
+# ALLOWED_HOSTS corrigido - adicionando o domínio personalizado
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,web-production-4389a.up.railway.app,bailahcorpoecia.com,www.bailahcorpoecia.com').split(',')
 
 # Application definition
 INSTALLED_APPS = [
@@ -131,36 +133,7 @@ if not DEBUG:
     SECURE_CONTENT_TYPE_NOSNIFF = True
     X_FRAME_OPTIONS = 'DENY'
 
-    # Criar superusuário automaticamente (apenas em produção)
-if not DEBUG:
-    import sys
-    if 'runserver' not in sys.argv and 'migrate' not in sys.argv:
-        def criar_superuser():
-            try:
-                import django
-                django.setup()
-                from django.contrib.auth.models import User
-                
-                if not User.objects.filter(username='admin').exists():
-                    User.objects.create_superuser(
-                        username='admin',
-                        email='vinybag@gmail.com',
-                        password='Pomboobeso9798!'
-                    )
-                    print('✅ Superusuário admin criado com sucesso!')
-                else:
-                    print('⚠️ Superusuário admin já existe!')
-            except Exception as e:
-                print(f'⚠️ Não foi possível criar superusuário: {e}')
-        
-        # Executa após apps carregarem
-        from django.apps import apps
-        if apps.ready:
-            criar_superuser()
-
-            # Configuracao de Email (Gmail GRATIS)
-from decouple import config
-
+# Configuracao de Email (Gmail)
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
 EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
@@ -168,8 +141,3 @@ EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='BAILAH <noreply@bailah.com>')
-
-if not DEBUG:
-    import os
-    from django.conf.urls.static import static
-    from django.urls import path, include
