@@ -7,64 +7,98 @@
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <style>
-        /* Estilos responsivos adicionais */
-        .navbar {
-            position: relative;
+        /* Estilos responsivos - menu sempre visível */
+        .navbar .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
         }
         
-        .menu-toggle {
-            display: none;
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: white;
-            padding: 0.5rem;
+        .nav-links {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0;
+            padding: 0;
+            list-style: none;
         }
         
-        @media (max-width: 768px) {
-            .menu-toggle {
-                display: block;
-            }
-            
-            .nav-links {
-                display: none;
-                flex-direction: column;
-                width: 100%;
-                position: absolute;
-                top: 100%;
-                left: 0;
-                background: linear-gradient(135deg, #2c3e50, #b07a84);
-                padding: 1rem;
-                z-index: 1000;
-            }
-            
-            .nav-links.active {
-                display: flex;
-            }
-            
-            .nav-links li {
-                margin: 0.5rem 0;
-                text-align: center;
-            }
-            
+        .nav-links li {
+            margin: 0;
+        }
+        
+        .nav-links li a {
+            display: inline-block;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+            white-space: nowrap;
+        }
+        
+        .btn-login {
+            background: rgba(255,255,255,0.2);
+            border-radius: 5px;
+        }
+        
+        /* Tablet (entre 768px e 1024px) */
+        @media (max-width: 1024px) {
             .nav-links li a {
-                display: block;
-                padding: 0.75rem;
-            }
-            
-            .container {
-                flex-wrap: wrap;
+                padding: 0.4rem 0.6rem;
+                font-size: 0.8rem;
             }
         }
         
-        @media (max-width: 480px) {
+        /* Mobile (abaixo de 768px) */
+        @media (max-width: 768px) {
             .navbar .container {
-                justify-content: space-between;
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .logo {
+                margin-bottom: 0.25rem;
             }
             
             .logo img {
-                max-height: 40px;
+                max-height: 45px;
+            }
+            
+            .nav-links {
+                justify-content: center;
+                gap: 0.3rem;
+                width: 100%;
+            }
+            
+            .nav-links li a {
+                padding: 0.4rem 0.5rem;
+                font-size: 0.75rem;
+                white-space: nowrap;
+            }
+        }
+        
+        /* Mobile muito pequeno (abaixo de 480px) - permite quebra de linha */
+        @media (max-width: 480px) {
+            .nav-links {
+                gap: 0.25rem;
+            }
+            
+            .nav-links li a {
+                padding: 0.3rem 0.4rem;
+                font-size: 0.7rem;
+            }
+        }
+        
+        /* Para telas muito estreitas (abaixo de 380px) - força quebra organizada */
+        @media (max-width: 380px) {
+            .nav-links {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .nav-links li {
+                flex: 0 0 auto;
             }
         }
     </style>
@@ -76,8 +110,6 @@
                 {% load static %}
                 <img src="{% static 'img/logo.png' %}" alt="Logo Escola de Balé" style="max-height: 50px;">
             </a>
-            
-            <button class="menu-toggle" id="menuToggle" aria-label="Menu">☰</button>
             
             <ul class="nav-links" id="navLinks">
                 {% if user.is_authenticated %}
@@ -122,36 +154,5 @@
     <footer>
         <p>&copy; 2026 BAILAH - Corpo e Cia - Todos os direitos reservados</p>
     </footer>
-
-    <script>
-        // Menu hambúrguer
-        const menuToggle = document.getElementById('menuToggle');
-        const navLinks = document.getElementById('navLinks');
-        
-        if (menuToggle) {
-            menuToggle.addEventListener('click', function() {
-                navLinks.classList.toggle('active');
-            });
-        }
-        
-        // Fechar menu ao clicar em um link (mobile)
-        document.querySelectorAll('.nav-links a').forEach(link => {
-            link.addEventListener('click', () => {
-                if (window.innerWidth <= 768) {
-                    navLinks.classList.remove('active');
-                }
-            });
-        });
-        
-        // Fechar menu ao clicar fora (mobile)
-        document.addEventListener('click', (e) => {
-            if (window.innerWidth <= 768 && 
-                navLinks.classList.contains('active') && 
-                !navLinks.contains(e.target) && 
-                !menuToggle.contains(e.target)) {
-                navLinks.classList.remove('active');
-            }
-        });
-    </script>
 </body>
 </html>
