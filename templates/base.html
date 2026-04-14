@@ -15,16 +15,16 @@
                 <img src="{% static 'img/logo.png' %}" alt="Logo Escola de Balé">
             </a>
             <ul class="nav-links">
-                {% if user.is_authenticated %}
-                {% if user.is_staff %}
-                {# Admin/Staff - Links do admin_dashboard #}
-                   <li><a href="/admin-dashboard/">Dashboard</a></li>
-                   <li><a href="/admin-dashboard/mensalidades/">Mensalidades</a></li>
-                   <li><a href="/admin-dashboard/avisos/">Avisos</a></li>
-                {% else %}
-                {# Responsável comum - Links do usuário #}
-            <li><a href="/dashboard/">Dashboard</a></li>
-            <li><a href="/mensalidades/">Mensalidades</a></li>
+    {% if user.is_authenticated %}
+        {% if user.is_staff %}
+            {# Admin/Staff - Links do admin_dashboard #}
+            <li><a href="/admin-dashboard/">Dashboard</a></li>
+            <li><a href="/admin-dashboard/mensalidades/">Mensalidades</a></li>
+            <li><a href="/admin-dashboard/avisos/">Avisos</a></li>
+        {% else %}
+            {# Responsável comum - Links do usuário #}
+            <li><a href="/conta/dashboard/">Dashboard</a></li>
+            <li><a href="/pagamentos/mensalidades/">Mensalidades</a></li>
             <li><a href="/avisos/">Avisos</a></li>
         {% endif %}
         <li><a href="/espetaculo/">Espetáculo</a></li>
@@ -37,7 +37,6 @@
         <li><a href="/conta/login/" class="btn-login">Área dos Pais</a></li>
     {% endif %}
 </ul>
-        </div>
     </nav>
 
     <main>
