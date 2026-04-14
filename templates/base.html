@@ -16,19 +16,27 @@
             </a>
             <ul class="nav-links">
                 {% if user.is_authenticated %}
-                    <li><a href="/admin-dashboard/">Dashboard</a></li>
-                    <li><a href="/admin-dashboard/mensalidades/">Mensalidades</a></li>
-                    <li><a href="/admin-dashboard/avisos/">Avisos</a></li>
-                    <li><a href="/espetaculo/">Espetáculo</a></li>
-                    <li><a href="/conta/perfil/">Perfil</a></li>
-                    <li><a href="/conta/logout/">Sair</a></li>
+                {% if user.is_staff %}
+                {# Admin/Staff - Links do admin_dashboard #}
+                   <li><a href="/admin-dashboard/">Dashboard</a></li>
+                   <li><a href="/admin-dashboard/mensalidades/">Mensalidades</a></li>
+                   <li><a href="/admin-dashboard/avisos/">Avisos</a></li>
                 {% else %}
-                    <li><a href="/">Início</a></li>
-                    <li><a href="/agenda/experimental/">Aula Experimental</a></li>
-                    <li><a href="/espetaculo/">Espetáculo</a></li>
-                    <li><a href="/conta/login/" class="btn-login">Área dos Pais</a></li>
-                {% endif %}
-            </ul>
+                {# Responsável comum - Links do usuário #}
+            <li><a href="/dashboard/">Dashboard</a></li>
+            <li><a href="/mensalidades/">Mensalidades</a></li>
+            <li><a href="/avisos/">Avisos</a></li>
+        {% endif %}
+        <li><a href="/espetaculo/">Espetáculo</a></li>
+        <li><a href="/conta/perfil/">Perfil</a></li>
+        <li><a href="/conta/logout/">Sair</a></li>
+    {% else %}
+        <li><a href="/">Início</a></li>
+        <li><a href="/agenda/experimental/">Aula Experimental</a></li>
+        <li><a href="/espetaculo/">Espetáculo</a></li>
+        <li><a href="/conta/login/" class="btn-login">Área dos Pais</a></li>
+    {% endif %}
+</ul>
         </div>
     </nav>
 
