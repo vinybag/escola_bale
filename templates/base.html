@@ -2,41 +2,107 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>{% block title %}Escola de Balé{% endblock %}</title>
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <style>
+        /* Estilos responsivos adicionais */
+        .navbar {
+            position: relative;
+        }
+        
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: white;
+            padding: 0.5rem;
+        }
+        
+        @media (max-width: 768px) {
+            .menu-toggle {
+                display: block;
+            }
+            
+            .nav-links {
+                display: none;
+                flex-direction: column;
+                width: 100%;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                background: linear-gradient(135deg, #2c3e50, #b07a84);
+                padding: 1rem;
+                z-index: 1000;
+            }
+            
+            .nav-links.active {
+                display: flex;
+            }
+            
+            .nav-links li {
+                margin: 0.5rem 0;
+                text-align: center;
+            }
+            
+            .nav-links li a {
+                display: block;
+                padding: 0.75rem;
+            }
+            
+            .container {
+                flex-wrap: wrap;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .navbar .container {
+                justify-content: space-between;
+            }
+            
+            .logo img {
+                max-height: 40px;
+            }
+        }
+    </style>
 </head>
 <body>
     <nav class="navbar">
-        <div class="container">
+        <div class="container" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
             <a href="/" class="logo">
                 {% load static %}
-                <img src="{% static 'img/logo.png' %}" alt="Logo Escola de Balé">
+                <img src="{% static 'img/logo.png' %}" alt="Logo Escola de Balé" style="max-height: 50px;">
             </a>
-            <ul class="nav-links">
-    {% if user.is_authenticated %}
-        {% if user.is_staff %}
-            {# Admin/Staff - Links do admin_dashboard #}
-            <li><a href="/admin-dashboard/">Dashboard</a></li>
-            <li><a href="/admin-dashboard/mensalidades/">Mensalidades</a></li>
-            <li><a href="/admin-dashboard/avisos/">Avisos</a></li>
-        {% else %}
-            {# Responsável comum - Links do usuário #}
-            <li><a href="/conta/dashboard/">Dashboard</a></li>
-            <li><a href="/pagamentos/mensalidades/">Mensalidades</a></li>
-            <li><a href="/avisos/">Avisos</a></li>
-        {% endif %}
-        <li><a href="/espetaculo/">Espetáculo</a></li>
-        <li><a href="/conta/perfil/">Perfil</a></li>
-        <li><a href="/conta/logout/">Sair</a></li>
-    {% else %}
-        <li><a href="/">Início</a></li>
-        <li><a href="/agenda/experimental/">Aula Experimental</a></li>
-        <li><a href="/espetaculo/">Espetáculo</a></li>
-        <li><a href="/conta/login/" class="btn-login">Área dos Pais</a></li>
-    {% endif %}
-</ul>
+            
+            <button class="menu-toggle" id="menuToggle" aria-label="Menu">☰</button>
+            
+            <ul class="nav-links" id="navLinks">
+                {% if user.is_authenticated %}
+                    {% if user.is_staff %}
+                        {# Admin/Staff - Links do admin_dashboard #}
+                        <li><a href="/admin-dashboard/">Dashboard</a></li>
+                        <li><a href="/admin-dashboard/mensalidades/">Mensalidades</a></li>
+                        <li><a href="/admin-dashboard/avisos/">Avisos</a></li>
+                    {% else %}
+                        {# Responsável comum - Links do usuário #}
+                        <li><a href="/conta/dashboard/">Dashboard</a></li>
+                        <li><a href="/pagamentos/mensalidades/">Mensalidades</a></li>
+                        <li><a href="/avisos/">Avisos</a></li>
+                    {% endif %}
+                    <li><a href="/espetaculo/">Espetáculo</a></li>
+                    <li><a href="/conta/perfil/">Perfil</a></li>
+                    <li><a href="/conta/logout/">Sair</a></li>
+                {% else %}
+                    <li><a href="/">Início</a></li>
+                    <li><a href="/agenda/experimental/">Aula Experimental</a></li>
+                    <li><a href="/espetaculo/">Espetáculo</a></li>
+                    <li><a href="/conta/login/" class="btn-login">Área dos Pais</a></li>
+                {% endif %}
+            </ul>
+        </div>
     </nav>
 
     <main>
@@ -56,5 +122,36 @@
     <footer>
         <p>&copy; 2026 BAILAH - Corpo e Cia - Todos os direitos reservados</p>
     </footer>
+
+    <script>
+        // Menu hambúrguer
+        const menuToggle = document.getElementById('menuToggle');
+        const navLinks = document.getElementById('navLinks');
+        
+        if (menuToggle) {
+            menuToggle.addEventListener('click', function() {
+                navLinks.classList.toggle('active');
+            });
+        }
+        
+        // Fechar menu ao clicar em um link (mobile)
+        document.querySelectorAll('.nav-links a').forEach(link => {
+            link.addEventListener('click', () => {
+                if (window.innerWidth <= 768) {
+                    navLinks.classList.remove('active');
+                }
+            });
+        });
+        
+        // Fechar menu ao clicar fora (mobile)
+        document.addEventListener('click', (e) => {
+            if (window.innerWidth <= 768 && 
+                navLinks.classList.contains('active') && 
+                !navLinks.contains(e.target) && 
+                !menuToggle.contains(e.target)) {
+                navLinks.classList.remove('active');
+            }
+        });
+    </script>
 </body>
 </html>
