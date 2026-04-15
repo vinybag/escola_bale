@@ -45,4 +45,9 @@ urlpatterns = [
     path('responsaveis/<int:pk>/editar/', views.responsavel_editar, name='responsavel_editar'),
     path('responsaveis/<int:pk>/redefinir-senha/', views.responsavel_redefinir_senha, name='responsavel_redefinir_senha'),
     path('responsaveis/<int:pk>/excluir/', views.responsavel_excluir, name='responsavel_excluir'),
+
+    # Agendamentos
+    path('agendamentos/', views.agendamentos_list, name='agendamentos_list'),
+    path('agendamentos/<int:pk>/', views.agendamento_detalhes, name='agendamento_detalhes'),
+    path('agendamentos/<int:pk>/excluir/', views.agendamento_excluir, name='agendamento_excluir'),
 ]

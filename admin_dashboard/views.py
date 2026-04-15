@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from datetime import datetime
 from decimal import Decimal
 from django.db import models
@@ -1427,3 +1428,43 @@ def inscricao_audicao_excluir(request, pk):
             messages.error(request, f'Erro ao excluir inscrição: {e}')
     
     return redirect('admin_dashboard:inscricoes_audicao')
+
+@login_required
+def agendamentos_list(request):
+    """Lista de agendamentos de aula experimental"""
+    if not request.user.is_staff:
+        return redirect('home')
+    
+    from agenda.models import Agendamento
+    agendamentos = Agendamento.objects.all().order_by('-criado_em')
+    return render(request, 'admin_dashboard/agendamentos/list.html', {'agendamentos': agendamentos})
+
+@login_required
+def agendamento_detalhes(request, pk):
+    """Detalhes do agendamento"""
+    if not request.user.is_staff:
+        return redirect('home')
+    
+    from agenda.models import Agendamento
+    agendamento = get_object_or_404(Agendamento, pk=pk)
+    return render(request, 'admin_dashboard/agendamentos/detalhes.html', {'agendamento': agendamento})
+
+@login_required
+def agendamento_excluir(request, pk):
+    """Excluir agendamento de aula experimental"""
+    if not request.user.is_staff:
+        return redirect('home')
+    
+    if request.method == 'POST':
+        try:
+            from agenda.models import Agendamento
+            agendamento = Agendamento.objects.get(pk=pk)
+            nome = agendamento.nome_aluna
+            agendamento.delete()
+            
+            messages.success(request, f'Agendamento de {nome} excluído com sucesso!')
+            
+        except Exception as e:
+            messages.error(request, f'Erro ao excluir agendamento: {e}')
+    
+    return redirect('admin_dashboard:agendamentos_list')
