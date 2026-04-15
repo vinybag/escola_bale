@@ -14,12 +14,20 @@ def dashboard(request):
     if not request.user.is_staff:
         return redirect('home')
     
+    # Mapeamento dos meses em portugues
+    meses_pt = {
+        1: 'Janeiro', 2: 'Fevereiro', 3: 'Marco', 4: 'Abril',
+        5: 'Maio', 6: 'Junho', 7: 'Julho', 8: 'Agosto',
+        9: 'Setembro', 10: 'Outubro', 11: 'Novembro', 12: 'Dezembro'
+    }
+    
     # Valores default (caso de erro)
     total_alunas = 0
     total_recebido = Decimal('0.00')
     mensalidades_pendentes = 0
     mensalidades_pagas = 0
-    mes_atual = datetime.now().strftime('%B %Y')
+    hoje = datetime.now()
+    mes_atual = f"{meses_pt[hoje.month]} {hoje.year}"
     total_turmas = 0
     
     # Dados para gráficos
@@ -86,7 +94,7 @@ def dashboard(request):
                 ativa=True
             ).count()
             
-            if total_alunas_turma > 0:  # Só adiciona turmas com alunas
+            if total_alunas_turma > 0:  # So adiciona turmas com alunas
                 turmas_labels.append(turma.nome)
                 turmas_valores.append(total_alunas_turma)
         
