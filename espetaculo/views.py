@@ -70,7 +70,7 @@ def get_personagens_por_idade(request):
         'zyara': idade >= 8,
         'zyar': idade >= 8,
         'astela_nur': idade >= 16,
-        'kai_ignus': idade >= 15,
+        'kai_ignus': idade >= 10,
         'eldrick_felicius': idade >= 10,
         'florine': 8 <= idade <= 20,
         'odessa': idade >= 10,
