@@ -1,21 +1,53 @@
-{% extends 'agenda/base.html' %}
+{% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Agendamento Confirmado{% endblock %}
+{% block title %}Agendamento Confirmado - BAILAH{% endblock %}
 
 {% block content %}
-
-<h1>Aula agendada com sucesso</h1>
-
-<p>
-    <strong>Aluna(o):</strong> {{ agendamento.nome_aluna }} <br>
-    <strong>Aula:</strong> {{ agendamento.aula.nome }} <br>
-    <strong>Dia da semana:</strong> {{ agendamento.aula.dia_semana }} <br>
-    <strong>Data escolhida:</strong> {{ agendamento.data|date:"d/m/Y" }} <br>
-    <strong>Horário:</strong> {{ agendamento.horario }}
-</p>
-
-<div style="text-align: center; margin-top: 20px;">
-    <a href="{% url 'agendar' %}">Agendar outra aula</a>
+<div style="max-width: 800px; margin: 2rem auto; padding: 0 1rem;">
+    
+    <div style="background: white; border-radius: 10px; padding: 2rem; box-shadow: 0 2px 10px rgba(0,0,0,0.1); text-align: center;">
+        
+        <h1 style="color: #2c3e50; margin-bottom: 0.5rem; font-size: 1.75rem;">Aula agendada com sucesso!</h1>
+        <p style="color: #666; margin-bottom: 2rem;">Sua aula experimental foi agendada. Em breve entraremos em contato.</p>
+        
+        <div style="background: #f8f9fa; border-radius: 10px; padding: 1.5rem; margin-bottom: 2rem; text-align: left;">
+            <h3 style="color: #b07a84; margin-bottom: 1rem; font-size: 1.1rem;">Detalhes do Agendamento</h3>
+            
+            <p style="margin-bottom: 0.5rem;">
+                <strong style="color: #2c3e50;">Aluna(o):</strong> 
+                <span style="color: #555;">{{ agendamento.nome_aluna }}</span>
+            </p>
+            <p style="margin-bottom: 0.5rem;">
+                <strong style="color: #2c3e50;">Aula:</strong> 
+                <span style="color: #555;">{{ agendamento.aula.nome }}</span>
+            </p>
+            <p style="margin-bottom: 0.5rem;">
+                <strong style="color: #2c3e50;">Dia da semana:</strong> 
+                <span style="color: #555;">{{ agendamento.aula.dia_semana }}</span>
+            </p>
+            <p style="margin-bottom: 0.5rem;">
+                <strong style="color: #2c3e50;">Data escolhida:</strong> 
+                <span style="color: #555;">{{ agendamento.data|date:"d/m/Y" }}</span>
+            </p>
+            <p style="margin-bottom: 0.5rem;">
+                <strong style="color: #2c3e50;">Horário:</strong> 
+                <span style="color: #555;">{{ agendamento.horario }}</span>
+            </p>
+        </div>
+        
+        <div>
+            <a href="{% url 'agendar' %}" 
+               style="display: inline-block; background: #b07a84; color: white; padding: 0.75rem 2rem; border-radius: 5px; text-decoration: none;">
+                Agendar outra aula
+            </a>
+            <a href="/" 
+               style="display: inline-block; margin-left: 1rem; padding: 0.75rem 1.5rem; background: #f5f5f5; color: #333; border-radius: 5px; text-decoration: none;">
+                Voltar para Home
+            </a>
+        </div>
+        
+    </div>
+    
 </div>
-
 {% endblock %}
