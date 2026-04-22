@@ -45,7 +45,6 @@
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Data de nascimento</label>
                         <input type="date" id="data_nascimento" name="data_nascimento" 
                                style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
-                        <small style="color: #888;">Opcional</small>
                     </div>
                 </div>
                 
@@ -117,23 +116,20 @@
                             <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Nome</label>
                             <input type="text" name="responsavel_nome" id="responsavel_nome"
                                    style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
-                            <small style="color: #888;">Opcional</small>
                         </div>
                         
                         <div>
                             <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Sobrenome</label>
                             <input type="text" name="responsavel_sobrenome" id="responsavel_sobrenome"
                                    style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
-                            <small style="color: #888;">Opcional</small>
                         </div>
                     </div>
                     
                     <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
                         <div>
                             <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Email</label>
-                            <input type="email" name="responsavel_email" id="responsavel_email"
+                            <input type="email" name="responsavel_email" id="responsavel_email" required
                                    style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
-                            <small style="color: #888;">Opcional</small>
                         </div>
                         
                         <div>
@@ -141,15 +137,13 @@
                             <input type="text" name="responsavel_telefone" id="responsavel_telefone"
                                    placeholder="(15) 99999-9999"
                                    style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
-                            <small style="color: #888;">Opcional</small>
                         </div>
                         
                         <div>
                             <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Senha</label>
                             <input type="text" name="responsavel_senha" id="responsavel_senha"
-                                   placeholder="Senha inicial (deixe em branco para gerar automaticamente)"
+                                   placeholder="Senha inicial (opcional)"
                                    style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
-                            <small style="color: #888;">Opcional - será gerada automaticamente se deixar em branco</small>
                         </div>
                     </div>
                 </div>
@@ -225,9 +219,13 @@ function toggleResponsavel() {
 
         if (selectResp) selectResp.required = false;
 
+        // Apenas o email continua obrigatório
+        const emailCampo = document.getElementById('responsavel_email');
+        if (emailCampo) emailCampo.required = true;
+        
         camposNovo.forEach(id => {
             const campo = document.getElementById(id);
-            if (campo) campo.required = true;
+            if (campo && id !== 'responsavel_email') campo.required = false;
         });
     }
 }
