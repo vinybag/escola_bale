@@ -17,7 +17,7 @@
                 <tr>
                     <th style="padding: 1rem; text-align: left;">Aluna(o)</th>
                     <th style="padding: 1rem; text-align: left;">Responsavel</th>
-                    <th style="padding: 1rem; text-align: left;">Telefone</th>
+                    <th style="padding: 1rem; text-align: left;">Whatsapp</th>
                     <th style="padding: 1rem; text-align: center;">Idade</th>
                     <th style="padding: 1rem; text-align: center;">Data e Horario</th>
                     <th style="padding: 1rem; text-align: center;">Criado em</th>
@@ -34,7 +34,11 @@
                         {{ agendamento.nome_responsavel }}
                     </td>
                     <td style="padding: 1rem;">
-                        {{ agendamento.telefone }}
+                        <a href="https://wa.me/55{{ agendamento.telefone|cut:' '|cut:'('|cut:')'|cut:'-'|cut:'+' }}"
+                           target="_blank"
+                           style="color: #25D366; text-decoration: none;">
+                            {{ agendamento.telefone }}
+                        </a>
                     </td>
                     <td style="padding: 1rem; text-align: center;">
                         {{ agendamento.idade_aluna }} anos
@@ -59,13 +63,13 @@
                             </button>
                         </form>
                     </td>
-                 </tr>
+                  </tr>
                 {% empty %}
                 <tr style="border-top: 1px solid #eee;">
                     <td colspan="7" style="padding: 3rem; text-align: center; color: #999;">
                         Nenhum agendamento encontrado.
-                     </td>
-                 </tr>
+                      </td>
+                  </tr>
                 {% endfor %}
             </tbody>
         </table>
