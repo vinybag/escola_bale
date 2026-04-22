@@ -7,10 +7,10 @@ from django.utils import timezone
 class Perfil(models.Model):
     """Perfil completo do usuario/responsavel"""
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='perfil')
-    telefone = models.CharField(max_length=20, blank=True)
-    cpf = models.CharField(max_length=14, blank=True)
+    telefone = models.CharField(max_length=20, blank=True, null=True)  # TORNADO OPCIONAL
+    cpf = models.CharField(max_length=14, blank=True, null=True)
     data_nascimento = models.DateField(null=True, blank=True)
-    endereco = models.CharField(max_length=200, blank=True)
+    endereco = models.CharField(max_length=200, blank=True, null=True)
     criado_em = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):
@@ -66,7 +66,7 @@ class Aluna(models.Model):
     responsavel = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='alunas')
     tipo_aluna = models.CharField(max_length=20, choices=TIPO_ALUNAS, default='infantil')
     nome = models.CharField(max_length=100)
-    data_nascimento = models.DateField()
+    data_nascimento = models.DateField(null=True, blank=True)  # TORNADO OPCIONAL
     turma = models.ForeignKey(Turma, on_delete=models.SET_NULL, null=True, blank=True, related_name='alunas')
     ativa = models.BooleanField(default=True)
     data_matricula = models.DateField(auto_now_add=True)
@@ -79,9 +79,10 @@ class Aluna(models.Model):
     def idade(self):
         """Calcula a idade da aluna com base na data de nascimento"""
         from datetime import date
+        if not self.data_nascimento:
+            return None  # Retorna None se não tiver data
         hoje = date.today()
         idade = hoje.year - self.data_nascimento.year
-        # Ajusta se ainda não fez aniversário este ano
         if (hoje.month, hoje.day) < (self.data_nascimento.month, self.data_nascimento.day):
             idade -= 1
         return idade

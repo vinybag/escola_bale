@@ -13,7 +13,8 @@ class InscricaoAudicaoForm(forms.ModelForm):
         }
     
     def save(self, commit=True):
-        instance = super().save(commit=False)
+        # Pega os valores selecionados (vem como lista)
+        valores = self.cleaned_data.get('personagens')
         
         # Dicionário para converter códigos em nomes legíveis
         personagens_dict = {
@@ -30,11 +31,19 @@ class InscricaoAudicaoForm(forms.ModelForm):
             '3_marias': '3 Marias',
         }
         
-        # Pega os valores selecionados (vem como lista)
-        valores = self.cleaned_data.get('personagens')
+        # Converte os valores para nomes legíveis
         if isinstance(valores, list):
             nomes = [personagens_dict.get(v, v) for v in valores]
-            instance.personagens = ', '.join(nomes)
+            personagens_texto = ', '.join(nomes)
+        else:
+            personagens_texto = valores
+        
+        # Cria a instância
+        instance = self.instance
+        instance.nome_completo = self.cleaned_data.get('nome_completo')
+        instance.whatsapp = self.cleaned_data.get('whatsapp')
+        instance.idade = self.cleaned_data.get('idade')
+        instance.personagens = personagens_texto
         
         if commit:
             instance.save()

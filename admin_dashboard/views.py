@@ -214,15 +214,15 @@ def aluna_criar(request):
             
             # Pega dados da aluna
             nome = request.POST.get('nome')
-            data_nascimento = request.POST.get('data_nascimento')
+            data_nascimento = request.POST.get('data_nascimento') or None  # Permite vazio
             turma_id = request.POST.get('turma')
             ativa = request.POST.get('ativa') == 'on'
             observacoes = request.POST.get('observacoes', '')
             tipo_aluna = request.POST.get('tipo_aluna', 'infantil')
             
-            # Valida dados básicos
-            if not all([nome, data_nascimento]):
-                messages.error(request, 'Preencha todos os campos obrigatorios da aluna!')
+            # Valida dados básicos (apenas nome é obrigatório)
+            if not nome:
+                messages.error(request, 'O nome da aluna e obrigatorio!')
                 return redirect('admin_dashboard:aluna_criar')
             
             responsavel = None
@@ -241,16 +241,16 @@ def aluna_criar(request):
                     responsavel = User.objects.get(id=responsavel_id)
                     
                 else:
-                    # Cria novo responsável
-                    resp_nome = request.POST.get('responsavel_nome')
-                    resp_sobrenome = request.POST.get('responsavel_sobrenome')
-                    resp_email = request.POST.get('responsavel_email')
-                    resp_senha = request.POST.get('responsavel_senha')
+                    # Cria novo responsável (campos opcionais)
+                    resp_nome = request.POST.get('responsavel_nome', '')
+                    resp_sobrenome = request.POST.get('responsavel_sobrenome', '')
+                    resp_email = request.POST.get('responsavel_email', '')
+                    resp_senha = request.POST.get('responsavel_senha', '')
                     resp_telefone = request.POST.get('responsavel_telefone', '')
                     
-                    # Valida campos do responsável (TELEFONE OBRIGATÓRIO)
-                    if not all([resp_nome, resp_sobrenome, resp_email, resp_senha, resp_telefone]):
-                        messages.error(request, 'Preencha todos os campos obrigatorios do responsavel (incluindo telefone)!')
+                    # Só cria se tiver nome e email (mínimo)
+                    if not resp_nome or not resp_email:
+                        messages.error(request, 'Nome e email do responsavel sao obrigatorios!')
                         return redirect('admin_dashboard:aluna_criar')
                     
                     # Verifica se email já existe
@@ -268,6 +268,10 @@ def aluna_criar(request):
                         username = f"{base_username}{counter}"
                         counter += 1
                     
+                    # Gera senha padrão se não for fornecida
+                    if not resp_senha:
+                        resp_senha = User.objects.make_random_password()
+                    
                     # Cria o responsável
                     responsavel = User.objects.create_user(
                         username=username,
@@ -277,13 +281,13 @@ def aluna_criar(request):
                         last_name=resp_sobrenome
                     )
                     
-                    # Cria perfil com telefone
+                    # Cria perfil com telefone (se fornecido)
                     from usuarios.models import Perfil
                     perfil, created = Perfil.objects.get_or_create(
                         user=responsavel,
-                        defaults={'telefone': resp_telefone}
+                        defaults={'telefone': resp_telefone or ''}
                     )
-                    if not created:
+                    if not created and resp_telefone:
                         perfil.telefone = resp_telefone
                         perfil.save()
                     

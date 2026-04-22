@@ -21,7 +21,7 @@
                 <h3 style="margin-bottom: 1rem; color: #2c3e50; font-size: 1rem; text-transform: uppercase; font-weight: 600;">Dados da Aluna</h3>
                 
                 <div style="margin-bottom: 1rem;">
-                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Tipo de Aluna *</label>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Tipo de Aluna</label>
                     <div style="display: flex; gap: 1.5rem;">
                         <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
                             <input type="radio" name="tipo_aluna" value="infantil" checked onchange="toggleTipoAluna()">
@@ -36,15 +36,16 @@
                 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                     <div>
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Nome completo *</label>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Nome completo</label>
                         <input type="text" id="nome" name="nome" required 
                                style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
                     </div>
                     
                     <div>
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Data de nascimento *</label>
-                        <input type="date" id="data_nascimento" name="data_nascimento" required 
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Data de nascimento</label>
+                        <input type="date" id="data_nascimento" name="data_nascimento" 
                                style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                        <small style="color: #888;">Opcional</small>
                     </div>
                 </div>
                 
@@ -113,37 +114,42 @@
                 <div id="novo-responsavel">
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                         <div>
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Nome *</label>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Nome</label>
                             <input type="text" name="responsavel_nome" id="responsavel_nome"
                                    style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                            <small style="color: #888;">Opcional</small>
                         </div>
                         
                         <div>
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Sobrenome *</label>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Sobrenome</label>
                             <input type="text" name="responsavel_sobrenome" id="responsavel_sobrenome"
                                    style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                            <small style="color: #888;">Opcional</small>
                         </div>
                     </div>
                     
                     <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
                         <div>
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Email *</label>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Email</label>
                             <input type="email" name="responsavel_email" id="responsavel_email"
                                    style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                            <small style="color: #888;">Opcional</small>
                         </div>
                         
                         <div>
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Telefone *</label>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Telefone</label>
                             <input type="text" name="responsavel_telefone" id="responsavel_telefone"
                                    placeholder="(15) 99999-9999"
                                    style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                            <small style="color: #888;">Opcional</small>
                         </div>
                         
                         <div>
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Senha *</label>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Senha</label>
                             <input type="text" name="responsavel_senha" id="responsavel_senha"
-                                   placeholder="Senha inicial"
+                                   placeholder="Senha inicial (deixe em branco para gerar automaticamente)"
                                    style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                            <small style="color: #888;">Opcional - será gerada automaticamente se deixar em branco</small>
                         </div>
                     </div>
                 </div>
