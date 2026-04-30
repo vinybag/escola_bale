@@ -209,7 +209,7 @@
         /* RESPONSIVO - MOBILE */
         @media (max-width: 768px) {
             .header .logo img {
-                max-height: 32px;
+                max-height: 50px;
             }
             
             .header-user span {
@@ -330,7 +330,7 @@
     <div class="header">
         <button class="menu-toggle" onclick="toggleMenu()">☰</button>
         <div class="logo">
-            <img src="{% static 'img/logo_bkn_tech.png' %}" alt="BKN Tech" style="height: 40px;">
+            <img src="{% static 'img/logo_bkn_tech.png' %}" alt="BKN Tech" style="height: 60px;">
         </div>
         <div class="header-user">
             <span>{{ request.user.get_full_name|default:request.user.username }}</span>
