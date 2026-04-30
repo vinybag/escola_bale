@@ -20,8 +20,8 @@
         
         /* Header */
         .header {
-            background: linear-gradient(135deg, #2c3e50, #b07a84);
-            color: white;
+            background: linear-gradient(135deg, #ffffff 0%, #e8e8e8 100%);
+            color: #333;
             padding: 1rem;
             display: flex;
             justify-content: space-between;
@@ -30,12 +30,12 @@
             position: sticky;
             top: 0;
             z-index: 100;
+            border-bottom: 3px solid #6b2d8f;
         }
         
         .header .logo img {
             width: 180px;
             height: auto;
-            max-height: none;
             display: block;
         }
         
@@ -46,8 +46,8 @@
         }
         
         .btn-logout {
-            background: rgba(255,255,255,0.2);
-            color: white;
+            background: rgba(0,0,0,0.08);
+            color: #333;
             padding: 0.5rem 1rem;
             border-radius: 5px;
             text-decoration: none;
@@ -57,14 +57,14 @@
         }
         
         .btn-logout:hover {
-            background: rgba(255,255,255,0.3);
+            background: rgba(0,0,0,0.15);
         }
         
         .menu-toggle {
             display: none;
-            background: rgba(255,255,255,0.2);
+            background: rgba(0,0,0,0.08);
             border: none;
-            color: white;
+            color: #333;
             font-size: 1.5rem;
             padding: 0.5rem;
             cursor: pointer;
@@ -210,8 +210,12 @@
         
         /* RESPONSIVO - MOBILE */
         @media (max-width: 768px) {
+            .header {
+                padding: 0.75rem;
+            }
+            
             .header .logo img {
-                width: 120px;
+                width: 100px;
                 height: auto;
             }
             
@@ -270,12 +274,22 @@
         
         @media (max-width: 480px) {
             .header {
-                padding: 0.75rem;
+                padding: 0.5rem;
+            }
+            
+            .header .logo img {
+                width: 80px;
+                height: auto;
             }
             
             .btn {
                 padding: 0.5rem 1rem;
                 font-size: 0.8rem;
+            }
+            
+            .btn-logout {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.75rem;
             }
             
             .stat-card {
@@ -330,16 +344,16 @@
 <body>
     
     <!-- Header -->
-<div class="header">
-    <button class="menu-toggle" onclick="toggleMenu()">☰</button>
-    <div class="logo">
-        <img src="{% static 'img/logo_bkn_tech.png' %}" alt="BKN Tech" style="width: 180px; height: auto; max-height: none;">
+    <div class="header">
+        <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+        <div class="logo">
+            <img src="{% static 'img/logo_bkn_tech.png' %}" alt="BKN Tech">
+        </div>
+        <div class="header-user">
+            <span>{{ request.user.get_full_name|default:request.user.username }}</span>
+            <a href="{% url 'logout' %}" class="btn-logout">Sair</a>
+        </div>
     </div>
-    <div class="header-user">
-        <span>{{ request.user.get_full_name|default:request.user.username }}</span>
-        <a href="{% url 'logout' %}" class="btn-logout">Sair</a>
-    </div>
-</div>
     
     <!-- Container -->
     <div class="container">
@@ -371,7 +385,9 @@
                 <a href="{% url 'admin_dashboard:espetaculos_list' %}" class="{% if 'espetaculos' in request.path %}active{% endif %}">
                     Espetáculos
                 </a>
-                <a href="{% url 'admin_dashboard:inscricoes_audicao' %}">Inscrições Audição</a>
+                <a href="{% url 'admin_dashboard:inscricoes_audicao' %}" class="{% if 'inscricoes' in request.path %}active{% endif %}">
+                    Inscrições Audição
+                </a>
                 <a href="#">
                     Relatórios
                 </a>
