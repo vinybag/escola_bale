@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Admin Dashboard{% endblock %} - BKN Tech</title>
+    {% load static %}
     
     <style>
         * {
@@ -31,9 +32,9 @@
             z-index: 100;
         }
         
-        .header h1 {
-            font-size: 1.25rem;
-            font-weight: 600;
+        .header .logo img {
+            max-height: 40px;
+            display: block;
         }
         
         .header-user {
@@ -207,8 +208,8 @@
         
         /* RESPONSIVO - MOBILE */
         @media (max-width: 768px) {
-            .header h1 {
-                font-size: 1rem;
+            .header .logo img {
+                max-height: 32px;
             }
             
             .header-user span {
@@ -328,7 +329,9 @@
     <!-- Header -->
     <div class="header">
         <button class="menu-toggle" onclick="toggleMenu()">☰</button>
-        <h1>BKN Tech - Admin</h1>
+        <div class="logo">
+            <img src="{% static 'img/logo_bkn_tech.png' %}" alt="BKN Tech" style="height: 40px;">
+        </div>
         <div class="header-user">
             <span>{{ request.user.get_full_name|default:request.user.username }}</span>
             <a href="{% url 'logout' %}" class="btn-logout">Sair</a>
