@@ -139,8 +139,8 @@ def alunas_list(request):
         from usuarios.models import Aluna, Turma
         from django.db.models import Q
         
-        # Query base
-        alunas = Aluna.objects.select_related('responsavel', 'turma').all()
+        # Query base - REMOVA select_related('turma') porque não existe mais
+        alunas = Aluna.objects.select_related('responsavel').all()  # Só responsavel
         
         # Debug - mostra no console
         print(f"Total de alunas no banco: {alunas.count()}")
@@ -158,7 +158,7 @@ def alunas_list(request):
         # Filtro por turma
         turma = request.GET.get('turma', '')
         if turma:
-            alunas = alunas.filter(turmas__nome=turma)  # MUDOU: 'turma__nome' -> 'turmas__nome'
+            alunas = alunas.filter(turmas__nome=turma)
             print(f"Alunas após filtro turma: {alunas.count()}")
         
         # Filtro por status
@@ -194,7 +194,7 @@ def alunas_list(request):
         'busca': busca,
         'turma_filtro': turma,
         'status_filtro': status,
-        'total_alunas': alunas.count() if alunas else 0,
+        'total_alunas': len(alunas) if alunas else 0,
     }
     
     return render(request, 'admin_dashboard/alunas/list.html', context)
