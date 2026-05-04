@@ -77,6 +77,26 @@
                 </div>
             </div>
             
+            <!-- Dados da Aluna Adulta (sem responsável) -->
+            <div id="bloco-adulto" style="display: none;">
+                <h3 style="margin-bottom: 1rem; color: #2c3e50; font-size: 1rem; text-transform: uppercase; font-weight: 600;">Dados de Acesso (Aluna Adulta)</h3>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Email *</label>
+                        <input type="email" name="adulto_email" id="adulto_email"
+                               style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                    </div>
+                    
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Senha</label>
+                        <input type="text" name="adulto_senha" id="adulto_senha"
+                               placeholder="Deixe em branco para gerar automaticamente"
+                               style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                    </div>
+                </div>
+            </div>
+            
             <!-- Responsável (apenas para infantil) -->
             <div id="bloco-responsavel">
                 <h3 style="margin-bottom: 1rem; color: #2c3e50; font-size: 1rem; text-transform: uppercase; font-weight: 600;">Responsável</h3>
@@ -168,9 +188,12 @@
 function toggleTipoAluna() {
     const tipo = document.querySelector('input[name="tipo_aluna"]:checked').value;
     const blocoResponsavel = document.getElementById('bloco-responsavel');
+    const blocoAdulto = document.getElementById('bloco-adulto');
     
     if (tipo === 'adulto') {
         blocoResponsavel.style.display = 'none';
+        blocoAdulto.style.display = 'block';
+        
         // Remove required dos campos de responsável
         const camposResponsavel = [
             'responsavel_nome', 'responsavel_sobrenome', 'responsavel_email',
@@ -180,8 +203,19 @@ function toggleTipoAluna() {
             const campo = document.getElementById(id);
             if (campo) campo.required = false;
         });
+        
+        // Adiciona required no email do adulto
+        const emailAdulto = document.getElementById('adulto_email');
+        if (emailAdulto) emailAdulto.required = true;
+        
     } else {
         blocoResponsavel.style.display = 'block';
+        blocoAdulto.style.display = 'none';
+        
+        // Remove required do email adulto
+        const emailAdulto = document.getElementById('adulto_email');
+        if (emailAdulto) emailAdulto.required = false;
+        
         // Reaplica required baseado no tipo de responsável selecionado
         toggleResponsavel();
     }
