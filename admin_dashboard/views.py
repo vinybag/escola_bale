@@ -90,11 +90,11 @@ def dashboard(request):
         
         for turma in turmas:
             total_alunas_turma = Aluna.objects.filter(
-                turma=turma,
+                turmas=turma,  # MUDOU DE 'turma' PARA 'turmas
                 ativa=True
             ).count()
             
-            if total_alunas_turma > 0:  # So adiciona turmas com alunas
+            if total_alunas_turma > 0:
                 turmas_labels.append(turma.nome)
                 turmas_valores.append(total_alunas_turma)
         
@@ -158,7 +158,7 @@ def alunas_list(request):
         # Filtro por turma
         turma = request.GET.get('turma', '')
         if turma:
-            alunas = alunas.filter(turma__nome=turma)
+            alunas = alunas.filter(turmas__nome=turma)  # MUDOU: 'turma__nome' -> 'turmas__nome'
             print(f"Alunas após filtro turma: {alunas.count()}")
         
         # Filtro por status
@@ -1363,7 +1363,7 @@ def turma_detalhes(request, pk):
         
         # Busca todas as alunas da turma
         alunas = Aluna.objects.filter(
-            turma=turma,
+            turmas=turma,  # CORRETO: usa ManyToMany
             ativa=True
         ).order_by('nome')
         
