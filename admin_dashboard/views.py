@@ -1035,7 +1035,7 @@ def responsavel_editar(request, pk):
     
     try:
         from django.contrib.auth.models import User
-        from usuarios.models import Perfil
+        from usuarios.models import Perfil, Aluna
         from django.contrib import messages
         
         responsavel = User.objects.get(pk=pk, is_staff=False)
@@ -1043,11 +1043,17 @@ def responsavel_editar(request, pk):
         # Pega ou cria perfil
         perfil, created = Perfil.objects.get_or_create(user=responsavel)
         
+        # Lista de alunas vinculadas a este responsável
+        alunas_vinculadas = Aluna.objects.filter(responsavel=responsavel).order_by('nome')
+        
+        # Lista de alunas não vinculadas a nenhum responsável (para adicionar)
+        alunas_nao_vinculadas = Aluna.objects.filter(responsavel__isnull=True, tipo_aluna='infantil').order_by('nome')
+        
         if request.method == 'POST':
             # Atualiza dados do User
-            responsavel.first_name = request.POST.get('first_name')
-            responsavel.last_name = request.POST.get('last_name')
-            responsavel.email = request.POST.get('email')
+            responsavel.first_name = request.POST.get('first_name', '')
+            responsavel.last_name = request.POST.get('last_name', '')
+            responsavel.email = request.POST.get('email', '')
             responsavel.save()
             
             # Atualiza dados do Perfil
@@ -1061,13 +1067,36 @@ def responsavel_editar(request, pk):
             
             perfil.save()
             
-            messages.success(request, f'Dados de {responsavel.get_full_name()} atualizados com sucesso!')
-            return redirect('admin_dashboard:responsaveis_list')
+            # Vincular nova aluna (se selecionada)
+            vincular_aluna_id = request.POST.get('vincular_aluna')
+            if vincular_aluna_id:
+                try:
+                    aluna = Aluna.objects.get(id=vincular_aluna_id)
+                    aluna.responsavel = responsavel
+                    aluna.save()
+                    messages.success(request, f'Aluna {aluna.nome} vinculada com sucesso!')
+                except Aluna.DoesNotExist:
+                    messages.error(request, 'Aluna não encontrada!')
+            
+            # Remover vínculo de aluna (se solicitado)
+            remover_aluna_id = request.POST.get('remover_aluna')
+            if remover_aluna_id:
+                try:
+                    aluna = Aluna.objects.get(id=remover_aluna_id, responsavel=responsavel)
+                    aluna.responsavel = None
+                    aluna.save()
+                    messages.success(request, f'Vínculo com {aluna.nome} removido!')
+                except Aluna.DoesNotExist:
+                    messages.error(request, 'Aluna não encontrada!')
+            
+            return redirect('admin_dashboard:responsavel_editar', pk=responsavel.pk)
         
         # GET - mostra form
         context = {
             'responsavel': responsavel,
             'perfil': perfil,
+            'alunas_vinculadas': alunas_vinculadas,
+            'alunas_nao_vinculadas': alunas_nao_vinculadas,
         }
         return render(request, 'admin_dashboard/responsaveis/editar.html', context)
         
