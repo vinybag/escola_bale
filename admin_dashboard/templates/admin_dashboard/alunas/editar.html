@@ -22,7 +22,7 @@
                 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                     <div>
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Nome completo *</label>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Nome completo</label>
                         <input type="text" 
                                id="nome" 
                                name="nome" 
@@ -32,34 +32,34 @@
                     </div>
                     
                     <div>
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Data de nascimento *</label>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Data de nascimento</label>
                         <input type="date" 
                                id="data_nascimento" 
                                name="data_nascimento" 
                                value="{{ aluna.data_nascimento|date:'Y-m-d' }}"
-                               required
                                style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
                     </div>
                 </div>
                 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                     <div>
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Turma</label>
-                        <select id="turma" name="turma" 
-                                style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
-                            <option value="">Sem turma</option>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Turmas</label>
+                        <select id="turmas" name="turmas" multiple 
+                                style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem; min-height: 120px;">
                             {% for turma in turmas %}
-                                <option value="{{ turma.id }}" {% if aluna.turma.id == turma.id %}selected{% endif %}>
-                                    {{ turma.nome }} ({{ turma.total_alunas }}/{{ turma.capacidade_maxima }} - {{ turma.vagas_disponiveis }} vagas)
+                                <option value="{{ turma.id }}" {% if turma in aluna.turmas.all %}selected{% endif %}>
+                                    {{ turma.nome }} ({{ turma.total_alunas }}/{{ turma.capacidade_maxima }} vagas)
                                 </option>
                             {% endfor %}
                         </select>
+                        <small style="color: #888;">Segure Ctrl (ou Cmd no Mac) para selecionar múltiplas turmas</small>
                     </div>
                     
                     <div>
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Responsável *</label>
-                        <select id="responsavel" name="responsavel" required 
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Responsável</label>
+                        <select id="responsavel" name="responsavel" 
                                 style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                            <option value="">Sem responsável</option>
                             {% for resp in responsaveis %}
                                 <option value="{{ resp.id }}" {% if aluna.responsavel.id == resp.id %}selected{% endif %}>
                                     {{ resp.get_full_name|default:resp.username }} - {{ resp.email }}

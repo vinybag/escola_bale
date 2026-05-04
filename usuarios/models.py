@@ -66,8 +66,8 @@ class Aluna(models.Model):
     responsavel = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='alunas')
     tipo_aluna = models.CharField(max_length=20, choices=TIPO_ALUNAS, default='infantil')
     nome = models.CharField(max_length=100)
-    data_nascimento = models.DateField(null=True, blank=True)  # TORNADO OPCIONAL
-    turma = models.ForeignKey(Turma, on_delete=models.SET_NULL, null=True, blank=True, related_name='alunas')
+    data_nascimento = models.DateField(null=True, blank=True)
+    turmas = models.ManyToManyField('Turma', blank=True, related_name='alunas')  # SÓ ISSO - SEM campo turma separado
     ativa = models.BooleanField(default=True)
     data_matricula = models.DateField(auto_now_add=True)
     observacoes = models.TextField(blank=True)
@@ -80,7 +80,7 @@ class Aluna(models.Model):
         """Calcula a idade da aluna com base na data de nascimento"""
         from datetime import date
         if not self.data_nascimento:
-            return None  # Retorna None se não tiver data
+            return None
         hoje = date.today()
         idade = hoje.year - self.data_nascimento.year
         if (hoje.month, hoje.day) < (self.data_nascimento.month, self.data_nascimento.day):

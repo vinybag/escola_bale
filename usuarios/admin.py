@@ -16,14 +16,20 @@ class TurmaAdmin(admin.ModelAdmin):
 
 @admin.register(Aluna)
 class AlunaAdmin(admin.ModelAdmin):
-    list_display = ['nome', 'responsavel', 'idade', 'turma', 'ativa', 'data_matricula']
+    list_display = ['nome', 'responsavel', 'idade', 'get_turmas', 'ativa', 'data_matricula']
     search_fields = ['nome', 'responsavel__first_name', 'responsavel__last_name', 'responsavel__email']
-    list_filter = ['ativa', 'turma', 'data_matricula']
+    list_filter = ['ativa', 'data_matricula']  # Removeu 'turma' daqui
     ordering = ['nome']
     
     def idade(self, obj):
-        return f"{obj.idade} anos"
+        if obj.idade:
+            return f"{obj.idade} anos"
+        return "-"
     idade.short_description = 'Idade'
+    
+    def get_turmas(self, obj):
+        return ", ".join([turma.nome for turma in obj.turmas.all()]) if obj.turmas.exists() else "-"
+    get_turmas.short_description = 'Turmas'
 
 @admin.register(RecuperacaoSenha)
 class RecuperacaoSenhaAdmin(admin.ModelAdmin):

@@ -215,7 +215,7 @@ def aluna_criar(request):
             # Pega dados da aluna
             nome = request.POST.get('nome')
             data_nascimento = request.POST.get('data_nascimento') or None
-            turma_id = request.POST.get('turma')
+            turmas_ids = request.POST.getlist('turmas')  # PEGA MÚLTIPLAS TURMAS
             ativa = request.POST.get('ativa') == 'on'
             observacoes = request.POST.get('observacoes', '')
             tipo_aluna = request.POST.get('tipo_aluna', 'infantil')
@@ -297,11 +297,12 @@ def aluna_criar(request):
                     
                     messages.success(request, f'Responsavel {resp_nome} {resp_sobrenome} cadastrado! Login: {resp_email} / Senha: {resp_senha}')
             
-            # Busca turma se foi selecionada
-            turma = None
-            if turma_id:
+            # Busca as turmas selecionadas
+            turmas_selecionadas = []
+            for turma_id in turmas_ids:
                 try:
                     turma = Turma.objects.get(id=turma_id)
+                    turmas_selecionadas.append(turma)
                 except Turma.DoesNotExist:
                     pass
             
@@ -309,12 +310,14 @@ def aluna_criar(request):
             aluna = Aluna.objects.create(
                 nome=nome,
                 data_nascimento=data_nascimento,
-                turma=turma,
                 responsavel=responsavel,
                 tipo_aluna=tipo_aluna,
                 ativa=ativa,
                 observacoes=observacoes
             )
+            
+            # Adiciona as turmas (ManyToMany)
+            aluna.turmas.set(turmas_selecionadas)
             
             messages.success(request, f'Aluna {nome} criada com sucesso!')
             return redirect('admin_dashboard:alunas_list')
@@ -408,24 +411,27 @@ def aluna_editar(request, pk):
             
             # Atualiza dados
             aluna.nome = request.POST.get('nome')
-            aluna.data_nascimento = request.POST.get('data_nascimento')
+            aluna.data_nascimento = request.POST.get('data_nascimento') or None
             aluna.ativa = request.POST.get('ativa') == 'on'
             aluna.observacoes = request.POST.get('observacoes', '')
             
-            # Atualiza responsavel se mudou
+            # Atualiza responsavel se mudou (pode ser None para adulto)
             responsavel_id = request.POST.get('responsavel')
             if responsavel_id:
                 aluna.responsavel = User.objects.get(id=responsavel_id)
-            
-            # Atualiza turma
-            turma_id = request.POST.get('turma')
-            if turma_id:
-                try:
-                    aluna.turma = Turma.objects.get(id=turma_id)
-                except Turma.DoesNotExist:
-                    aluna.turma = None
             else:
-                aluna.turma = None
+                aluna.responsavel = None
+            
+            # Atualiza as turmas (múltiplas)
+            turmas_ids = request.POST.getlist('turmas')
+            turmas_selecionadas = []
+            for turma_id in turmas_ids:
+                try:
+                    turma = Turma.objects.get(id=turma_id)
+                    turmas_selecionadas.append(turma)
+                except Turma.DoesNotExist:
+                    pass
+            aluna.turmas.set(turmas_selecionadas)
             
             aluna.save()
             
