@@ -9,4 +9,7 @@ urlpatterns = [
     path('verificar-pix/<str:payment_id>/', views.verificar_pagamento_pix, name='verificar_pagamento_pix'),
     path('sucesso/', views.pagamento_sucesso, name='pagamento_sucesso'),
     path('cancelado/', views.pagamento_cancelado, name='pagamento_cancelado'),
+    
+    # Webhook do Asaas (não requer autenticação)
+    path('webhook/asaas/', views.webhook_asaas, name='webhook_asaas'),
 ]

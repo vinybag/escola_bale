@@ -1,7 +1,8 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
+from django.views.decorators.csrf import csrf_exempt
 from .models import Mensalidade
 from .asaas_helper import AsaasAPI
 import stripe
@@ -9,6 +10,10 @@ from datetime import datetime
 import json
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
+
+# Configurações do webhook Asaas
+ASAAS_WEBHOOK_TOKEN = "whsec_QZ29t9lfesKRKyZRmCvIQ9Ca_ErtrYALxunk7PwU02U"
+ASAAS_WEBHOOK_EMAIL = "vinybag@gmail.com"
 
 @login_required
 def mensalidades(request):
@@ -225,3 +230,60 @@ def pagamento_sucesso(request):
 @login_required
 def pagamento_cancelado(request):
     return render(request, 'pagamentos/cancelado.html')
+
+
+# ==================== WEBHOOK DO ASAAS ====================
+
+@csrf_exempt
+def webhook_asaas(request):
+    """Recebe notificações do Asaas quando um pagamento é confirmado"""
+    
+    if request.method == 'POST':
+        # Verifica o token de autenticação
+        token_recebido = request.headers.get('asaas-access-token') or request.headers.get('access_token')
+        
+        print(f"[WEBHOOK] Token recebido: {token_recebido}")
+        
+        if not token_recebido or token_recebido != ASAAS_WEBHOOK_TOKEN:
+            print(f"[WEBHOOK] Token inválido! Acesso negado.")
+            return HttpResponse(status=401)
+        
+        try:
+            dados = json.loads(request.body)
+            evento = dados.get('event')
+            payment_id = dados.get('payment', {}).get('id')
+            
+            print(f"[WEBHOOK] Evento: {evento}, Payment ID: {payment_id}")
+            print(f"[WEBHOOK] Dados completos: {json.dumps(dados, indent=2)}")
+            
+            if evento == 'PAYMENT_RECEIVED' and payment_id:
+                try:
+                    mensalidade = Mensalidade.objects.get(asaas_payment_id=payment_id)
+                    
+                    if mensalidade.status != 'pago':
+                        mensalidade.status = 'pago'
+                        mensalidade.data_pagamento = datetime.now()
+                        mensalidade.forma_pagamento = 'pix'
+                        mensalidade.comprovante = payment_id
+                        mensalidade.save()
+                        print(f"[WEBHOOK] Mensalidade {mensalidade.id} atualizada para PAGO")
+                    else:
+                        print(f"[WEBHOOK] Mensalidade {mensalidade.id} já estava como PAGO")
+                    
+                    return HttpResponse(status=200)
+                    
+                except Mensalidade.DoesNotExist:
+                    print(f"[WEBHOOK] Mensalidade com payment_id {payment_id} não encontrada")
+                    return HttpResponse(status=200)  # Retorna 200 mesmo assim para o Asaas não tentar novamente
+            
+            # Outros eventos (PENDING, etc) - só loga e retorna ok
+            print(f"[WEBHOOK] Evento ignorado: {evento}")
+            return HttpResponse(status=200)
+            
+        except Exception as e:
+            print(f"[WEBHOOK] Erro: {e}")
+            import traceback
+            traceback.print_exc()
+            return HttpResponse(status=500)
+    
+    return HttpResponse(status=405)
