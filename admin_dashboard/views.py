@@ -214,7 +214,7 @@ def aluna_criar(request):
             
             # Pega dados da aluna
             nome = request.POST.get('nome')
-            data_nascimento = request.POST.get('data_nascimento') or None  # Permite vazio
+            data_nascimento = request.POST.get('data_nascimento') or None
             turma_id = request.POST.get('turma')
             ativa = request.POST.get('ativa') == 'on'
             observacoes = request.POST.get('observacoes', '')
@@ -248,9 +248,13 @@ def aluna_criar(request):
                     resp_senha = request.POST.get('responsavel_senha', '')
                     resp_telefone = request.POST.get('responsavel_telefone', '')
                     
-                    # Só cria se tiver nome e email (mínimo)
-                    if not resp_nome or not resp_email:
-                        messages.error(request, 'Nome e email do responsavel sao obrigatorios!')
+                    # Validações mínimas (nome e email são obrigatórios para criar responsável)
+                    if not resp_nome:
+                        messages.error(request, 'Nome do responsavel e obrigatorio!')
+                        return redirect('admin_dashboard:aluna_criar')
+                    
+                    if not resp_email:
+                        messages.error(request, 'Email do responsavel e obrigatorio!')
                         return redirect('admin_dashboard:aluna_criar')
                     
                     # Verifica se email já existe
