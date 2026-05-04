@@ -74,7 +74,11 @@
                         <strong style="color: #2c3e50;">{{ aluna.nome }}</strong>
                     </td>
                     <td style="padding: 1rem; color: #666;">
-                        {{ aluna.responsavel.get_full_name|default:aluna.responsavel.username }}
+                        {% if aluna.responsavel %}
+                            {{ aluna.responsavel.get_full_name|default:aluna.responsavel.username }}
+                        {% else %}
+                            <span style="color: #999;">-</span>
+                        {% endif %}
                     </td>
                     <td style="padding: 1rem;">
                         {% if aluna.turma %}
@@ -88,7 +92,11 @@
                         {% endif %}
                     </td>
                     <td style="padding: 1rem; color: #666;">
-                        {{ aluna.idade }} anos
+                        {% if aluna.idade %}
+                            {{ aluna.idade }} anos
+                        {% else %}
+                            <span style="color: #999;">-</span>
+                        {% endif %}
                     </td>
                     <td style="padding: 1rem;">
                         {% if aluna.ativa %}
