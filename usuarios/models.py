@@ -7,11 +7,12 @@ from django.utils import timezone
 class Perfil(models.Model):
     """Perfil completo do usuario/responsavel"""
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='perfil')
-    telefone = models.CharField(max_length=20, blank=True, null=True)  # TORNADO OPCIONAL
+    telefone = models.CharField(max_length=20, blank=True, null=True)
     cpf = models.CharField(max_length=14, blank=True, null=True)
     data_nascimento = models.DateField(null=True, blank=True)
     endereco = models.CharField(max_length=200, blank=True, null=True)
     criado_em = models.DateTimeField(auto_now_add=True)
+    is_responsavel = models.BooleanField(default=True)  # Indica se é um responsável de verdade
     
     def __str__(self):
         return f"Perfil de {self.user.get_full_name() or self.user.username}"
@@ -67,7 +68,7 @@ class Aluna(models.Model):
     tipo_aluna = models.CharField(max_length=20, choices=TIPO_ALUNAS, default='infantil')
     nome = models.CharField(max_length=100)
     data_nascimento = models.DateField(null=True, blank=True)
-    turmas = models.ManyToManyField('Turma', blank=True, related_name='alunas')  # SÓ ISSO - SEM campo turma separado
+    turmas = models.ManyToManyField(Turma, blank=True, related_name='alunas')
     ativa = models.BooleanField(default=True)
     data_matricula = models.DateField(auto_now_add=True)
     observacoes = models.TextField(blank=True)

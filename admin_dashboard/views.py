@@ -229,8 +229,74 @@ def aluna_criar(request):
             
             # Só processa responsável se for aluna infantil
             if tipo_aluna == 'infantil':
-                # ... código existente do responsável (não muda) ...
-                pass
+                # VERIFICA TIPO DE RESPONSÁVEL
+                tipo_responsavel = request.POST.get('tipo_responsavel')
+                
+                if tipo_responsavel == 'existente':
+                    # Usa responsável existente
+                    responsavel_id = request.POST.get('responsavel_existente')
+                    if not responsavel_id:
+                        messages.error(request, 'Selecione um responsavel!')
+                        return redirect('admin_dashboard:aluna_criar')
+                    responsavel = User.objects.get(id=responsavel_id)
+                    
+                else:
+                    # Cria novo responsável (campos opcionais)
+                    resp_nome = request.POST.get('responsavel_nome', '')
+                    resp_sobrenome = request.POST.get('responsavel_sobrenome', '')
+                    resp_email = request.POST.get('responsavel_email', '')
+                    resp_senha = request.POST.get('responsavel_senha', '')
+                    resp_telefone = request.POST.get('responsavel_telefone', '')
+                    
+                    # Validações mínimas (nome e email são obrigatórios para criar responsável)
+                    if not resp_nome:
+                        messages.error(request, 'Nome do responsavel e obrigatorio!')
+                        return redirect('admin_dashboard:aluna_criar')
+                    
+                    if not resp_email:
+                        messages.error(request, 'Email do responsavel e obrigatorio!')
+                        return redirect('admin_dashboard:aluna_criar')
+                    
+                    # Verifica se email já existe
+                    if User.objects.filter(email=resp_email).exists():
+                        messages.error(request, f'Ja existe um usuario com o email {resp_email}!')
+                        return redirect('admin_dashboard:aluna_criar')
+                    
+                    # Cria username a partir do email
+                    username = resp_email.split('@')[0]
+                    
+                    # Se username já existe, adiciona número
+                    base_username = username
+                    counter = 1
+                    while User.objects.filter(username=username).exists():
+                        username = f"{base_username}{counter}"
+                        counter += 1
+                    
+                    # Gera senha padrão se não for fornecida
+                    if not resp_senha:
+                        resp_senha = User.objects.make_random_password()
+                    
+                    # Cria o responsável
+                    responsavel = User.objects.create_user(
+                        username=username,
+                        email=resp_email,
+                        password=resp_senha,
+                        first_name=resp_nome,
+                        last_name=resp_sobrenome
+                    )
+                    
+                    # Cria perfil com telefone (se fornecido)
+                    perfil, created = Perfil.objects.get_or_create(
+                        user=responsavel,
+                        defaults={'telefone': resp_telefone or '', 'is_responsavel': True}
+                    )
+                    if not created and resp_telefone:
+                        perfil.telefone = resp_telefone
+                        perfil.is_responsavel = True
+                        perfil.save()
+                    
+                    messages.success(request, f'Responsavel {resp_nome} {resp_sobrenome} cadastrado! Login: {resp_email} / Senha: {resp_senha}')
+            
             else:
                 # ALUNA ADULTA - cria um usuário para ela mesma
                 adulto_email = request.POST.get('adulto_email', '')
@@ -266,8 +332,14 @@ def aluna_criar(request):
                     last_name=nome.split()[-1] if ' ' in nome else ''
                 )
                 
-                # Cria perfil
-                perfil, created = Perfil.objects.get_or_create(user=responsavel)
+                # Cria perfil marcando como NÃO RESPONSÁVEL
+                perfil, created = Perfil.objects.get_or_create(
+                    user=responsavel,
+                    defaults={'telefone': '', 'is_responsavel': False}
+                )
+                if not created:
+                    perfil.is_responsavel = False
+                    perfil.save()
                 
                 messages.success(request, f'Aluna adulta {nome} cadastrada! Login: {adulto_email} / Senha: {adulto_senha}')
             
@@ -995,11 +1067,14 @@ def responsaveis_list(request):
     
     try:
         from django.contrib.auth.models import User
-        from usuarios.models import Aluna
+        from usuarios.models import Aluna, Perfil
         from django.db.models import Count
         
-        # Pega todos os responsáveis (não-staff)
-        responsaveis = User.objects.filter(is_staff=False).annotate(
+        # Pega apenas usuários que são responsáveis (marcados como True)
+        responsaveis = User.objects.filter(
+            is_staff=False,
+            perfil__is_responsavel=True  # SÓ RESPONSÁVEIS DE VERDADE
+        ).annotate(
             total_alunas=Count('alunas')
         ).order_by('first_name', 'last_name')
         
