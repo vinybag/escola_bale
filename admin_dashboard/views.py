@@ -1171,7 +1171,7 @@ def responsavel_editar(request, pk):
                     messages.error(request, 'Aluna não encontrada!')
             
             messages.success(request, f'Dados de {responsavel.get_full_name()} atualizados com sucesso!')
-            return redirect('admin_dashboard:responsaveis_editar', pk=responsavel.pk)
+            return redirect('admin_dashboard:responsavel_editar', pk=responsavel.pk)
         
         # GET - mostra form
         context = {
