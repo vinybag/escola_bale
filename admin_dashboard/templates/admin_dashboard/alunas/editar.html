@@ -20,7 +20,7 @@
             <div>
                 <h3 style="margin-bottom: 1rem; color: #2c3e50; font-size: 1rem; text-transform: uppercase; font-weight: 600;">Dados da Aluna</h3>
                 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                     <div>
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Nome completo</label>
                         <input type="text" 
@@ -29,6 +29,16 @@
                                value="{{ aluna.nome }}"
                                required
                                style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                    </div>
+                    
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Genero</label>
+                        <select name="genero" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                            <option value="">Selecione...</option>
+                            <option value="F" {% if aluna.genero == 'F' %}selected{% endif %}>Feminino</option>
+                            <option value="M" {% if aluna.genero == 'M' %}selected{% endif %}>Masculino</option>
+                            <option value="O" {% if aluna.genero == 'O' %}selected{% endif %}>Outro</option>
+                        </select>
                     </div>
                     
                     <div>
@@ -52,14 +62,14 @@
                                 </option>
                             {% endfor %}
                         </select>
-                        <small style="color: #888;">Segure Ctrl (ou Cmd no Mac) para selecionar múltiplas turmas</small>
+                        <small style="color: #888;">Segure Ctrl (ou Cmd no Mac) para selecionar multiplas turmas</small>
                     </div>
                     
                     <div>
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Responsável</label>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Responsavel</label>
                         <select id="responsavel" name="responsavel" 
                                 style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
-                            <option value="">Sem responsável</option>
+                            <option value="">Sem responsavel</option>
                             {% for resp in responsaveis %}
                                 <option value="{{ resp.id }}" {% if aluna.responsavel.id == resp.id %}selected{% endif %}>
                                     {{ resp.get_full_name|default:resp.username }} - {{ resp.email }}
@@ -70,7 +80,7 @@
                 </div>
                 
                 <div style="margin-bottom: 1rem;">
-                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Observações</label>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Observacoes</label>
                     <textarea id="observacoes" 
                               name="observacoes" 
                               rows="3"
@@ -85,10 +95,10 @@
                 </div>
             </div>
             
-            <!-- Botões -->
+            <!-- Botoes -->
             <div style="display: flex; gap: 1rem; margin-top: 1rem;">
                 <button type="submit" class="btn btn-primary" style="background: #3498db; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 5px; cursor: pointer;">
-                    Salvar Alterações
+                    Salvar Alteracoes
                 </button>
                 <a href="{% url 'admin_dashboard:aluna_detalhes' aluna.pk %}" 
                    style="padding: 0.75rem 1.5rem; background: #f5f5f5; color: #333; border-radius: 5px; text-decoration: none; font-weight: 500;">

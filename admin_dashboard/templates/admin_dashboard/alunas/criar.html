@@ -34,11 +34,21 @@
                     </div>
                 </div>
                 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                     <div>
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Nome completo</label>
                         <input type="text" id="nome" name="nome" required 
                                style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                    </div>
+                    
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Genero</label>
+                        <select name="genero" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                            <option value="">Selecione...</option>
+                            <option value="F">Feminino</option>
+                            <option value="M">Masculino</option>
+                            <option value="O">Outro</option>
+                        </select>
                     </div>
                     
                     <div>
@@ -59,11 +69,11 @@
                                 </option>
                             {% endfor %}
                         </select>
-                        <small style="color: #888;">Segure Ctrl (ou Cmd no Mac) para selecionar múltiplas turmas</small>
+                        <small style="color: #888;">Segure Ctrl (ou Cmd no Mac) para selecionar multiplas turmas</small>
                     </div>
                     
                     <div>
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Observações</label>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Observacoes</label>
                         <textarea id="observacoes" name="observacoes" rows="3" 
                                   style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem; font-family: inherit;"></textarea>
                     </div>
@@ -83,7 +93,7 @@
                 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                     <div>
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Email *</label>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Email</label>
                         <input type="email" name="adulto_email" id="adulto_email"
                                style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
                     </div>
@@ -97,26 +107,26 @@
                 </div>
             </div>
             
-            <!-- Responsável (apenas para infantil) -->
+            <!-- Responsavel (apenas para infantil) -->
             <div id="bloco-responsavel">
-                <h3 style="margin-bottom: 1rem; color: #2c3e50; font-size: 1rem; text-transform: uppercase; font-weight: 600;">Responsável</h3>
+                <h3 style="margin-bottom: 1rem; color: #2c3e50; font-size: 1rem; text-transform: uppercase; font-weight: 600;">Responsavel</h3>
                 
                 <div style="margin-bottom: 1.5rem;">
                     <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; margin-bottom: 0.75rem;">
                         <input type="radio" name="tipo_responsavel" value="novo" checked onchange="toggleResponsavel()">
-                        <span style="font-weight: 500; color: #333;">Criar novo responsável</span>
+                        <span style="font-weight: 500; color: #333;">Criar novo responsavel</span>
                     </label>
                     
                     <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
                         <input type="radio" name="tipo_responsavel" value="existente" onchange="toggleResponsavel()">
-                        <span style="font-weight: 500; color: #333;">Usar responsável existente</span>
+                        <span style="font-weight: 500; color: #333;">Usar responsavel existente</span>
                     </label>
                 </div>
                 
-                <!-- Responsável Existente -->
+                <!-- Responsavel Existente -->
                 <div id="responsavel-existente" style="display: none; margin-bottom: 1.5rem;">
                     <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
-                        Selecione o responsável
+                        Selecione o responsavel
                     </label>
                     <select name="responsavel_existente" id="select-responsavel"
                             style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
@@ -129,7 +139,7 @@
                     </select>
                 </div>
                 
-                <!-- Novo Responsável -->
+                <!-- Novo Responsavel -->
                 <div id="novo-responsavel">
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                         <div>
@@ -169,7 +179,7 @@
                 </div>
             </div>
             
-            <!-- Botões -->
+            <!-- Botoes -->
             <div style="display: flex; gap: 1rem; margin-top: 1rem;">
                 <button type="submit" class="btn btn-primary" style="background: #3498db; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 5px; cursor: pointer;">
                     Cadastrar Aluna
@@ -194,7 +204,7 @@ function toggleTipoAluna() {
         blocoResponsavel.style.display = 'none';
         blocoAdulto.style.display = 'block';
         
-        // Remove required dos campos de responsável
+        // Remove required dos campos de responsavel
         const camposResponsavel = [
             'responsavel_nome', 'responsavel_sobrenome', 'responsavel_email',
             'responsavel_telefone', 'responsavel_senha', 'select-responsavel'
@@ -216,7 +226,7 @@ function toggleTipoAluna() {
         const emailAdulto = document.getElementById('adulto_email');
         if (emailAdulto) emailAdulto.required = false;
         
-        // Reaplica required baseado no tipo de responsável selecionado
+        // Reaplica required baseado no tipo de responsavel selecionado
         toggleResponsavel();
     }
 }
@@ -253,7 +263,7 @@ function toggleResponsavel() {
 
         if (selectResp) selectResp.required = false;
 
-        // Apenas o email continua obrigatório
+        // Apenas o email continua obrigatorio
         const emailCampo = document.getElementById('responsavel_email');
         if (emailCampo) emailCampo.required = true;
         

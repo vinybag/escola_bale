@@ -214,6 +214,7 @@ def aluna_criar(request):
             
             # Pega dados da aluna
             nome = request.POST.get('nome')
+            genero = request.POST.get('genero') or None
             data_nascimento = request.POST.get('data_nascimento') or None
             turmas_ids = request.POST.getlist('turmas')
             ativa = request.POST.get('ativa') == 'on'
@@ -355,6 +356,7 @@ def aluna_criar(request):
             # Cria a aluna
             aluna = Aluna.objects.create(
                 nome=nome,
+                genero=genero,
                 data_nascimento=data_nascimento,
                 responsavel=responsavel,
                 tipo_aluna=tipo_aluna,
@@ -457,6 +459,7 @@ def aluna_editar(request, pk):
             
             # Atualiza dados
             aluna.nome = request.POST.get('nome')
+            aluna.genero = request.POST.get('genero') or None
             aluna.data_nascimento = request.POST.get('data_nascimento') or None
             aluna.ativa = request.POST.get('ativa') == 'on'
             aluna.observacoes = request.POST.get('observacoes', '')
