@@ -1143,6 +1143,9 @@ def responsavel_editar(request, pk):
             if data_nascimento:
                 perfil.data_nascimento = data_nascimento
             
+            # NOVO CAMPO: Este responsável também é aluno
+            perfil.is_tambem_aluno = request.POST.get('is_tambem_aluno') == 'on'
+            
             perfil.save()
             
             # Vincular nova aluna (se selecionada)
@@ -1167,7 +1170,8 @@ def responsavel_editar(request, pk):
                 except Aluna.DoesNotExist:
                     messages.error(request, 'Aluna não encontrada!')
             
-            return redirect('admin_dashboard:responsavel_editar', pk=responsavel.pk)
+            messages.success(request, f'Dados de {responsavel.get_full_name()} atualizados com sucesso!')
+            return redirect('admin_dashboard:responsaveis_editar', pk=responsavel.pk)
         
         # GET - mostra form
         context = {

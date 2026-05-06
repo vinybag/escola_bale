@@ -63,6 +63,15 @@
                     <input type="date" name="data_nascimento" value="{{ perfil.data_nascimento|date:'Y-m-d' }}"
                            style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
                 </div>
+                
+                <!-- Campo: Também é aluno -->
+                <div style="margin-top: 1rem; padding: 1rem; background: #f8f9fa; border-radius: 5px;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                        <input type="checkbox" name="is_tambem_aluno" {% if perfil.is_tambem_aluno %}checked{% endif %}>
+                        <span style="font-weight: 500; color: #333;">Este responsável também é aluno(a)</span>
+                    </label>
+                    <small style="color: #888; display: block; margin-top: 0.25rem;">Marque se esta pessoa também estuda na escola</small>
+                </div>
             </div>
             
             <!-- Alunas Vinculadas -->
