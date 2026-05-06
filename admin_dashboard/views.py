@@ -1113,7 +1113,7 @@ def responsavel_editar(request, pk):
     
     try:
         from django.contrib.auth.models import User
-        from usuarios.models import Perfil, Aluna
+        from usuarios.models import Perfil, Aluna, Turma
         from django.contrib import messages
         
         responsavel = User.objects.get(pk=pk, is_staff=False)
@@ -1126,6 +1126,9 @@ def responsavel_editar(request, pk):
         
         # Lista de alunas não vinculadas a nenhum responsável (para adicionar)
         alunas_nao_vinculadas = Aluna.objects.filter(responsavel__isnull=True, tipo_aluna='infantil').order_by('nome')
+        
+        # Busca a aluna associada a este responsável (se existir)
+        aluna_associada = Aluna.objects.filter(responsavel=responsavel, tipo_aluna='adulto').first()
         
         if request.method == 'POST':
             # Atualiza dados do User
@@ -1144,9 +1147,48 @@ def responsavel_editar(request, pk):
                 perfil.data_nascimento = data_nascimento
             
             # NOVO CAMPO: Este responsável também é aluno
-            perfil.is_tambem_aluno = request.POST.get('is_tambem_aluno') == 'on'
-            
+            is_tambem_aluno = request.POST.get('is_tambem_aluno') == 'on'
+            perfil.is_tambem_aluno = is_tambem_aluno
             perfil.save()
+            
+            # Se marcou "também é aluno", criar/atualizar a aluna associada
+            if is_tambem_aluno:
+                # Busca as turmas selecionadas
+                turmas_ids = request.POST.getlist('turmas_aluno')
+                turmas_selecionadas = []
+                for turma_id in turmas_ids:
+                    try:
+                        turma = Turma.objects.get(id=turma_id)
+                        turmas_selecionadas.append(turma)
+                    except Turma.DoesNotExist:
+                        pass
+                
+                if aluna_associada:
+                    # Atualiza aluna existente
+                    aluna_associada.nome = responsavel.get_full_name() or responsavel.username
+                    aluna_associada.data_nascimento = data_nascimento or None
+                    aluna_associada.ativa = True
+                    aluna_associada.save()
+                    aluna_associada.turmas.set(turmas_selecionadas)
+                    messages.success(request, f'Aluno {aluna_associada.nome} atualizado como aluno da escola!')
+                else:
+                    # Cria nova aluna
+                    aluna_associada = Aluna.objects.create(
+                        nome=responsavel.get_full_name() or responsavel.username,
+                        responsavel=responsavel,
+                        tipo_aluna='adulto',
+                        data_nascimento=data_nascimento or None,
+                        ativa=True
+                    )
+                    aluna_associada.turmas.set(turmas_selecionadas)
+                    messages.success(request, f'Aluno {aluna_associada.nome} cadastrado como aluno da escola!')
+            else:
+                # Se desmarcou "também é aluno", remove a associação (mas não deleta a aluna)
+                if aluna_associada:
+                    aluna_associada.responsavel = None
+                    aluna_associada.ativa = False
+                    aluna_associada.save()
+                    messages.info(request, f'Aluno {aluna_associada.nome} foi desvinculado')
             
             # Vincular nova aluna (se selecionada)
             vincular_aluna_id = request.POST.get('vincular_aluna')
@@ -1170,7 +1212,6 @@ def responsavel_editar(request, pk):
                 except Aluna.DoesNotExist:
                     messages.error(request, 'Aluna não encontrada!')
             
-            messages.success(request, f'Dados de {responsavel.get_full_name()} atualizados com sucesso!')
             return redirect('admin_dashboard:responsavel_editar', pk=responsavel.pk)
         
         # GET - mostra form
@@ -1179,6 +1220,8 @@ def responsavel_editar(request, pk):
             'perfil': perfil,
             'alunas_vinculadas': alunas_vinculadas,
             'alunas_nao_vinculadas': alunas_nao_vinculadas,
+            'aluna_associada': aluna_associada,
+            'turmas': Turma.objects.filter(ativa=True).order_by('nome'),
         }
         return render(request, 'admin_dashboard/responsaveis/editar.html', context)
         
