@@ -66,7 +66,16 @@ def criar_evento_google(agendamento):
     
     # Se horario for string, converte para time
     if isinstance(horario, str):
-        horario = datetime.strptime(horario, '%H:%M:%S').time()
+        try:
+            # Tenta primeiro com formato HH:MM:SS
+            horario = datetime.strptime(horario, '%H:%M:%S').time()
+        except ValueError:
+            try:
+                # Tenta com formato HH:MM
+                horario = datetime.strptime(horario, '%H:%M').time()
+            except ValueError:
+                print(f"Erro ao converter horário: {horario}")
+                return False
     
     fuso = pytz.timezone('America/Sao_Paulo')
     
