@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from .models import Agendamento
-from usuarios.models import Turma  # Mudou: importa Turma em vez de Aula
+from usuarios.models import Turma  # Importa Turma
 from datetime import datetime, date
 from .google_calendar import criar_evento_google
 
@@ -15,14 +15,14 @@ DIAS_SEMANA = {
 
 
 def agendar(request):
-    # Busca apenas aulas do tipo 'aula_experimental'
-    aulas = Turma.objects.filter(tipo='aula_experimental', ativa=True).order_by('nome')
+    # AGORA: Mostra TODAS as turmas ativas (sem filtro de tipo)
+    aulas = Turma.objects.filter(ativa=True).order_by('nome')
 
     if request.method == 'POST':
         aula_id = request.POST.get('aula')
         data_str = request.POST.get('data')
 
-        aula = Turma.objects.filter(id=aula_id, ativa=True).first()  # Mudou: Turma
+        aula = Turma.objects.filter(id=aula_id, ativa=True).first()
 
         if not aula or not data_str:
             return render(
@@ -68,7 +68,7 @@ def agendar(request):
             telefone=request.POST.get('telefone'),
             data=data_escolhida,
             horario=aula.horario,
-            aula=aula  # Agora aula é uma Turma
+            aula=aula  # aula agora é uma Turma
         )
 
         # Cria o evento no Google Agenda
