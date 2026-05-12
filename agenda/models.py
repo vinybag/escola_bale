@@ -1,6 +1,7 @@
 from django.db import models
 
 
+# Classe Aula será removida depois, por enquanto vamos mantê-la mas não usar mais
 class Aula(models.Model):
     nome = models.CharField(max_length=100)
     dia_semana = models.CharField(
@@ -50,13 +51,15 @@ class Agendamento(models.Model):
         auto_now_add=True,
         verbose_name="Criado em"
     )
+    
+    # ALTERADO: Agora usa Turma do app usuarios
     aula = models.ForeignKey(
-    'Aula',
-    on_delete=models.SET_NULL,
-    null=True,
-    blank=True,
-    verbose_name='Aula escolhida'
-)
+        'usuarios.Turma',  # Mudou para o modelo Turma
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name='Turma/Aula escolhida'
+    )
 
     def __str__(self):
         return f"{self.nome_aluna} - {self.data} às {self.horario}"

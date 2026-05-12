@@ -32,7 +32,22 @@ class Perfil(models.Model):
 
 
 class Turma(models.Model):
-    """Turmas de ballet"""
+    """Turmas de ballet (unificada com Aulas)"""
+    
+    DIAS_SEMANA = [
+        ('Segunda', 'Segunda-feira'),
+        ('Terça', 'Terça-feira'),
+        ('Quarta', 'Quarta-feira'),
+        ('Quinta', 'Quinta-feira'),
+        ('Sexta', 'Sexta-feira'),
+        ('Sábado', 'Sábado'),
+    ]
+    
+    TIPOS = [
+        ('turma', 'Turma'),
+        ('aula_experimental', 'Aula Experimental'),
+    ]
+    
     nome = models.CharField(max_length=100, unique=True)
     descricao = models.TextField(blank=True)
     horario = models.CharField(max_length=100, blank=True, help_text="Ex: Segunda e Quarta 14h-15h")
@@ -40,6 +55,10 @@ class Turma(models.Model):
     capacidade_maxima = models.IntegerField(default=20, help_text="Número máximo de alunas")
     ativa = models.BooleanField(default=True)
     criado_em = models.DateTimeField(auto_now_add=True)
+    
+    # NOVOS CAMPOS (unificação com Aula)
+    dia_semana = models.CharField(max_length=20, choices=DIAS_SEMANA, blank=True, null=True)
+    tipo = models.CharField(max_length=20, choices=TIPOS, default='turma')
     
     def __str__(self):
         return self.nome
