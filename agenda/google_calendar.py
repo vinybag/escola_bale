@@ -56,10 +56,22 @@ def criar_evento_google(agendamento):
         print("Erro: Não foi possível autenticar no Google Calendar")
         return False
     
+    # CONVERTER CAMPOS PARA OS TIPOS CORRETOS
+    data = agendamento.data
+    horario = agendamento.horario
+    
+    # Se data for string, converte para date
+    if isinstance(data, str):
+        data = datetime.strptime(data, '%Y-%m-%d').date()
+    
+    # Se horario for string, converte para time
+    if isinstance(horario, str):
+        horario = datetime.strptime(horario, '%H:%M:%S').time()
+    
     fuso = pytz.timezone('America/Sao_Paulo')
     
     inicio = fuso.localize(
-        datetime.combine(agendamento.data, agendamento.horario)
+        datetime.combine(data, horario)
     )
     
     fim = inicio + timedelta(hours=1)
@@ -91,4 +103,3 @@ def criar_evento_google(agendamento):
     except Exception as e:
         print(f"Erro ao criar evento: {e}")
         return False
-
