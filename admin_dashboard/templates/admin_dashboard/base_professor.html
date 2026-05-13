@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Professor{% endblock %} - BAILAH</title>
     {% load static %}
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    
     <style>
         * {
             margin: 0;
@@ -18,6 +18,7 @@
             background: #f5f5f5;
         }
         
+        /* Header */
         .header {
             background: linear-gradient(135deg, #ffffff 0%, #e8e8e8 100%);
             color: #333;
@@ -33,7 +34,8 @@
         }
         
         .header .logo img {
-            height: 50px;
+            width: 180px;
+            height: auto;
             display: block;
         }
         
@@ -69,11 +71,13 @@
             border-radius: 5px;
         }
         
+        /* Layout */
         .container {
             display: flex;
             min-height: calc(100vh - 70px);
         }
         
+        /* Sidebar */
         .sidebar {
             width: 260px;
             background: white;
@@ -88,7 +92,7 @@
         }
         
         .sidebar a {
-            padding: 0.75rem 1rem;
+            padding: 1rem 2rem;
             color: #333;
             text-decoration: none;
             transition: all 0.3s;
@@ -107,6 +111,7 @@
             font-weight: 600;
         }
         
+        /* Content */
         .content {
             flex: 1;
             padding: 1.5rem;
@@ -127,6 +132,64 @@
             color: #666;
         }
         
+        /* Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border-left: 4px solid #b07a84;
+        }
+        
+        .stat-card h3 {
+            color: #666;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .stat-card .number {
+            font-size: 1.75rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        /* Buttons */
+        .btn {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #2c3e50, #b07a84);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(176, 122, 132, 0.3);
+        }
+        
+        /* Messages */
+        .messages {
+            margin-bottom: 1.5rem;
+        }
+        
         .alert {
             padding: 1rem;
             border-radius: 5px;
@@ -145,13 +208,15 @@
             border-left: 4px solid #dc3545;
         }
         
+        /* RESPONSIVO - MOBILE */
         @media (max-width: 768px) {
             .header {
                 padding: 0.75rem;
             }
             
             .header .logo img {
-                height: 35px;
+                width: 100px;
+                height: auto;
             }
             
             .header-user span {
@@ -182,6 +247,18 @@
                 width: 100%;
             }
             
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stat-card .number {
+                font-size: 1.5rem;
+            }
+            
+            .page-header h2 {
+                font-size: 1.5rem;
+            }
+            
             .sidebar.active::before {
                 content: '';
                 position: fixed;
@@ -200,7 +277,8 @@
             }
             
             .header .logo img {
-                height: 30px;
+                width: 80px;
+                height: auto;
             }
             
             .btn {
@@ -212,8 +290,13 @@
                 padding: 0.4rem 0.8rem;
                 font-size: 0.75rem;
             }
+            
+            .stat-card {
+                padding: 1rem;
+            }
         }
         
+        /* TABELAS RESPONSIVAS */
         .table-container {
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
@@ -235,6 +318,11 @@
                 padding: 0.75rem 0.5rem !important;
                 white-space: nowrap;
             }
+            
+            table th:first-child,
+            table td:first-child {
+                min-width: 120px;
+            }
         }
         
         @media (max-width: 480px) {
@@ -250,6 +338,8 @@
     </style>
 </head>
 <body>
+    
+    <!-- Header -->
     <div class="header">
         <button class="menu-toggle" onclick="toggleMenu()">☰</button>
         <div class="logo">
@@ -260,7 +350,11 @@
             <a href="{% url 'logout' %}" class="btn-logout">Sair</a>
         </div>
     </div>
+    
+    <!-- Container -->
     <div class="container">
+        
+        <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
             <nav>
                 <a href="{% url 'admin_dashboard:professor_dashboard' %}" class="{% if request.resolver_match.url_name == 'professor_dashboard' %}active{% endif %}">
@@ -274,7 +368,10 @@
                 </a>
             </nav>
         </aside>
+        
+        <!-- Content -->
         <main class="content">
+            
             {% if messages %}
                 <div class="messages">
                     {% for message in messages %}
@@ -284,9 +381,13 @@
                     {% endfor %}
                 </div>
             {% endif %}
+            
             {% block content %}{% endblock %}
+            
         </main>
+        
     </div>
+    
     <script>
         function toggleMenu() {
             const sidebar = document.getElementById('sidebar');
@@ -313,5 +414,6 @@
             }
         });
     </script>
+    
 </body>
 </html>

@@ -1,43 +1,213 @@
-{% extends 'admin_dashboard/base_professor.html' %}
+{% extends 'admin_dashboard/base.html' %}
 
-{% block title %}Dashboard - Professor{% endblock %}
+{% block title %}Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chart-container {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        margin-bottom: 1.5rem;
+    }
+    .chart-container h3 {
+        margin-bottom: 1.5rem;
+        color: #2c3e50;
+        font-size: 1rem;
+        text-transform: uppercase;
+        font-weight: 600;
+    }
+    .charts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 1.5rem;
+        margin-top: 2rem;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <h2>Olá, {{ request.user.first_name }}</h2>
-    <p>Suas turmas e alunas</p>
+<div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
+    <div>
+        <h2>Dashboard</h2>
+        <p>Visão geral - {{ mes_atual }}</p>
+    </div>
 </div>
 
-<!-- Cards de estatísticas -->
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+<!-- Cards de estatísticas padronizados -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem;">
+    
     <div style="background: white; border-radius: 10px; padding: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
-        <h3 style="margin: 0 0 0.5rem 0; color: #2c3e50; font-size: 0.875rem; text-transform: uppercase; font-weight: 600;">Minhas Turmas</h3>
-        <div style="font-size: 2rem; font-weight: bold; color: #b07a84;">{{ total_turmas }}</div>
-    </div>
-    <div style="background: white; border-radius: 10px; padding: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
-        <h3 style="margin: 0 0 0.5rem 0; color: #2c3e50; font-size: 0.875rem; text-transform: uppercase; font-weight: 600;">Total de Alunas</h3>
+        <h3 style="margin: 0 0 0.5rem 0; color: #2c3e50; font-size: 0.875rem; text-transform: uppercase; font-weight: 600;">Alunas Ativas</h3>
         <div style="font-size: 2rem; font-weight: bold; color: #b07a84;">{{ total_alunas }}</div>
     </div>
+
+    <div style="background: white; border-radius: 10px; padding: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+        <h3 style="margin: 0 0 0.5rem 0; color: #2c3e50; font-size: 0.875rem; text-transform: uppercase; font-weight: 600;">Turmas Ativas</h3>
+        <div style="font-size: 2rem; font-weight: bold; color: #b07a84;">{{ total_turmas }}</div>
+    </div>
+    
+    <div style="background: white; border-radius: 10px; padding: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+        <h3 style="margin: 0 0 0.5rem 0; color: #2c3e50; font-size: 0.875rem; text-transform: uppercase; font-weight: 600;">Recebido no Mês</h3>
+        <div style="font-size: 1.5rem; font-weight: bold; color: #b07a84;">R$ {{ total_recebido|floatformat:2 }}</div>
+    </div>
+    
+    <div style="background: white; border-radius: 10px; padding: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+        <h3 style="margin: 0 0 0.5rem 0; color: #2c3e50; font-size: 0.875rem; text-transform: uppercase; font-weight: 600;">Mensalidades Pendentes</h3>
+        <div style="font-size: 2rem; font-weight: bold; color: #b07a84;">{{ mensalidades_pendentes }}</div>
+    </div>
+    
+    <div style="background: white; border-radius: 10px; padding: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+        <h3 style="margin: 0 0 0.5rem 0; color: #2c3e50; font-size: 0.875rem; text-transform: uppercase; font-weight: 600;">Mensalidades Pagas</h3>
+        <div style="font-size: 2rem; font-weight: bold; color: #b07a84;">{{ mensalidades_pagas }}</div>
+    </div>
 </div>
 
-<!-- Lista de Turmas -->
-<h3>Minhas Turmas</h3>
-<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem;">
-    {% for turma in turmas %}
-    <div style="background: white; border-radius: 10px; padding: 1rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
-        <h3 style="color: #2c3e50;">{{ turma.nome }}</h3>
-        <p><strong>Horário:</strong> {{ turma.horario|default:"--" }}</p>
-        <p><strong>Alunas:</strong> {{ turma.total_alunas }}</p>
-        <p><strong>Capacidade:</strong> {{ turma.capacidade_maxima }}</p>
-        <a href="{% url 'admin_dashboard:professor_turma_detalhes' turma.pk %}" 
-           style="display: inline-block; margin-top: 0.5rem; background: #b07a84; color: white; padding: 0.4rem 1rem; border-radius: 5px; text-decoration: none;">
-            Ver alunas
-        </a>
+<!-- Gráficos -->
+<div class="charts-grid">
+    
+    <!-- Gráfico 1 - Faturamento -->
+    <div class="chart-container" style="grid-column: 1 / -1;">
+        <h3>Faturamento - Últimos 6 Meses</h3>
+        <canvas id="faturamentoChart" height="80"></canvas>
     </div>
-    {% empty %}
-    <div style="background: white; border-radius: 10px; padding: 2rem; text-align: center; color: #999;">
-        Nenhuma turma atribuída a você.
+    
+    <!-- Gráfico 2 - Alunas por Turma -->
+    <div class="chart-container">
+        <h3>Alunas por Turma</h3>
+        <canvas id="turmasChart"></canvas>
     </div>
-    {% endfor %}
+    
+    <!-- Gráfico 3 - Status Mensalidades -->
+    <div class="chart-container">
+        <h3>Mensalidades - {{ mes_atual }}</h3>
+        <canvas id="statusChart"></canvas>
+    </div>
+    
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<script>
+// Dados do Django
+const faturamentoMeses = {{ faturamento_meses|safe }};
+const faturamentoValores = {{ faturamento_valores|safe }};
+const turmasLabels = {{ turmas_labels|safe }};
+const turmasValores = {{ turmas_valores|safe }};
+const statusLabels = {{ status_labels|safe }};
+const statusValores = {{ status_valores|safe }};
+
+// Cores padronizadas
+const primaryColor = '#b07a84';
+const secondaryColor = '#2c3e50';
+const colors = [
+    '#b07a84',
+    '#2c3e50',
+    '#e8d5f2',
+    '#d4a5a5',
+    '#9a9a9a',
+    '#f0c0c0',
+    '#c4c4c4'
+];
+
+// Gráfico 1 - Faturamento (Linha)
+const faturamentoCtx = document.getElementById('faturamentoChart').getContext('2d');
+new Chart(faturamentoCtx, {
+    type: 'line',
+    data: {
+        labels: faturamentoMeses,
+        datasets: [{
+            label: 'Faturamento (R$)',
+            data: faturamentoValores,
+            borderColor: primaryColor,
+            backgroundColor: 'rgba(176, 122, 132, 0.1)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) {
+                        return 'R$ ' + value.toFixed(2);
+                    }
+                }
+            }
+        }
+    }
+});
+
+// Gráfico 2 - Alunas por Turma (Barra)
+const turmasCtx = document.getElementById('turmasChart').getContext('2d');
+new Chart(turmasCtx, {
+    type: 'bar',
+    data: {
+        labels: turmasLabels,
+        datasets: [{
+            label: 'Alunas',
+            data: turmasValores,
+            backgroundColor: colors,
+            borderWidth: 0
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1
+                }
+            }
+        }
+    }
+});
+
+// Gráfico 3 - Status Mensalidades (Doughnut)
+const statusCtx = document.getElementById('statusChart').getContext('2d');
+new Chart(statusCtx, {
+    type: 'doughnut',
+    data: {
+        labels: statusLabels,
+        datasets: [{
+            data: statusValores,
+            backgroundColor: [
+                '#28a745',  // Verde - Pagas
+                '#ffc107',  // Amarelo - Pendentes
+                '#dc3545'   // Vermelho - Vencidas
+            ],
+            borderWidth: 0
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+</script>
 {% endblock %}
