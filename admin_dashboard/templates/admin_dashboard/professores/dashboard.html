@@ -1,0 +1,32 @@
+{% extends 'admin_dashboard/base_professor.html' %}
+
+{% block title %}Dashboard - Professor{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Olá, {{ request.user.first_name }}</h2>
+    <p>Suas turmas e alunas</p>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+    <div style="background: white; border-radius: 10px; padding: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+        <h3>Turmas</h3>
+        <div style="font-size: 2rem; font-weight: bold; color: #b07a84;">{{ total_turmas }}</div>
+    </div>
+    <div style="background: white; border-radius: 10px; padding: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+        <h3>Alunas</h3>
+        <div style="font-size: 2rem; font-weight: bold; color: #b07a84;">{{ total_alunas }}</div>
+    </div>
+</div>
+
+<h3>Minhas Turmas</h3>
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem;">
+    {% for turma in turmas %}
+    <div style="background: white; border-radius: 10px; padding: 1rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+        <h3>{{ turma.nome }}</h3>
+        <p>Alunas: {{ turma.total_alunas }}</p>
+        <a href="{% url 'admin_dashboard:professor_turma_detalhes' turma.pk %}">Ver alunas</a>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

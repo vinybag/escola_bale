@@ -50,4 +50,15 @@ urlpatterns = [
     path('agendamentos/', views.agendamentos_list, name='agendamentos_list'),
     path('agendamentos/<int:pk>/', views.agendamento_detalhes, name='agendamento_detalhes'),
     path('agendamentos/<int:pk>/excluir/', views.agendamento_excluir, name='agendamento_excluir'),
+
+    # Professores
+    path('professores/', views.professores_list, name='professores_list'),
+    path('professores/criar/', views.professor_criar, name='professor_criar'),
+    path('professores/<int:pk>/editar/', views.professor_editar, name='professor_editar'),
+    path('professores/<int:pk>/excluir/', views.professor_excluir, name='professor_excluir'),
+
+    # Professor
+    path('professor/dashboard/', views.professor_dashboard, name='professor_dashboard'),
+    path('professor/turma/<int:pk>/', views.professor_turma_detalhes, name='professor_turma_detalhes'),
+    path('professor/avisos/', views.professor_avisos, name='professor_avisos'),
 ]

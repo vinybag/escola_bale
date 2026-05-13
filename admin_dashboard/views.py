@@ -1618,3 +1618,281 @@ def agendamento_excluir(request, pk):
             messages.error(request, f'Erro ao excluir agendamento: {e}')
     
     return redirect('admin_dashboard:agendamentos_list')
+
+# ==================== VIEWS PARA PROFESSORES ====================
+
+@login_required
+def professor_dashboard(request):
+    """Dashboard do professor - mostra apenas suas turmas"""
+    
+    if not request.user.groups.filter(name='Professores').exists():
+        return redirect('home')
+    
+    from usuarios.models import Turma, Aluna
+    
+    # Turmas do professor
+    turmas = Turma.objects.filter(professor_responsavel=request.user, ativa=True)
+    
+    # Totais
+    total_turmas = turmas.count()
+    total_alunas = Aluna.objects.filter(turmas__in=turmas, ativa=True).distinct().count()
+    
+    context = {
+        'turmas': turmas,
+        'total_turmas': total_turmas,
+        'total_alunas': total_alunas,
+    }
+    return render(request, 'admin_dashboard/professor/dashboard.html', context)
+
+@login_required
+def professor_turma_detalhes(request, pk):
+    """Detalhes da turma para professor"""
+    
+    if not request.user.groups.filter(name='Professores').exists():
+        return redirect('home')
+    
+    from usuarios.models import Turma, Aluna
+    from django.shortcuts import get_object_or_404
+    
+    turma = get_object_or_404(Turma, pk=pk, professor_responsavel=request.user)
+    alunas = Aluna.objects.filter(turmas=turma, ativa=True).order_by('nome')
+    
+    context = {
+        'turma': turma,
+        'alunas': alunas,
+    }
+    return render(request, 'admin_dashboard/professor/turma_detalhes.html', context)
+
+@login_required
+def professor_avisos(request):
+    """Lista de avisos para professor"""
+    
+    if not request.user.groups.filter(name='Professores').exists():
+        return redirect('home')
+    
+    from calendario_avisos.models import Aviso
+    
+    avisos = Aviso.objects.filter(ativo=True).order_by('-data_publicacao')
+    
+    return render(request, 'admin_dashboard/professor/avisos.html', {'avisos': avisos})
+
+@login_required
+def professor_criar(request):
+    """Criar novo professor (apenas para admin)"""
+    
+    if not request.user.is_staff:
+        return redirect('home')
+    
+    from django.contrib.auth.models import User, Group
+    from usuarios.models import Turma
+    from django.contrib import messages
+    
+    if request.method == 'POST':
+        nome = request.POST.get('nome')
+        email = request.POST.get('email')
+        senha = request.POST.get('senha')
+        turmas_ids = request.POST.getlist('turmas')
+        
+        # Validações
+        if not nome or not email or not senha:
+            messages.error(request, 'Preencha todos os campos obrigatórios!')
+            return redirect('admin_dashboard:professor_criar')
+        
+        if User.objects.filter(email=email).exists():
+            messages.error(request, f'Email {email} já cadastrado!')
+            return redirect('admin_dashboard:professor_criar')
+        
+        if len(senha) < 6:
+            messages.error(request, 'A senha deve ter no mínimo 6 caracteres!')
+            return redirect('admin_dashboard:professor_criar')
+        
+        # Cria o usuário
+        username = email.split('@')[0]
+        base_username = username
+        counter = 1
+        while User.objects.filter(username=username).exists():
+            username = f"{base_username}{counter}"
+            counter += 1
+        
+        user = User.objects.create_user(
+            username=username,
+            email=email,
+            password=senha,
+            first_name=nome
+        )
+        
+        # Adiciona ao grupo Professores
+        grupo, _ = Group.objects.get_or_create(name='Professores')
+        user.groups.add(grupo)
+        
+        # Vincula as turmas selecionadas
+        for turma_id in turmas_ids:
+            try:
+                turma = Turma.objects.get(id=turma_id)
+                turma.professor_responsavel = user
+                turma.save()
+            except Turma.DoesNotExist:
+                pass
+        
+        messages.success(request, f'Professor {nome} criado com sucesso!')
+        return redirect('admin_dashboard:professores_list')
+    
+    # GET - mostra formulário
+    turmas = Turma.objects.filter(ativa=True).order_by('nome')
+    
+    context = {
+        'turmas': turmas,
+    }
+    return render(request, 'admin_dashboard/professores/criar.html', context)
+
+@login_required
+def professores_list(request):
+    """Lista de professores"""
+    
+    if not request.user.is_staff:
+        return redirect('home')
+    
+    from django.contrib.auth.models import User
+    from django.db.models import Count
+    
+    professores = User.objects.filter(groups__name='Professores').annotate(
+        total_turmas=Count('turmas_ministradas')
+    ).order_by('first_name')
+    
+    return render(request, 'admin_dashboard/professores/list.html', {'professores': professores})
+
+@login_required
+def professor_editar(request, pk):
+    """Editar professor"""
+    
+    if not request.user.is_staff:
+        return redirect('home')
+    
+    from django.contrib.auth.models import User
+    from usuarios.models import Turma
+    from django.contrib import messages
+    from django.shortcuts import get_object_or_404
+    
+    professor = get_object_or_404(User, pk=pk, groups__name='Professores')
+    
+    if request.method == 'POST':
+        # Atualiza dados básicos
+        professor.first_name = request.POST.get('nome')
+        professor.email = request.POST.get('email')
+        
+        # Atualiza senha se fornecida
+        nova_senha = request.POST.get('senha')
+        if nova_senha:
+            if len(nova_senha) >= 6:
+                professor.set_password(nova_senha)
+                messages.info(request, 'Senha alterada com sucesso!')
+            else:
+                messages.error(request, 'A senha deve ter no mínimo 6 caracteres!')
+        
+        professor.save()
+        
+        # Atualiza turmas vinculadas
+        turmas_ids = request.POST.getlist('turmas')
+        # Remove vínculos antigos
+        Turma.objects.filter(professor_responsavel=professor).update(professor_responsavel=None)
+        # Adiciona novos vínculos
+        for turma_id in turmas_ids:
+            Turma.objects.filter(id=turma_id).update(professor_responsavel=professor)
+        
+        messages.success(request, f'Professor {professor.first_name} atualizado com sucesso!')
+        return redirect('admin_dashboard:professores_list')
+    
+    # GET - mostra formulário
+    turmas_disponiveis = Turma.objects.filter(ativa=True).order_by('nome')
+    turmas_vinculadas = professor.turmas_ministradas.all()
+    
+    context = {
+        'professor': professor,
+        'turmas_disponiveis': turmas_disponiveis,
+        'turmas_vinculadas': turmas_vinculadas,
+    }
+    return render(request, 'admin_dashboard/professores/editar.html', context)
+
+@login_required
+def professor_excluir(request, pk):
+    """Excluir professor"""
+    
+    if not request.user.is_staff:
+        return redirect('home')
+    
+    if request.method == 'POST':
+        from django.contrib.auth.models import User
+        from usuarios.models import Turma
+        
+        professor = get_object_or_404(User, pk=pk, groups__name='Professores')
+        nome = professor.first_name
+        
+        # Remove vínculo com turmas
+        Turma.objects.filter(professor_responsavel=professor).update(professor_responsavel=None)
+        
+        professor.delete()
+        messages.success(request, f'Professor {nome} excluído com sucesso!')
+    
+    return redirect('admin_dashboard:professores_list')
+
+# ==================== VIEWS PARA PROFESSORES ====================
+
+@login_required
+def professor_dashboard(request):
+    """Dashboard do professor - mostra apenas suas turmas"""
+    
+    if not request.user.groups.filter(name='Professores').exists():
+        return redirect('home')
+    
+    from usuarios.models import Turma, Aluna
+    
+    # Turmas do professor
+    turmas = Turma.objects.filter(professor_responsavel=request.user, ativa=True)
+    
+    # Totais
+    total_turmas = turmas.count()
+    total_alunas = Aluna.objects.filter(turmas__in=turmas, ativa=True).distinct().count()
+    
+    context = {
+        'turmas': turmas,
+        'total_turmas': total_turmas,
+        'total_alunas': total_alunas,
+    }
+    return render(request, 'admin_dashboard/professor/dashboard.html', context)
+
+@login_required
+def professor_turma_detalhes(request, pk):
+    """Detalhes da turma para professor"""
+    
+    if not request.user.groups.filter(name='Professores').exists():
+        return redirect('home')
+    
+    from usuarios.models import Turma, Aluna
+    from django.shortcuts import get_object_or_404
+    
+    turma = get_object_or_404(Turma, pk=pk, professor_responsavel=request.user)
+    alunas = Aluna.objects.filter(turmas=turma, ativa=True).order_by('nome')
+    
+    # Calcula idade de cada aluna
+    for aluna in alunas:
+        aluna.idade_calculada = aluna.idade if aluna.idade else '--'
+    
+    context = {
+        'turma': turma,
+        'alunas': alunas,
+        'total_alunas': alunas.count(),
+    }
+    return render(request, 'admin_dashboard/professor/turma_detalhes.html', context)
+
+@login_required
+def professor_avisos(request):
+    """Lista de avisos para professor"""
+    
+    if not request.user.groups.filter(name='Professores').exists():
+        return redirect('home')
+    
+    from calendario_avisos.models import Aviso
+    
+    avisos = Aviso.objects.filter(ativo=True).order_by('-data_publicacao')
+    
+    return render(request, 'admin_dashboard/professor/avisos.html', {'avisos': avisos})

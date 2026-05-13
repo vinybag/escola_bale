@@ -1,0 +1,44 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Professores{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
+    <div>
+        <h2>Professores</h2>
+        <p>{{ professores.count }} professor{{ professores.count|pluralize:"es" }}</p>
+    </div>
+    <a href="{% url 'admin_dashboard:professor_criar' %}" class="btn btn-primary">+ Novo Professor</a>
+</div>
+
+<div style="background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+    <div class="table-container">
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Email</th>
+                    <th>Turmas</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for professor in professores %}
+                <tr>
+                    <td>{{ professor.first_name }}</td>
+                    <td>{{ professor.email }}</td>
+                    <td>{{ professor.total_turmas }}</td>
+                    <td>
+                        <a href="{% url 'admin_dashboard:professor_editar' professor.id %}">Editar</a>
+                        <form method="post" action="{% url 'admin_dashboard:professor_excluir' professor.id %}" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" onclick="return confirm('Tem certeza?')">Excluir</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

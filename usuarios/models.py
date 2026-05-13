@@ -60,6 +60,16 @@ class Turma(models.Model):
     dia_semana = models.CharField(max_length=20, choices=DIAS_SEMANA, blank=True, null=True)
     tipo = models.CharField(max_length=20, choices=TIPOS, default='turma')
     
+    # NOVO CAMPO: Professor responsável (usuário do sistema)
+    professor_responsavel = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='turmas_ministradas',
+        verbose_name='Professor responsável'
+    )
+    
     def __str__(self):
         return self.nome
     
@@ -103,7 +113,7 @@ class Aluna(models.Model):
     nome = models.CharField(max_length=100)
     genero = models.CharField(max_length=1, choices=GENERO_CHOICES, blank=True, null=True)
     data_nascimento = models.DateField(null=True, blank=True)
-    turmas = models.ManyToManyField('Turma', blank=True, related_name='alunas')
+    turmas = models.ManyToManyField(Turma, blank=True, related_name='alunas')
     ativa = models.BooleanField(default=True)
     data_matricula = models.DateField(auto_now_add=True)
     observacoes = models.TextField(blank=True)

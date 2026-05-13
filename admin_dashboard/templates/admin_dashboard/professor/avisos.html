@@ -1,0 +1,27 @@
+{% extends 'admin_dashboard/base_professor.html' %}
+
+{% block title %}Avisos{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Avisos</h2>
+    <p>{{ avisos.count }} aviso{{ avisos.count|pluralize:"s" }}</p>
+</div>
+
+<div style="display: grid; gap: 1rem;">
+    {% for aviso in avisos %}
+    <div style="background: white; border-radius: 10px; padding: 1rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+        <h3 style="color: #b07a84;">{{ aviso.titulo }}</h3>
+        <p style="color: #666;">{{ aviso.descricao }}</p>
+        <div style="display: flex; justify-content: space-between; margin-top: 0.5rem;">
+            <small style="color: #888;">Data: {{ aviso.data_evento|date:"d/m/Y" }}</small>
+            <small style="color: #888;">Publicado: {{ aviso.data_publicacao|date:"d/m/Y H:i" }}</small>
+        </div>
+    </div>
+    {% empty %}
+    <div style="background: white; border-radius: 10px; padding: 2rem; text-align: center; color: #999;">
+        Nenhum aviso disponível.
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends 'admin_dashboard/base_professor.html' %}
+
+{% block title %}Turma - {{ turma.nome }}{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1rem;">
+    <a href="{% url 'admin_dashboard:professor_dashboard' %}" style="color: #b07a84; text-decoration: none;">← Voltar</a>
+</div>
+
+<div style="background: white; border-radius: 10px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+    <h2>{{ turma.nome }}</h2>
+    <p><strong>Horário:</strong> {{ turma.horario|default:"--" }}</p>
+    <p><strong>Professor:</strong> {{ turma.professor|default:"--" }}</p>
+    <p><strong>Total de alunas:</strong> {{ total_alunas }} / {{ turma.capacidade_maxima }}</p>
+</div>
+
+<h3>Alunas Matriculadas</h3>
+<div style="background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+    <div class="table-container">
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead style="background: #f8f9fa;">
+                <tr>
+                    <th style="padding: 1rem; text-align: left;">Aluna</th>
+                    <th style="padding: 1rem; text-align: left;">Idade</th>
+                    <th style="padding: 1rem; text-align: left;">Data de Matrícula</th>
+                    <th style="padding: 1rem; text-align: left;">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for aluna in alunas %}
+                <tr style="border-top: 1px solid #eee;">
+                    <td style="padding: 1rem;">
+                        <strong>{{ aluna.nome }}</strong>
+                        {% if aluna.observacoes %}
+                            <br><small style="color: #888;">{{ aluna.observacoes|truncatechars:30 }}</small>
+                        {% endif %}
+                    </td>
+                    <td style="padding: 1rem;">
+                        {% if aluna.idade_calculada %}
+                            {{ aluna.idade_calculada }} anos
+                        {% else %}
+                            --
+                        {% endif %}
+                    </td>
+                    <td style="padding: 1rem;">
+                        {{ aluna.data_matricula|date:"d/m/Y" }}
+                    </td>
+                    <td style="padding: 1rem;">
+                        {% if aluna.ativa %}
+                            <span style="background: #d4edda; color: #155724; padding: 0.25rem 0.75rem; border-radius: 20px;">Ativa</span>
+                        {% else %}
+                            <span style="background: #f8d7da; color: #721c24; padding: 0.25rem 0.75rem; border-radius: 20px;">Inativa</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr style="border-top: 1px solid #eee;">
+                    <td colspan="4" style="padding: 2rem; text-align: center; color: #999;">
+                        Nenhuma aluna matriculada nesta turma.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

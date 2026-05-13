@@ -1,0 +1,64 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Novo Professor{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
+    <div>
+        <h2>Novo Professor</h2>
+        <p>Cadastrar novo professor</p>
+    </div>
+</div>
+
+<div style="background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); max-width: 600px;">
+    <form method="post">
+        {% csrf_token %}
+        
+        <div style="display: grid; gap: 1.5rem;">
+            
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Nome completo</label>
+                <input type="text" name="nome" required
+                       style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+            </div>
+            
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Email</label>
+                <input type="email" name="email" required
+                       style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+            </div>
+            
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Senha</label>
+                <input type="password" name="senha" required
+                       style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                <small style="color: #888;">Mínimo de 6 caracteres</small>
+            </div>
+            
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Turmas do Professor</label>
+                <select name="turmas" multiple 
+                        style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem; min-height: 150px;">
+                    {% for turma in turmas %}
+                        <option value="{{ turma.id }}">
+                            {{ turma.nome }} ({{ turma.total_alunas }} alunas)
+                        </option>
+                    {% endfor %}
+                </select>
+                <small style="color: #888;">Segure Ctrl (ou Cmd no Mac) para selecionar múltiplas turmas</small>
+            </div>
+            
+            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                <button type="submit" class="btn btn-primary" style="background: #3498db; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 5px; cursor: pointer;">
+                    Criar Professor
+                </button>
+                <a href="{% url 'admin_dashboard:professores_list' %}" 
+                   style="padding: 0.75rem 1.5rem; background: #f5f5f5; color: #333; border-radius: 5px; text-decoration: none;">
+                    Cancelar
+                </a>
+            </div>
+            
+        </div>
+    </form>
+</div>
+{% endblock %}
