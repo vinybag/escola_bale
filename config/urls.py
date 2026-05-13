@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from usuarios.views import redirecionar_dashboard
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -12,6 +13,9 @@ urlpatterns = [
     path('pagamentos/', include('pagamentos.urls')),
     path('avisos/', include('calendario_avisos.urls')),
     path('espetaculo/', include('espetaculo.urls')),  # ← NOVO
+
+    # Redirecionamento de login
+    path('dashboard/', redirecionar_dashboard, name='redirecionar_dashboard'),
 ]
 
 if settings.DEBUG:

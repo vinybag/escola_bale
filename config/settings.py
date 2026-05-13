@@ -105,7 +105,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Login/Logout
 LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = 'dashboard'
+LOGIN_REDIRECT_URL = 'redirecionar_dashboard'
 LOGOUT_REDIRECT_URL = 'home'
 
 # Google Calendar

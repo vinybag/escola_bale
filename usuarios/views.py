@@ -210,3 +210,18 @@ def redefinir_senha(request, token):
     except RecuperacaoSenha.DoesNotExist:
         messages.error(request, 'Link invalido!')
         return redirect('login')
+    
+@login_required
+def redirecionar_dashboard(request):
+    """Redireciona o usuário para o dashboard correto baseado no seu tipo"""
+    
+    # Verifica se é professor
+    if request.user.groups.filter(name='Professores').exists():
+        return redirect('admin_dashboard:professor_dashboard')
+    
+    # Verifica se é admin/staff
+    if request.user.is_staff:
+        return redirect('admin_dashboard:dashboard')
+    
+    # Caso contrário, é responsável/aluno
+    return redirect('dashboard')
