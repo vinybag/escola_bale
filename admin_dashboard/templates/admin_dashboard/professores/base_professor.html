@@ -28,7 +28,7 @@
         }
         
         .header .logo img {
-            max-height: 50px;
+            height: 40px;
             display: block;
         }
         
@@ -153,10 +153,6 @@
             .container {
                 flex-direction: column;
             }
-            
-            .header .logo img {
-                max-height: 35px;
-            }
         }
     </style>
 </head>
@@ -164,7 +160,7 @@
     <div class="header">
         <button class="menu-toggle" onclick="toggleMenu()">☰</button>
         <div class="logo">
-            <img src="/static/img/logo_bkn_tech.png" alt="BKN Tech">
+            <img src="{% static 'img/logo_bkn_tech.png' %}" alt="BKN Tech">
         </div>
         <div class="header-user">
             <span>{{ request.user.first_name }}</span>
@@ -204,7 +200,6 @@
             sidebar.classList.toggle('active');
         }
         
-        // Fecha menu ao clicar em link (mobile)
         document.querySelectorAll('.sidebar a').forEach(link => {
             link.addEventListener('click', () => {
                 if (window.innerWidth <= 768) {
@@ -213,7 +208,6 @@
             });
         });
         
-        // Fecha menu ao clicar fora (mobile)
         document.addEventListener('click', (e) => {
             const sidebar = document.getElementById('sidebar');
             const toggle = document.querySelector('.menu-toggle');
