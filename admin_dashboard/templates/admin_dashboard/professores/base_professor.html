@@ -27,6 +27,11 @@
             align-items: center;
         }
         
+        .header .logo img {
+            max-height: 50px;
+            display: block;
+        }
+        
         .container {
             display: flex;
             min-height: calc(100vh - 70px);
@@ -91,6 +96,10 @@
             text-decoration: none;
         }
         
+        .btn-logout:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
         .alert {
             padding: 1rem;
             border-radius: 5px;
@@ -109,27 +118,54 @@
             border-left: 4px solid #dc3545;
         }
         
+        .menu-toggle {
+            display: none;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            padding: 0.5rem;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        
         @media (max-width: 768px) {
             .sidebar {
                 position: fixed;
-                left: -260px;
-                height: 100%;
-                z-index: 100;
-                transition: left 0.3s;
-            }
-            .sidebar.active {
                 left: 0;
+                top: 70px;
+                height: calc(100vh - 70px);
+                transform: translateX(-100%);
+                z-index: 99;
+                width: 80%;
+                max-width: 260px;
+                transition: transform 0.3s;
             }
+            
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            
+            .menu-toggle {
+                display: block;
+            }
+            
             .container {
                 flex-direction: column;
+            }
+            
+            .header .logo img {
+                max-height: 35px;
             }
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <button class="menu-toggle" onclick="toggleMenu()" style="background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer;">☰</button>
-        <h1>BAILAH - Área do Professor</h1>
+        <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+        <div class="logo">
+            <img src="{% static 'img/logo_bkn_tech.png' %}" alt="BKN Tech">
+        </div>
         <div class="header-user">
             <span>{{ request.user.first_name }}</span>
             <a href="{% url 'logout' %}" class="btn-logout">Sair</a>
@@ -164,8 +200,31 @@
     </div>
     <script>
         function toggleMenu() {
-            document.getElementById('sidebar').classList.toggle('active');
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('active');
         }
+        
+        // Fecha menu ao clicar em link (mobile)
+        document.querySelectorAll('.sidebar a').forEach(link => {
+            link.addEventListener('click', () => {
+                if (window.innerWidth <= 768) {
+                    document.getElementById('sidebar').classList.remove('active');
+                }
+            });
+        });
+        
+        // Fecha menu ao clicar fora (mobile)
+        document.addEventListener('click', (e) => {
+            const sidebar = document.getElementById('sidebar');
+            const toggle = document.querySelector('.menu-toggle');
+            
+            if (window.innerWidth <= 768 && 
+                sidebar.classList.contains('active') && 
+                !sidebar.contains(e.target) && 
+                !toggle.contains(e.target)) {
+                sidebar.classList.remove('active');
+            }
+        });
     </script>
 </body>
 </html>
