@@ -101,7 +101,7 @@ def dashboard(request):
         # GRAFICO 3 - Status mensalidades mes atual
         status_valores[0] = mensalidades_mes.filter(status='pago').count()
         status_valores[1] = mensalidades_mes.filter(status='pendente').count()
-        status_valores[2] = mensalidades_mes.filter(status='vencido').count()
+        status_valores[2] = mensalidades_mes.filter(status='vencida').count()
         
     except Exception as e:
         # Se der erro, mostra no console mas nao quebra
