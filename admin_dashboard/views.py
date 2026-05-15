@@ -1908,6 +1908,55 @@ def professor_avisos(request):
     
     return render(request, 'admin_dashboard/professor/avisos.html', {'avisos': avisos})
 
+@login_required
+def ficha_audicao(request, pk):
+    """Página de ficha de avaliação para audição"""
+    if not request.user.is_staff:
+        return redirect('home')
+    
+    from espetaculo.models import InscricaoAudicao, AvaliacaoAudicao
+    
+    inscricao = get_object_or_404(InscricaoAudicao, pk=pk)
+    
+    # Lista de personagens que a pessoa escolheu
+    personagens_lista = [p.strip() for p in inscricao.personagens.split(',')]
+    
+    # Busca ou cria avaliações para cada personagem
+    avaliacoes = {}
+    for personagem in personagens_lista:
+        aval, created = AvaliacaoAudicao.objects.get_or_create(
+            inscricao=inscricao,
+            personagem=personagem,
+            defaults={
+                'nome_participante': inscricao.nome_completo,
+                'nivel': 'regular'
+            }
+        )
+        avaliacoes[personagem] = aval
+    
+    if request.method == 'POST':
+        # Salvar avaliações
+        for personagem in personagens_lista:
+            aval, created = AvaliacaoAudicao.objects.get_or_create(
+                inscricao=inscricao,
+                personagem=personagem
+            )
+            aval.nome_participante = request.POST.get(f'nome_{personagem}', inscricao.nome_completo)
+            aval.nivel = request.POST.get(f'nivel_{personagem}', 'regular')
+            aval.observacoes = request.POST.get(f'obs_{personagem}', '')
+            aval.save()
+        
+        messages.success(request, 'Avaliação salva com sucesso!')
+        return redirect('admin_dashboard:inscricoes_audicao')
+    
+    context = {
+        'inscricao': inscricao,
+        'avaliacoes': avaliacoes,
+        'personagens_lista': personagens_lista,
+        'nivel_opcoes': AvaliacaoAudicao.NIVEL_OPCOES,
+    }
+    return render(request, 'admin_dashboard/espetaculos/ficha.html', context)
+
 #from weasyprint import HTML
 from django.template.loader import render_to_string
 from django.http import HttpResponse

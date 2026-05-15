@@ -63,5 +63,6 @@ urlpatterns = [
     path('professor/avisos/', views.professor_avisos, name='professor_avisos'),
 
     #Ficha
+    path('ficha-audicao/<int:pk>/', views.ficha_audicao, name='ficha_audicao'),
     path('ficha-audicao/<int:pk>/pdf/', views.ficha_pdf, name='ficha_pdf'),
 ]

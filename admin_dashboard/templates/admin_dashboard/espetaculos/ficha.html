@@ -44,8 +44,8 @@
         <button type="submit" name="salvar" class="btn btn-primary" style="background: #3498db;">
             Salvar Avaliação
         </button>
-        <button type="submit" name="gerar_pdf" class="btn btn-primary" style="background: #b07a84;">
-            Gerar PDF
+        <button type="button" onclick="window.print();" class="btn btn-primary" style="background: #b07a84;">
+            Imprimir / Salvar PDF
         </button>
         <a href="{% url 'admin_dashboard:inscricoes_audicao' %}" 
            style="padding: 0.75rem 1.5rem; background: #f5f5f5; color: #333; border-radius: 5px; text-decoration: none;">
