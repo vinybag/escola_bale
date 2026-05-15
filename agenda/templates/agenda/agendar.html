@@ -17,7 +17,7 @@
         </div>
         {% endif %}
         
-        <form method="POST">
+        <form method="POST" id="form-agendamento">
             {% csrf_token %}
             
             <div style="display: grid; gap: 1.5rem;">
@@ -56,23 +56,27 @@
                            style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
                 </div>
                 
-                <!-- SELECT ESTILIZADO -->
+                <!-- DROPDOWN PERSONALIZADO -->
                 <div>
                     <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Escolha a aula</label>
-                    <div style="position: relative;">
-                        <select name="aula" id="select-aula" required
-                                style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem; background: white; cursor: pointer; appearance: none; -webkit-appearance: none; -moz-appearance: none;">
-                            <option value="" disabled selected>Selecione uma aula</option>
+                    <div id="custom-select" style="position: relative;">
+                        <div id="select-trigger" 
+                             style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem; background: white; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+                            <span id="selected-text" style="color: #999;">Selecione uma aula</span>
+                            <span id="select-arrow" style="color: #b07a84; transition: transform 0.3s;">▼</span>
+                        </div>
+                        <div id="select-dropdown" 
+                             style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 5px; margin-top: 4px; max-height: 250px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
                             {% for aula in aulas %}
-                                <option value="{{ aula.id }}">
-                                    {{ aula.nome }} – {{ aula.dia_semana }} às {{ aula.horario }}
-                                </option>
+                            <div class="select-option" data-value="{{ aula.id }}" data-text="{{ aula.nome }} – {{ aula.dia_semana }} às {{ aula.horario }}"
+                                 style="padding: 0.75rem; cursor: pointer; border-bottom: 1px solid #f0f0f0; transition: all 0.2s;">
+                                <div style="font-weight: 500; color: #2c3e50;">{{ aula.nome }}</div>
+                                <div style="font-size: 0.75rem; color: #b07a84;">{{ aula.dia_semana }} às {{ aula.horario }}</div>
+                            </div>
                             {% endfor %}
-                        </select>
-                        <div style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); pointer-events: none; color: #b07a84;">
-                            ▼
                         </div>
                     </div>
+                    <input type="hidden" name="aula" id="aula-selecionada" required>
                 </div>
                 
                 <div>
@@ -98,4 +102,52 @@
     </div>
     
 </div>
+
+<script>
+// Dropdown personalizado
+const trigger = document.getElementById('select-trigger');
+const dropdown = document.getElementById('select-dropdown');
+const options = document.querySelectorAll('.select-option');
+const selectedText = document.getElementById('selected-text');
+const hiddenInput = document.getElementById('aula-selecionada');
+const arrow = document.getElementById('select-arrow');
+
+// Abrir/fechar dropdown
+trigger.addEventListener('click', () => {
+    const isOpen = dropdown.style.display === 'block';
+    dropdown.style.display = isOpen ? 'none' : 'block';
+    arrow.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+});
+
+// Selecionar opção
+options.forEach(option => {
+    option.addEventListener('click', () => {
+        const value = option.dataset.value;
+        const text = option.dataset.text;
+        
+        selectedText.textContent = text;
+        selectedText.style.color = '#2c3e50';
+        hiddenInput.value = value;
+        
+        // Fechar dropdown
+        dropdown.style.display = 'none';
+        arrow.style.transform = 'rotate(0deg)';
+        
+        // Marcar visualmente a opção selecionada
+        options.forEach(opt => {
+            opt.style.background = 'white';
+        });
+        option.style.background = '#faf8f9';
+    });
+});
+
+// Fechar dropdown ao clicar fora
+document.addEventListener('click', (e) => {
+    if (!trigger.contains(e.target) && !dropdown.contains(e.target)) {
+        dropdown.style.display = 'none';
+        arrow.style.transform = 'rotate(0deg)';
+    }
+});
+</script>
+
 {% endblock %}
