@@ -76,3 +76,27 @@ class InscricaoAudicao(models.Model):
         verbose_name = 'Inscrição para Audição'
         verbose_name_plural = 'Inscrições para Audição'
         ordering = ['-data_inscricao']
+
+class AvaliacaoAudicao(models.Model):
+    NIVEL_OPCOES = [
+        ('regular', 'Regular'),
+        ('bom', 'Bom'),
+        ('muito_bom', 'Muito Bom'),
+        ('excelente', 'Excelente'),
+        ('destaque', 'Destaque'),
+    ]
+    
+    inscricao = models.ForeignKey('InscricaoAudicao', on_delete=models.CASCADE, related_name='avaliacoes')
+    personagem = models.CharField(max_length=100)
+    nome_participante = models.CharField(max_length=200)
+    nivel = models.CharField(max_length=20, choices=NIVEL_OPCOES, default='regular')
+    observacoes = models.TextField(blank=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"{self.nome_participante} - {self.personagem}"
+    
+    class Meta:
+        verbose_name = 'Avaliação de Audição'
+        verbose_name_plural = 'Avaliações de Audição'        
