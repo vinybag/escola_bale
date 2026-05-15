@@ -10,6 +10,29 @@
     </div>
 </div>
 
+<!-- Filtro por Personagem -->
+<div style="background: white; padding: 1.5rem; border-radius: 10px; margin-bottom: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+    <form method="get" style="display: flex; gap: 1rem; align-items: end; flex-wrap: wrap;">
+        <div style="flex: 2;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Filtrar por Personagem</label>
+            <input type="text" 
+                   name="personagem" 
+                   value="{{ personagem_filtro }}"
+                   placeholder="Digite o nome do personagem (ex: Thessália, Zyara, Kai Ignus...)"
+                   style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+            <button type="submit" class="btn btn-primary">Filtrar</button>
+            {% if personagem_filtro %}
+                <a href="{% url 'admin_dashboard:inscricoes_audicao' %}" 
+                   style="padding: 0.75rem 1.5rem; background: #f5f5f5; color: #333; border-radius: 5px; text-decoration: none;">
+                    Limpar
+                </a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
 <div style="background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
     <div class="table-container">
         <table style="width: 100%; border-collapse: collapse;">
@@ -69,7 +92,7 @@
                 {% empty %}
                 <tr style="border-top: 1px solid #eee;">
                     <td colspan="7" style="padding: 3rem; text-align: center; color: #999;">
-                        Nenhuma inscrição ainda.
+                        Nenhuma inscrição encontrada.
                     </td>
                 </tr>
                 {% endfor %}

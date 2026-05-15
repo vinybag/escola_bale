@@ -1548,13 +1548,24 @@ def turma_detalhes(request, pk):
 
 @login_required
 def inscricoes_audicao_list(request):
-    """Lista de inscrições para audição"""
+    """Lista de inscrições para audição com filtro por personagem"""
     if not request.user.is_staff:
         return redirect('home')
     
     from espetaculo.models import InscricaoAudicao
+    
     inscricoes = InscricaoAudicao.objects.all().order_by('-data_inscricao')
-    return render(request, 'admin_dashboard/espetaculos/inscricoes.html', {'inscricoes': inscricoes})
+    
+    # Filtro por personagem
+    personagem_filtro = request.GET.get('personagem', '')
+    if personagem_filtro:
+        inscricoes = inscricoes.filter(personagens__icontains=personagem_filtro)
+    
+    context = {
+        'inscricoes': inscricoes,
+        'personagem_filtro': personagem_filtro,
+    }
+    return render(request, 'admin_dashboard/espetaculos/inscricoes.html', context)
 
 @login_required
 def inscricao_audicao_excluir(request, pk):
