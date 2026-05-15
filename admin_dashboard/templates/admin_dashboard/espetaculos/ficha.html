@@ -1,0 +1,56 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Ficha de Avaliação - {{ inscricao.nome_completo }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Ficha de Avaliação</h2>
+    <p>{{ inscricao.nome_completo }}</p>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+    
+    {% for personagem, avaliacao in avaliacoes.items %}
+    <div style="background: white; border-radius: 10px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+        <h3 style="color: #b07a84; margin-bottom: 1rem;">Personagem: {{ personagem }}</h3>
+        
+        <div style="display: grid; gap: 1rem;">
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Nome do Participante</label>
+                <input type="text" name="nome_{{ personagem }}" value="{{ avaliacao.nome_participante }}"
+                       style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+            </div>
+            
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Nível</label>
+                <select name="nivel_{{ personagem }}" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                    {% for value, label in nivel_opcoes %}
+                        <option value="{{ value }}" {% if avaliacao.nivel == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Observações</label>
+                <textarea name="obs_{{ personagem }}" rows="3" 
+                          style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem; font-family: inherit;">{{ avaliacao.observacoes }}</textarea>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+    
+    <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+        <button type="submit" name="salvar" class="btn btn-primary" style="background: #3498db;">
+            Salvar Avaliação
+        </button>
+        <button type="submit" name="gerar_pdf" class="btn btn-primary" style="background: #b07a84;">
+            Gerar PDF
+        </button>
+        <a href="{% url 'admin_dashboard:inscricoes_audicao' %}" 
+           style="padding: 0.75rem 1.5rem; background: #f5f5f5; color: #333; border-radius: 5px; text-decoration: none;">
+            Cancelar
+        </a>
+    </div>
+</form>
+{% endblock %}

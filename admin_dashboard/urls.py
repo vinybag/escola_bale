@@ -61,4 +61,7 @@ urlpatterns = [
     path('professor/dashboard/', views.professor_dashboard, name='professor_dashboard'),
     path('professor/turma/<int:pk>/', views.professor_turma_detalhes, name='professor_turma_detalhes'),
     path('professor/avisos/', views.professor_avisos, name='professor_avisos'),
+
+    #Ficha
+    path('ficha-audicao/<int:pk>/pdf/', views.ficha_pdf, name='ficha_pdf'),
 ]

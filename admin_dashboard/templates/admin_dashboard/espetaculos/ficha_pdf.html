@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Ficha de Avaliação - {{ inscricao.nome_completo }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 30px;
+        }
+        .avaliacao {
+            margin-bottom: 30px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 20px;
+        }
+        .avaliacao h3 {
+            color: #b07a84;
+            margin-bottom: 15px;
+        }
+        .label {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .observacoes {
+            margin-top: 10px;
+            font-style: italic;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            font-size: 12px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <h1>Ficha de Avaliação - Audição</h1>
+    
+    <div class="info">
+        <p><span class="label">Participante:</span> {{ inscricao.nome_completo }}</p>
+        <p><span class="label">Idade:</span> {{ inscricao.idade }} anos</p>
+        <p><span class="label">Whatsapp:</span> {{ inscricao.whatsapp }}</p>
+        <p><span class="label">Data da Inscrição:</span> {{ inscricao.data_inscricao|date:"d/m/Y H:i" }}</p>
+    </div>
+    
+    {% for avaliacao in avaliacoes %}
+    <div class="avaliacao">
+        <h3>Personagem: {{ avaliacao.personagem }}</h3>
+        <p><span class="label">Nome:</span> {{ avaliacao.nome_participante }}</p>
+        <p><span class="label">Nível:</span> {{ avaliacao.get_nivel_display }}</p>
+        {% if avaliacao.observacoes %}
+            <div class="observacoes">
+                <span class="label">Observações:</span>
+                <p>{{ avaliacao.observacoes }}</p>
+            </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+    
+    <div class="footer">
+        Documento gerado em {{ data_atual|date:"d/m/Y H:i" }}
+    </div>
+</body>
+</html>
