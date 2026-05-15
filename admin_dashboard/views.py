@@ -1908,7 +1908,7 @@ def professor_avisos(request):
     
     return render(request, 'admin_dashboard/professor/avisos.html', {'avisos': avisos})
 
-from weasyprint import HTML
+#from weasyprint import HTML
 from django.template.loader import render_to_string
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -1917,25 +1917,5 @@ from datetime import datetime
 @login_required
 def ficha_pdf(request, pk):
     """Gera PDF da ficha de avaliação"""
-    if not request.user.is_staff:
-        return redirect('home')
-    
-    from espetaculo.models import InscricaoAudicao, AvaliacaoAudicao
-    
-    inscricao = get_object_or_404(InscricaoAudicao, pk=pk)
-    avaliacoes = AvaliacaoAudicao.objects.filter(inscricao=inscricao)
-    
-    context = {
-        'inscricao': inscricao,
-        'avaliacoes': avaliacoes,
-        'data_atual': datetime.now(),
-    }
-    
-    html_string = render_to_string('admin_dashboard/espetaculos/ficha_pdf.html', context)
-    
-    # Gerar PDF
-    pdf = HTML(string=html_string).write_pdf()
-    
-    response = HttpResponse(pdf, content_type='application/pdf')
-    response['Content-Disposition'] = f'inline; filename=ficha_{inscricao.nome_completo}.pdf'
-    return response
+    messages.warning(request, 'Função de PDF temporariamente indisponível. Use Ctrl+P para imprimir.')
+    return redirect('admin_dashboard:inscricoes_audicao')
