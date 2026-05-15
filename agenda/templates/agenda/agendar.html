@@ -56,17 +56,23 @@
                            style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
                 </div>
                 
+                <!-- SELECT ESTILIZADO -->
                 <div>
                     <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Escolha a aula</label>
-                    <select name="aula" required
-                            style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
-                        <option value="">Selecione</option>
-                        {% for aula in aulas %}
-                            <option value="{{ aula.id }}">
-                                {{ aula.nome }} – {{ aula.dia_semana }} às {{ aula.horario }}
-                            </option>
-                        {% endfor %}
-                    </select>
+                    <div style="position: relative;">
+                        <select name="aula" id="select-aula" required
+                                style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem; background: white; cursor: pointer; appearance: none; -webkit-appearance: none; -moz-appearance: none;">
+                            <option value="" disabled selected>Selecione uma aula</option>
+                            {% for aula in aulas %}
+                                <option value="{{ aula.id }}">
+                                    {{ aula.nome }} – {{ aula.dia_semana }} às {{ aula.horario }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <div style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); pointer-events: none; color: #b07a84;">
+                            ▼
+                        </div>
+                    </div>
                 </div>
                 
                 <div>
