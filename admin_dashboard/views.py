@@ -1915,35 +1915,61 @@ def ficha_audicao(request, pk):
         return redirect('home')
     
     from espetaculo.models import InscricaoAudicao, AvaliacaoAudicao
+    import ast
     
     inscricao = get_object_or_404(InscricaoAudicao, pk=pk)
     
-    # Lista de personagens que a pessoa escolheu
-    personagens_lista = [p.strip() for p in inscricao.personagens.split(',')]
+    # Converte a lista de personagens corretamente
+    try:
+        personagens_lista = ast.literal_eval(inscricao.personagens)
+        if not isinstance(personagens_lista, list):
+            personagens_lista = [inscricao.personagens]
+    except:
+        # Fallback: tenta com split
+        valor_limpo = inscricao.personagens.replace('[', '').replace(']', '').replace("'", "").strip()
+        personagens_lista = [p.strip() for p in valor_limpo.split(',')] if valor_limpo else []
+    
+    # Dicionário para converter nomes dos personagens
+    personagens_dict = {
+        'thessalia': 'Thessália',
+        'zyara': 'Zyara',
+        'zyar': 'Zyar',
+        'astela_nur': 'Astela Nur',
+        'kai_ignus': 'Kai Ignus',
+        'eldrick_felicius': 'Eldrick Felicius',
+        'florine': 'Florine',
+        'odessa': 'Odessa',
+        'aurelia': 'Aurélia',
+        'cora_del_amour': 'Cora del Amour',
+        '3_marias': '3 Marias',
+    }
+    
+    # Converte os nomes dos personagens para exibição legível
+    personagens_legiveis = [personagens_dict.get(p, p) for p in personagens_lista]
     
     # Busca ou cria avaliações para cada personagem
     avaliacoes = {}
-    for personagem in personagens_lista:
+    for personagem, personagem_legivel in zip(personagens_lista, personagens_legiveis):
         aval, created = AvaliacaoAudicao.objects.get_or_create(
             inscricao=inscricao,
-            personagem=personagem,
+            personagem=personagem_legivel,
             defaults={
                 'nome_participante': inscricao.nome_completo,
                 'nivel': 'regular'
             }
         )
-        avaliacoes[personagem] = aval
+        avaliacoes[personagem_legivel] = aval
     
     if request.method == 'POST':
         # Salvar avaliações
-        for personagem in personagens_lista:
+        for personagem_legivel in personagens_legiveis:
             aval, created = AvaliacaoAudicao.objects.get_or_create(
                 inscricao=inscricao,
-                personagem=personagem
+                personagem=personagem_legivel
             )
-            aval.nome_participante = request.POST.get(f'nome_{personagem}', inscricao.nome_completo)
-            aval.nivel = request.POST.get(f'nivel_{personagem}', 'regular')
-            aval.observacoes = request.POST.get(f'obs_{personagem}', '')
+            aval.nome_participante = request.POST.get(f'nome_{personagem_legivel}', inscricao.nome_completo)
+            aval.nivel = request.POST.get(f'nivel_{personagem_legivel}', 'regular')
+            aval.observacoes = request.POST.get(f'obs_{personagem_legivel}', '')
             aval.save()
         
         messages.success(request, 'Avaliação salva com sucesso!')
@@ -1952,7 +1978,7 @@ def ficha_audicao(request, pk):
     context = {
         'inscricao': inscricao,
         'avaliacoes': avaliacoes,
-        'personagens_lista': personagens_lista,
+        'personagens_lista': personagens_legiveis,
         'nivel_opcoes': AvaliacaoAudicao.NIVEL_OPCOES,
     }
     return render(request, 'admin_dashboard/espetaculos/ficha.html', context)
