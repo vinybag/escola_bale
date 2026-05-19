@@ -637,4 +637,113 @@ footer {
     .turmas-grid {
         grid-template-columns: 1fr;
     }
+
+    /* Navbar responsiva */
+    .navbar .container {
+        flex-direction: column;
+        gap: 0.25rem;
+        padding: 0.5rem;
+    }
+
+    .logo img {
+        max-height: 35px;
+    }
+
+    .nav-links {
+        justify-content: center;
+        gap: 0.2rem;
+    }
+
+    .nav-links li a {
+        padding: 0.3rem 0.4rem;
+        font-size: 0.7rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .nav-links li a {
+        font-size: 0.65rem;
+        padding: 0.25rem 0.35rem;
+    }
+}
+
+
+/* ==================== PAGAMENTO ==================== */
+.alert-pagamento {
+    margin-top: 1rem;
+}
+
+.metodos-pagamento {
+    margin-top: 2rem;
+}
+
+.metodos-titulo {
+    margin-bottom: 1.5rem;
+}
+
+.metodos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.metodo-card {
+    border: 2px solid #e0c0c3;
+    transition: all 0.3s;
+}
+
+.metodo-card:hover {
+    border-color: #b07a84;
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(176, 122, 132, 0.2);
+}
+
+.metodo-header {
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.metodo-icone {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.metodo-descricao {
+    text-align: center;
+    color: #666;
+    margin-bottom: 1.5rem;
+}
+
+.btn-full {
+    width: 100%;
+    display: block;
+    text-align: center;
+}
+
+.btn-pix {
+    width: 100%;
+    display: block;
+    text-align: center;
+    background: #32BCAD;
+    color: #fff;
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    font-weight: 600;
+    transition: background 0.3s;
+}
+
+.btn-pix:hover {
+    background: #28a89a;
+}
+
+.btn-voltar {
+    margin-top: 2rem;
+    display: inline-block;
+}
+
+@media (max-width: 768px) {
+    .metodos-grid {
+        grid-template-columns: 1fr;
+    }
 }

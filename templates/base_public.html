@@ -10,37 +10,6 @@
     <link rel="shortcut icon" type="image/png" href="{% static 'favicon.png' %}">
     
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
-    <style>
-        /* Apenas ajustes responsivos - sem mudar cores */
-        @media (max-width: 768px) {
-            .navbar .container {
-                flex-direction: column;
-                gap: 0.25rem;
-                padding: 0.5rem;
-            }
-            
-            .logo img {
-                max-height: 35px;
-            }
-            
-            .nav-links {
-                justify-content: center;
-                gap: 0.2rem;
-            }
-            
-            .nav-links li a {
-                padding: 0.3rem 0.4rem;
-                font-size: 0.7rem;
-            }
-        }
-        
-        @media (max-width: 480px) {
-            .nav-links li a {
-                font-size: 0.65rem;
-                padding: 0.25rem 0.35rem;
-            }
-        }
-    </style>
 </head>
 <body>
     <nav class="navbar">
