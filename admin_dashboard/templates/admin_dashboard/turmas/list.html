@@ -53,6 +53,7 @@
                     <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Professora</th>
                     <th style="padding: 1rem; text-align: center; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Alunas</th>
                     <th style="padding: 1rem; text-align: center; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Status</th>
+                    <th style="padding: 1rem; text-align: center; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Experimental</th>
                     <th style="padding: 1rem; text-align: right; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Ações</th>
                 </tr>
             </thead>
@@ -84,14 +85,32 @@
                             <span style="background: #f8d7da; color: #721c24; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">Inativa</span>
                         {% endif %}
                     </td>
+                    <td style="padding: 1rem; text-align: center;">
+                        {% if turma.disponivel_experimental %}
+                            <span style="background: #d1ecf1; color: #0c5460; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">Disponível</span>
+                        {% else %}
+                            <span style="background: #f8d7da; color: #721c24; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">Indisponível</span>
+                        {% endif %}
+                    </td>
                     <td style="padding: 1rem; text-align: right;">
+                        <form method="post" action="{% url 'admin_dashboard:turma_toggle_experimental' turma.pk %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" style="background: none; border: none; color: {% if turma.disponivel_experimental %}#c62828{% else %}#1565c0{% endif %}; cursor: pointer; margin-right: 1rem; font-size: 0.95rem;">
+                                {% if turma.disponivel_experimental %}
+                                    Desativar experimental
+                                {% else %}
+                                    Ativar experimental
+                                {% endif %}
+                            </button>
+                        </form>
+
                         <a href="{% url 'admin_dashboard:turma_detalhes' turma.pk %}" style="color: #b07a84; text-decoration: none; margin-right: 1rem;">Ver</a>
                         <a href="{% url 'admin_dashboard:turma_editar' turma.pk %}" style="color: #2c3e50; text-decoration: none;">Editar</a>
                     </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="6" style="padding: 3rem; text-align: center; color: #999;">
+                    <td colspan="7" style="padding: 3rem; text-align: center; color: #999;">
                         Nenhuma turma encontrada.
                     </td>
                 </tr>

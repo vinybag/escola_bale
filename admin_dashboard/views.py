@@ -1374,6 +1374,7 @@ def turma_criar(request):
             professor = request.POST.get('professor', '')
             capacidade_maxima = request.POST.get('capacidade_maxima', 20)
             ativa = request.POST.get('ativa') == 'on'
+            disponivel_experimental = request.POST.get('disponivel_experimental') == 'on'
             
             if not nome:
                 messages.error(request, 'O nome da turma e obrigatorio!')
@@ -1385,7 +1386,8 @@ def turma_criar(request):
                 horario=horario,
                 professor=professor,
                 capacidade_maxima=int(capacidade_maxima),
-                ativa=ativa
+                ativa=ativa,
+                disponivel_experimental=disponivel_experimental
             )
             
             messages.success(request, f'Turma "{nome}" criada com sucesso!')
@@ -1427,6 +1429,7 @@ def turma_editar(request, pk):
             turma.professor = request.POST.get('professor', '')
             turma.capacidade_maxima = int(request.POST.get('capacidade_maxima', 20))
             turma.ativa = request.POST.get('ativa') == 'on'
+            turma.disponivel_experimental = request.POST.get('disponivel_experimental') == 'on'
             
             turma.save()
             
@@ -1443,6 +1446,32 @@ def turma_editar(request, pk):
     }
     
     return render(request, 'admin_dashboard/turmas/editar.html', context)
+
+@login_required
+def turma_toggle_experimental(request, pk):
+    """Ativa ou desativa a turma para aula experimental"""
+    
+    if not request.user.is_staff:
+        return redirect('home')
+    
+    if request.method == 'POST':
+        try:
+            from usuarios.models import Turma
+            from django.contrib import messages
+            
+            turma = Turma.objects.get(pk=pk)
+            turma.disponivel_experimental = not turma.disponivel_experimental
+            turma.save()
+            
+            if turma.disponivel_experimental:
+                messages.success(request, f'Turma "{turma.nome}" ativada para aula experimental com sucesso!')
+            else:
+                messages.success(request, f'Turma "{turma.nome}" desativada da aula experimental com sucesso!')
+        
+        except Exception as e:
+            messages.error(request, f'Erro ao alterar aula experimental: {e}')
+    
+    return redirect('admin_dashboard:turmas_list')
 
 
 @login_required

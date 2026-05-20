@@ -15,14 +15,21 @@ DIAS_SEMANA = {
 
 
 def agendar(request):
-    # AGORA: Mostra TODAS as turmas ativas (sem filtro de tipo)
-    aulas = Turma.objects.filter(ativa=True).order_by('nome')
+    # Mostra apenas turmas ativas e liberadas para aula experimental
+    aulas = Turma.objects.filter(
+        ativa=True,
+        disponivel_experimental=True
+    ).order_by('nome')
 
     if request.method == 'POST':
         aula_id = request.POST.get('aula')
         data_str = request.POST.get('data')
 
-        aula = Turma.objects.filter(id=aula_id, ativa=True).first()
+        aula = Turma.objects.filter(
+            id=aula_id,
+            ativa=True,
+            disponivel_experimental=True
+        ).first()
 
         if not aula or not data_str:
             return render(
@@ -68,7 +75,7 @@ def agendar(request):
             telefone=request.POST.get('telefone'),
             data=data_escolhida,
             horario=aula.horario,
-            aula=aula  # aula agora é uma Turma
+            aula=aula
         )
 
         # Cria o evento no Google Agenda

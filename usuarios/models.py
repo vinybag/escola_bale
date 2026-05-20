@@ -54,6 +54,10 @@ class Turma(models.Model):
     professor = models.CharField(max_length=100, blank=True)
     capacidade_maxima = models.IntegerField(default=20, help_text="Número máximo de alunas")
     ativa = models.BooleanField(default=True)
+    disponivel_experimental = models.BooleanField(
+        default=True,
+        verbose_name='Disponível para aula experimental'
+    )
     criado_em = models.DateTimeField(auto_now_add=True)
     
     # NOVOS CAMPOS (unificação com Aula)
