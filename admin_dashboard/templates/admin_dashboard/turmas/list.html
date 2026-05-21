@@ -15,7 +15,6 @@
 <div style="background: white; padding: 1.5rem; border-radius: 10px; margin-bottom: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
     <form method="get" style="display: grid; grid-template-columns: 2fr 1fr auto; gap: 1rem; align-items: end;">
         
-        <!-- Busca -->
         <div>
             <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Buscar</label>
             <input type="text" 
@@ -25,7 +24,6 @@
                    style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
         </div>
         
-        <!-- Filtro Status -->
         <div>
             <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Status</label>
             <select name="status" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
@@ -86,24 +84,17 @@
                         {% endif %}
                     </td>
                     <td style="padding: 1rem; text-align: center;">
-                        {% if turma.disponivel_experimental %}
-                            <span style="background: #d1ecf1; color: #0c5460; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">Disponível</span>
-                        {% else %}
-                            <span style="background: #f8d7da; color: #721c24; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">Indisponível</span>
-                        {% endif %}
+                        <form method="post" action="{% url 'admin_dashboard:turma_toggle_experimental' turma.pk %}" class="form-toggle-experimental">
+                            {% csrf_token %}
+                            <input type="checkbox"
+                                   name="disponivel_experimental"
+                                   {% if turma.disponivel_experimental %}checked{% endif %}
+                                   onchange="this.form.submit()"
+                                   title="{% if turma.disponivel_experimental %}Clique para desativar aula experimental{% else %}Clique para ativar aula experimental{% endif %}"
+                                   style="width: 18px; height: 18px; cursor: pointer; accent-color: #0c5460;">
+                        </form>
                     </td>
                     <td style="padding: 1rem; text-align: right;">
-                        <form method="post" action="{% url 'admin_dashboard:turma_toggle_experimental' turma.pk %}" style="display: inline;">
-                            {% csrf_token %}
-                            <button type="submit" style="background: none; border: none; color: {% if turma.disponivel_experimental %}#c62828{% else %}#1565c0{% endif %}; cursor: pointer; margin-right: 1rem; font-size: 0.95rem;">
-                                {% if turma.disponivel_experimental %}
-                                    Desativar experimental
-                                {% else %}
-                                    Ativar experimental
-                                {% endif %}
-                            </button>
-                        </form>
-
                         <a href="{% url 'admin_dashboard:turma_detalhes' turma.pk %}" style="color: #b07a84; text-decoration: none; margin-right: 1rem;">Ver</a>
                         <a href="{% url 'admin_dashboard:turma_editar' turma.pk %}" style="color: #2c3e50; text-decoration: none;">Editar</a>
                     </td>
