@@ -1626,7 +1626,7 @@ def agendamentos_list(request):
         return redirect('home')
     
     from agenda.models import Agendamento
-    from datetime import date, datetime, timedelta
+    from datetime import date
     
     hoje = date.today()
     
@@ -1658,21 +1658,23 @@ def agendamentos_list(request):
             ano = int(ano_str)
             num_semana = int(semana_str)
 
-            inicio_semana = datetime.fromisocalendar(ano, num_semana, 1).date()
-            fim_semana = inicio_semana + timedelta(days=6)
+            inicio_semana = date.fromisocalendar(ano, num_semana, 1)
+            fim_semana = date.fromisocalendar(ano, num_semana, 7)
 
             agendamentos = agendamentos.filter(
-                data__range=[inicio_semana, fim_semana]
+                data__gte=inicio_semana,
+                data__lte=fim_semana
             )
-        except ValueError:
+        except (ValueError, TypeError):
             pass
     
     agendamentos = agendamentos.order_by('data', 'horario')
     
-    meses_disponiveis = (
-        Agendamento.objects
-        .dates('data', 'month', order='DESC')
-    )
+    meses_disponiveis = Agendamento.objects.dates('data', 'month', order='DESC')
+
+    total_geral = Agendamento.objects.count()
+    total_proximos = Agendamento.objects.filter(data__gte=hoje).count()
+    total_antigos = Agendamento.objects.filter(data__lt=hoje).count()
 
     context = {
         'agendamentos': agendamentos,
@@ -1681,6 +1683,9 @@ def agendamentos_list(request):
         'semana': semana,
         'hoje': hoje,
         'meses_disponiveis': meses_disponiveis,
+        'total_geral': total_geral,
+        'total_proximos': total_proximos,
+        'total_antigos': total_antigos,
     }
     
     return render(request, 'admin_dashboard/agendamentos/list.html', context)
