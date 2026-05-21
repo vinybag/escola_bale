@@ -64,7 +64,7 @@
                     <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Turmas</th>
                     <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Idade</th>
                     <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Status</th>
-                    <th style="padding: 1rem; text-align: right; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Acoes</th>
+                    <th style="padding: 1rem; text-align: right; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600; white-space: nowrap;">Ações</th>
                 </tr>
             </thead>
             <tbody>
@@ -93,7 +93,7 @@
                             </span>
                         {% endif %}
                     </td>
-                    <td style="padding: 1rem; color: #666;">
+                    <td style="padding: 1rem; color: #666; white-space: nowrap;">
                         {% if aluna.idade %}
                             {{ aluna.idade }} anos
                         {% else %}
@@ -102,26 +102,24 @@
                     </td>
                     <td style="padding: 1rem;">
                         {% if aluna.ativa %}
-                            <span style="background: #d4edda; color: #155724; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">Ativa</span>
+                            <span style="background: #d4edda; color: #155724; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem; display: inline-block; white-space: nowrap;">Ativa</span>
                         {% else %}
-                            <span style="background: #f8d7da; color: #721c24; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">Inativa</span>
+                            <span style="background: #f8d7da; color: #721c24; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem; display: inline-block; white-space: nowrap;">Inativa</span>
                         {% endif %}
                     </td>
-                    <td style="padding: 1rem;">
-                        <div style="display: flex; justify-content: flex-end; align-items: center; gap: 1rem; flex-wrap: wrap;">
-                            <a href="{% url 'admin_dashboard:aluna_detalhes' aluna.pk %}" style="color: #b07a84; text-decoration: none;">Ver</a>
-                            <a href="{% url 'admin_dashboard:aluna_editar' aluna.pk %}" style="color: #2c3e50; text-decoration: none;">Editar</a>
-                            <form method="post"
-                                  action="{% url 'admin_dashboard:aluna_excluir' aluna.pk %}"
-                                  style="margin: 0;"
-                                  onsubmit="return confirm('Tem certeza que deseja excluir a aluna {{ aluna.nome }}?');">
-                                {% csrf_token %}
-                                <button type="submit"
-                                        style="background: none; border: none; color: #e74c3c; cursor: pointer; padding: 0;">
-                                    Excluir
-                                </button>
-                            </form>
-                        </div>
+                    <td style="padding: 1rem; text-align: right; white-space: nowrap;">
+                        <a href="{% url 'admin_dashboard:aluna_detalhes' aluna.pk %}" style="color: #b07a84; text-decoration: none; margin-right: 1rem;">Ver</a>
+                        <a href="{% url 'admin_dashboard:aluna_editar' aluna.pk %}" style="color: #2c3e50; text-decoration: none; margin-right: 1rem;">Editar</a>
+                        <form method="post"
+                              action="{% url 'admin_dashboard:aluna_excluir' aluna.pk %}"
+                              style="display: inline;"
+                              onsubmit="return confirm('Tem certeza que deseja excluir a aluna {{ aluna.nome }}?');">
+                            {% csrf_token %}
+                            <button type="submit"
+                                    style="background: none; border: none; color: #dc3545; cursor: pointer; text-decoration: underline;">
+                                Excluir
+                            </button>
+                        </form>
                     </td>
                 </tr>
                 {% empty %}
