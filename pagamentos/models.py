@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from usuarios.models import Aluna
 from datetime import date
 
+
 class Mensalidade(models.Model):
     STATUS_CHOICES = [
         ('pendente', 'Pendente'),
@@ -47,8 +48,12 @@ class Mensalidade(models.Model):
         return False
     
     def save(self, *args, **kwargs):
-        if self.data_pagamento and self.status == 'pendente':
+        if self.status == 'vencida':
+            self.status = 'atrasado'
+
+        if self.data_pagamento and self.status in ['pendente', 'atrasado']:
             self.status = 'pago'
         elif self.esta_atrasada and self.status == 'pendente':
             self.status = 'atrasado'
+
         super().save(*args, **kwargs)
