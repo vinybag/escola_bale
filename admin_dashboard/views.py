@@ -1626,8 +1626,64 @@ def agendamentos_list(request):
         return redirect('home')
     
     from agenda.models import Agendamento
-    agendamentos = Agendamento.objects.all().order_by('-criado_em')
-    return render(request, 'admin_dashboard/agendamentos/list.html', {'agendamentos': agendamentos})
+    from datetime import date, datetime, timedelta
+    
+    hoje = date.today()
+    
+    tipo = request.GET.get('tipo', 'proximos')
+    mes = request.GET.get('mes', '')
+    semana = request.GET.get('semana', '')
+    
+    agendamentos = Agendamento.objects.all()
+    
+    if tipo == 'antigos':
+        agendamentos = agendamentos.filter(data__lt=hoje)
+    else:
+        tipo = 'proximos'
+        agendamentos = agendamentos.filter(data__gte=hoje)
+    
+    if mes:
+        try:
+            ano, mes_num = mes.split('-')
+            agendamentos = agendamentos.filter(
+                data__year=int(ano),
+                data__month=int(mes_num)
+            )
+        except ValueError:
+            pass
+    
+    if semana:
+        try:
+            ano_str, semana_str = semana.split('-W')
+            ano = int(ano_str)
+            num_semana = int(semana_str)
+
+            inicio_semana = datetime.fromisocalendar(ano, num_semana, 1).date()
+            fim_semana = inicio_semana + timedelta(days=6)
+
+            agendamentos = agendamentos.filter(
+                data__range=[inicio_semana, fim_semana]
+            )
+        except ValueError:
+            pass
+    
+    agendamentos = agendamentos.order_by('data', 'horario')
+    
+    meses_disponiveis = (
+        Agendamento.objects
+        .dates('data', 'month', order='DESC')
+    )
+
+    context = {
+        'agendamentos': agendamentos,
+        'tipo': tipo,
+        'mes': mes,
+        'semana': semana,
+        'hoje': hoje,
+        'meses_disponiveis': meses_disponiveis,
+    }
+    
+    return render(request, 'admin_dashboard/agendamentos/list.html', context)
 
 @login_required
 def agendamento_detalhes(request, pk):

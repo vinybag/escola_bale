@@ -10,18 +10,56 @@
     </div>
 </div>
 
+<div style="background: white; padding: 1.5rem; border-radius: 10px; margin-bottom: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+    <form method="get" style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: end;">
+        <div>
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Tipo</label>
+            <select name="tipo" style="padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                <option value="proximos" {% if tipo == 'proximos' %}selected{% endif %}>Próximos</option>
+                <option value="antigos" {% if tipo == 'antigos' %}selected{% endif %}>Antigos</option>
+            </select>
+        </div>
+
+        <div>
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Mês</label>
+            <select name="mes" style="padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                <option value="">Todos</option>
+                {% for item in meses_disponiveis %}
+                    <option value="{{ item|date:'Y-m' }}" {% if mes == item|date:'Y-m' %}selected{% endif %}>
+                        {{ item|date:"m/Y" }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div>
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Semana</label>
+            <input type="week"
+                   name="semana"
+                   value="{{ semana }}"
+                   style="padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+        </div>
+
+        <div style="display: flex; gap: 0.5rem;">
+            <button type="submit" class="btn btn-primary">Filtrar</button>
+            <a href="{% url 'admin_dashboard:agendamentos_list' %}" style="padding: 0.75rem 1.5rem; background: #f5f5f5; color: #333; border-radius: 5px; text-decoration: none;">Limpar</a>
+        </div>
+    </form>
+</div>
+
 <div style="background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
     <div class="table-container">
         <table style="width: 100%; border-collapse: collapse;">
             <thead style="background: #f8f9fa;">
                 <tr>
                     <th style="padding: 1rem; text-align: left;">Aluna(o)</th>
-                    <th style="padding: 1rem; text-align: left;">Responsavel</th>
+                    <th style="padding: 1rem; text-align: left;">Responsável</th>
                     <th style="padding: 1rem; text-align: left;">Whatsapp</th>
                     <th style="padding: 1rem; text-align: center;">Idade</th>
-                    <th style="padding: 1rem; text-align: center;">Data e Horario</th>
+                    <th style="padding: 1rem; text-align: center;">Data e Horário</th>
+                    <th style="padding: 1rem; text-align: center;">Status</th>
                     <th style="padding: 1rem; text-align: center;">Criado em</th>
-                    <th style="padding: 1rem; text-align: right;">Acoes</th>
+                    <th style="padding: 1rem; text-align: right;">Ações</th>
                 </tr>
             </thead>
             <tbody>
@@ -44,32 +82,39 @@
                         {{ agendamento.idade_aluna }} anos
                     </td>
                     <td style="padding: 1rem; text-align: center;">
-                        {{ agendamento.data|date:"d/m/Y" }} as {{ agendamento.horario|time:"H:i" }}
+                        {{ agendamento.data|date:"d/m/Y" }} às {{ agendamento.horario|time:"H:i" }}
+                    </td>
+                    <td style="padding: 1rem; text-align: center;">
+                        {% if agendamento.data >= hoje %}
+                            <span style="background: #d4edda; color: #155724; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">Próximo</span>
+                        {% else %}
+                            <span style="background: #f8d7da; color: #721c24; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">Antigo</span>
+                        {% endif %}
                     </td>
                     <td style="padding: 1rem; text-align: center;">
                         {{ agendamento.criado_em|date:"d/m/Y H:i" }}
                     </td>
                     <td style="padding: 1rem; text-align: right;">
-                        <a href="{% url 'admin_dashboard:agendamento_detalhes' agendamento.pk %}" 
+                        <a href="{% url 'admin_dashboard:agendamento_detalhes' agendamento.pk %}"
                            style="color: #b07a84; text-decoration: none; margin-right: 1rem;">Ver</a>
-                        <form method="post" 
-                              action="{% url 'admin_dashboard:agendamento_excluir' agendamento.pk %}" 
+                        <form method="post"
+                              action="{% url 'admin_dashboard:agendamento_excluir' agendamento.pk %}"
                               style="display: inline-block;"
                               onsubmit="return confirm('Tem certeza que deseja excluir o agendamento de {{ agendamento.nome_aluna }}?');">
                             {% csrf_token %}
-                            <button type="submit" 
+                            <button type="submit"
                                     style="background: none; border: none; color: #e74c3c; cursor: pointer;">
                                 Excluir
                             </button>
                         </form>
                     </td>
-                  </tr>
+                </tr>
                 {% empty %}
                 <tr style="border-top: 1px solid #eee;">
-                    <td colspan="7" style="padding: 3rem; text-align: center; color: #999;">
+                    <td colspan="8" style="padding: 3rem; text-align: center; color: #999;">
                         Nenhum agendamento encontrado.
-                      </td>
-                  </tr>
+                    </td>
+                </tr>
                 {% endfor %}
             </tbody>
         </table>
