@@ -107,13 +107,21 @@
                             <span style="background: #f8d7da; color: #721c24; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">Inativa</span>
                         {% endif %}
                     </td>
-                    <td style="padding: 1rem; text-align: right;">
-                        <a href="{% url 'admin_dashboard:aluna_detalhes' aluna.pk %}" style="color: #b07a84; text-decoration: none; margin-right: 1rem;">Ver</a>
-                        <a href="{% url 'admin_dashboard:aluna_editar' aluna.pk %}" style="color: #2c3e50; text-decoration: none; margin-right: 1rem;">Editar</a>
-                        <form method="post" action="{% url 'admin_dashboard:aluna_excluir' aluna.pk %}" style="display: inline-block;" onsubmit="return confirm('Tem certeza que deseja excluir a aluna {{ aluna.nome }}?');">
-                            {% csrf_token %}
-                            <button type="submit" style="background: none; border: none; color: #e74c3c; cursor: pointer;">Excluir</button>
-                        </form>
+                    <td style="padding: 1rem;">
+                        <div style="display: flex; justify-content: flex-end; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                            <a href="{% url 'admin_dashboard:aluna_detalhes' aluna.pk %}" style="color: #b07a84; text-decoration: none;">Ver</a>
+                            <a href="{% url 'admin_dashboard:aluna_editar' aluna.pk %}" style="color: #2c3e50; text-decoration: none;">Editar</a>
+                            <form method="post"
+                                  action="{% url 'admin_dashboard:aluna_excluir' aluna.pk %}"
+                                  style="margin: 0;"
+                                  onsubmit="return confirm('Tem certeza que deseja excluir a aluna {{ aluna.nome }}?');">
+                                {% csrf_token %}
+                                <button type="submit"
+                                        style="background: none; border: none; color: #e74c3c; cursor: pointer; padding: 0;">
+                                    Excluir
+                                </button>
+                            </form>
+                        </div>
                     </td>
                 </tr>
                 {% empty %}
@@ -121,7 +129,7 @@
                     <td colspan="6" style="padding: 3rem; text-align: center; color: #999;">
                         Nenhuma aluna encontrada.
                     </td>
-                </td>
+                </tr>
                 {% endfor %}
             </tbody>
         </table>
