@@ -13,7 +13,7 @@
                 <ul class="alunas-list">
                     {% for aluna in alunas %}
                         <li>
-                            <strong>{{ aluna.nome }}</strong> - {{ aluna.idade }} anos
+                            <strong>{{ aluna.nome }}</strong> - {% if aluna.idade %}{{ aluna.idade }} anos{% else %}-{% endif %}
                             {% if aluna.turma_atual %}
                                 <br><small>Turma: {{ aluna.turma_atual }}</small>
                             {% endif %}

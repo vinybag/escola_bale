@@ -35,7 +35,7 @@
                    <li>
                        <strong>{{ aluna.nome }}</strong><br>
                        <small>Data de nascimento: {{ aluna.data_nascimento|date:"d/m/Y" }}</small><br>
-                       <small>Idade: {{ aluna.idade }} anos</small>
+                       <small>Idade: {% if aluna.idade %}{{ aluna.idade }} anos{% else %}-{% endif %}</small>
                        {% if aluna.turma_atual %}
                            <br><small>Turma: {{ aluna.turma_atual }}</small>
                        {% endif %}
