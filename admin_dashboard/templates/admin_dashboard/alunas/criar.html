@@ -178,6 +178,46 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Configurações Financeiras -->
+            <div>
+                <h3 style="margin-bottom: 1rem; color: #2c3e50; font-size: 1rem; text-transform: uppercase; font-weight: 600;">
+                    Configurações Financeiras
+                </h3>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                            Valor da mensalidade
+                        </label>
+                        <input type="number"
+                               name="valor_mensalidade"
+                               step="0.01"
+                               min="0"
+                               placeholder="Ex: 150.00"
+                               style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                    </div>
+
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                            Dia do vencimento
+                        </label>
+                        <input type="number"
+                               name="dia_vencimento"
+                               min="1"
+                               max="31"
+                               value="10"
+                               style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                    </div>
+
+                    <div style="display: flex; align-items: end;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; margin-bottom: 0.75rem;">
+                            <input type="checkbox" name="gerar_mensalidade_automatica" checked>
+                            <span style="font-weight: 500; color: #333;">Gerar mensalidade automaticamente</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
             
             <!-- Botoes -->
             <div style="display: flex; gap: 1rem; margin-top: 1rem;">
@@ -204,7 +244,6 @@ function toggleTipoAluna() {
         blocoResponsavel.style.display = 'none';
         blocoAdulto.style.display = 'block';
         
-        // Remove required dos campos de responsavel
         const camposResponsavel = [
             'responsavel_nome', 'responsavel_sobrenome', 'responsavel_email',
             'responsavel_telefone', 'responsavel_senha', 'select-responsavel'
@@ -214,7 +253,6 @@ function toggleTipoAluna() {
             if (campo) campo.required = false;
         });
         
-        // Adiciona required no email do adulto
         const emailAdulto = document.getElementById('adulto_email');
         if (emailAdulto) emailAdulto.required = true;
         
@@ -222,11 +260,9 @@ function toggleTipoAluna() {
         blocoResponsavel.style.display = 'block';
         blocoAdulto.style.display = 'none';
         
-        // Remove required do email adulto
         const emailAdulto = document.getElementById('adulto_email');
         if (emailAdulto) emailAdulto.required = false;
         
-        // Reaplica required baseado no tipo de responsavel selecionado
         toggleResponsavel();
     }
 }
@@ -263,7 +299,6 @@ function toggleResponsavel() {
 
         if (selectResp) selectResp.required = false;
 
-        // Apenas o email continua obrigatorio
         const emailCampo = document.getElementById('responsavel_email');
         if (emailCampo) emailCampo.required = true;
         
@@ -274,7 +309,6 @@ function toggleResponsavel() {
     }
 }
 
-// Inicializa ao carregar
 document.addEventListener('DOMContentLoaded', function() {
     toggleTipoAluna();
     toggleResponsavel();

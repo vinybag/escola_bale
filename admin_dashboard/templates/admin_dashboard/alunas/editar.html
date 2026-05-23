@@ -71,7 +71,7 @@
                                 style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
                             <option value="">Sem responsavel</option>
                             {% for resp in responsaveis %}
-                                <option value="{{ resp.id }}" {% if aluna.responsavel.id == resp.id %}selected{% endif %}>
+                                <option value="{{ resp.id }}" {% if aluna.responsavel and aluna.responsavel.id == resp.id %}selected{% endif %}>
                                     {{ resp.get_full_name|default:resp.username }} - {{ resp.email }}
                                 </option>
                             {% endfor %}
@@ -92,6 +92,46 @@
                         <input type="checkbox" name="ativa" {% if aluna.ativa %}checked{% endif %}>
                         <span style="font-weight: 500; color: #333;">Aluna ativa</span>
                     </label>
+                </div>
+            </div>
+
+            <!-- Configurações Financeiras -->
+            <div>
+                <h3 style="margin-bottom: 1rem; color: #2c3e50; font-size: 1rem; text-transform: uppercase; font-weight: 600;">
+                    Configurações Financeiras
+                </h3>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                            Valor da mensalidade
+                        </label>
+                        <input type="number"
+                               name="valor_mensalidade"
+                               step="0.01"
+                               min="0"
+                               value="{{ aluna.valor_mensalidade|default_if_none:'' }}"
+                               style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                    </div>
+
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                            Dia do vencimento
+                        </label>
+                        <input type="number"
+                               name="dia_vencimento"
+                               min="1"
+                               max="31"
+                               value="{{ aluna.dia_vencimento|default:10 }}"
+                               style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                    </div>
+
+                    <div style="display: flex; align-items: end;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; margin-bottom: 0.75rem;">
+                            <input type="checkbox" name="gerar_mensalidade_automatica" {% if aluna.gerar_mensalidade_automatica %}checked{% endif %}>
+                            <span style="font-weight: 500; color: #333;">Gerar mensalidade automaticamente</span>
+                        </label>
+                    </div>
                 </div>
             </div>
             

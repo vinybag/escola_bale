@@ -189,6 +189,7 @@ def aluna_criar(request):
     
     if request.method == 'POST':
         try:
+            from decimal import Decimal, InvalidOperation
             from usuarios.models import Aluna, Turma, Perfil
             from django.contrib.auth.models import User
             from django.contrib import messages
@@ -201,21 +202,45 @@ def aluna_criar(request):
             ativa = request.POST.get('ativa') == 'on'
             observacoes = request.POST.get('observacoes', '')
             tipo_aluna = request.POST.get('tipo_aluna', 'infantil')
+
+            # NOVOS CAMPOS FINANCEIROS
+            valor_mensalidade = request.POST.get('valor_mensalidade')
+            dia_vencimento = request.POST.get('dia_vencimento') or 10
+            gerar_mensalidade_automatica = request.POST.get('gerar_mensalidade_automatica') == 'on'
             
-            # Valida dados básicos (apenas nome é obrigatório)
+            # Valida dados básicos
             if not nome:
                 messages.error(request, 'O nome da aluna e obrigatorio!')
+                return redirect('admin_dashboard:aluna_criar')
+
+            # Validação financeira
+            valor_mensalidade_decimal = None
+            if valor_mensalidade:
+                try:
+                    valor_mensalidade_decimal = Decimal(valor_mensalidade)
+                    if valor_mensalidade_decimal < 0:
+                        messages.error(request, 'O valor da mensalidade nao pode ser negativo!')
+                        return redirect('admin_dashboard:aluna_criar')
+                except (InvalidOperation, ValueError):
+                    messages.error(request, 'Informe um valor de mensalidade valido!')
+                    return redirect('admin_dashboard:aluna_criar')
+
+            try:
+                dia_vencimento = int(dia_vencimento)
+                if dia_vencimento < 1 or dia_vencimento > 31:
+                    messages.error(request, 'O dia de vencimento deve estar entre 1 e 31!')
+                    return redirect('admin_dashboard:aluna_criar')
+            except (TypeError, ValueError):
+                messages.error(request, 'Informe um dia de vencimento valido!')
                 return redirect('admin_dashboard:aluna_criar')
             
             responsavel = None
             
             # Só processa responsável se for aluna infantil
             if tipo_aluna == 'infantil':
-                # VERIFICA TIPO DE RESPONSÁVEL
                 tipo_responsavel = request.POST.get('tipo_responsavel')
                 
                 if tipo_responsavel == 'existente':
-                    # Usa responsável existente
                     responsavel_id = request.POST.get('responsavel_existente')
                     if not responsavel_id:
                         messages.error(request, 'Selecione um responsavel!')
@@ -223,14 +248,12 @@ def aluna_criar(request):
                     responsavel = User.objects.get(id=responsavel_id)
                     
                 else:
-                    # Cria novo responsável (campos opcionais)
                     resp_nome = request.POST.get('responsavel_nome', '')
                     resp_sobrenome = request.POST.get('responsavel_sobrenome', '')
                     resp_email = request.POST.get('responsavel_email', '')
                     resp_senha = request.POST.get('responsavel_senha', '')
                     resp_telefone = request.POST.get('responsavel_telefone', '')
                     
-                    # Validações mínimas (nome e email são obrigatórios para criar responsável)
                     if not resp_nome:
                         messages.error(request, 'Nome do responsavel e obrigatorio!')
                         return redirect('admin_dashboard:aluna_criar')
@@ -239,26 +262,20 @@ def aluna_criar(request):
                         messages.error(request, 'Email do responsavel e obrigatorio!')
                         return redirect('admin_dashboard:aluna_criar')
                     
-                    # Verifica se email já existe
                     if User.objects.filter(email=resp_email).exists():
                         messages.error(request, f'Ja existe um usuario com o email {resp_email}!')
                         return redirect('admin_dashboard:aluna_criar')
                     
-                    # Cria username a partir do email
                     username = resp_email.split('@')[0]
-                    
-                    # Se username já existe, adiciona número
                     base_username = username
                     counter = 1
                     while User.objects.filter(username=username).exists():
                         username = f"{base_username}{counter}"
                         counter += 1
                     
-                    # Gera senha padrão se não for fornecida
                     if not resp_senha:
                         resp_senha = User.objects.make_random_password()
                     
-                    # Cria o responsável
                     responsavel = User.objects.create_user(
                         username=username,
                         email=resp_email,
@@ -267,7 +284,6 @@ def aluna_criar(request):
                         last_name=resp_sobrenome
                     )
                     
-                    # Cria perfil com telefone (se fornecido)
                     perfil, created = Perfil.objects.get_or_create(
                         user=responsavel,
                         defaults={'telefone': resp_telefone or '', 'is_responsavel': True}
@@ -280,7 +296,6 @@ def aluna_criar(request):
                     messages.success(request, f'Responsavel {resp_nome} {resp_sobrenome} cadastrado! Login: {resp_email} / Senha: {resp_senha}')
             
             else:
-                # ALUNA ADULTA - cria um usuário para ela mesma
                 adulto_email = request.POST.get('adulto_email', '')
                 adulto_senha = request.POST.get('adulto_senha', '')
                 
@@ -288,12 +303,10 @@ def aluna_criar(request):
                     messages.error(request, 'Email da aluna adulta e obrigatorio!')
                     return redirect('admin_dashboard:aluna_criar')
                 
-                # Verifica se email já existe
                 if User.objects.filter(email=adulto_email).exists():
                     messages.error(request, f'Ja existe um usuario com o email {adulto_email}!')
                     return redirect('admin_dashboard:aluna_criar')
                 
-                # Cria username a partir do email
                 username = adulto_email.split('@')[0]
                 base_username = username
                 counter = 1
@@ -301,11 +314,9 @@ def aluna_criar(request):
                     username = f"{base_username}{counter}"
                     counter += 1
                 
-                # Gera senha padrão se não for fornecida
                 if not adulto_senha:
                     adulto_senha = User.objects.make_random_password()
                 
-                # Cria o usuário (responsável = própria aluna)
                 responsavel = User.objects.create_user(
                     username=username,
                     email=adulto_email,
@@ -314,7 +325,6 @@ def aluna_criar(request):
                     last_name=nome.split()[-1] if ' ' in nome else ''
                 )
                 
-                # Cria perfil marcando como NÃO RESPONSÁVEL
                 perfil, created = Perfil.objects.get_or_create(
                     user=responsavel,
                     defaults={'telefone': '', 'is_responsavel': False}
@@ -342,7 +352,10 @@ def aluna_criar(request):
                 responsavel=responsavel,
                 tipo_aluna=tipo_aluna,
                 ativa=ativa,
-                observacoes=observacoes
+                observacoes=observacoes,
+                valor_mensalidade=valor_mensalidade_decimal,
+                dia_vencimento=dia_vencimento,
+                gerar_mensalidade_automatica=gerar_mensalidade_automatica,
             )
             
             # Adiciona as turmas (ManyToMany)
@@ -434,25 +447,56 @@ def aluna_editar(request, pk):
     
     if request.method == 'POST':
         try:
+            from decimal import Decimal, InvalidOperation
             from django.contrib.auth.models import User
             from usuarios.models import Turma
             from django.contrib import messages
             
-            # Atualiza dados
+            # Atualiza dados básicos
             aluna.nome = request.POST.get('nome')
             aluna.genero = request.POST.get('genero') or None
             aluna.data_nascimento = request.POST.get('data_nascimento') or None
             aluna.ativa = request.POST.get('ativa') == 'on'
             aluna.observacoes = request.POST.get('observacoes', '')
+
+            # NOVOS CAMPOS FINANCEIROS
+            valor_mensalidade = request.POST.get('valor_mensalidade')
+            dia_vencimento = request.POST.get('dia_vencimento') or 10
+            gerar_mensalidade_automatica = request.POST.get('gerar_mensalidade_automatica') == 'on'
+
+            if valor_mensalidade:
+                try:
+                    valor_mensalidade_decimal = Decimal(valor_mensalidade)
+                    if valor_mensalidade_decimal < 0:
+                        messages.error(request, 'O valor da mensalidade nao pode ser negativo!')
+                        return redirect('admin_dashboard:aluna_editar', pk=pk)
+                    aluna.valor_mensalidade = valor_mensalidade_decimal
+                except (InvalidOperation, ValueError):
+                    messages.error(request, 'Informe um valor de mensalidade valido!')
+                    return redirect('admin_dashboard:aluna_editar', pk=pk)
+            else:
+                aluna.valor_mensalidade = None
+
+            try:
+                dia_vencimento = int(dia_vencimento)
+                if dia_vencimento < 1 or dia_vencimento > 31:
+                    messages.error(request, 'O dia de vencimento deve estar entre 1 e 31!')
+                    return redirect('admin_dashboard:aluna_editar', pk=pk)
+                aluna.dia_vencimento = dia_vencimento
+            except (TypeError, ValueError):
+                messages.error(request, 'Informe um dia de vencimento valido!')
+                return redirect('admin_dashboard:aluna_editar', pk=pk)
+
+            aluna.gerar_mensalidade_automatica = gerar_mensalidade_automatica
             
-            # Atualiza responsavel se mudou (pode ser None para adulto)
+            # Atualiza responsavel se mudou
             responsavel_id = request.POST.get('responsavel')
             if responsavel_id:
                 aluna.responsavel = User.objects.get(id=responsavel_id)
             else:
                 aluna.responsavel = None
             
-            # Atualiza as turmas (múltiplas)
+            # Atualiza as turmas
             turmas_ids = request.POST.getlist('turmas')
             turmas_selecionadas = []
             for turma_id in turmas_ids:
@@ -461,9 +505,9 @@ def aluna_editar(request, pk):
                     turmas_selecionadas.append(turma)
                 except Turma.DoesNotExist:
                     pass
-            aluna.turmas.set(turmas_selecionadas)
-            
+
             aluna.save()
+            aluna.turmas.set(turmas_selecionadas)
             
             messages.success(request, f'Aluna {aluna.nome} atualizada com sucesso!')
             return redirect('admin_dashboard:aluna_detalhes', pk=aluna.pk)

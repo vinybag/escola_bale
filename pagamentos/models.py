@@ -37,6 +37,12 @@ class Mensalidade(models.Model):
         ordering = ['-mes_referencia']
         verbose_name = 'Mensalidade'
         verbose_name_plural = 'Mensalidades'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['aluna', 'mes_referencia'],
+                name='unique_mensalidade_aluna_mes_referencia'
+            )
+        ]
     
     def __str__(self):
         return f"{self.aluna.nome} - {self.mes_referencia.strftime('%m/%Y')}"
