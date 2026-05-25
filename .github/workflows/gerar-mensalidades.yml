@@ -10,22 +10,17 @@ jobs:
     runs-on: ubuntu-latest
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
 
     steps:
       - name: Baixar código
         uses: actions/checkout@v4
 
-      - name: Instalar Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
+      - name: Instalar Railway CLI via npm
+        run: npm install -g @railway/cli@latest
 
-      - name: Instalar Railway CLI
-        run: |
-          curl -fsSL https://railway.com/install.sh | sh
-          echo "$HOME/.railway/bin" >> $GITHUB_PATH
+      - name: Verificar instalação
+        run: railway --version
 
       - name: Rodar geração no Railway
-        env:
-          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
         run: railway run --service 736065af-4959-4b0f-8af3-7985d8d0fc33 python manage.py gerar_mensalidades
