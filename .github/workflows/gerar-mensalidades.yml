@@ -8,6 +8,8 @@ on:
 jobs:
   gerar-mensalidades:
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
       - name: Baixar código
@@ -16,10 +18,12 @@ jobs:
       - name: Instalar Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
 
       - name: Instalar Railway CLI
-        run: npm install -g @railway/cli
+        run: |
+          curl -fsSL https://railway.com/install.sh | sh
+          echo "$HOME/.railway/bin" >> $GITHUB_PATH
 
       - name: Rodar geração no Railway
         env:
