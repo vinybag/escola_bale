@@ -11,6 +11,8 @@ jobs:
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
+      RAILWAY_PROJECT_ID: de264516-835b-4bc9-9bd9-11055c649742
+      RAILWAY_ENVIRONMENT_NAME: production
 
     steps:
       - name: Baixar código
