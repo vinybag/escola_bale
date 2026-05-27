@@ -2174,3 +2174,91 @@ def espetaculo_participacoes(request, pk):
     except Exception as e:
         messages.error(request, f'Erro ao carregar participações: {e}')
         return redirect('admin_dashboard:espetaculos_list')
+    
+from decimal import Decimal
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404, redirect, render
+
+@login_required
+def participacao_cobrancas(request, pk):
+    if not request.user.is_staff:
+        return redirect('home')
+
+    try:
+        from espetaculo.models import ParticipacaoEspetaculo, CobrancaEspetaculo
+
+        participacao = get_object_or_404(
+            ParticipacaoEspetaculo.objects.select_related(
+                'espetaculo',
+                'aluna',
+                'aluna__responsavel'
+            ),
+            pk=pk
+        )
+
+        if request.method == 'POST':
+            tipo = request.POST.get('tipo')
+            descricao = request.POST.get('descricao')
+            valor_total = request.POST.get('valor_total')
+            permitir_parcelamento = request.POST.get('permitir_parcelamento') == 'on'
+            max_parcelas = request.POST.get('max_parcelas') or 1
+
+            if not tipo or not descricao or not valor_total:
+                messages.error(request, 'Preencha os campos obrigatórios da cobrança.')
+                return redirect('admin_dashboard:participacao_cobrancas', pk=pk)
+
+            try:
+                valor_total = Decimal(valor_total)
+            except Exception:
+                messages.error(request, 'Valor total inválido.')
+                return redirect('admin_dashboard:participacao_cobrancas', pk=pk)
+
+            try:
+                max_parcelas = int(max_parcelas)
+            except Exception:
+                max_parcelas = 1
+
+            if max_parcelas < 1:
+                max_parcelas = 1
+
+            if not permitir_parcelamento:
+                max_parcelas = 1
+
+            CobrancaEspetaculo.objects.create(
+                participacao=participacao,
+                tipo=tipo,
+                descricao=descricao,
+                valor_total=valor_total,
+                permitir_parcelamento=permitir_parcelamento,
+                max_parcelas=max_parcelas,
+            )
+
+            messages.success(request, 'Cobrança criada com sucesso.')
+            return redirect('admin_dashboard:participacao_cobrancas', pk=pk)
+
+        cobrancas = (
+            CobrancaEspetaculo.objects
+            .filter(participacao=participacao)
+            .prefetch_related('parcelas')
+            .order_by('-criado_em')
+        )
+
+        context = {
+            'participacao': participacao,
+            'cobrancas': cobrancas,
+            'total_cobrancas': cobrancas.count(),
+        }
+
+        return render(
+            request,
+            'admin_dashboard/espetaculos/participacao_cobrancas.html',
+            context
+        )
+
+    except Exception as e:
+        messages.error(request, f'Erro ao carregar cobranças: {e}')
+        return redirect(
+            'admin_dashboard:admindashboardespetaculoparticipacoes',
+            pk=pk
+        )

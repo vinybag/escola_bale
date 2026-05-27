@@ -83,7 +83,8 @@
                                     </td>
                                     <td>{{ participacao.cobrancas.count }}</td>
                                     <td>
-                                        <a href="#" class="btn btn-sm btn-primary">
+                                        <a href="{% url 'admin_dashboard:participacao_cobrancas' participacao.pk %}" 
+                                        class="btn btn-sm btn-primary">
                                             Gerenciar cobranças
                                         </a>
                                     </td>
