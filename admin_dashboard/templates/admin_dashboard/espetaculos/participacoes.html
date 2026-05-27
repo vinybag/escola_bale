@@ -23,6 +23,32 @@
         </div>
     </div>
 
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h5 class="mb-3">Adicionar aluna ao espetáculo</h5>
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-8">
+                        <label for="aluna_id" class="form-label">Aluna</label>
+                        <select name="aluna_id" id="aluna_id" class="form-select" required>
+                            <option value="">Selecione uma aluna</option>
+                            {% for aluna in alunas_disponiveis %}
+                                <option value="{{ aluna.id }}">{{ aluna.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <button type="submit" class="btn btn-primary w-100">
+                            Adicionar participação
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div class="card shadow-sm">
         <div class="card-body">
             {% if participacoes %}

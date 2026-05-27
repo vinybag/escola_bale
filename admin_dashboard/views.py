@@ -2121,8 +2121,31 @@ def espetaculo_participacoes(request, pk):
 
     try:
         from espetaculo.models import Espetaculo, ParticipacaoEspetaculo
+        from usuarios.models import Aluna
 
         espetaculo = get_object_or_404(Espetaculo, pk=pk)
+
+        if request.method == 'POST':
+            aluna_id = request.POST.get('aluna_id')
+
+            if not aluna_id:
+                messages.error(request, 'Selecione uma aluna.')
+                return redirect('admin_dashboard:espetaculo_participacoes', pk=pk)
+
+            aluna = get_object_or_404(Aluna, pk=aluna_id)
+
+            participacao, created = ParticipacaoEspetaculo.objects.get_or_create(
+                espetaculo=espetaculo,
+                aluna=aluna,
+                defaults={'vai_dancar': True}
+            )
+
+            if created:
+                messages.success(request, f'{aluna.nome} foi adicionada ao espetáculo com sucesso!')
+            else:
+                messages.warning(request, f'{aluna.nome} já está vinculada a este espetáculo.')
+
+            return redirect('admin_dashboard:espetaculo_participacoes', pk=pk)
 
         participacoes = (
             ParticipacaoEspetaculo.objects
@@ -2132,10 +2155,18 @@ def espetaculo_participacoes(request, pk):
             .order_by('aluna__nome')
         )
 
+        alunas_disponiveis = (
+            Aluna.objects
+            .filter(ativa=True)
+            .exclude(participacoes_espetaculo__espetaculo=espetaculo)
+            .order_by('nome')
+        )
+
         context = {
             'espetaculo': espetaculo,
             'participacoes': participacoes,
             'total_participacoes': participacoes.count(),
+            'alunas_disponiveis': alunas_disponiveis,
         }
 
         return render(request, 'admin_dashboard/espetaculos/participacoes.html', context)
