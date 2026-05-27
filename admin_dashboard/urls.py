@@ -38,6 +38,11 @@ urlpatterns = [
     path('espetaculos/', views.espetaculos_list, name='espetaculos_list'),
     path('espetaculos/criar/', views.espetaculo_criar, name='espetaculo_criar'),
     path('espetaculos/<int:pk>/editar/', views.espetaculo_editar, name='espetaculo_editar'),
+    path(
+        'espetaculos/<int:pk>/participacoes/',
+        views.espetaculo_participacoes,
+        name='espetaculo_participacoes'
+    ),
     path('inscricoes-audicao/', views.inscricoes_audicao_list, name='inscricoes_audicao'),
     path('inscricoes-audicao/<int:pk>/excluir/', views.inscricao_audicao_excluir, name='inscricao_audicao_excluir'),
     

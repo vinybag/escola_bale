@@ -1,4 +1,6 @@
+from decimal import Decimal
 from django.db import models
+from django.utils import timezone
 
 class Espetaculo(models.Model):
     # Informações básicas
@@ -99,4 +101,129 @@ class AvaliacaoAudicao(models.Model):
     
     class Meta:
         verbose_name = 'Avaliação de Audição'
-        verbose_name_plural = 'Avaliações de Audição'        
+        verbose_name_plural = 'Avaliações de Audição'
+
+class ParticipacaoEspetaculo(models.Model):
+    espetaculo = models.ForeignKey(
+        Espetaculo,
+        on_delete=models.CASCADE,
+        related_name='participacoes'
+    )
+    aluna = models.ForeignKey(
+        'usuarios.Aluna',
+        on_delete=models.CASCADE,
+        related_name='participacoes_espetaculo'
+    )
+    vai_dancar = models.BooleanField(default=True)
+    observacoes = models.TextField(blank=True, null=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Participação no espetáculo'
+        verbose_name_plural = 'Participações no espetáculo'
+        unique_together = ('espetaculo', 'aluna')
+
+    def __str__(self):
+        return f'{self.aluna.nome} - {self.espetaculo.titulo}'
+
+class CobrancaEspetaculo(models.Model):
+    TIPO_CHOICES = (
+        ('taxa_palco', 'Taxa de palco'),
+        ('figurino', 'Figurino'),
+    )
+
+    STATUS_CHOICES = (
+        ('pendente', 'Pendente'),
+        ('parcial', 'Parcial'),
+        ('pago', 'Pago'),
+    )
+
+    participacao = models.ForeignKey(
+        ParticipacaoEspetaculo,
+        on_delete=models.CASCADE,
+        related_name='cobrancas'
+    )
+    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES)
+    descricao = models.CharField(max_length=255)
+    valor_total = models.DecimalField(max_digits=10, decimal_places=2)
+    permitir_parcelamento = models.BooleanField(default=False)
+    max_parcelas = models.PositiveIntegerField(default=1)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pendente')
+    ativo = models.BooleanField(default=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Cobrança do espetáculo'
+        verbose_name_plural = 'Cobranças do espetáculo'
+
+    def __str__(self):
+        return f'{self.get_tipo_display()} - {self.participacao.aluna.nome}'
+
+    def total_pago(self):
+        total = self.parcelas.filter(status='pago').aggregate(
+            total=models.Sum('valor')
+        )['total']
+        return total or Decimal('0.00')
+
+    def total_pendente(self):
+        return self.valor_total - self.total_pago()
+
+    def atualizar_status(self):
+        parcelas = self.parcelas.all()
+
+        if parcelas.exists():
+            total = parcelas.count()
+            pagas = parcelas.filter(status='pago').count()
+
+            if pagas == 0:
+                self.status = 'pendente'
+            elif pagas == total:
+                self.status = 'pago'
+            else:
+                self.status = 'parcial'
+        else:
+            self.status = 'pendente'
+
+        self.save(update_fields=['status'])
+
+class ParcelaCobrancaEspetaculo(models.Model):
+    STATUS_CHOICES = (
+        ('pendente', 'Pendente'),
+        ('pago', 'Pago'),
+    )
+
+    cobranca = models.ForeignKey(
+        CobrancaEspetaculo,
+        on_delete=models.CASCADE,
+        related_name='parcelas'
+    )
+    numero_parcela = models.PositiveIntegerField()
+    total_parcelas = models.PositiveIntegerField(default=1)
+    valor = models.DecimalField(max_digits=10, decimal_places=2)
+    vencimento = models.DateField(blank=True, null=True)
+    mes_liberacao = models.DateField(blank=True, null=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pendente')
+    data_pagamento = models.DateTimeField(blank=True, null=True)
+    codigo_pix = models.TextField(blank=True, null=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Parcela da cobrança do espetáculo'
+        verbose_name_plural = 'Parcelas da cobrança do espetáculo'
+        unique_together = ('cobranca', 'numero_parcela')
+        ordering = ['numero_parcela']
+
+    def __str__(self):
+        return f'{self.cobranca} - parcela {self.numero_parcela}/{self.total_parcelas}'
+
+    def esta_liberada(self):
+        if not self.mes_liberacao:
+            return True
+        hoje = timezone.now().date()
+        return hoje >= self.mes_liberacao
+
+    def marcar_como_pago(self):
+        self.status = 'pago'
+        self.data_pagamento = timezone.now()
+        self.save(update_fields=['status', 'data_pagamento'])
+        self.cobranca.atualizar_status()        

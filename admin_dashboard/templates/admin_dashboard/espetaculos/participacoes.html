@@ -1,0 +1,80 @@
+{% extends 'admindashboard/base.html' %}
+
+{% block title %}Participações - {{ espetaculo.titulo }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">Participações do espetáculo</h1>
+            <p class="text-muted mb-0">
+                <strong>{{ espetaculo.titulo }}</strong>
+                {% if espetaculo.subtitulo %}
+                    — {{ espetaculo.subtitulo }}
+                {% endif %}
+            </p>
+            <p class="text-muted mb-0">Total de participações: {{ total_participacoes }}</p>
+        </div>
+
+        <div>
+            <a href="{% url 'espetaculos_list' %}" class="btn btn-outline-secondary">
+                Voltar para espetáculos
+            </a>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            {% if participacoes %}
+                <div class="table-responsive">
+                    <table class="table table-striped align-middle">
+                        <thead>
+                            <tr>
+                                <th>Aluna</th>
+                                <th>Responsável</th>
+                                <th>Vai dançar?</th>
+                                <th>Cobranças</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for participacao in participacoes %}
+                                <tr>
+                                    <td>{{ participacao.aluna.nome }}</td>
+                                    <td>
+                                        {% if participacao.aluna.responsavel %}
+                                            {{ participacao.aluna.responsavel.first_name }} {{ participacao.aluna.responsavel.last_name }}
+                                        {% else %}
+                                            —
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if participacao.vai_dancar %}
+                                            <span class="badge bg-success">Sim</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Não</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ participacao.cobrancas.count }}</td>
+                                    <td>
+                                        <a href="#" class="btn btn-sm btn-primary">
+                                            Gerenciar cobranças
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-4">
+                    <h5 class="mb-2">Nenhuma participação cadastrada</h5>
+                    <p class="text-muted mb-0">
+                        Ainda não há alunas vinculadas a este espetáculo.
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

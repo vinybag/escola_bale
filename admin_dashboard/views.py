@@ -2109,3 +2109,37 @@ def ficha_pdf(request, pk):
     """Gera PDF da ficha de avaliação"""
     messages.warning(request, 'Função de PDF temporariamente indisponível. Use Ctrl+P para imprimir.')
     return redirect('admin_dashboard:inscricoes_audicao')
+
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+
+@login_required
+def espetaculo_participacoes(request, pk):
+    if not request.user.is_staff:
+        return redirect('home')
+
+    try:
+        from espetaculo.models import Espetaculo, ParticipacaoEspetaculo
+
+        espetaculo = get_object_or_404(Espetaculo, pk=pk)
+
+        participacoes = (
+            ParticipacaoEspetaculo.objects
+            .select_related('aluna', 'aluna__responsavel')
+            .filter(espetaculo=espetaculo)
+            .prefetch_related('cobrancas')
+            .order_by('aluna__nome')
+        )
+
+        context = {
+            'espetaculo': espetaculo,
+            'participacoes': participacoes,
+            'total_participacoes': participacoes.count(),
+        }
+
+        return render(request, 'admin_dashboard/espetaculos/participacoes.html', context)
+
+    except Exception as e:
+        messages.error(request, f'Erro ao carregar participações: {e}')
+        return redirect('admin_dashboard:espetaculos_list')

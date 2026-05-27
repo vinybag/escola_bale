@@ -16,9 +16,9 @@
     {% for esp in espetaculos %}
     <div style="background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-left: 4px solid {% if esp.ativo %}#28a745{% else %}#6c757d{% endif %};">
         
-        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem; gap: 1rem;">
             <div style="flex: 1;">
-                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
+                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem; flex-wrap: wrap;">
                     <h3 style="margin: 0; color: #2c3e50; font-size: 1.5rem;">{{ esp.titulo }}</h3>
                     {% if esp.ativo %}
                         <span style="background: #28a745; color: white; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem;">ATIVO</span>
@@ -26,15 +26,23 @@
                         <span style="background: #6c757d; color: white; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem;">INATIVO</span>
                     {% endif %}
                 </div>
+
                 {% if esp.subtitulo %}
                     <p style="color: #666; margin: 0 0 1rem 0;">{{ esp.subtitulo }}</p>
                 {% endif %}
             </div>
             
-            <a href="{% url 'admin_dashboard:espetaculo_editar' esp.pk %}" 
-               style="padding: 0.5rem 1rem; background: #2c3e50; color: white; border-radius: 5px; text-decoration: none; font-size: 0.875rem;">
-                Editar
-            </a>
+            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; justify-content: flex-end;">
+                <a href="{% url 'admin_dashboard:espetaculo_participacoes' esp.pk %}" 
+                   style="padding: 0.5rem 1rem; background: #b07a84; color: white; border-radius: 5px; text-decoration: none; font-size: 0.875rem;">
+                    Participações
+                </a>
+
+                <a href="{% url 'admin_dashboard:espetaculo_editar' esp.pk %}" 
+                   style="padding: 0.5rem 1rem; background: #2c3e50; color: white; border-radius: 5px; text-decoration: none; font-size: 0.875rem;">
+                    Editar
+                </a>
+            </div>
         </div>
         
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
