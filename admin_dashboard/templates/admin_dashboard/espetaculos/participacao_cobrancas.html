@@ -1,0 +1,124 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Cobranças da Participação{% endblock %}
+
+{% block content %}
+<div style="max-width: 1100px; margin: 0 auto; padding: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; gap: 1rem; flex-wrap: wrap;">
+        <div>
+            <h1 style="margin: 0; font-size: 2rem; color: #2c3e50;">Cobranças da Participação</h1>
+            <p style="margin: 0.5rem 0 0 0; color: #666;">
+                <strong>Aluna:</strong> {{ participacao.aluna.nome }}<br>
+                <strong>Espetáculo:</strong> {{ participacao.espetaculo.titulo }}
+            </p>
+        </div>
+
+        <a href="{% url 'admin_dashboard:espetaculos_list' %}"
+           style="padding: 0.75rem 1.25rem; background: #6c757d; color: white; text-decoration: none; border-radius: 6px;">
+            Voltar
+        </a>
+    </div>
+
+    <div style="background: #fff; border: 1px solid #ddd; border-radius: 10px; padding: 1.5rem; margin-bottom: 2rem;">
+        <h2 style="margin-top: 0; color: #2c3e50;">Nova cobrança</h2>
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                <div>
+                    <label for="tipo" style="display: block; margin-bottom: 0.5rem; font-weight: bold;">Tipo</label>
+                    <select name="tipo" id="tipo" required
+                            style="width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 6px;">
+                        <option value="">Selecione</option>
+                        <option value="figurino">Figurino</option>
+                        <option value="ensaio">Ensaio extra</option>
+                        <option value="taxa">Taxa</option>
+                        <option value="outro">Outro</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="valor_total" style="display: block; margin-bottom: 0.5rem; font-weight: bold;">Valor total</label>
+                    <input type="number" step="0.01" min="0" name="valor_total" id="valor_total" required
+                           style="width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 6px;">
+                </div>
+
+                <div>
+                    <label for="max_parcelas" style="display: block; margin-bottom: 0.5rem; font-weight: bold;">Máx. parcelas</label>
+                    <input type="number" min="1" name="max_parcelas" id="max_parcelas" value="1"
+                           style="width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 6px;">
+                </div>
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <label for="descricao" style="display: block; margin-bottom: 0.5rem; font-weight: bold;">Descrição</label>
+                <input type="text" name="descricao" id="descricao" required
+                       style="width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 6px;">
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: flex; align-items: center; gap: 0.5rem;">
+                    <input type="checkbox" name="permitir_parcelamento" id="permitir_parcelamento">
+                    Permitir parcelamento
+                </label>
+            </div>
+
+            <button type="submit"
+                    style="padding: 0.85rem 1.4rem; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                Criar cobrança
+            </button>
+        </form>
+    </div>
+
+    <div style="background: #fff; border: 1px solid #ddd; border-radius: 10px; padding: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap;">
+            <h2 style="margin: 0; color: #2c3e50;">Cobranças cadastradas</h2>
+            <span style="color: #666;">Total: {{ total_cobrancas }}</span>
+        </div>
+
+        {% if cobrancas %}
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: #f8f9fa;">
+                            <th style="padding: 0.75rem; border: 1px solid #ddd; text-align: left;">Tipo</th>
+                            <th style="padding: 0.75rem; border: 1px solid #ddd; text-align: left;">Descrição</th>
+                            <th style="padding: 0.75rem; border: 1px solid #ddd; text-align: left;">Valor</th>
+                            <th style="padding: 0.75rem; border: 1px solid #ddd; text-align: left;">Parcelamento</th>
+                            <th style="padding: 0.75rem; border: 1px solid #ddd; text-align: left;">Parcelas</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cobranca in cobrancas %}
+                            <tr>
+                                <td style="padding: 0.75rem; border: 1px solid #ddd;">
+                                    {{ cobranca.tipo }}
+                                </td>
+                                <td style="padding: 0.75rem; border: 1px solid #ddd;">
+                                    {{ cobranca.descricao }}
+                                </td>
+                                <td style="padding: 0.75rem; border: 1px solid #ddd;">
+                                    R$ {{ cobranca.valor_total }}
+                                </td>
+                                <td style="padding: 0.75rem; border: 1px solid #ddd;">
+                                    {% if cobranca.permitir_parcelamento %}
+                                        Sim (até {{ cobranca.max_parcelas }}x)
+                                    {% else %}
+                                        Não
+                                    {% endif %}
+                                </td>
+                                <td style="padding: 0.75rem; border: 1px solid #ddd;">
+                                    {{ cobranca.parcelas.count }}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p style="color: #666; margin: 0;">Nenhuma cobrança cadastrada para esta participação.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
