@@ -2186,8 +2186,6 @@ def participacao_cobrancas(request, pk):
     if not request.user.is_staff:
         return redirect('home')
 
-    participacao = None
-
     try:
         from espetaculo.models import ParticipacaoEspetaculo, CobrancaEspetaculo
 
@@ -2261,11 +2259,4 @@ def participacao_cobrancas(request, pk):
 
     except Exception as e:
         messages.error(request, f'Erro ao carregar cobranças: {e}')
-
-        if participacao:
-            return redirect(
-                'admin_dashboard:admindashboardespetaculoparticipacoes',
-                pk=participacao.espetaculo.pk
-            )
-
         return redirect('admin_dashboard:espetaculos_list')
