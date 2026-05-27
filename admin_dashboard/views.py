@@ -2180,10 +2180,13 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 
+
 @login_required
 def participacao_cobrancas(request, pk):
     if not request.user.is_staff:
         return redirect('home')
+
+    participacao = None
 
     try:
         from espetaculo.models import ParticipacaoEspetaculo, CobrancaEspetaculo
@@ -2258,7 +2261,11 @@ def participacao_cobrancas(request, pk):
 
     except Exception as e:
         messages.error(request, f'Erro ao carregar cobranças: {e}')
-        return redirect(
-            'admin_dashboard:admindashboardespetaculoparticipacoes',
-            pk=pk
-        )
+
+        if participacao:
+            return redirect(
+                'admin_dashboard:admindashboardespetaculoparticipacoes',
+                pk=participacao.espetaculo.pk
+            )
+
+        return redirect('admin_dashboard:espetaculos_list')
