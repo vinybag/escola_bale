@@ -148,7 +148,7 @@ def create_payment(
     due_date,
     description,
     external_reference,
-    billing_type='UNDEFINED',
+    billing_type='PIX',
 ):
     payload = {
         'customer': customer_id,
@@ -183,7 +183,7 @@ def create_installment_payment(
     due_date,
     description,
     external_reference,
-    billing_type='UNDEFINED',
+    billing_type='PIX',
 ):
     installment_value = calculate_installment_value(total_value, installment_count)
 

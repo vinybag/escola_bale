@@ -2336,7 +2336,7 @@ def cobranca_espetaculo_enviar_asaas(request, pk):
             f'{cobranca.participacao.aluna.nome}'
         )
 
-        billing_type = request.POST.get('billing_type') or 'UNDEFINED'
+        billing_type = 'PIX'
 
         if cobranca.permitir_parcelamento and cobranca.max_parcelas > 1:
             retorno = create_installment_payment(
