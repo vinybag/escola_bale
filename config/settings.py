@@ -119,6 +119,7 @@ STRIPE_SECRET_KEY = config('STRIPE_SECRET_KEY', default='')
 # Asaas
 ASAAS_API_KEY = config('ASAAS_API_KEY', default='')
 ASAAS_SANDBOX = config('ASAAS_SANDBOX', default='True') == 'True'
+ASAAS_BASE_URL = 'https://api.asaas.com/v3'
 
 # Default primary key
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

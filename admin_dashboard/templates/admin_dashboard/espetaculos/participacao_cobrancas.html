@@ -31,10 +31,8 @@
                     <select name="tipo" id="tipo" required
                             style="width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 6px;">
                         <option value="">Selecione</option>
+                        <option value="taxa_palco">Taxa de palco</option>
                         <option value="figurino">Figurino</option>
-                        <option value="ensaio">Ensaio extra</option>
-                        <option value="taxa">Taxa</option>
-                        <option value="outro">Outro</option>
                     </select>
                 </div>
 
@@ -47,6 +45,12 @@
                 <div>
                     <label for="max_parcelas" style="display: block; margin-bottom: 0.5rem; font-weight: bold;">Máx. parcelas</label>
                     <input type="number" min="1" name="max_parcelas" id="max_parcelas" value="1"
+                           style="width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 6px;">
+                </div>
+
+                <div>
+                    <label for="vencimento_primeira_parcela" style="display: block; margin-bottom: 0.5rem; font-weight: bold;">Vencimento da 1ª parcela</label>
+                    <input type="date" name="vencimento_primeira_parcela" id="vencimento_primeira_parcela" required
                            style="width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 6px;">
                 </div>
             </div>
@@ -72,7 +76,7 @@
     </div>
 
     <div style="background: #fff; border: 1px solid #ddd; border-radius: 10px; padding: 1.5rem;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
             <h2 style="margin: 0; color: #2c3e50;">Cobranças cadastradas</h2>
             <span style="color: #666;">Total: {{ total_cobrancas }}</span>
         </div>
@@ -86,14 +90,17 @@
                             <th style="padding: 0.75rem; border: 1px solid #ddd; text-align: left;">Descrição</th>
                             <th style="padding: 0.75rem; border: 1px solid #ddd; text-align: left;">Valor</th>
                             <th style="padding: 0.75rem; border: 1px solid #ddd; text-align: left;">Parcelamento</th>
+                            <th style="padding: 0.75rem; border: 1px solid #ddd; text-align: left;">Vencimento</th>
+                            <th style="padding: 0.75rem; border: 1px solid #ddd; text-align: left;">Status</th>
                             <th style="padding: 0.75rem; border: 1px solid #ddd; text-align: left;">Parcelas</th>
+                            <th style="padding: 0.75rem; border: 1px solid #ddd; text-align: left;">Asaas</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for cobranca in cobrancas %}
                             <tr>
                                 <td style="padding: 0.75rem; border: 1px solid #ddd;">
-                                    {{ cobranca.tipo }}
+                                    {{ cobranca.get_tipo_display }}
                                 </td>
                                 <td style="padding: 0.75rem; border: 1px solid #ddd;">
                                     {{ cobranca.descricao }}
@@ -109,7 +116,71 @@
                                     {% endif %}
                                 </td>
                                 <td style="padding: 0.75rem; border: 1px solid #ddd;">
+                                    {% if cobranca.vencimento_primeira_parcela %}
+                                        {{ cobranca.vencimento_primeira_parcela|date:"d/m/Y" }}
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+                                <td style="padding: 0.75rem; border: 1px solid #ddd;">
+                                    {{ cobranca.get_status_display }}
+                                </td>
+                                <td style="padding: 0.75rem; border: 1px solid #ddd;">
                                     {{ cobranca.parcelas.count }}
+                                </td>
+                                <td style="padding: 0.75rem; border: 1px solid #ddd; min-width: 240px;">
+                                    {% if cobranca.enviado_asaas %}
+                                        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                            <span style="display: inline-block; padding: 0.35rem 0.6rem; background: #d4edda; color: #155724; border-radius: 5px; font-size: 0.85rem; width: fit-content;">
+                                                Enviado
+                                            </span>
+
+                                            {% if cobranca.billing_type %}
+                                                <span style="font-size: 0.85rem; color: #666;">
+                                                    Tipo: {{ cobranca.billing_type }}
+                                                </span>
+                                            {% endif %}
+
+                                            {% if cobranca.parcelas.all %}
+                                                <div style="display: flex; flex-direction: column; gap: 0.35rem;">
+                                                    {% for parcela in cobranca.parcelas.all %}
+                                                        <div style="padding: 0.5rem; background: #f8f9fa; border-radius: 6px; font-size: 0.85rem;">
+                                                            Parcela {{ parcela.numero_parcela }}/{{ parcela.total_parcelas }}
+                                                            {% if parcela.asaas_status %}
+                                                                - {{ parcela.asaas_status }}
+                                                            {% endif %}
+
+                                                            {% if parcela.asaas_invoice_url %}
+                                                                <br>
+                                                                <a href="{{ parcela.asaas_invoice_url }}" target="_blank" rel="noopener noreferrer">Fatura</a>
+                                                            {% endif %}
+
+                                                            {% if parcela.asaas_bank_slip_url %}
+                                                                |
+                                                                <a href="{{ parcela.asaas_bank_slip_url }}" target="_blank" rel="noopener noreferrer">Boleto</a>
+                                                            {% endif %}
+                                                        </div>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    {% else %}
+                                        <form method="post" action="{% url 'admin_dashboard:cobranca_espetaculo_enviar_asaas' cobranca.pk %}" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                            {% csrf_token %}
+
+                                            <select name="billing_type"
+                                                    style="width: 100%; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px;">
+                                                <option value="UNDEFINED">Asaas define</option>
+                                                <option value="PIX">PIX</option>
+                                                <option value="BOLETO">Boleto</option>
+                                            </select>
+
+                                            <button type="submit"
+                                                    style="padding: 0.7rem 1rem; background: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                                                Enviar ao Asaas
+                                            </button>
+                                        </form>
+                                    {% endif %}
                                 </td>
                             </tr>
                         {% endfor %}

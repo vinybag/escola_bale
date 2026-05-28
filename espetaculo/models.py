@@ -2,12 +2,13 @@ from decimal import Decimal
 from django.db import models
 from django.utils import timezone
 
+
 class Espetaculo(models.Model):
     # Informações básicas
     titulo = models.CharField(max_length=200)
     subtitulo = models.CharField(max_length=200, blank=True)
     descricao = models.TextField()
-    
+
     # Data e local
     data_apresentacao = models.DateTimeField()
     local = models.CharField(max_length=200)
@@ -17,10 +18,20 @@ class Espetaculo(models.Model):
     imagem = models.ImageField(upload_to='espetaculos/', blank=True, null=True)
 
     # PDF com informações completas
-    arquivo_informacoes = models.FileField(upload_to='espetaculos/pdfs/', blank=True, null=True, help_text='PDF com sinopse, personagens, audição, etc.')
+    arquivo_informacoes = models.FileField(
+        upload_to='espetaculos/pdfs/',
+        blank=True,
+        null=True,
+        help_text='PDF com sinopse, personagens, audição, etc.'
+    )
 
-    # NOVO CAMPO - Edital/Arquivo para download
-    arquivo_edital = models.FileField(upload_to='espetaculos/editais/', blank=True, null=True, help_text='PDF com edital, regulamento ou material de apoio')
+    # Edital/Arquivo para download
+    arquivo_edital = models.FileField(
+        upload_to='espetaculos/editais/',
+        blank=True,
+        null=True,
+        help_text='PDF com edital, regulamento ou material de apoio'
+    )
 
     # Audição
     audicao_aberta = models.BooleanField(default=False)
@@ -37,7 +48,7 @@ class Espetaculo(models.Model):
     ativo = models.BooleanField(default=True)
     criado_em = models.DateTimeField(auto_now_add=True)
     atualizado_em = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
         verbose_name = 'Espetáculo'
         verbose_name_plural = 'Espetáculos'
@@ -47,7 +58,6 @@ class Espetaculo(models.Model):
         return self.titulo
 
 
-# Classe fora da Espetaculo
 class InscricaoAudicao(models.Model):
     PERSONAGENS_CHOICES = [
         ('thessalia', 'Thessália'),
@@ -67,7 +77,13 @@ class InscricaoAudicao(models.Model):
     whatsapp = models.CharField(max_length=20, verbose_name='Whatsapp')
     idade = models.IntegerField(verbose_name='Idade')
     personagens = models.CharField(max_length=500, verbose_name='Personagens escolhidos')
-    espetaculo = models.ForeignKey(Espetaculo, on_delete=models.CASCADE, related_name='inscricoes', null=True, blank=True)
+    espetaculo = models.ForeignKey(
+        Espetaculo,
+        on_delete=models.CASCADE,
+        related_name='inscricoes',
+        null=True,
+        blank=True
+    )
     data_inscricao = models.DateTimeField(auto_now_add=True)
     lida = models.BooleanField(default=False, verbose_name='Inscrição lida')
 
@@ -79,6 +95,7 @@ class InscricaoAudicao(models.Model):
         verbose_name_plural = 'Inscrições para Audição'
         ordering = ['-data_inscricao']
 
+
 class AvaliacaoAudicao(models.Model):
     NIVEL_OPCOES = [
         ('regular', 'Regular'),
@@ -87,7 +104,7 @@ class AvaliacaoAudicao(models.Model):
         ('excelente', 'Excelente'),
         ('destaque', 'Destaque'),
     ]
-    
+
     inscricao = models.ForeignKey('InscricaoAudicao', on_delete=models.CASCADE, related_name='avaliacoes')
     personagem = models.CharField(max_length=100)
     nome_participante = models.CharField(max_length=200)
@@ -95,13 +112,14 @@ class AvaliacaoAudicao(models.Model):
     observacoes = models.TextField(blank=True)
     criado_em = models.DateTimeField(auto_now_add=True)
     atualizado_em = models.DateTimeField(auto_now=True)
-    
+
     def __str__(self):
         return f"{self.nome_participante} - {self.personagem}"
-    
+
     class Meta:
         verbose_name = 'Avaliação de Audição'
         verbose_name_plural = 'Avaliações de Audição'
+
 
 class ParticipacaoEspetaculo(models.Model):
     espetaculo = models.ForeignKey(
@@ -126,6 +144,7 @@ class ParticipacaoEspetaculo(models.Model):
     def __str__(self):
         return f'{self.aluna.nome} - {self.espetaculo.titulo}'
 
+
 class CobrancaEspetaculo(models.Model):
     TIPO_CHOICES = (
         ('taxa_palco', 'Taxa de palco'),
@@ -148,8 +167,15 @@ class CobrancaEspetaculo(models.Model):
     valor_total = models.DecimalField(max_digits=10, decimal_places=2)
     permitir_parcelamento = models.BooleanField(default=False)
     max_parcelas = models.PositiveIntegerField(default=1)
+    vencimento_primeira_parcela = models.DateField(blank=True, null=True)
+
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pendente')
     ativo = models.BooleanField(default=True)
+
+    enviado_asaas = models.BooleanField(default=False)
+    asaas_customer_id = models.CharField(max_length=100, blank=True, null=True)
+    billing_type = models.CharField(max_length=30, blank=True, null=True)
+
     criado_em = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -186,6 +212,7 @@ class CobrancaEspetaculo(models.Model):
 
         self.save(update_fields=['status'])
 
+
 class ParcelaCobrancaEspetaculo(models.Model):
     STATUS_CHOICES = (
         ('pendente', 'Pendente'),
@@ -202,8 +229,19 @@ class ParcelaCobrancaEspetaculo(models.Model):
     valor = models.DecimalField(max_digits=10, decimal_places=2)
     vencimento = models.DateField(blank=True, null=True)
     mes_liberacao = models.DateField(blank=True, null=True)
+
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pendente')
     data_pagamento = models.DateTimeField(blank=True, null=True)
+
+    asaas_payment_id = models.CharField(max_length=100, blank=True, null=True)
+    asaas_installment_id = models.CharField(max_length=100, blank=True, null=True)
+    asaas_invoice_url = models.URLField(blank=True, null=True)
+    asaas_bank_slip_url = models.URLField(blank=True, null=True)
+    asaas_transaction_receipt_url = models.URLField(blank=True, null=True)
+    asaas_nosso_numero = models.CharField(max_length=100, blank=True, null=True)
+    asaas_status = models.CharField(max_length=50, blank=True, null=True)
+    billing_type = models.CharField(max_length=30, blank=True, null=True)
+
     codigo_pix = models.TextField(blank=True, null=True)
     criado_em = models.DateTimeField(auto_now_add=True)
 
@@ -226,4 +264,4 @@ class ParcelaCobrancaEspetaculo(models.Model):
         self.status = 'pago'
         self.data_pagamento = timezone.now()
         self.save(update_fields=['status', 'data_pagamento'])
-        self.cobranca.atualizar_status()        
+        self.cobranca.atualizar_status()
