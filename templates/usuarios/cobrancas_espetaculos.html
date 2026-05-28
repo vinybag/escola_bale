@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+
+{% block title %}Cobranças de Espetáculos{% endblock %}
+
+{% block content %}
+<div class="container dashboard">
+    <h1>Cobranças de Espetáculos</h1>
+
+    <div class="card" style="margin-bottom: 2rem;">
+        <p style="margin: 0; color: #666;">
+            Total de cobranças: {{ total_cobrancas }}
+        </p>
+    </div>
+
+    {% if cobrancas %}
+        {% for cobranca in cobrancas %}
+            <div class="card" style="margin-bottom: 2rem;">
+                <h3 style="margin-top: 0;">
+                    {{ cobranca.participacao.espetaculo.titulo }}
+                </h3>
+
+                <p>
+                    <strong>Aluna:</strong> {{ cobranca.participacao.aluna.nome }}<br>
+                    <strong>Tipo:</strong> {{ cobranca.get_tipo_display }}<br>
+                    <strong>Descrição:</strong> {{ cobranca.descricao }}<br>
+                    <strong>Valor total:</strong> R$ {{ cobranca.valor_total }}<br>
+                    <strong>Status:</strong> {{ cobranca.get_status_display }}
+                </p>
+
+                {% if cobranca.parcelas.all %}
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; margin-top: 1rem;">
+                            <thead>
+                                <tr style="background: #f8f9fa;">
+                                    <th style="padding: 0.75rem; border: 1px solid #ddd; text-align: left;">Parcela</th>
+                                    <th style="padding: 0.75rem; border: 1px solid #ddd; text-align: left;">Valor</th>
+                                    <th style="padding: 0.75rem; border: 1px solid #ddd; text-align: left;">Vencimento</th>
+                                    <th style="padding: 0.75rem; border: 1px solid #ddd; text-align: left;">Status</th>
+                                    <th style="padding: 0.75rem; border: 1px solid #ddd; text-align: left;">Pagamento</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for parcela in cobranca.parcelas.all %}
+                                    <tr>
+                                        <td style="padding: 0.75rem; border: 1px solid #ddd;">
+                                            {{ parcela.numero_parcela }}/{{ parcela.total_parcelas }}
+                                        </td>
+                                        <td style="padding: 0.75rem; border: 1px solid #ddd;">
+                                            R$ {{ parcela.valor }}
+                                        </td>
+                                        <td style="padding: 0.75rem; border: 1px solid #ddd;">
+                                            {% if parcela.vencimento %}
+                                                {{ parcela.vencimento|date:"d/m/Y" }}
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </td>
+                                        <td style="padding: 0.75rem; border: 1px solid #ddd;">
+                                            {% if parcela.status == 'pago' %}
+                                                <span style="color: #155724; font-weight: bold;">Pago</span>
+                                            {% else %}
+                                                <span style="color: #856404; font-weight: bold;">Pendente</span>
+                                            {% endif %}
+                                        </td>
+                                        <td style="padding: 0.75rem; border: 1px solid #ddd;">
+                                            {% if parcela.status == 'pago' %}
+                                                <span style="color: #155724;">Quitado</span>
+                                            {% else %}
+                                                {% if parcela.asaas_invoice_url %}
+                                                    <a href="{{ parcela.asaas_invoice_url }}" target="_blank" rel="noopener noreferrer">
+                                                        Pagar
+                                                    </a>
+                                                {% elif parcela.asaas_bank_slip_url %}
+                                                    <a href="{{ parcela.asaas_bank_slip_url }}" target="_blank" rel="noopener noreferrer">
+                                                        Ver boleto
+                                                    </a>
+                                                {% else %}
+                                                    <span style="color: #666;">Aguardando liberação</span>
+                                                {% endif %}
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p style="color: #666;">Nenhuma parcela gerada ainda para esta cobrança.</p>
+                {% endif %}
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="card">
+            <p style="margin: 0; color: #666;">Você ainda não possui cobranças de espetáculo.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

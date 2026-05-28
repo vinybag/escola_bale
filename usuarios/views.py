@@ -225,3 +225,29 @@ def redirecionar_dashboard(request):
     
     # Caso contrário, é responsável/aluno
     return redirect('dashboard')
+
+@login_required
+def cobrancas_espetaculos(request):
+    """Cobranças de espetáculos do responsável logado"""
+    from espetaculo.models import CobrancaEspetaculo
+
+    cobrancas = (
+        CobrancaEspetaculo.objects
+        .select_related(
+            'participacao',
+            'participacao__aluna',
+            'participacao__espetaculo',
+        )
+        .prefetch_related('parcelas')
+        .filter(
+            participacao__aluna__responsavel=request.user,
+            ativo=True,
+        )
+        .order_by('-criado_em')
+    )
+
+    context = {
+        'cobrancas': cobrancas,
+        'total_cobrancas': cobrancas.count(),
+    }
+    return render(request, 'usuarios/cobrancas_espetaculos.html', context)

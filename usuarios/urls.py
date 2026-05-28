@@ -8,6 +8,8 @@ urlpatterns = [
     path('dashboard/', views.dashboard, name='dashboard'),
     path('perfil/', views.perfil, name='perfil'),
     path('alterar-senha/', views.alterar_senha, name='alterar_senha'),
+
+    path('cobrancas-espetaculos/', views.cobrancas_espetaculos, name='cobrancas_espetaculos'),
     
     # Recuperação de senha por email
     path('esqueci-senha/', views.esqueci_senha, name='esqueci_senha'),
