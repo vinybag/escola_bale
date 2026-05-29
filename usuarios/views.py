@@ -6,6 +6,7 @@ from django.contrib import messages
 from django.core.mail import send_mail
 from django.conf import settings
 from .models import Perfil, Aluna, RecuperacaoSenha
+from django.db.models import Prefetch
 
 def user_login(request):
     """Pagina de login"""
@@ -229,7 +230,7 @@ def redirecionar_dashboard(request):
 @login_required
 def cobrancas_espetaculos(request):
     """Cobranças de espetáculos do responsável logado"""
-    from espetaculo.models import CobrancaEspetaculo
+    from espetaculo.models import CobrancaEspetaculo, ParcelaCobrancaEspetaculo
 
     cobrancas = (
         CobrancaEspetaculo.objects
@@ -238,7 +239,12 @@ def cobrancas_espetaculos(request):
             'participacao__aluna',
             'participacao__espetaculo',
         )
-        .prefetch_related('parcelas')
+        .prefetch_related(
+            Prefetch(
+                'parcelas',
+                queryset=ParcelaCobrancaEspetaculo.objects.order_by('numero_parcela')
+            )
+        )
         .filter(
             participacao__aluna__responsavel=request.user,
             ativo=True,

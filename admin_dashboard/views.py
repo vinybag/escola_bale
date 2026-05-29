@@ -2514,7 +2514,6 @@ def cobranca_espetaculo_escolher_parcelas(request, pk):
             create_installment_payment,
             list_installment_payments,
         )
-        from usuarios.models import Perfil
 
         cobranca = get_object_or_404(
             CobrancaEspetaculo.objects.select_related(
@@ -2526,7 +2525,6 @@ def cobranca_espetaculo_escolher_parcelas(request, pk):
             pk=pk
         )
 
-        # Garante que essa cobrança pertence ao usuário logado (ou é admin)
         responsavel = cobranca.participacao.aluna.responsavel
         if not request.user.is_staff and request.user != responsavel:
             messages.error(request, 'Acesso negado.')
@@ -2534,26 +2532,16 @@ def cobranca_espetaculo_escolher_parcelas(request, pk):
 
         if cobranca.enviado_asaas:
             messages.warning(request, 'Essa cobrança já foi enviada ao Asaas.')
-            return redirect(
-                'admin_dashboard:participacao_cobrancas',
-                pk=cobranca.participacao.pk
-            )
+            return redirect('cobrancas_espetaculos')
 
         if not responsavel:
             messages.error(request, 'A aluna não possui responsável vinculado.')
-            return redirect(
-                'admin_dashboard:participacao_cobrancas',
-                pk=cobranca.participacao.pk
-            )
+            return redirect('cobrancas_espetaculos')
 
         if not cobranca.vencimento_primeira_parcela:
             messages.error(request, 'O vencimento da primeira parcela não foi definido.')
-            return redirect(
-                'admin_dashboard:participacao_cobrancas',
-                pk=cobranca.participacao.pk
-            )
+            return redirect('cobrancas_espetaculos')
 
-        # Valida CPF antes de tentar qualquer coisa no Asaas
         perfil = getattr(responsavel, 'perfil', None)
         cpf_cnpj = ''
         if perfil and perfil.cpf:
@@ -2565,18 +2553,13 @@ def cobranca_espetaculo_escolher_parcelas(request, pk):
                 'Para pagar via Pix, o CPF do responsável precisa estar cadastrado. '
                 'Entre em contato com a escola.'
             )
-            return redirect(
-                'admin_dashboard:participacao_cobrancas',
-                pk=cobranca.participacao.pk
-            )
+            return redirect('cobrancas_espetaculos')
 
-        # Lê a escolha da aluna
         try:
             num_parcelas = int(request.POST.get('num_parcelas', 1))
         except (ValueError, TypeError):
             num_parcelas = 1
 
-        # Garante que a escolha está dentro do permitido
         max_parcelas = cobranca.max_parcelas if cobranca.permitir_parcelamento else 1
         if num_parcelas < 1:
             num_parcelas = 1
@@ -2614,6 +2597,11 @@ def cobranca_espetaculo_escolher_parcelas(request, pk):
             parcelas_response = list_installment_payments(installment_id)
             parcelas_asaas = parcelas_response.get('data', [])
 
+            parcelas_asaas = sorted(
+                parcelas_asaas,
+                key=lambda item: item.get('dueDate') or ''
+            )
+
             with transaction.atomic():
                 cobranca.asaas_customer_id = customer.get('id')
                 cobranca.billing_type = billing_type
@@ -2642,7 +2630,10 @@ def cobranca_espetaculo_escolher_parcelas(request, pk):
 
                 cobranca.atualizar_status()
 
-            messages.success(request, f'Cobrança em {num_parcelas}x enviada com sucesso! Pague via Pix abaixo.')
+            messages.success(
+                request,
+                f'Cobrança em {num_parcelas}x enviada com sucesso! Pague via Pix abaixo.'
+            )
 
         else:
             retorno = create_payment(
@@ -2682,17 +2673,11 @@ def cobranca_espetaculo_escolher_parcelas(request, pk):
 
             messages.success(request, 'Cobrança à vista enviada com sucesso! Pague via Pix abaixo.')
 
-        return redirect(
-            'admin_dashboard:participacao_cobrancas',
-            pk=cobranca.participacao.pk
-        )
+        return redirect('cobrancas_espetaculos')
 
     except Exception as e:
         messages.error(request, f'Erro ao gerar cobrança: {e}')
-        return redirect(
-            'admin_dashboard:participacao_cobrancas',
-            pk=cobranca.participacao.pk
-        ) 
+        return redirect('cobrancas_espetaculos')
 
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect
