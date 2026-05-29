@@ -2324,6 +2324,9 @@ def cobranca_espetaculo_enviar_asaas(request, pk):
         return redirect('admin_dashboard:espetaculos_list')
 
     try:
+        from django.db import transaction
+        from django.shortcuts import get_object_or_404
+        from django.contrib import messages
         from espetaculo.models import CobrancaEspetaculo, ParcelaCobrancaEspetaculo
         from pagamentos.services.asaas import (
             AsaasError,
@@ -2365,7 +2368,25 @@ def cobranca_espetaculo_enviar_asaas(request, pk):
                 pk=cobranca.participacao.pk
             )
 
+        perfil = getattr(responsavel, 'perfil', None)
+        cpf_cnpj = ''
+        if perfil and perfil.cpf:
+            cpf_cnpj = ''.join(filter(str.isdigit, perfil.cpf))
+
+        if not cpf_cnpj:
+            messages.error(
+                request,
+                'Para enviar ao Asaas, preencha o CPF do responsável no cadastro da aluna.'
+            )
+            return redirect(
+                'admin_dashboard:participacao_cobrancas',
+                pk=cobranca.participacao.pk
+            )
+
         customer = get_or_create_customer(responsavel)
+
+        if not customer or not customer.get('id'):
+            raise AsaasError('Não foi possível obter o cliente no Asaas.')
 
         descricao_base = (
             f'{cobranca.get_tipo_display()} - '

@@ -123,20 +123,39 @@ def create_customer(responsavel):
     return _request('POST', 'customers', payload=payload)
 
 
+# NOVA FUNÇÃO: atualiza dados do customer existente no Asaas
+def update_customer(customer_id, responsavel):
+    customer_data = get_responsavel_data(responsavel)
+
+    payload = {
+        'name': customer_data['nome'],
+        'email': customer_data['email'],
+        'mobilePhone': customer_data['telefone'],
+        'externalReference': customer_data['external_reference'],
+    }
+
+    if customer_data['cpf_cnpj']:
+        payload['cpfCnpj'] = customer_data['cpf_cnpj']
+
+    payload = {k: v for k, v in payload.items() if v}
+    return _request('POST', f'customers/{customer_id}', payload=payload)
+
+
+# CORRIGIDO: agora sempre atualiza o customer encontrado com dados recentes (incluindo CPF)
 def get_or_create_customer(responsavel):
     customer_data = get_responsavel_data(responsavel)
 
     customer = find_customer_by_external_reference(customer_data['external_reference'])
     if customer:
-        return customer
+        return update_customer(customer['id'], responsavel)
 
     customer = find_customer_by_cpf_cnpj(customer_data['cpf_cnpj'])
     if customer:
-        return customer
+        return update_customer(customer['id'], responsavel)
 
     customer = find_customer_by_email(customer_data['email'])
     if customer:
-        return customer
+        return update_customer(customer['id'], responsavel)
 
     return create_customer(responsavel)
 
