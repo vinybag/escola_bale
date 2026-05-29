@@ -2490,3 +2490,206 @@ def cobranca_espetaculo_enviar_asaas(request, pk):
     except Exception as e:
         messages.error(request, f'Erro ao enviar cobrança ao Asaas: {e}')
         return redirect('admin_dashboard:espetaculos_list')
+    
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib import messages
+from django.db import transaction
+
+
+@login_required
+def cobranca_espetaculo_escolher_parcelas(request, pk):
+    """Aluna escolhe quantidade de parcelas e cria cobranças Pix no Asaas."""
+
+    if request.method != 'POST':
+        messages.error(request, 'Método inválido.')
+        return redirect('home')
+
+    try:
+        from espetaculo.models import CobrancaEspetaculo, ParcelaCobrancaEspetaculo
+        from pagamentos.services.asaas import (
+            AsaasError,
+            get_or_create_customer,
+            create_payment,
+            create_installment_payment,
+            list_installment_payments,
+        )
+        from usuarios.models import Perfil
+
+        cobranca = get_object_or_404(
+            CobrancaEspetaculo.objects.select_related(
+                'participacao',
+                'participacao__aluna',
+                'participacao__aluna__responsavel',
+                'participacao__espetaculo',
+            ).prefetch_related('parcelas'),
+            pk=pk
+        )
+
+        # Garante que essa cobrança pertence ao usuário logado (ou é admin)
+        responsavel = cobranca.participacao.aluna.responsavel
+        if not request.user.is_staff and request.user != responsavel:
+            messages.error(request, 'Acesso negado.')
+            return redirect('home')
+
+        if cobranca.enviado_asaas:
+            messages.warning(request, 'Essa cobrança já foi enviada ao Asaas.')
+            return redirect(
+                'admin_dashboard:participacao_cobrancas',
+                pk=cobranca.participacao.pk
+            )
+
+        if not responsavel:
+            messages.error(request, 'A aluna não possui responsável vinculado.')
+            return redirect(
+                'admin_dashboard:participacao_cobrancas',
+                pk=cobranca.participacao.pk
+            )
+
+        if not cobranca.vencimento_primeira_parcela:
+            messages.error(request, 'O vencimento da primeira parcela não foi definido.')
+            return redirect(
+                'admin_dashboard:participacao_cobrancas',
+                pk=cobranca.participacao.pk
+            )
+
+        # Valida CPF antes de tentar qualquer coisa no Asaas
+        perfil = getattr(responsavel, 'perfil', None)
+        cpf_cnpj = ''
+        if perfil and perfil.cpf:
+            cpf_cnpj = ''.join(filter(str.isdigit, perfil.cpf))
+
+        if not cpf_cnpj:
+            messages.error(
+                request,
+                'Para pagar via Pix, o CPF do responsável precisa estar cadastrado. '
+                'Entre em contato com a escola.'
+            )
+            return redirect(
+                'admin_dashboard:participacao_cobrancas',
+                pk=cobranca.participacao.pk
+            )
+
+        # Lê a escolha da aluna
+        try:
+            num_parcelas = int(request.POST.get('num_parcelas', 1))
+        except (ValueError, TypeError):
+            num_parcelas = 1
+
+        # Garante que a escolha está dentro do permitido
+        max_parcelas = cobranca.max_parcelas if cobranca.permitir_parcelamento else 1
+        if num_parcelas < 1:
+            num_parcelas = 1
+        if num_parcelas > max_parcelas:
+            num_parcelas = max_parcelas
+
+        customer = get_or_create_customer(responsavel)
+
+        if not customer or not customer.get('id'):
+            raise AsaasError('Não foi possível obter o cliente no Asaas.')
+
+        descricao_base = (
+            f'{cobranca.get_tipo_display()} - '
+            f'{cobranca.participacao.espetaculo.titulo} - '
+            f'{cobranca.participacao.aluna.nome}'
+        )
+
+        billing_type = 'PIX'
+
+        if num_parcelas > 1:
+            retorno = create_installment_payment(
+                customer_id=customer['id'],
+                total_value=cobranca.valor_total,
+                installment_count=num_parcelas,
+                due_date=cobranca.vencimento_primeira_parcela,
+                description=descricao_base,
+                external_reference=f'cobranca_espetaculo:{cobranca.pk}',
+                billing_type=billing_type,
+            )
+
+            installment_id = retorno.get('installment')
+            if not installment_id:
+                raise AsaasError('O Asaas não retornou o installment da cobrança parcelada.')
+
+            parcelas_response = list_installment_payments(installment_id)
+            parcelas_asaas = parcelas_response.get('data', [])
+
+            with transaction.atomic():
+                cobranca.asaas_customer_id = customer.get('id')
+                cobranca.billing_type = billing_type
+                cobranca.enviado_asaas = True
+                cobranca.save(update_fields=['asaas_customer_id', 'billing_type', 'enviado_asaas'])
+
+                for idx, item in enumerate(parcelas_asaas, start=1):
+                    ParcelaCobrancaEspetaculo.objects.update_or_create(
+                        cobranca=cobranca,
+                        numero_parcela=idx,
+                        defaults={
+                            'total_parcelas': len(parcelas_asaas),
+                            'valor': item.get('value') or 0,
+                            'vencimento': item.get('dueDate'),
+                            'asaas_payment_id': item.get('id'),
+                            'asaas_installment_id': installment_id,
+                            'asaas_invoice_url': item.get('invoiceUrl'),
+                            'asaas_bank_slip_url': item.get('bankSlipUrl'),
+                            'asaas_transaction_receipt_url': item.get('transactionReceiptUrl'),
+                            'asaas_nosso_numero': item.get('nossoNumero'),
+                            'asaas_status': item.get('status'),
+                            'billing_type': item.get('billingType') or billing_type,
+                            'status': 'pago' if item.get('status') == 'RECEIVED' else 'pendente',
+                        }
+                    )
+
+                cobranca.atualizar_status()
+
+            messages.success(request, f'Cobrança em {num_parcelas}x enviada com sucesso! Pague via Pix abaixo.')
+
+        else:
+            retorno = create_payment(
+                customer_id=customer['id'],
+                value=cobranca.valor_total,
+                due_date=cobranca.vencimento_primeira_parcela,
+                description=descricao_base,
+                external_reference=f'cobranca_espetaculo:{cobranca.pk}',
+                billing_type=billing_type,
+            )
+
+            with transaction.atomic():
+                cobranca.asaas_customer_id = customer.get('id')
+                cobranca.billing_type = billing_type
+                cobranca.enviado_asaas = True
+                cobranca.save(update_fields=['asaas_customer_id', 'billing_type', 'enviado_asaas'])
+
+                ParcelaCobrancaEspetaculo.objects.update_or_create(
+                    cobranca=cobranca,
+                    numero_parcela=1,
+                    defaults={
+                        'total_parcelas': 1,
+                        'valor': retorno.get('value') or cobranca.valor_total,
+                        'vencimento': retorno.get('dueDate') or cobranca.vencimento_primeira_parcela,
+                        'asaas_payment_id': retorno.get('id'),
+                        'asaas_invoice_url': retorno.get('invoiceUrl'),
+                        'asaas_bank_slip_url': retorno.get('bankSlipUrl'),
+                        'asaas_transaction_receipt_url': retorno.get('transactionReceiptUrl'),
+                        'asaas_nosso_numero': retorno.get('nossoNumero'),
+                        'asaas_status': retorno.get('status'),
+                        'billing_type': retorno.get('billingType') or billing_type,
+                        'status': 'pago' if retorno.get('status') == 'RECEIVED' else 'pendente',
+                    }
+                )
+
+                cobranca.atualizar_status()
+
+            messages.success(request, 'Cobrança à vista enviada com sucesso! Pague via Pix abaixo.')
+
+        return redirect(
+            'admin_dashboard:participacao_cobrancas',
+            pk=cobranca.participacao.pk
+        )
+
+    except Exception as e:
+        messages.error(request, f'Erro ao gerar cobrança: {e}')
+        return redirect(
+            'admin_dashboard:participacao_cobrancas',
+            pk=cobranca.participacao.pk
+        )    

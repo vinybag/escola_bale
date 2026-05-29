@@ -2,13 +2,13 @@ from django import template
 
 register = template.Library()
 
+
 @register.filter
 def formatar_personagens(valor):
     """Converte a lista de personagens do banco para nomes legíveis"""
     if not valor:
         return "-"
     
-    # Dicionário de conversão
     personagens_dict = {
         'thessalia': 'Thessália',
         'zyara': 'Zyara',
@@ -23,7 +23,6 @@ def formatar_personagens(valor):
         '3_marias': '3 Marias',
     }
     
-    # Tenta converter a string para lista
     try:
         import ast
         lista = ast.literal_eval(valor)
@@ -33,7 +32,13 @@ def formatar_personagens(valor):
     except:
         pass
     
-    # Se não for lista, tenta limpeza básica
     valor_limpo = valor.replace("['", "").replace("']", "").replace("'", "").split(", ")
     nomes = [personagens_dict.get(v.strip(), v.strip()) for v in valor_limpo]
     return ", ".join(nomes)
+
+
+@register.filter
+def get_item(dictionary, key):
+    if dictionary is None:
+        return ''
+    return dictionary.get(key, '')

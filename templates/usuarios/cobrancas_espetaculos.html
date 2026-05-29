@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load espetaculo_filters %}
 
 {% block title %}Cobranças de Espetáculos{% endblock %}
 
@@ -85,7 +86,47 @@
                         </table>
                     </div>
                 {% else %}
-                    <p style="color: #666;">Nenhuma parcela gerada ainda para esta cobrança.</p>
+                    <div style="margin-top: 1rem;">
+                        <p style="margin: 0 0 1rem 0; color: #2c3e50; font-weight: 600;">
+                            Escolha como deseja pagar:
+                        </p>
+
+                        <div style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
+                            <form method="post" action="{% url 'admin_dashboard:cobranca_espetaculo_escolher_parcelas' cobranca.pk %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="num_parcelas" value="1">
+                                <button type="submit"
+                                        style="padding: 0.75rem 1.25rem; background: #27ae60; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                                    À vista no Pix
+                                    <span style="display: block; font-size: 0.85rem; font-weight: 400; margin-top: 0.25rem;">
+                                        R$ {{ cobranca.valor_total }}
+                                    </span>
+                                </button>
+                            </form>
+
+                            {% if cobranca.permitir_parcelamento and cobranca.max_parcelas > 1 %}
+                                {% for n in cobranca.opcoes_parcelas %}
+                                    {% if n > 1 %}
+                                        <form method="post" action="{% url 'admin_dashboard:cobranca_espetaculo_escolher_parcelas' cobranca.pk %}">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="num_parcelas" value="{{ n }}">
+                                            <button type="submit"
+                                                    style="padding: 0.75rem 1.25rem; background: #3498db; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                                                {{ n }}x no Pix
+                                                <span style="display: block; font-size: 0.85rem; font-weight: 400; margin-top: 0.25rem;">
+                                                    R$ {{ cobranca.valor_por_parcela_de|get_item:n }} por parcela
+                                                </span>
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+
+                        <p style="margin-top: 1rem; color: #666; font-size: 0.95rem;">
+                            Após escolher, as parcelas serão geradas e liberadas para pagamento via Pix.
+                        </p>
+                    </div>
                 {% endif %}
             </div>
         {% endfor %}

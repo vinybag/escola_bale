@@ -1,4 +1,4 @@
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 from django.db import models
 from django.utils import timezone
 
@@ -184,6 +184,26 @@ class CobrancaEspetaculo(models.Model):
 
     def __str__(self):
         return f'{self.get_tipo_display()} - {self.participacao.aluna.nome}'
+
+    @property
+    def opcoes_parcelas(self):
+        """Retorna lista [1, 2, 3, ...] até max_parcelas."""
+        if not self.permitir_parcelamento:
+            return [1]
+        return list(range(1, (self.max_parcelas or 1) + 1))
+
+    @property
+    def valor_por_parcela_de(self):
+        """Retorna dict {n: valor} para cada opção de parcelamento."""
+        resultado = {}
+        for n in self.opcoes_parcelas:
+            if n > 0:
+                valor = (Decimal(str(self.valor_total)) / n).quantize(
+                    Decimal('0.01'),
+                    rounding=ROUND_HALF_UP,
+                )
+                resultado[n] = valor
+        return resultado
 
     def total_pago(self):
         total = self.parcelas.filter(status='pago').aggregate(
