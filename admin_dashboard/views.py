@@ -2692,4 +2692,40 @@ def cobranca_espetaculo_escolher_parcelas(request, pk):
         return redirect(
             'admin_dashboard:participacao_cobrancas',
             pk=cobranca.participacao.pk
-        )    
+        ) 
+
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib import messages
+from django.db import transaction
+
+
+@login_required
+def cobranca_espetaculo_excluir(request, pk):
+    if not request.user.is_staff:
+        return redirect('home')
+
+    if request.method != 'POST':
+        messages.error(request, 'Método inválido para excluir cobrança.')
+        return redirect('admin_dashboard:espetaculos_list')
+
+    try:
+        from espetaculo.models import CobrancaEspetaculo
+
+        cobranca = get_object_or_404(
+            CobrancaEspetaculo.objects.select_related('participacao'),
+            pk=pk
+        )
+
+        participacao_pk = cobranca.participacao.pk
+        descricao = str(cobranca)
+
+        with transaction.atomic():
+            cobranca.delete()
+
+        messages.success(request, f'Cobrança "{descricao}" excluída com sucesso.')
+        return redirect('admin_dashboard:participacao_cobrancas', pk=participacao_pk)
+
+    except Exception as e:
+        messages.error(request, f'Erro ao excluir cobrança: {e}')
+        return redirect('admin_dashboard:espetaculos_list')   

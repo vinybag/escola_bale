@@ -94,6 +94,7 @@
                             <th style="padding: 0.75rem; border: 1px solid #ddd; text-align: left;">Status</th>
                             <th style="padding: 0.75rem; border: 1px solid #ddd; text-align: left;">Parcelas</th>
                             <th style="padding: 0.75rem; border: 1px solid #ddd; text-align: left;">Asaas</th>
+                            <th style="padding: 0.75rem; border: 1px solid #ddd; text-align: left; min-width: 160px;">Ações</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -165,15 +166,10 @@
                                             {% endif %}
                                         </div>
                                     {% else %}
-                                        <form method="post" action="{% url 'admin_dashboard:cobranca_espetaculo_enviar_asaas' cobranca.pk %}" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                        <form method="post"
+                                              action="{% url 'admin_dashboard:cobranca_espetaculo_enviar_asaas' cobranca.pk %}"
+                                              style="display: flex; flex-direction: column; gap: 0.5rem;">
                                             {% csrf_token %}
-
-                                            <select name="billing_type"
-                                                    style="width: 100%; padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px;">
-                                                <option value="UNDEFINED">Asaas define</option>
-                                                <option value="PIX">PIX</option>
-                                                <option value="BOLETO">Boleto</option>
-                                            </select>
 
                                             <button type="submit"
                                                     style="padding: 0.7rem 1rem; background: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer;">
@@ -181,6 +177,18 @@
                                             </button>
                                         </form>
                                     {% endif %}
+                                </td>
+                                <td style="padding: 0.75rem; border: 1px solid #ddd;">
+                                    <form method="post"
+                                          action="{% url 'admin_dashboard:cobranca_espetaculo_excluir' cobranca.pk %}"
+                                          onsubmit="return confirm('Tem certeza que deseja excluir esta cobrança? Essa ação também removerá as parcelas vinculadas.');"
+                                          style="display: inline;">
+                                        {% csrf_token %}
+                                        <button type="submit"
+                                                style="padding: 0.7rem 1rem; background: #dc3545; color: white; border: none; border-radius: 6px; cursor: pointer; white-space: nowrap;">
+                                            Excluir cobrança
+                                        </button>
+                                    </form>
                                 </td>
                             </tr>
                         {% endfor %}
