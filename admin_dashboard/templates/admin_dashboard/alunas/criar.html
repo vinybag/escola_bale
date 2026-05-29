@@ -37,7 +37,7 @@
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                     <div>
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Nome completo</label>
-                        <input type="text" id="nome" name="nome" required 
+                        <input type="text" id="nome" name="nome" required
                                style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
                     </div>
                     
@@ -53,7 +53,7 @@
                     
                     <div>
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Data de nascimento</label>
-                        <input type="date" id="data_nascimento" name="data_nascimento" 
+                        <input type="date" id="data_nascimento" name="data_nascimento"
                                style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
                     </div>
                 </div>
@@ -61,7 +61,7 @@
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                     <div>
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Turmas</label>
-                        <select id="turmas" name="turmas" multiple 
+                        <select id="turmas" name="turmas" multiple
                                 style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem; min-height: 120px;">
                             {% for turma in turmas %}
                                 <option value="{{ turma.id }}">
@@ -74,7 +74,7 @@
                     
                     <div>
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Observacoes</label>
-                        <textarea id="observacoes" name="observacoes" rows="3" 
+                        <textarea id="observacoes" name="observacoes" rows="3"
                                   style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem; font-family: inherit;"></textarea>
                     </div>
                 </div>
@@ -91,7 +91,7 @@
             <div id="bloco-adulto" style="display: none;">
                 <h3 style="margin-bottom: 1rem; color: #2c3e50; font-size: 1rem; text-transform: uppercase; font-weight: 600;">Dados de Acesso (Aluna Adulta)</h3>
                 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                     <div>
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Email</label>
                         <input type="email" name="adulto_email" id="adulto_email"
@@ -102,6 +102,13 @@
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Senha</label>
                         <input type="text" name="adulto_senha" id="adulto_senha"
                                placeholder="Deixe em branco para gerar automaticamente"
+                               style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                    </div>
+
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">CPF</label>
+                        <input type="text" name="cpf" id="cpf_adulto"
+                               placeholder="000.000.000-00"
                                style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
                     </div>
                 </div>
@@ -125,18 +132,30 @@
                 
                 <!-- Responsavel Existente -->
                 <div id="responsavel-existente" style="display: none; margin-bottom: 1.5rem;">
-                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
-                        Selecione o responsavel
-                    </label>
-                    <select name="responsavel_existente" id="select-responsavel"
-                            style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
-                        <option value="">Selecione...</option>
-                        {% for resp in responsaveis %}
-                            <option value="{{ resp.id }}">
-                                {{ resp.get_full_name|default:resp.username }} - {{ resp.email }} ({{ resp.alunas.count }} aluna{{ resp.alunas.count|pluralize }})
-                            </option>
-                        {% endfor %}
-                    </select>
+                    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem;">
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                                Selecione o responsavel
+                            </label>
+                            <select name="responsavel_existente" id="select-responsavel"
+                                    style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                                <option value="">Selecione...</option>
+                                {% for resp in responsaveis %}
+                                    <option value="{{ resp.id }}">
+                                        {{ resp.get_full_name|default:resp.username }} - {{ resp.email }} ({{ resp.alunas.count }} aluna{{ resp.alunas.count|pluralize }})
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">CPF do responsável</label>
+                            <input type="text" name="cpf" id="cpf_existente"
+                                   placeholder="000.000.000-00"
+                                   style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                        </div>
+                    </div>
+                    <small style="color: #888;">Se preencher aqui, o CPF será salvo no perfil do responsável selecionado.</small>
                 </div>
                 
                 <!-- Novo Responsavel -->
@@ -155,7 +174,7 @@
                         </div>
                     </div>
                     
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1rem;">
                         <div>
                             <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Email</label>
                             <input type="email" name="responsavel_email" id="responsavel_email" required
@@ -166,6 +185,13 @@
                             <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Telefone</label>
                             <input type="text" name="responsavel_telefone" id="responsavel_telefone"
                                    placeholder="(15) 99999-9999"
+                                   style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                        </div>
+
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">CPF</label>
+                            <input type="text" name="cpf" id="cpf_novo"
+                                   placeholder="000.000.000-00"
                                    style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
                         </div>
                         
@@ -224,7 +250,7 @@
                 <button type="submit" class="btn btn-primary" style="background: #3498db; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 5px; cursor: pointer;">
                     Cadastrar Aluna
                 </button>
-                <a href="{% url 'admin_dashboard:alunas_list' %}" 
+                <a href="{% url 'admin_dashboard:alunas_list' %}"
                    style="padding: 0.75rem 1.5rem; background: #f5f5f5; color: #333; border-radius: 5px; text-decoration: none; font-weight: 500;">
                     Cancelar
                 </a>

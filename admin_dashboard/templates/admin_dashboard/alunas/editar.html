@@ -23,9 +23,9 @@
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                     <div>
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Nome completo</label>
-                        <input type="text" 
-                               id="nome" 
-                               name="nome" 
+                        <input type="text"
+                               id="nome"
+                               name="nome"
                                value="{{ aluna.nome }}"
                                required
                                style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
@@ -43,9 +43,9 @@
                     
                     <div>
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Data de nascimento</label>
-                        <input type="date" 
-                               id="data_nascimento" 
-                               name="data_nascimento" 
+                        <input type="date"
+                               id="data_nascimento"
+                               name="data_nascimento"
                                value="{{ aluna.data_nascimento|date:'Y-m-d' }}"
                                style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
                     </div>
@@ -54,7 +54,7 @@
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                     <div>
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Turmas</label>
-                        <select id="turmas" name="turmas" multiple 
+                        <select id="turmas" name="turmas" multiple
                                 style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem; min-height: 120px;">
                             {% for turma in turmas %}
                                 <option value="{{ turma.id }}" {% if turma in aluna.turmas.all %}selected{% endif %}>
@@ -67,7 +67,7 @@
                     
                     <div>
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Responsavel</label>
-                        <select id="responsavel" name="responsavel" 
+                        <select id="responsavel" name="responsavel"
                                 style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
                             <option value="">Sem responsavel</option>
                             {% for resp in responsaveis %}
@@ -78,11 +78,33 @@
                         </select>
                     </div>
                 </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">CPF do responsável</label>
+                        <input type="text"
+                               id="cpf"
+                               name="cpf"
+                               value="{{ perfil.cpf|default:'' }}"
+                               placeholder="000.000.000-00"
+                               style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                        <small style="color: #888;">Esse CPF será salvo no perfil do responsável vinculado.</small>
+                    </div>
+
+                    <div style="display: flex; align-items: end;">
+                        <div style="width: 100%;">
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: transparent;">Info</label>
+                            <div style="padding: 0.75rem; background: #f8f9fa; border: 1px solid #e5e7eb; border-radius: 5px; color: #666; font-size: 0.95rem;">
+                                Necessário para cobranças via Pix no Asaas.
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 
                 <div style="margin-bottom: 1rem;">
                     <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Observacoes</label>
-                    <textarea id="observacoes" 
-                              name="observacoes" 
+                    <textarea id="observacoes"
+                              name="observacoes"
                               rows="3"
                               style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem; font-family: inherit;">{{ aluna.observacoes }}</textarea>
                 </div>
@@ -140,7 +162,7 @@
                 <button type="submit" class="btn btn-primary" style="background: #3498db; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 5px; cursor: pointer;">
                     Salvar Alteracoes
                 </button>
-                <a href="{% url 'admin_dashboard:aluna_detalhes' aluna.pk %}" 
+                <a href="{% url 'admin_dashboard:aluna_detalhes' aluna.pk %}"
                    style="padding: 0.75rem 1.5rem; background: #f5f5f5; color: #333; border-radius: 5px; text-decoration: none; font-weight: 500;">
                     Cancelar
                 </a>

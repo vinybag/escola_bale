@@ -203,6 +203,9 @@ def aluna_criar(request):
             observacoes = request.POST.get('observacoes', '')
             tipo_aluna = request.POST.get('tipo_aluna', 'infantil')
 
+            # NOVO CAMPO CPF
+            cpf = request.POST.get('cpf', '').strip()
+
             # NOVOS CAMPOS FINANCEIROS
             valor_mensalidade = request.POST.get('valor_mensalidade')
             dia_vencimento = request.POST.get('dia_vencimento') or 10
@@ -245,7 +248,17 @@ def aluna_criar(request):
                     if not responsavel_id:
                         messages.error(request, 'Selecione um responsavel!')
                         return redirect('admin_dashboard:aluna_criar')
+
                     responsavel = User.objects.get(id=responsavel_id)
+
+                    if cpf:
+                        perfil, created = Perfil.objects.get_or_create(
+                            user=responsavel,
+                            defaults={'telefone': '', 'is_responsavel': True}
+                        )
+                        perfil.cpf = cpf
+                        perfil.is_responsavel = True
+                        perfil.save()
                     
                 else:
                     resp_nome = request.POST.get('responsavel_nome', '')
@@ -286,10 +299,16 @@ def aluna_criar(request):
                     
                     perfil, created = Perfil.objects.get_or_create(
                         user=responsavel,
-                        defaults={'telefone': resp_telefone or '', 'is_responsavel': True}
+                        defaults={
+                            'telefone': resp_telefone or '',
+                            'cpf': cpf,
+                            'is_responsavel': True
+                        }
                     )
-                    if not created and resp_telefone:
-                        perfil.telefone = resp_telefone
+                    if not created:
+                        if resp_telefone:
+                            perfil.telefone = resp_telefone
+                        perfil.cpf = cpf
                         perfil.is_responsavel = True
                         perfil.save()
                     
@@ -327,9 +346,14 @@ def aluna_criar(request):
                 
                 perfil, created = Perfil.objects.get_or_create(
                     user=responsavel,
-                    defaults={'telefone': '', 'is_responsavel': False}
+                    defaults={
+                        'telefone': '',
+                        'cpf': cpf,
+                        'is_responsavel': False
+                    }
                 )
                 if not created:
+                    perfil.cpf = cpf
                     perfil.is_responsavel = False
                     perfil.save()
                 
@@ -438,7 +462,7 @@ def aluna_editar(request, pk):
         return redirect('home')
     
     try:
-        from usuarios.models import Aluna
+        from usuarios.models import Aluna, Perfil
         aluna = Aluna.objects.get(pk=pk)
     except Exception as e:
         from django.contrib import messages
@@ -449,7 +473,7 @@ def aluna_editar(request, pk):
         try:
             from decimal import Decimal, InvalidOperation
             from django.contrib.auth.models import User
-            from usuarios.models import Turma
+            from usuarios.models import Turma, Perfil
             from django.contrib import messages
             
             # Atualiza dados básicos
@@ -495,6 +519,16 @@ def aluna_editar(request, pk):
                 aluna.responsavel = User.objects.get(id=responsavel_id)
             else:
                 aluna.responsavel = None
+
+            # NOVO: salva CPF no perfil do responsável
+            cpf = request.POST.get('cpf', '').strip()
+            if aluna.responsavel:
+                perfil, _ = Perfil.objects.get_or_create(
+                    user=aluna.responsavel,
+                    defaults={'telefone': '', 'is_responsavel': True}
+                )
+                perfil.cpf = cpf
+                perfil.save()
             
             # Atualiza as turmas
             turmas_ids = request.POST.getlist('turmas')
@@ -520,20 +554,23 @@ def aluna_editar(request, pk):
     # GET - mostra form preenchido
     try:
         from django.contrib.auth.models import User
-        from usuarios.models import Turma
+        from usuarios.models import Turma, Perfil
         
         responsaveis = User.objects.filter(is_staff=False).order_by('first_name')
         turmas = Turma.objects.filter(ativa=True).order_by('nome')
+        perfil = Perfil.objects.filter(user=aluna.responsavel).first() if aluna.responsavel else None
         
     except Exception as e:
         print(f"Erro ao buscar dados: {e}")
         responsaveis = []
         turmas = []
+        perfil = None
     
     context = {
         'aluna': aluna,
         'responsaveis': responsaveis,
         'turmas': turmas,
+        'perfil': perfil,
     }
     
     return render(request, 'admin_dashboard/alunas/editar.html', context)
