@@ -37,61 +37,75 @@
 <div style="background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
     <form method="post">
         {% csrf_token %}
-        
+
         <div style="margin-bottom: 2rem;">
             <h3 style="margin-bottom: 1rem; color: #2c3e50;">Informações Básicas</h3>
-            
+
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                 <div>
                     <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Nome da Turma *</label>
-                    <input type="text" 
-                           name="nome" 
+                    <input type="text"
+                           name="nome"
                            value="{{ turma.nome }}"
                            required
                            style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
                 </div>
-                
+
                 <div>
                     <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Capacidade Máxima *</label>
-                    <input type="number" 
-                           name="capacidade_maxima" 
+                    <input type="number"
+                           name="capacidade_maxima"
                            value="{{ turma.capacidade_maxima }}"
                            min="1"
                            required
                            style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
                 </div>
             </div>
-            
+
             <div style="margin-bottom: 1rem;">
                 <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Descrição</label>
-                <textarea name="descricao" 
+                <textarea name="descricao"
                           rows="3"
                           style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">{{ turma.descricao }}</textarea>
             </div>
         </div>
-        
+
         <div style="margin-bottom: 2rem;">
             <h3 style="margin-bottom: 1rem; color: #2c3e50;">Detalhes</h3>
-            
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
                 <div>
                     <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Professor(a)</label>
-                    <input type="text" 
-                           name="professor" 
+                    <input type="text"
+                           name="professor"
                            value="{{ turma.professor }}"
                            style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
                 </div>
-                
+
                 <div>
                     <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Horário</label>
-                    <input type="text" 
-                           name="horario" 
+                    <input type="text"
+                           name="horario"
                            value="{{ turma.horario }}"
                            style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
                 </div>
+
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Dia da Semana</label>
+                    <select name="dia_semana"
+                            style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                        <option value="" {% if not turma.dia_semana %}selected{% endif %}>Não definido</option>
+                        <option value="Segunda" {% if turma.dia_semana == "Segunda" %}selected{% endif %}>Segunda-feira</option>
+                        <option value="Terça" {% if turma.dia_semana == "Terça" %}selected{% endif %}>Terça-feira</option>
+                        <option value="Quarta" {% if turma.dia_semana == "Quarta" %}selected{% endif %}>Quarta-feira</option>
+                        <option value="Quinta" {% if turma.dia_semana == "Quinta" %}selected{% endif %}>Quinta-feira</option>
+                        <option value="Sexta" {% if turma.dia_semana == "Sexta" %}selected{% endif %}>Sexta-feira</option>
+                        <option value="Sábado" {% if turma.dia_semana == "Sábado" %}selected{% endif %}>Sábado</option>
+                    </select>
+                </div>
             </div>
         </div>
-        
+
         <div style="margin-bottom: 2rem;">
             <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
                 <input type="checkbox" name="ativa" {% if turma.ativa %}checked{% endif %}>
@@ -105,7 +119,7 @@
                 <span style="font-weight: 500; color: #333;">Disponível para aula experimental</span>
             </label>
         </div>
-        
+
         <div style="display: flex; gap: 1rem;">
             <button type="submit" class="btn btn-primary">Salvar Alterações</button>
             <a href="{% url 'admin_dashboard:turmas_list' %}" style="padding: 0.75rem 1.5rem; background: #f5f5f5; color: #333; border-radius: 5px; text-decoration: none;">Cancelar</a>

@@ -1421,15 +1421,15 @@ def turmas_list(request):
 @login_required
 def turma_criar(request):
     """Criar nova turma"""
-    
+
     if not request.user.is_staff:
         return redirect('home')
-    
+
     if request.method == 'POST':
         try:
             from usuarios.models import Turma
             from django.contrib import messages
-            
+
             nome = request.POST.get('nome')
             descricao = request.POST.get('descricao', '')
             horario = request.POST.get('horario', '')
@@ -1437,11 +1437,12 @@ def turma_criar(request):
             capacidade_maxima = request.POST.get('capacidade_maxima', 20)
             ativa = request.POST.get('ativa') == 'on'
             disponivel_experimental = request.POST.get('disponivel_experimental') == 'on'
-            
+            dia_semana = request.POST.get('dia_semana') or None
+
             if not nome:
-                messages.error(request, 'O nome da turma e obrigatorio!')
+                messages.error(request, 'O nome da turma é obrigatório!')
                 return redirect('admin_dashboard:turma_criar')
-            
+
             turma = Turma.objects.create(
                 nome=nome,
                 descricao=descricao,
@@ -1449,42 +1450,42 @@ def turma_criar(request):
                 professor=professor,
                 capacidade_maxima=int(capacidade_maxima),
                 ativa=ativa,
-                disponivel_experimental=disponivel_experimental
+                disponivel_experimental=disponivel_experimental,
+                dia_semana=dia_semana,
             )
-            
+
             messages.success(request, f'Turma "{nome}" criada com sucesso!')
             return redirect('admin_dashboard:turmas_list')
-            
+
         except Exception as e:
             from django.contrib import messages
             messages.error(request, f'Erro ao criar turma: {e}')
-            print(f"Erro detalhado: {e}")
             import traceback
             traceback.print_exc()
             return redirect('admin_dashboard:turma_criar')
-    
+
     return render(request, 'admin_dashboard/turmas/criar.html')
 
 
 @login_required
 def turma_editar(request, pk):
     """Editar turma existente"""
-    
+
     if not request.user.is_staff:
         return redirect('home')
-    
+
     try:
         from usuarios.models import Turma
         turma = Turma.objects.get(pk=pk)
     except Exception as e:
         from django.contrib import messages
-        messages.error(request, f'Turma nao encontrada: {e}')
+        messages.error(request, f'Turma não encontrada: {e}')
         return redirect('admin_dashboard:turmas_list')
-    
+
     if request.method == 'POST':
         try:
             from django.contrib import messages
-            
+
             turma.nome = request.POST.get('nome')
             turma.descricao = request.POST.get('descricao', '')
             turma.horario = request.POST.get('horario', '')
@@ -1492,21 +1493,22 @@ def turma_editar(request, pk):
             turma.capacidade_maxima = int(request.POST.get('capacidade_maxima', 20))
             turma.ativa = request.POST.get('ativa') == 'on'
             turma.disponivel_experimental = request.POST.get('disponivel_experimental') == 'on'
-            
+            turma.dia_semana = request.POST.get('dia_semana') or None
+
             turma.save()
-            
+
             messages.success(request, f'Turma "{turma.nome}" atualizada com sucesso!')
             return redirect('admin_dashboard:turmas_list')
-            
+
         except Exception as e:
             from django.contrib import messages
             messages.error(request, f'Erro ao atualizar turma: {e}')
             return redirect('admin_dashboard:turma_editar', pk=pk)
-    
+
     context = {
         'turma': turma,
     }
-    
+
     return render(request, 'admin_dashboard/turmas/editar.html', context)
 
 @login_required

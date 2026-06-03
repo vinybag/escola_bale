@@ -5,106 +5,112 @@
 
 {% block content %}
 <div style="max-width: 800px; margin: 2rem auto; padding: 0 1rem;">
-    
+
     <div style="background: white; border-radius: 10px; padding: 2rem; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-        
+
         <h1 style="color: #2c3e50; margin-bottom: 0.5rem; font-size: 1.75rem;">Aula Experimental</h1>
         <p style="color: #666; margin-bottom: 2rem;">Preencha os dados abaixo para agendar sua aula experimental.</p>
-        
+
         {% if erro %}
         <div style="background: #f8d7da; color: #721c24; padding: 1rem; border-radius: 5px; margin-bottom: 1.5rem; border-left: 4px solid #dc3545;">
             {{ erro }}
         </div>
         {% endif %}
-        
+
         <form method="POST" id="form-agendamento">
             {% csrf_token %}
-            
+
             <div style="display: grid; gap: 1.5rem;">
-                
+
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                     <div>
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Nome do responsável</label>
                         <input type="text" name="nome_responsavel" required
                                style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
                     </div>
-                    
+
                     <div>
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Nome da aluna(o)</label>
                         <input type="text" name="nome_aluna" required
                                style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
                     </div>
                 </div>
-                
+
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                     <div>
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Idade da aluna(o)</label>
                         <input type="number" name="idade_aluna" required
                                style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
                     </div>
-                    
+
                     <div>
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Telefone</label>
                         <input type="text" name="telefone" required placeholder="(11) 99999-9999"
                                style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
                     </div>
                 </div>
-                
+
                 <div>
                     <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">E-mail</label>
                     <input type="email" name="email" required
                            style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
                 </div>
-                
+
                 <!-- DROPDOWN PERSONALIZADO -->
                 <div>
                     <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Escolha a aula</label>
                     <div id="custom-select" style="position: relative;">
-                        <div id="select-trigger" 
+                        <div id="select-trigger"
                              style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem; background: white; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
                             <span id="selected-text" style="color: #999;">Selecione uma aula</span>
                             <span id="select-arrow" style="color: #b07a84; transition: transform 0.3s;">▼</span>
                         </div>
-                        <div id="select-dropdown" 
+                        <div id="select-dropdown"
                              style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 5px; margin-top: 4px; max-height: 250px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
                             {% for aula in aulas %}
-                            <div class="select-option" data-value="{{ aula.id }}" data-text="{{ aula.nome }} – {{ aula.dia_semana }} às {{ aula.horario }}"
+                            <div class="select-option"
+                                 data-value="{{ aula.id }}"
+                                 data-text="{{ aula.nome }}{% if aula.dia_semana %} – {{ aula.get_dia_semana_display }}{% endif %}{% if aula.horario %} às {{ aula.horario }}{% endif %}"
                                  style="padding: 0.75rem; cursor: pointer; border-bottom: 1px solid #f0f0f0; transition: all 0.2s;">
                                 <div style="font-weight: 500; color: #2c3e50;">{{ aula.nome }}</div>
-                                <div style="font-size: 0.75rem; color: #b07a84;">{{ aula.dia_semana }} às {{ aula.horario }}</div>
+                                <div style="font-size: 0.75rem; color: #b07a84;">
+                                    {% if aula.dia_semana %}{{ aula.get_dia_semana_display }}{% endif %}
+                                    {% if aula.dia_semana and aula.horario %} às {% endif %}
+                                    {% if aula.horario %}{{ aula.horario }}{% endif %}
+                                    {% if not aula.dia_semana and not aula.horario %}Horário a definir{% endif %}
+                                </div>
                             </div>
                             {% endfor %}
                         </div>
                     </div>
                     <input type="hidden" name="aula" id="aula-selecionada" required>
                 </div>
-                
+
                 <div>
                     <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Data da aula experimental</label>
                     <input type="date" name="data" required min="{{ hoje }}"
                            style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
                 </div>
-                
+
                 <div>
-                    <button type="submit" 
+                    <button type="submit"
                             style="background: #b07a84; color: white; padding: 0.75rem 2rem; border: none; border-radius: 5px; font-size: 1rem; cursor: pointer;">
                         Agendar Aula
                     </button>
-                    <a href="/" 
+                    <a href="/"
                        style="display: inline-block; margin-left: 1rem; padding: 0.75rem 1.5rem; background: #f5f5f5; color: #333; border-radius: 5px; text-decoration: none;">
                         Cancelar
                     </a>
                 </div>
-                
+
             </div>
         </form>
-        
+
     </div>
-    
+
 </div>
 
 <script>
-// Dropdown personalizado
 const trigger = document.getElementById('select-trigger');
 const dropdown = document.getElementById('select-dropdown');
 const options = document.querySelectorAll('.select-option');
@@ -112,28 +118,24 @@ const selectedText = document.getElementById('selected-text');
 const hiddenInput = document.getElementById('aula-selecionada');
 const arrow = document.getElementById('select-arrow');
 
-// Abrir/fechar dropdown
 trigger.addEventListener('click', () => {
     const isOpen = dropdown.style.display === 'block';
     dropdown.style.display = isOpen ? 'none' : 'block';
     arrow.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
 });
 
-// Selecionar opção
 options.forEach(option => {
     option.addEventListener('click', () => {
         const value = option.dataset.value;
         const text = option.dataset.text;
-        
+
         selectedText.textContent = text;
         selectedText.style.color = '#2c3e50';
         hiddenInput.value = value;
-        
-        // Fechar dropdown
+
         dropdown.style.display = 'none';
         arrow.style.transform = 'rotate(0deg)';
-        
-        // Marcar visualmente a opção selecionada
+
         options.forEach(opt => {
             opt.style.background = 'white';
         });
@@ -141,7 +143,6 @@ options.forEach(option => {
     });
 });
 
-// Fechar dropdown ao clicar fora
 document.addEventListener('click', (e) => {
     if (!trigger.contains(e.target) && !dropdown.contains(e.target)) {
         dropdown.style.display = 'none';
