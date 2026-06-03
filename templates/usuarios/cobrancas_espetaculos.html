@@ -92,38 +92,29 @@
                         </p>
 
                         <div style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
-                            <form method="post" action="{% url 'admin_dashboard:cobranca_espetaculo_escolher_parcelas' cobranca.pk %}">
-                                {% csrf_token %}
-                                <input type="hidden" name="num_parcelas" value="1">
-                                <button type="submit"
-                                        style="padding: 0.75rem 1.25rem; background: #27ae60; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
-                                    À vista no Pix
-                                    <span style="display: block; font-size: 0.85rem; font-weight: 400; margin-top: 0.25rem;">
-                                        R$ {{ cobranca.valor_total }}
-                                    </span>
-                                </button>
-                            </form>
-
-                            {% if cobranca.permitir_parcelamento and cobranca.max_parcelas > 1 %}
-                                {% for n in cobranca.opcoes_parcelas %}
-                                    {% if n > 1 %}
-                                        <form method="post" action="{% url 'admin_dashboard:cobranca_espetaculo_escolher_parcelas' cobranca.pk %}">
-                                            {% csrf_token %}
-                                            <input type="hidden" name="num_parcelas" value="{{ n }}">
-                                            <button type="submit"
-                                                    style="padding: 0.75rem 1.25rem; background: #3498db; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
-                                                {{ n }}x no Pix
-                                                <span style="display: block; font-size: 0.85rem; font-weight: 400; margin-top: 0.25rem;">
-                                                    R$ {{ cobranca.valor_por_parcela_de|get_item:n }} por parcela
-                                                </span>
-                                            </button>
-                                        </form>
-                                    {% endif %}
-                                {% endfor %}
-                            {% endif %}
+                            {% for opcao in cobranca.opcoes_pagamento_exibicao %}
+                                <form method="post" action="{% url 'admin_dashboard:cobranca_espetaculo_escolher_parcelas' cobranca.pk %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="num_parcelas" value="{{ opcao.parcelas }}">
+                                    <button type="submit"
+                                            style="padding: 0.75rem 1.25rem; {% if opcao.parcelas == 1 %}background: #27ae60;{% else %}background: #3498db;{% endif %} color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                                        {{ opcao.label }}
+                                        <span style="display: block; font-size: 0.85rem; font-weight: 400; margin-top: 0.25rem;">
+                                            {{ opcao.texto_valor }}
+                                        </span>
+                                        <span style="display: block; font-size: 0.8rem; font-weight: 400; margin-top: 0.2rem; opacity: 0.95;">
+                                            {{ opcao.observacao }}
+                                        </span>
+                                    </button>
+                                </form>
+                            {% endfor %}
                         </div>
 
                         <p style="margin-top: 1rem; color: #666; font-size: 0.95rem;">
+                            Ao escolher <strong>à vista no Pix</strong>, você recebe 5% de desconto. Nas opções parceladas, o valor é mantido sem desconto.
+                        </p>
+
+                        <p style="margin-top: 0.5rem; color: #666; font-size: 0.95rem;">
                             Após escolher, as parcelas serão geradas e liberadas para pagamento via Pix.
                         </p>
                     </div>
