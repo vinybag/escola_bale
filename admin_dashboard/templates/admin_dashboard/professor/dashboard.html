@@ -5,38 +5,38 @@
 {% block content %}
 <div style="padding: 0.5rem 0 2rem 0;">
     <div style="
-        background: linear-gradient(135deg, #f8e8ec 0%, #fdf7f8 100%);
+        background: linear-gradient(135deg, #ffffff 0%, #f0f0f3 100%);
         border-radius: 22px;
         padding: 2rem;
         margin-bottom: 2rem;
-        box-shadow: 0 10px 30px rgba(176, 122, 132, 0.12);
-        border: 1px solid rgba(176, 122, 132, 0.12);
+        box-shadow: 0 10px 30px rgba(107, 45, 143, 0.08);
+        border: 1px solid rgba(107, 45, 143, 0.10);
     ">
         <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 1rem; align-items: center;">
             <div>
-                <p style="margin: 0; color: #9a6b75; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; font-size: 0.85rem;">
+                <p style="margin: 0; color: #6b2d8f; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; font-size: 0.85rem;">
                     Painel da professora
                 </p>
-                <h2 style="margin: 0.4rem 0 0.5rem 0; font-size: 2rem; color: #5c3d44;">
+                <h2 style="margin: 0.4rem 0 0.5rem 0; font-size: 2rem; color: #2c3e50;">
                     Olá, {{ request.user.first_name|default:request.user.username }}
                 </h2>
-                <p style="margin: 0; color: #7a5a62; font-size: 1rem;">
+                <p style="margin: 0; color: #666;">
                     Aqui você acompanha suas turmas, horários e quantidade de alunas.
                 </p>
             </div>
 
             <div style="
-                background: rgba(255,255,255,0.75);
+                background: rgba(255,255,255,0.9);
                 border-radius: 18px;
                 padding: 1rem 1.25rem;
                 min-width: 220px;
-                box-shadow: inset 0 0 0 1px rgba(176, 122, 132, 0.08);
+                box-shadow: inset 0 0 0 1px rgba(107, 45, 143, 0.08);
             ">
-                <p style="margin: 0; color: #8d6770; font-size: 0.9rem;">Resumo rápido</p>
-                <p style="margin: 0.35rem 0 0 0; color: #5c3d44; font-weight: 700; font-size: 1.1rem;">
+                <p style="margin: 0; color: #666; font-size: 0.9rem;">Resumo rápido</p>
+                <p style="margin: 0.35rem 0 0 0; color: #2c3e50; font-weight: 700; font-size: 1.1rem;">
                     {{ total_turmas }} turma{{ total_turmas|pluralize }} ativa{{ total_turmas|pluralize }}
                 </p>
-                <p style="margin: 0.2rem 0 0 0; color: #5c3d44; font-weight: 700; font-size: 1.1rem;">
+                <p style="margin: 0.2rem 0 0 0; color: #2c3e50; font-weight: 700; font-size: 1.1rem;">
                     {{ total_alunas }} aluna{{ total_alunas|pluralize }}
                 </p>
             </div>
@@ -53,55 +53,31 @@
             background: #ffffff;
             border-radius: 20px;
             padding: 1.4rem;
-            box-shadow: 0 8px 24px rgba(31, 41, 55, 0.06);
-            border: 1px solid #f1e3e7;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.05);
+            border: 1px solid #ececec;
+            border-top: 4px solid #6b2d8f;
         ">
-            <div style="
-                width: 48px;
-                height: 48px;
-                border-radius: 14px;
-                background: #f9edf0;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 1.4rem;
-                margin-bottom: 1rem;
-            ">
-                🩰
-            </div>
-            <p style="margin: 0; color: #8b6b73; font-size: 0.92rem;">Turmas vinculadas</p>
-            <h3 style="margin: 0.35rem 0 0 0; font-size: 2rem; color: #5c3d44;">{{ total_turmas }}</h3>
+            <p style="margin: 0; color: #666; font-size: 0.92rem;">Turmas vinculadas</p>
+            <h3 style="margin: 0.35rem 0 0 0; font-size: 2rem; color: #2c3e50;">{{ total_turmas }}</h3>
         </div>
 
         <div style="
             background: #ffffff;
             border-radius: 20px;
             padding: 1.4rem;
-            box-shadow: 0 8px 24px rgba(31, 41, 55, 0.06);
-            border: 1px solid #f1e3e7;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.05);
+            border: 1px solid #ececec;
+            border-top: 4px solid #b07a84;
         ">
-            <div style="
-                width: 48px;
-                height: 48px;
-                border-radius: 14px;
-                background: #eef6ff;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 1.4rem;
-                margin-bottom: 1rem;
-            ">
-                👧
-            </div>
-            <p style="margin: 0; color: #8b6b73; font-size: 0.92rem;">Total de alunas</p>
-            <h3 style="margin: 0.35rem 0 0 0; font-size: 2rem; color: #5c3d44;">{{ total_alunas }}</h3>
+            <p style="margin: 0; color: #666; font-size: 0.92rem;">Total de alunas</p>
+            <h3 style="margin: 0.35rem 0 0 0; font-size: 2rem; color: #2c3e50;">{{ total_alunas }}</h3>
         </div>
     </div>
 
     <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap;">
         <div>
-            <h3 style="margin: 0; color: #5c3d44; font-size: 1.4rem;">Minhas Turmas</h3>
-            <p style="margin: 0.35rem 0 0 0; color: #8b6b73;">
+            <h3 style="margin: 0; color: #2c3e50; font-size: 1.4rem;">Minhas Turmas</h3>
+            <p style="margin: 0.35rem 0 0 0; color: #666;">
                 Visualize os dias das aulas, horários e acesso rápido para ver as alunas.
             </p>
         </div>
@@ -117,13 +93,12 @@
                 background: #ffffff;
                 border-radius: 22px;
                 padding: 1.4rem;
-                box-shadow: 0 12px 30px rgba(31, 41, 55, 0.07);
-                border: 1px solid #f3e8eb;
-                transition: transform 0.2s ease, box-shadow 0.2s ease;
+                box-shadow: 0 12px 30px rgba(0,0,0,0.06);
+                border: 1px solid #ececec;
             ">
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 1rem;">
                     <div>
-                        <h3 style="margin: 0; color: #4f3640; font-size: 1.2rem;">
+                        <h3 style="margin: 0; color: #2c3e50; font-size: 1.2rem;">
                             {{ turma.nome }}
                         </h3>
 
@@ -133,8 +108,8 @@
                                 margin-top: 0.55rem;
                                 padding: 0.35rem 0.7rem;
                                 border-radius: 999px;
-                                background: #f8eef1;
-                                color: #9a6b75;
+                                background: #f3edf8;
+                                color: #6b2d8f;
                                 font-size: 0.8rem;
                                 font-weight: 700;
                             ">
@@ -146,15 +121,15 @@
                     <div style="
                         min-width: 64px;
                         text-align: center;
-                        background: #fcf7f8;
+                        background: #f8f8fa;
                         border-radius: 16px;
                         padding: 0.65rem 0.5rem;
-                        border: 1px solid #f2e4e8;
+                        border: 1px solid #ededf2;
                     ">
-                        <div style="font-size: 1.2rem; font-weight: 700; color: #b07a84;">
+                        <div style="font-size: 1.2rem; font-weight: 700; color: #6b2d8f;">
                             {{ turma.total_alunas }}
                         </div>
-                        <div style="font-size: 0.78rem; color: #8b6b73;">
+                        <div style="font-size: 0.78rem; color: #666;">
                             alunas
                         </div>
                     </div>
@@ -163,7 +138,7 @@
                 {% if turma.descricao %}
                     <p style="
                         margin: 0 0 1rem 0;
-                        color: #6f5960;
+                        color: #666;
                         line-height: 1.5;
                         font-size: 0.95rem;
                     ">
@@ -178,15 +153,15 @@
                     margin-bottom: 1.2rem;
                 ">
                     <div style="
-                        background: #faf7fb;
+                        background: #f7f4fb;
                         border-radius: 14px;
                         padding: 0.85rem 1rem;
-                        border: 1px solid #f1e8ef;
+                        border: 1px solid #ece3f5;
                     ">
-                        <p style="margin: 0 0 0.25rem 0; color: #9a6b75; font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;">
+                        <p style="margin: 0 0 0.25rem 0; color: #6b2d8f; font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;">
                             Dia da aula
                         </p>
-                        <p style="margin: 0; color: #4f3640; font-weight: 600;">
+                        <p style="margin: 0; color: #2c3e50; font-weight: 600;">
                             {% if turma.dia_semana %}
                                 {{ turma.get_dia_semana_display }}
                             {% else %}
@@ -196,15 +171,15 @@
                     </div>
 
                     <div style="
-                        background: #f7f9fc;
+                        background: #f8f8fa;
                         border-radius: 14px;
                         padding: 0.85rem 1rem;
-                        border: 1px solid #e9eef6;
+                        border: 1px solid #ececec;
                     ">
-                        <p style="margin: 0 0 0.25rem 0; color: #6e7f99; font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;">
+                        <p style="margin: 0 0 0.25rem 0; color: #666; font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;">
                             Horário
                         </p>
-                        <p style="margin: 0; color: #334155; font-weight: 600;">
+                        <p style="margin: 0; color: #2c3e50; font-weight: 600;">
                             {% if turma.horario %}
                                 {{ turma.horario }}
                             {% else %}
@@ -221,8 +196,8 @@
                     gap: 1rem;
                     flex-wrap: wrap;
                 ">
-                    <p style="margin: 0; color: #8b6b73; font-size: 0.92rem;">
-                        Toque para visualizar as alunas da turma.
+                    <p style="margin: 0; color: #666; font-size: 0.92rem;">
+                        Visualize as alunas vinculadas a esta turma.
                     </p>
 
                     <a href="{% url 'admin_dashboard:professor_turma_detalhes' turma.pk %}"
@@ -232,11 +207,11 @@
                            justify-content: center;
                            padding: 0.8rem 1.1rem;
                            border-radius: 12px;
-                           background: linear-gradient(135deg, #b07a84 0%, #9b6872 100%);
+                           background: linear-gradient(135deg, #2c3e50, #6b2d8f);
                            color: white;
                            text-decoration: none;
                            font-weight: 700;
-                           box-shadow: 0 8px 18px rgba(176, 122, 132, 0.22);
+                           box-shadow: 0 8px 18px rgba(107, 45, 143, 0.18);
                        ">
                         Ver alunas
                     </a>
@@ -249,12 +224,11 @@
                 border-radius: 22px;
                 padding: 2rem;
                 text-align: center;
-                box-shadow: 0 10px 30px rgba(31, 41, 55, 0.05);
-                border: 1px solid #f1e3e7;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+                border: 1px solid #ececec;
             ">
-                <div style="font-size: 2rem; margin-bottom: 0.75rem;">🩰</div>
-                <h3 style="margin: 0 0 0.5rem 0; color: #5c3d44;">Nenhuma turma vinculada</h3>
-                <p style="margin: 0; color: #8b6b73;">
+                <h3 style="margin: 0 0 0.5rem 0; color: #2c3e50;">Nenhuma turma vinculada</h3>
+                <p style="margin: 0; color: #666;">
                     Você ainda não possui turmas associadas ao seu usuário.
                 </p>
             </div>

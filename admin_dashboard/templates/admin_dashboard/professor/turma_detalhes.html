@@ -10,11 +10,11 @@
                display: inline-flex;
                align-items: center;
                gap: 0.45rem;
-               color: #9a6b75;
+               color: #6b2d8f;
                text-decoration: none;
                font-weight: 700;
-               background: #fff7f8;
-               border: 1px solid #f1dde2;
+               background: #f7f4fb;
+               border: 1px solid #ece3f5;
                border-radius: 999px;
                padding: 0.7rem 1rem;
            ">
@@ -23,38 +23,38 @@
     </div>
 
     <div style="
-        background: linear-gradient(135deg, #f8e8ec 0%, #fdf7f8 100%);
+        background: linear-gradient(135deg, #ffffff 0%, #f0f0f3 100%);
         border-radius: 22px;
         padding: 2rem;
         margin-bottom: 1.75rem;
-        box-shadow: 0 10px 30px rgba(176, 122, 132, 0.12);
-        border: 1px solid rgba(176, 122, 132, 0.12);
+        box-shadow: 0 10px 30px rgba(107, 45, 143, 0.08);
+        border: 1px solid rgba(107, 45, 143, 0.10);
     ">
         <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 1rem; align-items: center;">
             <div>
-                <p style="margin: 0; color: #9a6b75; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; font-size: 0.85rem;">
+                <p style="margin: 0; color: #6b2d8f; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; font-size: 0.85rem;">
                     Detalhes da turma
                 </p>
-                <h2 style="margin: 0.4rem 0 0.5rem 0; font-size: 2rem; color: #5c3d44;">
+                <h2 style="margin: 0.4rem 0 0.5rem 0; font-size: 2rem; color: #2c3e50;">
                     {{ turma.nome }}
                 </h2>
-                <p style="margin: 0; color: #7a5a62; font-size: 1rem;">
+                <p style="margin: 0; color: #666; font-size: 1rem;">
                     Acompanhe as informações da turma e a lista de alunas matriculadas.
                 </p>
             </div>
 
             <div style="
-                background: rgba(255,255,255,0.78);
+                background: rgba(255,255,255,0.92);
                 border-radius: 18px;
                 padding: 1rem 1.25rem;
                 min-width: 230px;
-                box-shadow: inset 0 0 0 1px rgba(176, 122, 132, 0.08);
+                box-shadow: inset 0 0 0 1px rgba(107, 45, 143, 0.08);
             ">
-                <p style="margin: 0; color: #8d6770; font-size: 0.9rem;">Lotação atual</p>
-                <p style="margin: 0.35rem 0 0 0; color: #5c3d44; font-weight: 700; font-size: 1.25rem;">
+                <p style="margin: 0; color: #666; font-size: 0.9rem;">Lotação atual</p>
+                <p style="margin: 0.35rem 0 0 0; color: #2c3e50; font-weight: 700; font-size: 1.25rem;">
                     {{ total_alunas }} / {{ turma.capacidade_maxima }}
                 </p>
-                <p style="margin: 0.25rem 0 0 0; color: #7a5a62; font-size: 0.92rem;">
+                <p style="margin: 0.25rem 0 0 0; color: #666; font-size: 0.92rem;">
                     {{ turma.percentual_ocupacao }}% de ocupação
                 </p>
             </div>
@@ -71,11 +71,12 @@
             background: #ffffff;
             border-radius: 20px;
             padding: 1.3rem;
-            box-shadow: 0 8px 24px rgba(31, 41, 55, 0.06);
-            border: 1px solid #f1e3e7;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.05);
+            border: 1px solid #ececec;
+            border-top: 4px solid #6b2d8f;
         ">
-            <p style="margin: 0 0 0.35rem 0; color: #8b6b73; font-size: 0.9rem;">Dia da aula</p>
-            <h3 style="margin: 0; color: #4f3640; font-size: 1.2rem;">
+            <p style="margin: 0 0 0.35rem 0; color: #666; font-size: 0.9rem;">Dia da aula</p>
+            <h3 style="margin: 0; color: #2c3e50; font-size: 1.2rem;">
                 {% if turma.dia_semana %}
                     {{ turma.get_dia_semana_display }}
                 {% else %}
@@ -88,11 +89,12 @@
             background: #ffffff;
             border-radius: 20px;
             padding: 1.3rem;
-            box-shadow: 0 8px 24px rgba(31, 41, 55, 0.06);
-            border: 1px solid #f1e3e7;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.05);
+            border: 1px solid #ececec;
+            border-top: 4px solid #2c3e50;
         ">
-            <p style="margin: 0 0 0.35rem 0; color: #8b6b73; font-size: 0.9rem;">Horário</p>
-            <h3 style="margin: 0; color: #4f3640; font-size: 1.2rem;">
+            <p style="margin: 0 0 0.35rem 0; color: #666; font-size: 0.9rem;">Horário</p>
+            <h3 style="margin: 0; color: #2c3e50; font-size: 1.2rem;">
                 {{ turma.horario|default:"Não informado" }}
             </h3>
         </div>
@@ -101,11 +103,12 @@
             background: #ffffff;
             border-radius: 20px;
             padding: 1.3rem;
-            box-shadow: 0 8px 24px rgba(31, 41, 55, 0.06);
-            border: 1px solid #f1e3e7;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.05);
+            border: 1px solid #ececec;
+            border-top: 4px solid #b07a84;
         ">
-            <p style="margin: 0 0 0.35rem 0; color: #8b6b73; font-size: 0.9rem;">Professor</p>
-            <h3 style="margin: 0; color: #4f3640; font-size: 1.2rem;">
+            <p style="margin: 0 0 0.35rem 0; color: #666; font-size: 0.9rem;">Professor</p>
+            <h3 style="margin: 0; color: #2c3e50; font-size: 1.2rem;">
                 {{ turma.professor|default:"Não informado" }}
             </h3>
         </div>
@@ -114,11 +117,12 @@
             background: #ffffff;
             border-radius: 20px;
             padding: 1.3rem;
-            box-shadow: 0 8px 24px rgba(31, 41, 55, 0.06);
-            border: 1px solid #f1e3e7;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.05);
+            border: 1px solid #ececec;
+            border-top: 4px solid #6b2d8f;
         ">
-            <p style="margin: 0 0 0.35rem 0; color: #8b6b73; font-size: 0.9rem;">Vagas disponíveis</p>
-            <h3 style="margin: 0; color: #4f3640; font-size: 1.2rem;">
+            <p style="margin: 0 0 0.35rem 0; color: #666; font-size: 0.9rem;">Vagas disponíveis</p>
+            <h3 style="margin: 0; color: #2c3e50; font-size: 1.2rem;">
                 {{ turma.vagas_disponiveis }}
             </h3>
         </div>
@@ -130,19 +134,19 @@
             border-radius: 20px;
             padding: 1.4rem;
             margin-bottom: 1.75rem;
-            box-shadow: 0 8px 24px rgba(31, 41, 55, 0.06);
-            border: 1px solid #f1e3e7;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.05);
+            border: 1px solid #ececec;
         ">
-            <h3 style="margin: 0 0 0.75rem 0; color: #5c3d44;">Sobre a turma</h3>
-            <p style="margin: 0; color: #6f5960; line-height: 1.6;">
+            <h3 style="margin: 0 0 0.75rem 0; color: #2c3e50;">Sobre a turma</h3>
+            <p style="margin: 0; color: #666; line-height: 1.6;">
                 {{ turma.descricao }}
             </p>
         </div>
     {% endif %}
 
     <div style="margin-bottom: 1rem;">
-        <h3 style="margin: 0; color: #5c3d44; font-size: 1.4rem;">Alunas matriculadas</h3>
-        <p style="margin: 0.35rem 0 0 0; color: #8b6b73;">
+        <h3 style="margin: 0; color: #2c3e50; font-size: 1.4rem;">Alunas matriculadas</h3>
+        <p style="margin: 0.35rem 0 0 0; color: #666;">
             Veja abaixo as alunas vinculadas a esta turma.
         </p>
     </div>
@@ -151,8 +155,8 @@
         background: #ffffff;
         border-radius: 22px;
         overflow: hidden;
-        box-shadow: 0 12px 30px rgba(31, 41, 55, 0.07);
-        border: 1px solid #f1e3e7;
+        box-shadow: 0 12px 30px rgba(0,0,0,0.06);
+        border: 1px solid #ececec;
     ">
         <div style="
             display: flex;
@@ -161,12 +165,12 @@
             gap: 1rem;
             flex-wrap: wrap;
             padding: 1.2rem 1.4rem;
-            border-bottom: 1px solid #f3e6ea;
-            background: #fffafb;
+            border-bottom: 1px solid #ececec;
+            background: #fafafa;
         ">
             <div>
-                <h4 style="margin: 0; color: #5c3d44;">Lista de alunas</h4>
-                <p style="margin: 0.25rem 0 0 0; color: #8b6b73; font-size: 0.92rem;">
+                <h4 style="margin: 0; color: #2c3e50;">Lista de alunas</h4>
+                <p style="margin: 0.25rem 0 0 0; color: #666; font-size: 0.92rem;">
                     Total atual: {{ total_alunas }} aluna{{ total_alunas|pluralize }}
                 </p>
             </div>
@@ -174,43 +178,43 @@
 
         <div style="overflow-x: auto;">
             <table style="width: 100%; border-collapse: collapse; min-width: 760px;">
-                <thead style="background: #fcf7f8;">
+                <thead style="background: #f8f8fa;">
                     <tr>
-                        <th style="padding: 1rem 1.2rem; text-align: left; color: #7d5d66; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.04em;">
+                        <th style="padding: 1rem 1.2rem; text-align: left; color: #666; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.04em;">
                             Aluna
                         </th>
-                        <th style="padding: 1rem 1.2rem; text-align: left; color: #7d5d66; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.04em;">
+                        <th style="padding: 1rem 1.2rem; text-align: left; color: #666; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.04em;">
                             Idade
                         </th>
-                        <th style="padding: 1rem 1.2rem; text-align: left; color: #7d5d66; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.04em;">
+                        <th style="padding: 1rem 1.2rem; text-align: left; color: #666; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.04em;">
                             Matrícula
                         </th>
-                        <th style="padding: 1rem 1.2rem; text-align: left; color: #7d5d66; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.04em;">
+                        <th style="padding: 1rem 1.2rem; text-align: left; color: #666; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.04em;">
                             Status
                         </th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for aluna in alunas %}
-                        <tr style="border-top: 1px solid #f3edf0;">
+                        <tr style="border-top: 1px solid #ececec;">
                             <td style="padding: 1rem 1.2rem; vertical-align: top;">
-                                <div style="font-weight: 700; color: #4f3640;">
+                                <div style="font-weight: 700; color: #2c3e50;">
                                     {{ aluna.nome }}
                                 </div>
                                 {% if aluna.observacoes %}
-                                    <div style="margin-top: 0.3rem; color: #8b6b73; font-size: 0.88rem; line-height: 1.45;">
+                                    <div style="margin-top: 0.3rem; color: #666; font-size: 0.88rem; line-height: 1.45;">
                                         {{ aluna.observacoes|truncatechars:50 }}
                                     </div>
                                 {% endif %}
                             </td>
-                            <td style="padding: 1rem 1.2rem; color: #5f4b52;">
+                            <td style="padding: 1rem 1.2rem; color: #2c3e50;">
                                 {% if aluna.idade_calculada %}
                                     {{ aluna.idade_calculada }} anos
                                 {% else %}
                                     --
                                 {% endif %}
                             </td>
-                            <td style="padding: 1rem 1.2rem; color: #5f4b52;">
+                            <td style="padding: 1rem 1.2rem; color: #2c3e50;">
                                 {{ aluna.data_matricula|date:"d/m/Y" }}
                             </td>
                             <td style="padding: 1rem 1.2rem;">
@@ -220,8 +224,8 @@
                                         align-items: center;
                                         padding: 0.35rem 0.8rem;
                                         border-radius: 999px;
-                                        background: #e8f7ee;
-                                        color: #1f7a45;
+                                        background: #ede7f6;
+                                        color: #6b2d8f;
                                         font-weight: 700;
                                         font-size: 0.85rem;
                                     ">
@@ -233,8 +237,8 @@
                                         align-items: center;
                                         padding: 0.35rem 0.8rem;
                                         border-radius: 999px;
-                                        background: #fdecec;
-                                        color: #b42318;
+                                        background: #f8d7da;
+                                        color: #721c24;
                                         font-weight: 700;
                                         font-size: 0.85rem;
                                     ">
@@ -245,7 +249,7 @@
                         </tr>
                     {% empty %}
                         <tr>
-                            <td colspan="4" style="padding: 2.5rem 1rem; text-align: center; color: #8b6b73;">
+                            <td colspan="4" style="padding: 2.5rem 1rem; text-align: center; color: #666;">
                                 Nenhuma aluna matriculada nesta turma.
                             </td>
                         </tr>
