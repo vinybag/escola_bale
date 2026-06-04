@@ -4,6 +4,7 @@ from django.contrib import messages
 from datetime import datetime
 from decimal import Decimal
 from django.db import models
+from django.db.models import Case, When, Value, IntegerField
 
 @login_required
 def dashboard(request):
@@ -1794,9 +1795,26 @@ def professor_dashboard(request):
         return redirect('home')
     
     from usuarios.models import Turma, Aluna
+    from django.db.models import Case, When, Value, IntegerField
     
-    # Turmas do professor
-    turmas = Turma.objects.filter(professor_responsavel=request.user, ativa=True)
+    # Turmas do professor ordenadas por dia da semana
+    turmas = (
+        Turma.objects
+        .filter(professor_responsavel=request.user, ativa=True)
+        .annotate(
+            ordem_dia=Case(
+                When(dia_semana='Segunda', then=Value(1)),
+                When(dia_semana='Terça', then=Value(2)),
+                When(dia_semana='Quarta', then=Value(3)),
+                When(dia_semana='Quinta', then=Value(4)),
+                When(dia_semana='Sexta', then=Value(5)),
+                When(dia_semana='Sábado', then=Value(6)),
+                default=Value(99),
+                output_field=IntegerField(),
+            )
+        )
+        .order_by('ordem_dia', 'horario', 'nome')
+    )
     
     # Totais
     total_turmas = turmas.count()
