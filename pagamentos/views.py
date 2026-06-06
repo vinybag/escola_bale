@@ -14,7 +14,7 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 
 
 # Configurações do webhook Asaas
-ASAAS_WEBHOOK_TOKEN = "whsec_QZ29t9lfesKRKyZRmCvIQ9Ca_ErtrYALxunk7PwU02U"
+ASAAS_WEBHOOK_TOKEN = settings.ASAAS_WEBHOOK_TOKEN
 ASAAS_WEBHOOK_EMAIL = "vinybag@gmail.com"
 
 
@@ -349,3 +349,32 @@ def webhook_asaas(request):
             return HttpResponse(status=500)
 
     return HttpResponse(status=405)
+
+@csrf_exempt
+def webhook_stripe(request):
+    """Recebe notificações do Stripe quando um pagamento é confirmado"""
+    payload = request.body
+    sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
+
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
+        )
+    except ValueError:
+        return HttpResponse(status=400)
+    except stripe.error.SignatureVerificationError:
+        return HttpResponse(status=400)
+
+    if event['type'] == 'checkout.session.completed':
+        session = event['data']['object']
+
+        if session.get('payment_status') == 'paid':
+            mensalidade_id = session.get('client_reference_id')
+            try:
+                mensalidade = Mensalidade.objects.get(id=mensalidade_id)
+                marcar_mensalidade_como_paga(mensalidade, 'cartao', session['id'])
+                print(f"[WEBHOOK STRIPE] Mensalidade {mensalidade_id} marcada como paga.")
+            except Mensalidade.DoesNotExist:
+                print(f"[WEBHOOK STRIPE] Mensalidade {mensalidade_id} não encontrada.")
+
+    return HttpResponse(status=200)

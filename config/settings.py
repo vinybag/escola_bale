@@ -115,11 +115,13 @@ GOOGLE_CALENDAR_ID = config('GOOGLE_CALENDAR_ID', default='')
 # Stripe
 STRIPE_PUBLIC_KEY = config('STRIPE_PUBLIC_KEY', default='')
 STRIPE_SECRET_KEY = config('STRIPE_SECRET_KEY', default='')
+STRIPE_WEBHOOK_SECRET = config('STRIPE_WEBHOOK_SECRET', default='')
 
 # Asaas
 ASAAS_API_KEY = config('ASAAS_API_KEY', default='')
 ASAAS_SANDBOX = config('ASAAS_SANDBOX', default='True') == 'True'
 ASAAS_BASE_URL = 'https://api.asaas.com/v3'
+ASAAS_WEBHOOK_TOKEN = config('ASAAS_WEBHOOK_TOKEN', default='')
 
 # Default primary key
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

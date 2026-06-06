@@ -12,4 +12,6 @@ urlpatterns = [
     
     # Webhook do Asaas (não requer autenticação)
     path('webhook/asaas/', views.webhook_asaas, name='webhook_asaas'),
+    # Webhook do Stripe (não requer autenticação)
+    path('webhook-stripe/', views.webhook_stripe, name='webhook_stripe'),
 ]
