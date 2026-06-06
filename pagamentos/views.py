@@ -100,7 +100,20 @@ def pagar_cartao(request, mensalidade_id):
 
         return redirect(checkout_session.url)
 
+    except stripe.error.StripeError as e:
+        print(f"[STRIPE ERRO] {type(e).__name__}: {e}")
+        if hasattr(e, 'user_message') and e.user_message:
+            erro_msg = e.user_message
+        else:
+            erro_msg = str(e)
+
+        return render(request, 'pagamentos/pagar.html', {
+            'mensalidade': mensalidade,
+            'erro': f'Erro ao processar pagamento: {erro_msg}'
+        })
+
     except Exception as e:
+        print(f"[ERRO GERAL] {type(e).__name__}: {e}")
         return render(request, 'pagamentos/pagar.html', {
             'mensalidade': mensalidade,
             'erro': f'Erro ao processar pagamento: {str(e)}'
