@@ -93,6 +93,13 @@ def pagar_cartao(request, mensalidade_id):
                 'quantity': 1,
             }],
             mode='payment',
+            payment_method_options={
+                'card': {
+                    'installments': {
+                        'enabled': True,
+                    }
+                }
+            },
             success_url=request.build_absolute_uri('/pagamentos/sucesso/') + f'?session_id={{CHECKOUT_SESSION_ID}}&mensalidade_id={mensalidade.id}',
             cancel_url=request.build_absolute_uri(f'/pagamentos/pagar/{mensalidade.id}/'),
             client_reference_id=str(mensalidade.id),
