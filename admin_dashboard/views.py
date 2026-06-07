@@ -1790,17 +1790,33 @@ def agendamento_excluir(request, pk):
 @login_required
 def professor_dashboard(request):
     """Dashboard do professor - mostra apenas suas turmas"""
-    
-    if not request.user.groups.filter(name='Professores').exists():
-        return redirect('home')
-    
+
     from usuarios.models import Turma, Aluna
-    from django.db.models import Case, When, Value, IntegerField
-    
-    # Turmas do professor ordenadas por dia da semana
+    from django.db.models import Case, When, Value, IntegerField, Q
+
+    nomes_possiveis = []
+
+    if request.user.first_name:
+        nomes_possiveis.append(request.user.first_name.strip())
+
+    nome_completo = request.user.get_full_name().strip()
+    if nome_completo:
+        nomes_possiveis.append(nome_completo)
+
+    if request.user.username:
+        nomes_possiveis.append(request.user.username.strip())
+
+    nomes_possiveis = [nome for nome in nomes_possiveis if nome]
+    nomes_possiveis = list(dict.fromkeys(nomes_possiveis))
+
+    filtro_professor = Q()
+    for nome in nomes_possiveis:
+        filtro_professor |= Q(professor__iexact=nome)
+
     turmas = (
         Turma.objects
-        .filter(professor_responsavel=request.user, ativa=True)
+        .filter(ativa=True)
+        .filter(filtro_professor)
         .annotate(
             ordem_dia=Case(
                 When(dia_semana='Segunda', then=Value(1)),
@@ -1815,15 +1831,15 @@ def professor_dashboard(request):
         )
         .order_by('ordem_dia', 'horario', 'nome')
     )
-    
-    # Totais
+
     total_turmas = turmas.count()
     total_alunas = Aluna.objects.filter(turmas__in=turmas, ativa=True).distinct().count()
-    
+
     context = {
         'turmas': turmas,
         'total_turmas': total_turmas,
         'total_alunas': total_alunas,
+        'nomes_possiveis': nomes_possiveis,
     }
     return render(request, 'admin_dashboard/professor/dashboard.html', context)
 
