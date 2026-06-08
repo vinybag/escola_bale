@@ -169,6 +169,11 @@ class CobrancaEspetaculo(models.Model):
     max_parcelas = models.PositiveIntegerField(default=1)
     vencimento_primeira_parcela = models.DateField(blank=True, null=True)
 
+    desconto_irmaos = models.BooleanField(
+        default=False,
+        help_text='Aplicar desconto especial para irmãos/irmãs'
+    )
+
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pendente')
     ativo = models.BooleanField(default=True)
 
@@ -186,24 +191,129 @@ class CobrancaEspetaculo(models.Model):
         return f'{self.get_tipo_display()} - {self.participacao.aluna.nome}'
 
     @property
+    def pode_pagar_a_vista(self):
+        hoje = timezone.now().date()
+        return hoje.month == 6
+
+    @property
+    def max_parcelas_permitidas_hoje(self):
+        hoje = timezone.now().date()
+
+        if hoje.month <= 6:
+            return min(self.max_parcelas or 1, 5)
+        if hoje.month == 7:
+            return min(self.max_parcelas or 1, 4)
+        if hoje.month == 8:
+            return min(self.max_parcelas or 1, 3)
+        if hoje.month == 9:
+            return min(self.max_parcelas or 1, 2)
+        if hoje.month == 10:
+            return min(self.max_parcelas or 1, 1)
+        return 0
+
+    @property
     def opcoes_parcelas(self):
-        """Retorna lista [1, 2, 3, ...] até max_parcelas."""
+        """Retorna lista [1, 2, 3, ...] respeitando o mês atual."""
+        max_permitidas = self.max_parcelas_permitidas_hoje
+
+        if max_permitidas <= 0:
+            return []
+
         if not self.permitir_parcelamento:
-            return [1]
-        return list(range(1, (self.max_parcelas or 1) + 1))
+            return [1] if self.pode_pagar_a_vista else []
+
+        opcoes = list(range(1, max_permitidas + 1))
+
+        if not self.pode_pagar_a_vista:
+            opcoes = [n for n in opcoes if n > 1]
+
+        return opcoes
 
     @property
     def valor_por_parcela_de(self):
-        """Retorna dict {n: valor} para cada opção de parcelamento."""
+        """Retorna dict {n: valor_por_parcela} considerando descontos."""
         resultado = {}
         for n in self.opcoes_parcelas:
             if n > 0:
-                valor = (Decimal(str(self.valor_total)) / n).quantize(
+                valor_total_final = self.valor_com_desconto(n)
+                valor = (valor_total_final / n).quantize(
                     Decimal('0.01'),
                     rounding=ROUND_HALF_UP,
                 )
                 resultado[n] = valor
         return resultado
+
+    def percentual_desconto_para(self, parcelas):
+        parcelas = int(parcelas)
+
+        if self.tipo == 'taxa_palco':
+            if parcelas == 1:
+                return Decimal('12.00') if self.desconto_irmaos else Decimal('5.00')
+            return Decimal('10.00') if self.desconto_irmaos else Decimal('0.00')
+
+        if self.tipo == 'figurino':
+            if parcelas == 1:
+                return Decimal('10.00')
+            return Decimal('0.00')
+
+        return Decimal('0.00')
+
+    def valor_com_desconto(self, parcelas):
+        percentual = self.percentual_desconto_para(parcelas)
+        desconto = (Decimal(str(self.valor_total)) * percentual / Decimal('100')).quantize(
+            Decimal('0.01'),
+            rounding=ROUND_HALF_UP,
+        )
+        return (Decimal(str(self.valor_total)) - desconto).quantize(
+            Decimal('0.01'),
+            rounding=ROUND_HALF_UP,
+        )
+
+    @property
+    def opcoes_pagamento_exibicao(self):
+        opcoes = []
+
+        for parcelas in self.opcoes_parcelas:
+            valor_final = self.valor_com_desconto(parcelas)
+            valor_parcela = (valor_final / parcelas).quantize(
+                Decimal('0.01'),
+                rounding=ROUND_HALF_UP,
+            )
+            percentual_desconto = self.percentual_desconto_para(parcelas)
+
+            if parcelas == 1:
+                label = 'À vista'
+                texto_valor = f'R$ {valor_final}'
+
+                if self.tipo == 'taxa_palco':
+                    if self.desconto_irmaos:
+                        observacao = '12% de desconto para irmãs(ãos)'
+                    else:
+                        observacao = '5% de desconto à vista'
+                elif self.tipo == 'figurino':
+                    observacao = '10% de desconto à vista'
+                else:
+                    observacao = 'Pagamento à vista'
+            else:
+                label = f'{parcelas}x'
+                texto_valor = f'R$ {valor_parcela} por parcela'
+
+                if self.tipo == 'taxa_palco' and self.desconto_irmaos:
+                    observacao = '10% de desconto para irmãs(ãos)'
+                else:
+                    observacao = 'Sem desconto'
+
+            opcoes.append({
+                'parcelas': parcelas,
+                'label': label,
+                'texto_valor': texto_valor,
+                'observacao': observacao,
+                'valor_final': valor_final,
+                'valor_parcela': valor_parcela,
+                'percentual_desconto': percentual_desconto,
+            })
+
+        return opcoes
 
     def total_pago(self):
         total = self.parcelas.filter(status='pago').aggregate(

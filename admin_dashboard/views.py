@@ -2267,6 +2267,8 @@ def participacao_cobrancas(request, pk):
         return redirect('home')
 
     try:
+        from decimal import Decimal
+        from django.utils.dateparse import parse_date
         from espetaculo.models import ParticipacaoEspetaculo, CobrancaEspetaculo
 
         participacao = get_object_or_404(
@@ -2283,6 +2285,7 @@ def participacao_cobrancas(request, pk):
             descricao = request.POST.get('descricao')
             valor_total = request.POST.get('valor_total')
             permitir_parcelamento = request.POST.get('permitir_parcelamento') == 'on'
+            desconto_irmaos = request.POST.get('desconto_irmaos') == 'on'
             max_parcelas = request.POST.get('max_parcelas') or 1
             vencimento_primeira_parcela = request.POST.get('vencimento_primeira_parcela')
 
@@ -2291,7 +2294,7 @@ def participacao_cobrancas(request, pk):
                 return redirect('admin_dashboard:participacao_cobrancas', pk=pk)
 
             try:
-                valor_total = Decimal(valor_total)
+                valor_total = Decimal(str(valor_total))
             except Exception:
                 messages.error(request, 'Valor total inválido.')
                 return redirect('admin_dashboard:participacao_cobrancas', pk=pk)
@@ -2311,6 +2314,10 @@ def participacao_cobrancas(request, pk):
             if vencimento_primeira_parcela:
                 data_vencimento = parse_date(vencimento_primeira_parcela)
 
+            if vencimento_primeira_parcela and not data_vencimento:
+                messages.error(request, 'Data de vencimento inválida.')
+                return redirect('admin_dashboard:participacao_cobrancas', pk=pk)
+
             CobrancaEspetaculo.objects.create(
                 participacao=participacao,
                 tipo=tipo,
@@ -2319,6 +2326,7 @@ def participacao_cobrancas(request, pk):
                 permitir_parcelamento=permitir_parcelamento,
                 max_parcelas=max_parcelas,
                 vencimento_primeira_parcela=data_vencimento,
+                desconto_irmaos=desconto_irmaos,
             )
 
             messages.success(request, 'Cobrança criada com sucesso.')
@@ -2346,8 +2354,6 @@ def participacao_cobrancas(request, pk):
     except Exception as e:
         messages.error(request, f'Erro ao carregar cobranças: {e}')
         return redirect('admin_dashboard:espetaculos_list')
-    
-from django.db import transaction
 
 
 @login_required
@@ -2360,17 +2366,8 @@ def cobranca_espetaculo_enviar_asaas(request, pk):
         return redirect('admin_dashboard:espetaculos_list')
 
     try:
-        from django.db import transaction
         from django.shortcuts import get_object_or_404
-        from django.contrib import messages
-        from espetaculo.models import CobrancaEspetaculo, ParcelaCobrancaEspetaculo
-        from pagamentos.services.asaas import (
-            AsaasError,
-            get_or_create_customer,
-            create_payment,
-            create_installment_payment,
-            list_installment_payments,
-        )
+        from espetaculo.models import CobrancaEspetaculo
 
         cobranca = get_object_or_404(
             CobrancaEspetaculo.objects.select_related(
@@ -2398,118 +2395,37 @@ def cobranca_espetaculo_enviar_asaas(request, pk):
             )
 
         if not cobranca.vencimento_primeira_parcela:
-            messages.error(request, 'Defina o vencimento da primeira parcela antes de enviar ao Asaas.')
+            messages.error(
+                request,
+                'Defina o vencimento da primeira parcela antes de disponibilizar a cobrança.'
+            )
             return redirect(
                 'admin_dashboard:participacao_cobrancas',
                 pk=cobranca.participacao.pk
             )
 
-        customer = get_or_create_customer(responsavel)
+        if not cobranca.opcoes_parcelas:
+            messages.error(
+                request,
+                'Esta cobrança não possui opções de pagamento válidas no período atual.'
+            )
+            return redirect(
+                'admin_dashboard:participacao_cobrancas',
+                pk=cobranca.participacao.pk
+            )
 
-        if not customer or not customer.get('id'):
-            raise AsaasError('Não foi possível obter o cliente no Asaas.')
-
-        descricao_base = (
-            f'{cobranca.get_tipo_display()} - '
-            f'{cobranca.participacao.espetaculo.titulo} - '
-            f'{cobranca.participacao.aluna.nome}'
+        messages.info(
+            request,
+            'A escolha de pagamento é feita pela responsável na área dela. '
+            'A cobrança será enviada ao Asaas somente quando ela escolher à vista ou a quantidade de parcelas.'
         )
-
-        billing_type = 'PIX'
-
-        if cobranca.permitir_parcelamento and cobranca.max_parcelas > 1:
-            retorno = create_installment_payment(
-                customer_id=customer['id'],
-                total_value=cobranca.valor_total,
-                installment_count=cobranca.max_parcelas,
-                due_date=cobranca.vencimento_primeira_parcela,
-                description=descricao_base,
-                external_reference=f'cobranca_espetaculo:{cobranca.pk}',
-                billing_type=billing_type,
-            )
-
-            installment_id = retorno.get('installment')
-            if not installment_id:
-                raise AsaasError('O Asaas não retornou o installment da cobrança parcelada.')
-
-            parcelas_response = list_installment_payments(installment_id)
-            parcelas_asaas = parcelas_response.get('data', [])
-
-            with transaction.atomic():
-                cobranca.asaas_customer_id = customer.get('id')
-                cobranca.billing_type = billing_type
-                cobranca.enviado_asaas = True
-                cobranca.save(update_fields=['asaas_customer_id', 'billing_type', 'enviado_asaas'])
-
-                for idx, item in enumerate(parcelas_asaas, start=1):
-                    ParcelaCobrancaEspetaculo.objects.update_or_create(
-                        cobranca=cobranca,
-                        numero_parcela=idx,
-                        defaults={
-                            'total_parcelas': len(parcelas_asaas),
-                            'valor': item.get('value') or 0,
-                            'vencimento': item.get('dueDate'),
-                            'asaas_payment_id': item.get('id'),
-                            'asaas_installment_id': installment_id,
-                            'asaas_invoice_url': item.get('invoiceUrl'),
-                            'asaas_bank_slip_url': item.get('bankSlipUrl'),
-                            'asaas_transaction_receipt_url': item.get('transactionReceiptUrl'),
-                            'asaas_nosso_numero': item.get('nossoNumero'),
-                            'asaas_status': item.get('status'),
-                            'billing_type': item.get('billingType') or billing_type,
-                            'status': 'pago' if item.get('status') == 'RECEIVED' else 'pendente',
-                        }
-                    )
-
-                cobranca.atualizar_status()
-
-            messages.success(request, 'Cobrança parcelada enviada ao Asaas com sucesso.')
-
-        else:
-            retorno = create_payment(
-                customer_id=customer['id'],
-                value=cobranca.valor_total,
-                due_date=cobranca.vencimento_primeira_parcela,
-                description=descricao_base,
-                external_reference=f'cobranca_espetaculo:{cobranca.pk}',
-                billing_type=billing_type,
-            )
-
-            with transaction.atomic():
-                cobranca.asaas_customer_id = customer.get('id')
-                cobranca.billing_type = billing_type
-                cobranca.enviado_asaas = True
-                cobranca.save(update_fields=['asaas_customer_id', 'billing_type', 'enviado_asaas'])
-
-                ParcelaCobrancaEspetaculo.objects.update_or_create(
-                    cobranca=cobranca,
-                    numero_parcela=1,
-                    defaults={
-                        'total_parcelas': 1,
-                        'valor': retorno.get('value') or cobranca.valor_total,
-                        'vencimento': retorno.get('dueDate') or cobranca.vencimento_primeira_parcela,
-                        'asaas_payment_id': retorno.get('id'),
-                        'asaas_invoice_url': retorno.get('invoiceUrl'),
-                        'asaas_bank_slip_url': retorno.get('bankSlipUrl'),
-                        'asaas_transaction_receipt_url': retorno.get('transactionReceiptUrl'),
-                        'asaas_nosso_numero': retorno.get('nossoNumero'),
-                        'asaas_status': retorno.get('status'),
-                        'billing_type': retorno.get('billingType') or billing_type,
-                        'status': 'pago' if retorno.get('status') == 'RECEIVED' else 'pendente',
-                    }
-                )
-
-                cobranca.atualizar_status()
-
-            messages.success(request, 'Cobrança enviada ao Asaas com sucesso.')
-
         return redirect(
             'admin_dashboard:participacao_cobrancas',
             pk=cobranca.participacao.pk
         )
 
     except Exception as e:
-        messages.error(request, f'Erro ao enviar cobrança ao Asaas: {e}')
+        messages.error(request, f'Erro ao processar cobrança: {e}')
         return redirect('admin_dashboard:espetaculos_list')
     
 from django.contrib.auth.decorators import login_required
@@ -2527,6 +2443,7 @@ def cobranca_espetaculo_escolher_parcelas(request, pk):
         return redirect('home')
 
     try:
+        from decimal import Decimal
         from espetaculo.models import CobrancaEspetaculo, ParcelaCobrancaEspetaculo
         from pagamentos.services.asaas import (
             AsaasError,
@@ -2568,11 +2485,24 @@ def cobranca_espetaculo_escolher_parcelas(request, pk):
         except (ValueError, TypeError):
             num_parcelas = 1
 
-        max_parcelas = cobranca.max_parcelas if cobranca.permitir_parcelamento else 1
-        if num_parcelas < 1:
-            num_parcelas = 1
-        if num_parcelas > max_parcelas:
-            num_parcelas = max_parcelas
+        opcoes_validas = cobranca.opcoes_parcelas
+
+        if not opcoes_validas:
+            messages.error(
+                request,
+                'Esta cobrança não possui opções de pagamento disponíveis neste período.'
+            )
+            return redirect('cobrancas_espetaculos')
+
+        if num_parcelas not in opcoes_validas:
+            messages.error(
+                request,
+                'A opção de pagamento escolhida não está mais disponível.'
+            )
+            return redirect('cobrancas_espetaculos')
+
+        valor_final = cobranca.valor_com_desconto(num_parcelas)
+        percentual_desconto = cobranca.percentual_desconto_para(num_parcelas)
 
         customer = get_or_create_customer(responsavel)
 
@@ -2585,12 +2515,15 @@ def cobranca_espetaculo_escolher_parcelas(request, pk):
             f'{cobranca.participacao.aluna.nome}'
         )
 
+        if percentual_desconto > Decimal('0.00'):
+            descricao_base += f' - desconto de {percentual_desconto}%'
+
         billing_type = 'PIX'
 
         if num_parcelas > 1:
             retorno = create_installment_payment(
                 customer_id=customer['id'],
-                total_value=cobranca.valor_total,
+                total_value=valor_final,
                 installment_count=num_parcelas,
                 due_date=cobranca.vencimento_primeira_parcela,
                 description=descricao_base,
@@ -2638,15 +2571,21 @@ def cobranca_espetaculo_escolher_parcelas(request, pk):
 
                 cobranca.atualizar_status()
 
-            messages.success(
-                request,
-                f'Cobrança em {num_parcelas}x enviada com sucesso! Pague via Pix abaixo.'
-            )
+            if percentual_desconto > Decimal('0.00'):
+                messages.success(
+                    request,
+                    f'Cobrança em {num_parcelas}x enviada com sucesso, com {percentual_desconto}% de desconto! Pague via Pix abaixo.'
+                )
+            else:
+                messages.success(
+                    request,
+                    f'Cobrança em {num_parcelas}x enviada com sucesso! Pague via Pix abaixo.'
+                )
 
         else:
             retorno = create_payment(
                 customer_id=customer['id'],
-                value=cobranca.valor_total,
+                value=valor_final,
                 due_date=cobranca.vencimento_primeira_parcela,
                 description=descricao_base,
                 external_reference=f'cobranca_espetaculo:{cobranca.pk}',
@@ -2664,7 +2603,7 @@ def cobranca_espetaculo_escolher_parcelas(request, pk):
                     numero_parcela=1,
                     defaults={
                         'total_parcelas': 1,
-                        'valor': retorno.get('value') or cobranca.valor_total,
+                        'valor': retorno.get('value') or valor_final,
                         'vencimento': retorno.get('dueDate') or cobranca.vencimento_primeira_parcela,
                         'asaas_payment_id': retorno.get('id'),
                         'asaas_invoice_url': retorno.get('invoiceUrl'),
@@ -2679,7 +2618,16 @@ def cobranca_espetaculo_escolher_parcelas(request, pk):
 
                 cobranca.atualizar_status()
 
-            messages.success(request, 'Cobrança à vista enviada com sucesso! Pague via Pix abaixo.')
+            if percentual_desconto > Decimal('0.00'):
+                messages.success(
+                    request,
+                    f'Cobrança à vista enviada com sucesso, com {percentual_desconto}% de desconto! Pague via Pix abaixo.'
+                )
+            else:
+                messages.success(
+                    request,
+                    'Cobrança à vista enviada com sucesso! Pague via Pix abaixo.'
+                )
 
         return redirect('cobrancas_espetaculos')
 

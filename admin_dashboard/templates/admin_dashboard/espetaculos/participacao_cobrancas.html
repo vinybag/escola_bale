@@ -61,11 +61,25 @@
                        style="width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 6px;">
             </div>
 
-            <div style="margin-bottom: 1.5rem;">
+            <div style="display: flex; flex-wrap: wrap; gap: 1.5rem; margin-bottom: 1.5rem;">
                 <label style="display: flex; align-items: center; gap: 0.5rem;">
                     <input type="checkbox" name="permitir_parcelamento" id="permitir_parcelamento">
                     Permitir parcelamento
                 </label>
+
+                <label style="display: flex; align-items: center; gap: 0.5rem;">
+                    <input type="checkbox" name="desconto_irmaos" id="desconto_irmaos">
+                    Aplicar desconto de irmãs(ãos)
+                </label>
+            </div>
+
+            <div style="margin-bottom: 1.5rem; color: #666; font-size: 0.95rem;">
+                <p style="margin: 0 0 0.4rem 0;">
+                    <strong>Regras atuais:</strong>
+                </p>
+                <p style="margin: 0.2rem 0;">Taxa de palco: 5% à vista; 12% à vista para irmãs(ãos); 10% parcelado para irmãs(ãos).</p>
+                <p style="margin: 0.2rem 0;">Figurino: 10% à vista.</p>
+                <p style="margin: 0.2rem 0;">A escolha entre à vista ou parcelado é feita pela própria responsável na área dela.</p>
             </div>
 
             <button type="submit"
@@ -90,6 +104,7 @@
                             <th style="padding: 0.75rem; border: 1px solid #ddd; text-align: left;">Descrição</th>
                             <th style="padding: 0.75rem; border: 1px solid #ddd; text-align: left;">Valor</th>
                             <th style="padding: 0.75rem; border: 1px solid #ddd; text-align: left;">Parcelamento</th>
+                            <th style="padding: 0.75rem; border: 1px solid #ddd; text-align: left;">Desconto especial</th>
                             <th style="padding: 0.75rem; border: 1px solid #ddd; text-align: left;">Vencimento</th>
                             <th style="padding: 0.75rem; border: 1px solid #ddd; text-align: left;">Status</th>
                             <th style="padding: 0.75rem; border: 1px solid #ddd; text-align: left;">Parcelas</th>
@@ -112,6 +127,13 @@
                                 <td style="padding: 0.75rem; border: 1px solid #ddd;">
                                     {% if cobranca.permitir_parcelamento %}
                                         Sim (até {{ cobranca.max_parcelas }}x)
+                                    {% else %}
+                                        Não
+                                    {% endif %}
+                                </td>
+                                <td style="padding: 0.75rem; border: 1px solid #ddd;">
+                                    {% if cobranca.desconto_irmaos %}
+                                        Sim
                                     {% else %}
                                         Não
                                     {% endif %}
@@ -166,16 +188,15 @@
                                             {% endif %}
                                         </div>
                                     {% else %}
-                                        <form method="post"
-                                              action="{% url 'admin_dashboard:cobranca_espetaculo_enviar_asaas' cobranca.pk %}"
-                                              style="display: flex; flex-direction: column; gap: 0.5rem;">
-                                            {% csrf_token %}
+                                        <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+                                            <span style="display: inline-block; padding: 0.35rem 0.6rem; background: #fff3cd; color: #856404; border-radius: 5px; font-size: 0.85rem; width: fit-content;">
+                                                Aguardando escolha da responsável
+                                            </span>
 
-                                            <button type="submit"
-                                                    style="padding: 0.7rem 1rem; background: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer;">
-                                                Enviar ao Asaas
-                                            </button>
-                                        </form>
+                                            <span style="font-size: 0.85rem; color: #666; line-height: 1.4;">
+                                                A cobrança será enviada ao Asaas quando a responsável escolher à vista ou a quantidade de parcelas na área dela.
+                                            </span>
+                                        </div>
                                     {% endif %}
                                 </td>
                                 <td style="padding: 0.75rem; border: 1px solid #ddd;">
