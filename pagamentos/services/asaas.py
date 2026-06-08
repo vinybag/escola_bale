@@ -9,6 +9,9 @@ class AsaasError(Exception):
     pass
 
 
+CPF_FAKE_PADRAO = '24971563792'
+
+
 def _base_url():
     return settings.ASAAS_BASE_URL.rstrip('/')
 
@@ -75,11 +78,16 @@ def get_responsavel_data(responsavel):
     if perfil:
         cpf_cnpj = getattr(perfil, 'cpf', '') or getattr(perfil, 'cpf_cnpj', '') or ''
 
+    cpf_cnpj = _only_digits(cpf_cnpj)[:14]
+
+    if not cpf_cnpj:
+        cpf_cnpj = CPF_FAKE_PADRAO
+
     return {
         'nome': nome[:100],
         'email': email,
         'telefone': _only_digits(telefone)[:11],
-        'cpf_cnpj': _only_digits(cpf_cnpj)[:14],
+        'cpf_cnpj': cpf_cnpj,
         'external_reference': f'responsavel:{responsavel.pk}',
     }
 
@@ -114,16 +122,13 @@ def create_customer(responsavel):
         'email': customer_data['email'],
         'mobilePhone': customer_data['telefone'],
         'externalReference': customer_data['external_reference'],
+        'cpfCnpj': customer_data['cpf_cnpj'],
     }
-
-    if customer_data['cpf_cnpj']:
-        payload['cpfCnpj'] = customer_data['cpf_cnpj']
 
     payload = {k: v for k, v in payload.items() if v}
     return _request('POST', 'customers', payload=payload)
 
 
-# NOVA FUNÇÃO: atualiza dados do customer existente no Asaas
 def update_customer(customer_id, responsavel):
     customer_data = get_responsavel_data(responsavel)
 
@@ -132,24 +137,17 @@ def update_customer(customer_id, responsavel):
         'email': customer_data['email'],
         'mobilePhone': customer_data['telefone'],
         'externalReference': customer_data['external_reference'],
+        'cpfCnpj': customer_data['cpf_cnpj'],
     }
-
-    if customer_data['cpf_cnpj']:
-        payload['cpfCnpj'] = customer_data['cpf_cnpj']
 
     payload = {k: v for k, v in payload.items() if v}
     return _request('POST', f'customers/{customer_id}', payload=payload)
 
 
-# CORRIGIDO: agora sempre atualiza o customer encontrado com dados recentes (incluindo CPF)
 def get_or_create_customer(responsavel):
     customer_data = get_responsavel_data(responsavel)
 
     customer = find_customer_by_external_reference(customer_data['external_reference'])
-    if customer:
-        return update_customer(customer['id'], responsavel)
-
-    customer = find_customer_by_cpf_cnpj(customer_data['cpf_cnpj'])
     if customer:
         return update_customer(customer['id'], responsavel)
 

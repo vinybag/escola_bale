@@ -2404,21 +2404,6 @@ def cobranca_espetaculo_enviar_asaas(request, pk):
                 pk=cobranca.participacao.pk
             )
 
-        perfil = getattr(responsavel, 'perfil', None)
-        cpf_cnpj = ''
-        if perfil and perfil.cpf:
-            cpf_cnpj = ''.join(filter(str.isdigit, perfil.cpf))
-
-        if not cpf_cnpj:
-            messages.error(
-                request,
-                'Para enviar ao Asaas, preencha o CPF do responsável no cadastro da aluna.'
-            )
-            return redirect(
-                'admin_dashboard:participacao_cobrancas',
-                pk=cobranca.participacao.pk
-            )
-
         customer = get_or_create_customer(responsavel)
 
         if not customer or not customer.get('id'):
@@ -2576,19 +2561,6 @@ def cobranca_espetaculo_escolher_parcelas(request, pk):
 
         if not cobranca.vencimento_primeira_parcela:
             messages.error(request, 'O vencimento da primeira parcela não foi definido.')
-            return redirect('cobrancas_espetaculos')
-
-        perfil = getattr(responsavel, 'perfil', None)
-        cpf_cnpj = ''
-        if perfil and perfil.cpf:
-            cpf_cnpj = ''.join(filter(str.isdigit, perfil.cpf))
-
-        if not cpf_cnpj:
-            messages.error(
-                request,
-                'Para pagar via Pix, o CPF do responsável precisa estar cadastrado. '
-                'Entre em contato com a escola.'
-            )
             return redirect('cobrancas_espetaculos')
 
         try:
