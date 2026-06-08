@@ -1,24 +1,31 @@
 import requests
 from django.conf import settings
-from decimal import Decimal
 import json
 
 
 class AsaasAPI:
-    
     def __init__(self):
         self.api_key = settings.ASAAS_API_KEY
         self.sandbox = settings.ASAAS_SANDBOX
-        
+
         if self.sandbox:
             self.base_url = "https://sandbox.asaas.com/api/v3"
         else:
             self.base_url = "https://www.asaas.com/api/v3"
-        
+
         print(f"[Asaas] Modo: {'SANDBOX' if self.sandbox else 'PRODUCAO'}")
         print(f"[Asaas] Base URL: {self.base_url}")
         print(f"[Asaas] API Key: {self.api_key[:20]}..." if self.api_key else "[Asaas] API Key não configurada!")
-    
+
+    def _headers(self, content_type=True):
+        headers = {
+            "access_token": self.api_key,
+            "accept": "application/json",
+        }
+        if content_type:
+            headers["Content-Type"] = "application/json"
+        return headers
+
     def criar_cobranca_pix(self, valor, descricao, customer_id=None, customer_data=None, external_reference=None):
         """
         Cria uma cobrança PIX no Asaas
@@ -29,14 +36,9 @@ class AsaasAPI:
                 customer_id = customer['id']
             else:
                 return {'error': 'Não foi possível criar o cliente'}
-        
+
         url = f"{self.base_url}/payments"
-        
-        headers = {
-            "access_token": self.api_key,
-            "Content-Type": "application/json",
-        }
-        
+
         payload = {
             "customer": customer_id,
             "billingType": "PIX",
@@ -47,50 +49,107 @@ class AsaasAPI:
             "postalService": False,
             "notificationDisabled": True,
         }
-        
-        print(f"[Asaas] URL: {url}")
-        print(f"[Asaas] Payload: {json.dumps(payload, indent=2)}")
-        
+
+        print(f"[Asaas][PIX] URL: {url}")
+        print(f"[Asaas][PIX] Payload: {json.dumps(payload, indent=2, ensure_ascii=False)}")
+
         try:
-            response = requests.post(url, headers=headers, json=payload)
-            
-            print(f"[Asaas] Status Code: {response.status_code}")
-            print(f"[Asaas] Resposta: {response.text}")
-            
+            response = requests.post(url, headers=self._headers(), json=payload, timeout=20)
+
+            print(f"[Asaas][PIX] Status Code: {response.status_code}")
+            print(f"[Asaas][PIX] Resposta: {response.text}")
+
             response.raise_for_status()
             return response.json()
-            
+
         except requests.exceptions.RequestException as e:
-            print(f"[Asaas] ERRO: {e}")
+            print(f"[Asaas][PIX] ERRO: {e}")
             if hasattr(e, 'response') and e.response is not None:
-                print(f"[Asaas] Status: {e.response.status_code}")
-                print(f"[Asaas] Corpo: {e.response.text}")
-                
+                print(f"[Asaas][PIX] Status: {e.response.status_code}")
+                print(f"[Asaas][PIX] Corpo: {e.response.text}")
+
                 try:
                     erro_detalhado = e.response.json()
                     return {'error': erro_detalhado}
-                except:
+                except Exception:
                     return {'error': e.response.text}
             return {'error': str(e)}
-    
+
+    def criar_cobranca_cartao_redirect(
+        self,
+        valor,
+        descricao,
+        due_date,
+        success_url,
+        customer_id=None,
+        customer_data=None,
+        external_reference=None,
+    ):
+        """
+        Cria uma cobrança de cartão de crédito no Asaas e retorna a invoiceUrl
+        para redirecionar o cliente ao pagamento.
+        """
+        if not customer_id and customer_data:
+            customer = self.criar_cliente(customer_data)
+            if customer and 'id' in customer:
+                customer_id = customer['id']
+            else:
+                return {'error': 'Não foi possível criar o cliente'}
+
+        url = f"{self.base_url}/payments"
+
+        payload = {
+            "customer": customer_id,
+            "billingType": "CREDIT_CARD",
+            "value": float(valor),
+            "dueDate": due_date,
+            "description": descricao,
+            "externalReference": external_reference or descricao,
+            "notificationDisabled": True,
+            "callback": {
+                "successUrl": success_url,
+                "autoRedirect": True
+            }
+        }
+
+        print(f"[Asaas][CARTAO] URL: {url}")
+        print(f"[Asaas][CARTAO] Payload: {json.dumps(payload, indent=2, ensure_ascii=False)}")
+
+        try:
+            response = requests.post(url, headers=self._headers(), json=payload, timeout=20)
+
+            print(f"[Asaas][CARTAO] Status Code: {response.status_code}")
+            print(f"[Asaas][CARTAO] Resposta: {response.text}")
+
+            response.raise_for_status()
+            return response.json()
+
+        except requests.exceptions.RequestException as e:
+            print(f"[Asaas][CARTAO] ERRO: {e}")
+            if hasattr(e, 'response') and e.response is not None:
+                print(f"[Asaas][CARTAO] Status: {e.response.status_code}")
+                print(f"[Asaas][CARTAO] Corpo: {e.response.text}")
+
+                try:
+                    erro_detalhado = e.response.json()
+                    return {'error': erro_detalhado}
+                except Exception:
+                    return {'error': e.response.text}
+            return {'error': str(e)}
+
     def criar_cliente(self, customer_data):
         """
         Cria um cliente no Asaas com notificações desabilitadas
         """
         url = f"{self.base_url}/customers"
-        
-        headers = {
-            "access_token": self.api_key,
-            "Content-Type": "application/json",
-        }
-        
+
         customer_payload = customer_data.copy()
         customer_payload['notificationDisabled'] = True
-        
+
         print(f"[Asaas] Criando cliente: {customer_payload}")
-        
+
         try:
-            response = requests.post(url, headers=headers, json=customer_payload)
+            response = requests.post(url, headers=self._headers(), json=customer_payload, timeout=20)
             response.raise_for_status()
             cliente = response.json()
 
@@ -103,19 +162,15 @@ class AsaasAPI:
             if hasattr(e, 'response') and e.response is not None:
                 print(f"[Asaas] Resposta: {e.response.text}")
             return None
-    
+
     def listar_notificacoes_cliente(self, customer_id):
         """
         Lista as notificações de um cliente no Asaas
         """
         url = f"{self.base_url}/customers/{customer_id}/notifications"
-        
-        headers = {
-            "access_token": self.api_key,
-        }
-        
+
         try:
-            response = requests.get(url, headers=headers)
+            response = requests.get(url, headers=self._headers(content_type=False), timeout=20)
             print(f"[Asaas] Listando notificações do cliente {customer_id}: {response.status_code}")
             print(f"[Asaas] Resposta notificações: {response.text}")
             response.raise_for_status()
@@ -125,7 +180,7 @@ class AsaasAPI:
             if hasattr(e, 'response') and e.response is not None:
                 print(f"[Asaas] Resposta: {e.response.text}")
             return None
-    
+
     def desativar_notificacoes_cliente(self, customer_id):
         """
         Desativa todas as notificações do cliente no Asaas
@@ -134,18 +189,13 @@ class AsaasAPI:
         if not notificacoes or 'data' not in notificacoes:
             print(f"[Asaas] Nenhuma notificação encontrada para o cliente {customer_id}")
             return False
-        
+
         if not notificacoes['data']:
             print(f"[Asaas] Cliente {customer_id} não possui notificações para desativar")
             return True
-        
+
         url = f"{self.base_url}/notifications/batch"
-        
-        headers = {
-            "access_token": self.api_key,
-            "Content-Type": "application/json",
-        }
-        
+
         notifications_payload = []
         for notificacao in notificacoes['data']:
             notifications_payload.append({
@@ -158,17 +208,17 @@ class AsaasAPI:
                 "phoneCallEnabledForCustomer": False,
                 "whatsappEnabledForCustomer": False,
             })
-        
+
         payload = {
             "customer": customer_id,
             "notifications": notifications_payload
         }
-        
+
         print(f"[Asaas] Desativando notificações do cliente {customer_id}")
-        print(f"[Asaas] Payload batch: {json.dumps(payload, indent=2)}")
-        
+        print(f"[Asaas] Payload batch: {json.dumps(payload, indent=2, ensure_ascii=False)}")
+
         try:
-            response = requests.post(url, headers=headers, json=payload)
+            response = requests.post(url, headers=self._headers(), json=payload, timeout=20)
             print(f"[Asaas] Batch status: {response.status_code}")
             print(f"[Asaas] Batch resposta: {response.text}")
             response.raise_for_status()
@@ -179,19 +229,15 @@ class AsaasAPI:
             if hasattr(e, 'response') and e.response is not None:
                 print(f"[Asaas] Resposta: {e.response.text}")
             return False
-    
+
     def consultar_cobranca(self, payment_id):
         """
         Consulta o status de uma cobrança
         """
         url = f"{self.base_url}/payments/{payment_id}"
-        
-        headers = {
-            "access_token": self.api_key,
-        }
-        
+
         try:
-            response = requests.get(url, headers=headers)
+            response = requests.get(url, headers=self._headers(content_type=False), timeout=20)
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:
@@ -199,25 +245,23 @@ class AsaasAPI:
             if hasattr(e, 'response') and e.response is not None:
                 print(f"[Asaas] Resposta: {e.response.text}")
             return None
-    
+
     def obter_qrcode_pix(self, payment_id):
         """
         Obtém o QR Code PIX de uma cobrança
         """
         url = f"{self.base_url}/payments/{payment_id}/pixQrCode"
-        
-        headers = {
-            "access_token": self.api_key,
-        }
-        
+
         try:
-            response = requests.get(url, headers=headers)
+            response = requests.get(url, headers=self._headers(content_type=False), timeout=20)
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:
             print(f"[Asaas] Erro ao obter QR Code: {e}")
+            if hasattr(e, 'response') and e.response is not None:
+                print(f"[Asaas] Resposta: {e.response.text}")
             return None
-    
+
     def _get_due_date(self):
         """
         Retorna data de vencimento (hoje)
