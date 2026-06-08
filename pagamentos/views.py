@@ -139,9 +139,9 @@ def pagar_cartao(request, mensalidade_id):
 
         descricao = f"Mensalidade {mensalidade.aluna.nome} - {mensalidade.mes_referencia.strftime('%m/%Y')}"
         external_reference = f"mensalidade:{mensalidade.id}"
-        success_url = request.build_absolute_uri(f'/pagamentos/sucesso/?mensalidade_id={mensalidade.id}')
+        customer_id = mensalidade.asaas_customer_id
 
-        customer_id = mensalidade.asaas_customer_id or None
+        success_url = f'https://bailahcorpoecia.com/pagamentos/sucesso/?mensalidade_id={mensalidade.id}'
 
         resultado = asaas.criar_cobranca_cartao_redirect(
             valor=mensalidade.valor,
@@ -176,6 +176,7 @@ def pagar_cartao(request, mensalidade_id):
                 mensalidade.save(update_fields=['asaas_payment_id'])
 
             invoice_url = resultado.get('invoiceUrl')
+
             if not invoice_url:
                 return render(request, 'pagamentos/pagar.html', {
                     'mensalidade': mensalidade,
