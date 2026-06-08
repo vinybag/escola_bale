@@ -146,7 +146,7 @@ def pagar_cartao(request, mensalidade_id):
         resultado = asaas.criar_cobranca_cartao_redirect(
             valor=mensalidade.valor,
             descricao=descricao,
-            due_date=mensalidade.vencimento.strftime("%Y-%m-%d"),
+            due_date=mensalidade.data_vencimento.strftime("%Y-%m-%d"),
             success_url=success_url,
             customer_id=customer_id,
             customer_data=None if customer_id else customer_data,
