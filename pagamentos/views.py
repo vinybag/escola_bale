@@ -16,7 +16,6 @@ ASAAS_WEBHOOK_EMAIL = "vinybag@gmail.com"
 # ==================== UTILITÁRIOS ====================
 
 def marcar_mensalidade_como_paga(mensalidade, forma_pagamento, comprovante):
-    """Centraliza a atualização da mensalidade para evitar lógica duplicada."""
     if mensalidade.status != 'pago':
         mensalidade.status = 'pago'
         mensalidade.data_pagamento = datetime.now()
@@ -42,17 +41,6 @@ def montar_pix_contexto(mensalidade, payment_id, pix_data, valor):
         'pix_data': pix_data,
         'valor': valor,
     }
-
-
-def obter_forma_pagamento_asaas(payment):
-    billing_type = (payment or {}).get('billingType')
-
-    if billing_type == 'PIX':
-        return 'pix'
-    if billing_type in ['CREDIT_CARD', 'DEBIT_CARD']:
-        return 'cartao'
-
-    return 'asaas'
 
 
 def localizar_mensalidade_por_payment(payment_id, external_reference, customer_id=None):
@@ -112,95 +100,6 @@ def pagar(request, mensalidade_id):
 
 
 @login_required
-def pagar_cartao(request, mensalidade_id):
-    mensalidade = get_object_or_404(
-        Mensalidade,
-        id=mensalidade_id,
-        responsavel=request.user
-    )
-
-    if mensalidade.status == 'pago':
-        return redirect('mensalidades')
-
-    try:
-        asaas = AsaasAPI()
-
-        perfil = request.user.perfil
-        cpf_cliente = perfil.cpf.replace('.', '').replace('-', '') if perfil.cpf else ''
-
-        if not cpf_cliente or len(cpf_cliente) != 11:
-            cpf_cliente = '24971563792'
-
-        customer_data = {
-            'name': request.user.get_full_name() or request.user.username,
-            'email': request.user.email,
-            'cpfCnpj': cpf_cliente,
-        }
-
-        descricao = f"Mensalidade {mensalidade.aluna.nome} - {mensalidade.mes_referencia.strftime('%m/%Y')}"
-        external_reference = f"mensalidade:{mensalidade.id}"
-        customer_id = mensalidade.asaas_customer_id
-
-        success_url = f'https://bailahcorpoecia.com/pagamentos/sucesso/?mensalidade_id={mensalidade.id}'
-
-        resultado = asaas.criar_cobranca_cartao_redirect(
-            valor=mensalidade.valor,
-            descricao=descricao,
-            due_date=mensalidade.data_vencimento.strftime("%Y-%m-%d"),
-            success_url=success_url,
-            customer_id=customer_id,
-            customer_data=None if customer_id else customer_data,
-            external_reference=external_reference,
-        )
-
-        print(f"[CARTAO] Resultado completo: {resultado}")
-
-        if resultado and 'error' in resultado:
-            erro_msg = resultado['error']
-            if isinstance(erro_msg, dict):
-                mensagem_erro = json.dumps(erro_msg, indent=2, ensure_ascii=False)
-            else:
-                mensagem_erro = str(erro_msg)
-
-            return render(request, 'pagamentos/pagar.html', {
-                'mensalidade': mensalidade,
-                'erro': f'Erro Asaas: {mensagem_erro}'
-            })
-
-        if resultado and 'id' in resultado:
-            mensalidade.asaas_payment_id = resultado['id']
-            if 'customer' in resultado:
-                mensalidade.asaas_customer_id = resultado['customer']
-                mensalidade.save(update_fields=['asaas_payment_id', 'asaas_customer_id'])
-            else:
-                mensalidade.save(update_fields=['asaas_payment_id'])
-
-            invoice_url = resultado.get('invoiceUrl')
-
-            if not invoice_url:
-                return render(request, 'pagamentos/pagar.html', {
-                    'mensalidade': mensalidade,
-                    'erro': 'O Asaas não retornou a invoiceUrl para o pagamento com cartão.'
-                })
-
-            return redirect(invoice_url)
-
-        return render(request, 'pagamentos/pagar.html', {
-            'mensalidade': mensalidade,
-            'erro': f'Resposta inesperada do Asaas: {resultado}'
-        })
-
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-
-        return render(request, 'pagamentos/pagar.html', {
-            'mensalidade': mensalidade,
-            'erro': f'Erro ao processar pagamento com cartão: {str(e)}'
-        })
-
-
-@login_required
 def pagar_pix(request, mensalidade_id):
     mensalidade = get_object_or_404(Mensalidade, id=mensalidade_id, responsavel=request.user)
 
@@ -226,33 +125,28 @@ def pagar_pix(request, mensalidade_id):
         external_reference = f"mensalidade:{mensalidade.id}"
         payment_id_existente = mensalidade.asaas_payment_id
 
-        # 1) Reaproveita cobrança existente se ainda estiver válida
         if payment_id_existente:
             cobranca_existente = asaas.consultar_cobranca(payment_id_existente)
             print(f"[PIX] Cobrança existente para mensalidade {mensalidade.id}: {cobranca_existente}")
 
             if cobranca_existente:
                 status_existente = cobranca_existente.get('status')
-                billing_type_existente = cobranca_existente.get('billingType')
 
-                # Só reaproveita se a cobrança existente for realmente PIX
-                if billing_type_existente == 'PIX':
-                    if status_existente == 'RECEIVED':
-                        marcar_mensalidade_como_paga(mensalidade, 'pix', payment_id_existente)
-                        return redirect(f'/pagamentos/sucesso/?mensalidade_id={mensalidade.id}')
+                if status_existente == 'RECEIVED':
+                    marcar_mensalidade_como_paga(mensalidade, 'pix', payment_id_existente)
+                    return redirect(f'/pagamentos/sucesso/?mensalidade_id={mensalidade.id}')
 
-                    if status_existente in ['PENDING', 'OVERDUE']:
-                        qrcode_data = asaas.obter_qrcode_pix(payment_id_existente)
-                        pix_data = extrair_pix_data(qrcode_data)
-                        context = montar_pix_contexto(
-                            mensalidade=mensalidade,
-                            payment_id=payment_id_existente,
-                            pix_data=pix_data,
-                            valor=cobranca_existente.get('value', mensalidade.valor),
-                        )
-                        return render(request, 'pagamentos/pix.html', context)
+                if status_existente in ['PENDING', 'OVERDUE']:
+                    qrcode_data = asaas.obter_qrcode_pix(payment_id_existente)
+                    pix_data = extrair_pix_data(qrcode_data)
+                    context = montar_pix_contexto(
+                        mensalidade=mensalidade,
+                        payment_id=payment_id_existente,
+                        pix_data=pix_data,
+                        valor=cobranca_existente.get('value', mensalidade.valor),
+                    )
+                    return render(request, 'pagamentos/pix.html', context)
 
-        # 2) Nenhuma cobrança válida — cria uma nova
         resultado = asaas.criar_cobranca_pix(
             valor=mensalidade.valor,
             descricao=descricao,
@@ -311,7 +205,6 @@ def pagar_pix(request, mensalidade_id):
 
 @login_required
 def verificar_pagamento_pix(request, payment_id):
-    """Verifica se o pagamento PIX foi confirmado no Asaas"""
     try:
         asaas = AsaasAPI()
         resultado = asaas.consultar_cobranca(payment_id)
@@ -363,7 +256,7 @@ def pagamento_cancelado(request):
 
 @csrf_exempt
 def webhook_asaas(request):
-    """Recebe notificações do Asaas quando um pagamento é atualizado"""
+    """Recebe notificações do Asaas quando um pagamento PIX é confirmado"""
 
     if request.method == 'POST':
         token_recebido = (
@@ -387,16 +280,12 @@ def webhook_asaas(request):
             payment_id = payment.get('id')
             external_reference = payment.get('externalReference')
             customer_id = payment.get('customer')
-            billing_type = payment.get('billingType')
 
             print(f"[WEBHOOK] Evento: {evento}, Payment ID: {payment_id}")
-            print(f"[WEBHOOK] Billing Type: {billing_type}")
             print(f"[WEBHOOK] External Reference: {external_reference}")
             print(f"[WEBHOOK] Dados completos: {json.dumps(dados, indent=2, ensure_ascii=False)}")
 
-            eventos_que_baixam = ['PAYMENT_RECEIVED', 'PAYMENT_CONFIRMED']
-
-            if evento in eventos_que_baixam and payment_id:
+            if evento == 'PAYMENT_RECEIVED' and payment_id:
                 mensalidade = localizar_mensalidade_por_payment(
                     payment_id=payment_id,
                     external_reference=external_reference,
@@ -404,9 +293,8 @@ def webhook_asaas(request):
                 )
 
                 if mensalidade:
-                    forma_pagamento = obter_forma_pagamento_asaas(payment)
-                    marcar_mensalidade_como_paga(mensalidade, forma_pagamento, payment_id)
-                    print(f"[WEBHOOK] Mensalidade {mensalidade.id} atualizada para PAGO via {forma_pagamento}")
+                    marcar_mensalidade_como_paga(mensalidade, 'pix', payment_id)
+                    print(f"[WEBHOOK] Mensalidade {mensalidade.id} atualizada para PAGO")
                 else:
                     print(f"[WEBHOOK] Nenhuma mensalidade localizada para payment_id {payment_id}")
 

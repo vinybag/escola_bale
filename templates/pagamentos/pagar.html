@@ -21,34 +21,18 @@
     {% endif %}
 
     <div class="metodos-pagamento">
-        <h3 class="metodos-titulo">Escolha a forma de pagamento:</h3>
+        <h3 class="metodos-titulo">Forma de pagamento disponível</h3>
 
         <div class="metodos-grid">
-
-            <!-- Cartão de Crédito -->
             <div class="card metodo-card">
                 <div class="metodo-header">
-                    <span class="metodo-icone">💳</span>
-                    <h3>Cartão de Crédito</h3>
-                </div>
-                <p class="metodo-descricao">Pagamento instantâneo e seguro</p>
-                <a href="{% url 'pagar_cartao' mensalidade.id %}" class="btn btn-primary btn-full">
-                    Pagar com Cartão
-                </a>
-            </div>
-
-            <!-- PIX -->
-            <div class="card metodo-card">
-                <div class="metodo-header">
-                    <span class="metodo-icone">🇧🇷</span>
                     <h3>PIX</h3>
                 </div>
-                <p class="metodo-descricao">Aprovação em até 2 horas</p>
+                <p class="metodo-descricao">Pagamento com geração de QR Code para aprovação da mensalidade.</p>
                 <a href="{% url 'pagar_pix' mensalidade.id %}" class="btn btn-pix btn-full">
                     Pagar com PIX
                 </a>
             </div>
-
         </div>
     </div>
 
