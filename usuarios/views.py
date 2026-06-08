@@ -233,13 +233,6 @@ def cobrancas_espetaculos(request):
     """Cobranças de espetáculos do responsável logado"""
     from espetaculo.models import CobrancaEspetaculo, ParcelaCobrancaEspetaculo
 
-    def aplicar_desconto_avista(valor):
-        valor = Decimal(str(valor))
-        return (valor * Decimal('0.95')).quantize(
-            Decimal('0.01'),
-            rounding=ROUND_HALF_UP,
-        )
-
     cobrancas = (
         CobrancaEspetaculo.objects
         .select_related(
@@ -259,33 +252,6 @@ def cobrancas_espetaculos(request):
         )
         .order_by('-criado_em')
     )
-
-    for cobranca in cobrancas:
-        opcoes_pagamento = []
-
-        valor_avista = aplicar_desconto_avista(cobranca.valor_total)
-        opcoes_pagamento.append({
-            'parcelas': 1,
-            'label': 'À vista no Pix',
-            'texto_valor': f'R$ {valor_avista}',
-            'observacao': '5% de desconto',
-        })
-
-        if cobranca.permitir_parcelamento and cobranca.max_parcelas > 1:
-            for n in range(2, cobranca.max_parcelas + 1):
-                valor_parcela = (Decimal(str(cobranca.valor_total)) / n).quantize(
-                    Decimal('0.01'),
-                    rounding=ROUND_HALF_UP,
-                )
-                opcoes_pagamento.append({
-                    'parcelas': n,
-                    'label': f'{n}x no Pix',
-                    'texto_valor': f'R$ {valor_parcela} por parcela',
-                    'observacao': 'Sem desconto',
-                })
-
-        cobranca.opcoes_pagamento_exibicao = opcoes_pagamento
-        cobranca.valor_avista_com_desconto = valor_avista
 
     context = {
         'cobrancas': cobrancas,
