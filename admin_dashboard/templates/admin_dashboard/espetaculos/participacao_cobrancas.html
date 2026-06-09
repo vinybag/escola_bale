@@ -298,14 +298,11 @@
 
             if (!parcelamentoMarcado) {
                 maxParcelas.value = 1;
-                maxParcelas.setAttribute('readonly', 'readonly');
-                if (ehFigurino) {
-                    valorFigurinoParcelado.required = false;
-                }
+                maxParcelas.min = 1;
             } else {
-                maxParcelas.removeAttribute('readonly');
-                if (ehFigurino) {
-                    valorFigurinoParcelado.required = true;
+                maxParcelas.min = 2;
+                if (!maxParcelas.value || parseInt(maxParcelas.value, 10) < 2) {
+                    maxParcelas.value = 2;
                 }
             }
         }
