@@ -3,259 +3,311 @@
 {% block title %}Nova Aluna{% endblock %}
 
 {% block content %}
-<div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
+<div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; gap: 1rem; flex-wrap: wrap;">
     <div>
-        <h2>Nova Aluna</h2>
-        <p>Cadastrar nova aluna</p>
+        <h2 style="margin: 0 0 0.35rem 0; color: #4a235f;">Nova Aluna</h2>
+        <p style="margin: 0; color: #6f6f78;">Cadastrar nova aluna no sistema</p>
     </div>
 </div>
 
-<div style="background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); max-width: 900px;">
+<div style="max-width: 980px;">
     <form method="post">
         {% csrf_token %}
-        
-        <div style="display: grid; gap: 2rem;">
+
+        <div style="background: white; border: 1px solid #ebe3f1; border-radius: 18px; box-shadow: 0 8px 24px rgba(107, 45, 143, 0.08); overflow: hidden;">
             
-            <!-- Dados da Aluna -->
-            <div>
-                <h3 style="margin-bottom: 1rem; color: #2c3e50; font-size: 1rem; text-transform: uppercase; font-weight: 600;">Dados da Aluna</h3>
-                
-                <div style="margin-bottom: 1rem;">
-                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Tipo de Aluna</label>
-                    <div style="display: flex; gap: 1.5rem;">
-                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                            <input type="radio" name="tipo_aluna" value="infantil" checked onchange="toggleTipoAluna()">
-                            <span style="font-weight: 500; color: #333;">Infantil (com responsável)</span>
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                            <input type="radio" name="tipo_aluna" value="adulto" onchange="toggleTipoAluna()">
-                            <span style="font-weight: 500; color: #333;">Adulto (sem responsável)</span>
-                        </label>
-                    </div>
-                </div>
-                
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+            <!-- topo do form -->
+            <div style="padding: 1.5rem 2rem; background: linear-gradient(135deg, #ffffff 0%, #f5eff9 100%); border-bottom: 1px solid #ece3f2;">
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
                     <div>
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Nome completo</label>
-                        <input type="text" id="nome" name="nome" required
-                               style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                        <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1.15rem;">Cadastro da aluna</h3>
+                        <p style="margin: 0; color: #7a7280; font-size: 0.95rem;">
+                            Preencha os dados abaixo e configure o tipo de vínculo e cobrança.
+                        </p>
                     </div>
-                    
-                    <div>
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Genero</label>
-                        <select name="genero" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
-                            <option value="">Selecione...</option>
-                            <option value="F">Feminino</option>
-                            <option value="M">Masculino</option>
-                            <option value="O">Outro</option>
-                        </select>
+                    <div style="padding: 0.55rem 0.9rem; border-radius: 999px; background: #efe7f5; color: #6b2d8f; font-size: 0.85rem; font-weight: 600;">
+                        Padrão BKN Tech
                     </div>
-                    
-                    <div>
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Data de nascimento</label>
-                        <input type="date" id="data_nascimento" name="data_nascimento"
-                               style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
-                    </div>
-                </div>
-                
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-                    <div>
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Turmas</label>
-                        <select id="turmas" name="turmas" multiple
-                                style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem; min-height: 120px;">
-                            {% for turma in turmas %}
-                                <option value="{{ turma.id }}">
-                                    {{ turma.nome }} ({{ turma.total_alunas }}/{{ turma.capacidade_maxima }} vagas)
-                                </option>
-                            {% endfor %}
-                        </select>
-                        <small style="color: #888;">Segure Ctrl (ou Cmd no Mac) para selecionar multiplas turmas</small>
-                    </div>
-                    
-                    <div>
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Observacoes</label>
-                        <textarea id="observacoes" name="observacoes" rows="3"
-                                  style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem; font-family: inherit;"></textarea>
-                    </div>
-                </div>
-                
-                <div>
-                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                        <input type="checkbox" name="ativa" checked>
-                        <span style="font-weight: 500; color: #333;">Aluna ativa</span>
-                    </label>
                 </div>
             </div>
-            
-            <!-- Dados da Aluna Adulta (sem responsável) -->
-            <div id="bloco-adulto" style="display: none;">
-                <h3 style="margin-bottom: 1rem; color: #2c3e50; font-size: 1rem; text-transform: uppercase; font-weight: 600;">Dados de Acesso (Aluna Adulta)</h3>
-                
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-                    <div>
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Email</label>
-                        <input type="email" name="adulto_email" id="adulto_email"
-                               style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
-                    </div>
-                    
-                    <div>
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Senha</label>
-                        <input type="text" name="adulto_senha" id="adulto_senha"
-                               placeholder="Deixe em branco para gerar automaticamente"
-                               style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+
+            <div style="padding: 2rem; display: grid; gap: 1.5rem; background: #fcfbfd;">
+
+                <!-- Dados da Aluna -->
+                <section style="background: white; border: 1px solid #ece3f2; border-radius: 16px; padding: 1.5rem;">
+                    <div style="margin-bottom: 1.25rem;">
+                        <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1rem; font-weight: 700;">Dados da Aluna</h3>
+                        <p style="margin: 0; color: #7b7580; font-size: 0.92rem;">Informações principais de cadastro e vínculo com turmas.</p>
                     </div>
 
-                    <div>
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">CPF</label>
-                        <input type="text" name="cpf" id="cpf_adulto"
-                               placeholder="000.000.000-00"
-                               style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Responsavel (apenas para infantil) -->
-            <div id="bloco-responsavel">
-                <h3 style="margin-bottom: 1rem; color: #2c3e50; font-size: 1rem; text-transform: uppercase; font-weight: 600;">Responsavel</h3>
-                
-                <div style="margin-bottom: 1.5rem;">
-                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; margin-bottom: 0.75rem;">
-                        <input type="radio" name="tipo_responsavel" value="novo" checked onchange="toggleResponsavel()">
-                        <span style="font-weight: 500; color: #333;">Criar novo responsavel</span>
-                    </label>
-                    
-                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                        <input type="radio" name="tipo_responsavel" value="existente" onchange="toggleResponsavel()">
-                        <span style="font-weight: 500; color: #333;">Usar responsavel existente</span>
-                    </label>
-                </div>
-                
-                <!-- Responsavel Existente -->
-                <div id="responsavel-existente" style="display: none; margin-bottom: 1.5rem;">
-                    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem;">
-                        <div>
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
-                                Selecione o responsavel
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="display: block; margin-bottom: 0.75rem; font-weight: 600; color: #4a235f;">Tipo de Aluna</label>
+                        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                            <label style="flex: 1; min-width: 240px; display: flex; align-items: center; gap: 0.75rem; cursor: pointer; padding: 1rem 1.1rem; border: 1px solid #dccce8; border-radius: 14px; background: #faf7fc;">
+                                <input type="radio" name="tipo_aluna" value="infantil" checked onchange="toggleTipoAluna()" style="accent-color: #6b2d8f;">
+                                <div>
+                                    <div style="font-weight: 700; color: #4a235f;">Infantil</div>
+                                    <div style="font-size: 0.9rem; color: #7b7580;">Cadastro com responsável vinculado</div>
+                                </div>
                             </label>
-                            <select name="responsavel_existente" id="select-responsavel"
-                                    style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+
+                            <label style="flex: 1; min-width: 240px; display: flex; align-items: center; gap: 0.75rem; cursor: pointer; padding: 1rem 1.1rem; border: 1px solid #dccce8; border-radius: 14px; background: #faf7fc;">
+                                <input type="radio" name="tipo_aluna" value="adulto" onchange="toggleTipoAluna()" style="accent-color: #6b2d8f;">
+                                <div>
+                                    <div style="font-weight: 700; color: #4a235f;">Adulta</div>
+                                    <div style="font-size: 0.9rem; color: #7b7580;">Cadastro com acesso próprio</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Nome completo</label>
+                            <input type="text" id="nome" name="nome" required
+                                   style="width: 100%; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; background: #fff; color: #333;">
+                        </div>
+
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Genero</label>
+                            <select name="genero"
+                                    style="width: 100%; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; background: #fff; color: #333;">
                                 <option value="">Selecione...</option>
-                                {% for resp in responsaveis %}
-                                    <option value="{{ resp.id }}">
-                                        {{ resp.get_full_name|default:resp.username }} - {{ resp.email }} ({{ resp.alunas.count }} aluna{{ resp.alunas.count|pluralize }})
-                                    </option>
-                                {% endfor %}
+                                <option value="F">Feminino</option>
+                                <option value="M">Masculino</option>
+                                <option value="O">Outro</option>
                             </select>
                         </div>
 
                         <div>
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">CPF do responsável</label>
-                            <input type="text" name="cpf" id="cpf_existente"
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Data de nascimento</label>
+                            <input type="date" id="data_nascimento" name="data_nascimento"
+                                   style="width: 100%; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; background: #fff; color: #333;">
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 1rem; margin-bottom: 1rem;">
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Turmas</label>
+                            <select id="turmas" name="turmas" multiple
+                                    style="width: 100%; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; min-height: 140px; background: #fff; color: #333;">
+                                {% for turma in turmas %}
+                                    <option value="{{ turma.id }}">
+                                        {{ turma.nome }} ({{ turma.total_alunas }}/{{ turma.capacidade_maxima }} vagas)
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <small style="display: block; margin-top: 0.45rem; color: #8a8390;">
+                                Segure Ctrl (ou Cmd no Mac) para selecionar múltiplas turmas.
+                            </small>
+                        </div>
+
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Observacoes</label>
+                            <textarea id="observacoes" name="observacoes" rows="5"
+                                      style="width: 100%; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; font-family: inherit; background: #fff; color: #333; resize: vertical;"></textarea>
+                        </div>
+                    </div>
+
+                    <div style="padding: 0.95rem 1rem; background: #faf7fc; border: 1px solid #ece3f2; border-radius: 12px;">
+                        <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer;">
+                            <input type="checkbox" name="ativa" checked style="accent-color: #6b2d8f;">
+                            <span style="font-weight: 600; color: #4a235f;">Aluna ativa</span>
+                        </label>
+                    </div>
+                </section>
+
+                <!-- Dados da Aluna Adulta -->
+                <section id="bloco-adulto" style="display: none; background: white; border: 1px solid #ece3f2; border-radius: 16px; padding: 1.5rem;">
+                    <div style="margin-bottom: 1.25rem;">
+                        <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1rem; font-weight: 700;">Dados de Acesso da Aluna Adulta</h3>
+                        <p style="margin: 0; color: #7b7580; font-size: 0.92rem;">Esses dados serão usados para login e acesso individual no sistema.</p>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Email</label>
+                            <input type="email" name="adulto_email" id="adulto_email"
+                                   style="width: 100%; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; background: #fff;">
+                        </div>
+
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Senha</label>
+                            <input type="text" name="adulto_senha" id="adulto_senha"
+                                   placeholder="Deixe em branco para gerar automaticamente"
+                                   style="width: 100%; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; background: #fff;">
+                        </div>
+
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">CPF</label>
+                            <input type="text" name="cpf" id="cpf_adulto"
                                    placeholder="000.000.000-00"
-                                   style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                                   style="width: 100%; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; background: #fff;">
                         </div>
                     </div>
-                    <small style="color: #888;">Se preencher aqui, o CPF será salvo no perfil do responsável selecionado.</small>
-                </div>
-                
-                <!-- Novo Responsavel -->
-                <div id="novo-responsavel">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-                        <div>
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Nome</label>
-                            <input type="text" name="responsavel_nome" id="responsavel_nome"
-                                   style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
-                        </div>
-                        
-                        <div>
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Sobrenome</label>
-                            <input type="text" name="responsavel_sobrenome" id="responsavel_sobrenome"
-                                   style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
-                        </div>
+                </section>
+
+                <!-- Responsável -->
+                <section id="bloco-responsavel" style="background: white; border: 1px solid #ece3f2; border-radius: 16px; padding: 1.5rem;">
+                    <div style="margin-bottom: 1.25rem;">
+                        <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1rem; font-weight: 700;">Responsavel</h3>
+                        <p style="margin: 0; color: #7b7580; font-size: 0.92rem;">Escolha se deseja criar um novo responsável ou reutilizar um já existente.</p>
                     </div>
-                    
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1rem;">
-                        <div>
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Email</label>
-                            <input type="email" name="responsavel_email" id="responsavel_email" required
-                                   style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
-                        </div>
-                        
-                        <div>
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Telefone</label>
-                            <input type="text" name="responsavel_telefone" id="responsavel_telefone"
-                                   placeholder="(15) 99999-9999"
-                                   style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
-                        </div>
 
-                        <div>
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">CPF</label>
-                            <input type="text" name="cpf" id="cpf_novo"
-                                   placeholder="000.000.000-00"
-                                   style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
-                        </div>
-                        
-                        <div>
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Senha</label>
-                            <input type="text" name="responsavel_senha" id="responsavel_senha"
-                                   placeholder="Senha inicial (opcional)"
-                                   style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Configurações Financeiras -->
-            <div>
-                <h3 style="margin-bottom: 1rem; color: #2c3e50; font-size: 1rem; text-transform: uppercase; font-weight: 600;">
-                    Configurações Financeiras
-                </h3>
-
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-                    <div>
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
-                            Valor da mensalidade
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem;">
+                        <label style="flex: 1; min-width: 240px; display: flex; align-items: center; gap: 0.75rem; cursor: pointer; padding: 1rem 1.1rem; border: 1px solid #dccce8; border-radius: 14px; background: #faf7fc;">
+                            <input type="radio" name="tipo_responsavel" value="novo" checked onchange="toggleResponsavel()" style="accent-color: #6b2d8f;">
+                            <div>
+                                <div style="font-weight: 700; color: #4a235f;">Criar novo responsável</div>
+                                <div style="font-size: 0.9rem; color: #7b7580;">Cadastrar um novo acesso para a família</div>
+                            </div>
                         </label>
-                        <input type="number"
-                               name="valor_mensalidade"
-                               step="0.01"
-                               min="0"
-                               placeholder="Ex: 150.00"
-                               style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
-                    </div>
 
-                    <div>
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
-                            Dia do vencimento
-                        </label>
-                        <input type="number"
-                               name="dia_vencimento"
-                               min="1"
-                               max="31"
-                               value="10"
-                               style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
-                    </div>
-
-                    <div style="display: flex; align-items: end;">
-                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; margin-bottom: 0.75rem;">
-                            <input type="checkbox" name="gerar_mensalidade_automatica" checked>
-                            <span style="font-weight: 500; color: #333;">Gerar mensalidade automaticamente</span>
+                        <label style="flex: 1; min-width: 240px; display: flex; align-items: center; gap: 0.75rem; cursor: pointer; padding: 1rem 1.1rem; border: 1px solid #dccce8; border-radius: 14px; background: #faf7fc;">
+                            <input type="radio" name="tipo_responsavel" value="existente" onchange="toggleResponsavel()" style="accent-color: #6b2d8f;">
+                            <div>
+                                <div style="font-weight: 700; color: #4a235f;">Usar responsável existente</div>
+                                <div style="font-size: 0.9rem; color: #7b7580;">Vincular a aluna a um cadastro já existente</div>
+                            </div>
                         </label>
                     </div>
+
+                    <!-- Responsável Existente -->
+                    <div id="responsavel-existente" style="display: none; margin-bottom: 1.25rem; padding: 1rem; border: 1px solid #ece3f2; border-radius: 14px; background: #fcfafe;">
+                        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem;">
+                            <div>
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
+                                    Selecione o responsável
+                                </label>
+                                <select name="responsavel_existente" id="select-responsavel"
+                                        style="width: 100%; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; background: #fff;">
+                                    <option value="">Selecione...</option>
+                                    {% for resp in responsaveis %}
+                                        <option value="{{ resp.id }}">
+                                            {{ resp.get_full_name|default:resp.username }} - {{ resp.email }} ({{ resp.alunas.count }} aluna{{ resp.alunas.count|pluralize }})
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">CPF do responsável</label>
+                                <input type="text" name="cpf" id="cpf_existente"
+                                       placeholder="000.000.000-00"
+                                       style="width: 100%; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; background: #fff;">
+                            </div>
+                        </div>
+                        <small style="display: block; margin-top: 0.45rem; color: #8a8390;">
+                            Se preencher aqui, o CPF será salvo no perfil do responsável selecionado.
+                        </small>
+                    </div>
+
+                    <!-- Novo Responsável -->
+                    <div id="novo-responsavel" style="padding: 1rem; border: 1px solid #ece3f2; border-radius: 14px; background: #fcfafe;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                            <div>
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Nome</label>
+                                <input type="text" name="responsavel_nome" id="responsavel_nome"
+                                       style="width: 100%; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; background: #fff;">
+                            </div>
+
+                            <div>
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Sobrenome</label>
+                                <input type="text" name="responsavel_sobrenome" id="responsavel_sobrenome"
+                                       style="width: 100%; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; background: #fff;">
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1.2fr 1fr 1fr 1fr; gap: 1rem;">
+                            <div>
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Email</label>
+                                <input type="email" name="responsavel_email" id="responsavel_email" required
+                                       style="width: 100%; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; background: #fff;">
+                            </div>
+
+                            <div>
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Telefone</label>
+                                <input type="text" name="responsavel_telefone" id="responsavel_telefone"
+                                       placeholder="(15) 99999-9999"
+                                       style="width: 100%; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; background: #fff;">
+                            </div>
+
+                            <div>
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">CPF</label>
+                                <input type="text" name="cpf" id="cpf_novo"
+                                       placeholder="000.000.000-00"
+                                       style="width: 100%; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; background: #fff;">
+                            </div>
+
+                            <div>
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Senha</label>
+                                <input type="text" name="responsavel_senha" id="responsavel_senha"
+                                       placeholder="Senha inicial (opcional)"
+                                       style="width: 100%; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; background: #fff;">
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Configurações Financeiras -->
+                <section style="background: white; border: 1px solid #ece3f2; border-radius: 16px; padding: 1.5rem;">
+                    <div style="margin-bottom: 1.25rem;">
+                        <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1rem; font-weight: 700;">
+                            Configurações Financeiras
+                        </h3>
+                        <p style="margin: 0; color: #7b7580; font-size: 0.92rem;">
+                            Defina a mensalidade padrão e o comportamento automático de cobrança.
+                        </p>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 1rem; align-items: end;">
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
+                                Valor da mensalidade
+                            </label>
+                            <input type="number"
+                                   name="valor_mensalidade"
+                                   step="0.01"
+                                   min="0"
+                                   placeholder="Ex: 150.00"
+                                   style="width: 100%; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; background: #fff;">
+                        </div>
+
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
+                                Dia do vencimento
+                            </label>
+                            <input type="number"
+                                   name="dia_vencimento"
+                                   min="1"
+                                   max="31"
+                                   value="10"
+                                   style="width: 100%; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; background: #fff;">
+                        </div>
+
+                        <div style="padding: 0.95rem 1rem; background: #faf7fc; border: 1px solid #ece3f2; border-radius: 12px;">
+                            <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer;">
+                                <input type="checkbox" name="gerar_mensalidade_automatica" checked style="accent-color: #6b2d8f;">
+                                <span style="font-weight: 600; color: #4a235f;">Gerar mensalidade automaticamente</span>
+                            </label>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Botões -->
+                <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 0.25rem; flex-wrap: wrap;">
+                    <a href="{% url 'admin_dashboard:alunas_list' %}"
+                       style="padding: 0.85rem 1.5rem; background: #f3f3f3; color: #444; border: 1px solid #ddd; border-radius: 10px; text-decoration: none; font-weight: 600;">
+                        Cancelar
+                    </a>
+
+                    <button type="submit"
+                            style="background: linear-gradient(135deg, #6b2d8f 0%, #7e3aa5 100%); color: white; border: none; padding: 0.85rem 1.6rem; border-radius: 10px; cursor: pointer; font-weight: 700; box-shadow: 0 8px 18px rgba(107, 45, 143, 0.18);">
+                        Cadastrar Aluna
+                    </button>
                 </div>
+
             </div>
-            
-            <!-- Botoes -->
-            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
-                <button type="submit" class="btn btn-primary" style="background: #3498db; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 5px; cursor: pointer;">
-                    Cadastrar Aluna
-                </button>
-                <a href="{% url 'admin_dashboard:alunas_list' %}"
-                   style="padding: 0.75rem 1.5rem; background: #f5f5f5; color: #333; border-radius: 5px; text-decoration: none; font-weight: 500;">
-                    Cancelar
-                </a>
-            </div>
-            
         </div>
     </form>
 </div>
