@@ -109,6 +109,13 @@ class Aluna(models.Model):
     ]
     
     responsavel = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='alunas')
+    usuario = models.OneToOneField(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='aluna_vinculada'
+    )
     tipo_aluna = models.CharField(max_length=20, choices=TIPO_ALUNAS, default='infantil')
     nome = models.CharField(max_length=100)
     genero = models.CharField(max_length=1, choices=GENERO_CHOICES, blank=True, null=True)
@@ -118,7 +125,6 @@ class Aluna(models.Model):
     data_matricula = models.DateField(auto_now_add=True)
     observacoes = models.TextField(blank=True)
 
-    # NOVOS CAMPOS FINANCEIROS
     valor_mensalidade = models.DecimalField(
         max_digits=10,
         decimal_places=2,
@@ -134,11 +140,11 @@ class Aluna(models.Model):
         default=True,
         verbose_name='Gerar mensalidade automática'
     )
-    
+
     def __str__(self):
         genero_texto = dict(self.GENERO_CHOICES).get(self.genero, '')
         return f"{self.nome} ({genero_texto})" if genero_texto else self.nome
-    
+
     @property
     def idade(self):
         from datetime import date
@@ -149,7 +155,11 @@ class Aluna(models.Model):
         if (hoje.month, hoje.day) < (self.data_nascimento.month, self.data_nascimento.day):
             idade -= 1
         return idade
-    
+
+    @property
+    def tem_login_proprio(self):
+        return self.tipo_aluna == 'adulto' and self.usuario_id is not None
+
     class Meta:
         verbose_name = 'Aluna'
         verbose_name_plural = 'Alunas'

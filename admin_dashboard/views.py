@@ -113,53 +113,40 @@ def dashboard(request):
 @login_required
 def alunas_list(request):
     """Lista de todas as alunas com busca e filtros"""
-    
+
     if not request.user.is_staff:
         return redirect('home')
-    
+
     try:
         from usuarios.models import Aluna, Turma
         from django.db.models import Q
-        
-        # Query base - REMOVA select_related('turma') porque não existe mais
-        alunas = Aluna.objects.select_related('responsavel').all()  # Só responsavel
-        
-        # Debug - mostra no console
-        print(f"Total de alunas no banco: {alunas.count()}")
-        
-        # Busca
+
+        alunas = Aluna.objects.select_related('responsavel', 'usuario').prefetch_related('turmas').all()
+
         busca = request.GET.get('busca', '')
         if busca:
             alunas = alunas.filter(
                 Q(nome__icontains=busca) |
                 Q(responsavel__first_name__icontains=busca) |
-                Q(responsavel__last_name__icontains=busca)
+                Q(responsavel__last_name__icontains=busca) |
+                Q(usuario__first_name__icontains=busca) |
+                Q(usuario__last_name__icontains=busca) |
+                Q(usuario__email__icontains=busca)
             )
-            print(f"Alunas após busca: {alunas.count()}")
-        
-        # Filtro por turma
+
         turma = request.GET.get('turma', '')
         if turma:
             alunas = alunas.filter(turmas__nome=turma)
-            print(f"Alunas após filtro turma: {alunas.count()}")
-        
-        # Filtro por status
+
         status = request.GET.get('status', '')
         if status == 'ativas':
             alunas = alunas.filter(ativa=True)
-            print(f"Alunas após filtro ativas: {alunas.count()}")
         elif status == 'inativas':
             alunas = alunas.filter(ativa=False)
-            print(f"Alunas após filtro inativas: {alunas.count()}")
-        
-        # Ordenacao
-        alunas = alunas.order_by('nome')
-        
-        # Turmas unicas para o filtro
+
+        alunas = alunas.distinct().order_by('nome')
         turmas = Turma.objects.filter(ativa=True).values_list('nome', flat=True).distinct()
-        
-        print(f"Turmas disponíveis: {list(turmas)}")
-        
+
     except Exception as e:
         print(f"Erro ao buscar alunas: {e}")
         import traceback
@@ -169,7 +156,7 @@ def alunas_list(request):
         busca = ''
         turma = ''
         status = ''
-    
+
     context = {
         'alunas': alunas,
         'turmas': turmas,
@@ -178,7 +165,7 @@ def alunas_list(request):
         'status_filtro': status,
         'total_alunas': len(alunas) if alunas else 0,
     }
-    
+
     return render(request, 'admin_dashboard/alunas/list.html', context)
 
 @login_required
@@ -575,6 +562,51 @@ def aluna_editar(request, pk):
     }
     
     return render(request, 'admin_dashboard/alunas/editar.html', context)
+
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+from django.shortcuts import get_object_or_404, redirect, render
+
+from usuarios.models import Aluna
+
+
+@login_required
+def aluna_definir_senha(request, pk):
+    if not request.user.is_staff:
+        return redirect('home')
+
+    aluna = get_object_or_404(Aluna, pk=pk)
+
+    if aluna.tipo_aluna != 'adulto':
+        messages.error(request, 'Apenas alunas adultas com login próprio podem ter senha definida por aqui.')
+        return redirect('admin_dashboard:alunas_list')
+
+    if not aluna.usuario:
+        messages.error(request, 'Esta aluna adulta ainda não possui um usuário vinculado.')
+        return redirect('admin_dashboard:alunas_list')
+
+    if request.method == 'POST':
+        senha = request.POST.get('senha', '').strip()
+        confirmar_senha = request.POST.get('confirmar_senha', '').strip()
+
+        if not senha or not confirmar_senha:
+            messages.error(request, 'Preencha os dois campos de senha.')
+        elif senha != confirmar_senha:
+            messages.error(request, 'As senhas não coincidem.')
+        elif len(senha) < 6:
+            messages.error(request, 'A senha deve ter pelo menos 6 caracteres.')
+        else:
+            usuario = aluna.usuario
+            usuario.set_password(senha)
+            usuario.save()
+            messages.success(request, f'Senha da aluna {aluna.nome} atualizada com sucesso.')
+            return redirect('admin_dashboard:alunas_list')
+
+    context = {
+        'aluna': aluna,
+    }
+    return render(request, 'admin_dashboard/alunas/definir_senha.html', context)
 
 @login_required
 def mensalidades_list(request):

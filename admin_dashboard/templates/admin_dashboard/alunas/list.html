@@ -15,7 +15,6 @@
 <div style="background: white; padding: 1.5rem; border-radius: 10px; margin-bottom: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
     <form method="get" style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 1rem; align-items: end;">
         
-        <!-- Busca -->
         <div>
             <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Buscar</label>
             <input type="text" 
@@ -25,7 +24,6 @@
                    style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
         </div>
         
-        <!-- Filtro Turma -->
         <div>
             <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Turma</label>
             <select name="turma" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
@@ -36,7 +34,6 @@
             </select>
         </div>
         
-        <!-- Filtro Status -->
         <div>
             <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Status</label>
             <select name="status" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
@@ -71,15 +68,43 @@
                 {% for aluna in alunas %}
                 <tr style="border-top: 1px solid #eee;">
                     <td style="padding: 1rem;">
-                        <strong style="color: #2c3e50;">{{ aluna.nome }}</strong>
+                        <div style="display: flex; flex-direction: column; gap: 0.2rem;">
+                            <strong style="color: #2c3e50;">{{ aluna.nome }}</strong>
+
+                            {% if aluna.tipo_aluna == 'adulto' %}
+                                <span style="font-size: 0.75rem; color: #0d6efd;">Aluna adulta</span>
+                            {% else %}
+                                <span style="font-size: 0.75rem; color: #666;">Aluna infantil</span>
+                            {% endif %}
+                        </div>
                     </td>
+
                     <td style="padding: 1rem; color: #666;">
-                        {% if aluna.responsavel %}
-                            {{ aluna.responsavel.get_full_name|default:aluna.responsavel.username }}
+                        {% if aluna.tipo_aluna == 'adulto' %}
+                            {% if aluna.usuario %}
+                                <div style="display: flex; flex-direction: column; gap: 0.2rem;">
+                                    <span>{{ aluna.usuario.get_full_name|default:aluna.usuario.username }}</span>
+                                    {% if aluna.usuario.email %}
+                                        <span style="font-size: 0.75rem; color: #999;">{{ aluna.usuario.email }}</span>
+                                    {% endif %}
+                                </div>
+                            {% else %}
+                                <span style="color: #999;">Sem usuário vinculado</span>
+                            {% endif %}
                         {% else %}
-                            <span style="color: #999;">-</span>
+                            {% if aluna.responsavel %}
+                                <div style="display: flex; flex-direction: column; gap: 0.2rem;">
+                                    <span>{{ aluna.responsavel.get_full_name|default:aluna.responsavel.username }}</span>
+                                    {% if aluna.responsavel.email %}
+                                        <span style="font-size: 0.75rem; color: #999;">{{ aluna.responsavel.email }}</span>
+                                    {% endif %}
+                                </div>
+                            {% else %}
+                                <span style="color: #999;">-</span>
+                            {% endif %}
                         {% endif %}
                     </td>
+
                     <td style="padding: 1rem;">
                         {% if aluna.turmas.all %}
                             {% for turma in aluna.turmas.all %}
@@ -93,6 +118,7 @@
                             </span>
                         {% endif %}
                     </td>
+
                     <td style="padding: 1rem; color: #666; white-space: nowrap;">
                         {% if aluna.idade %}
                             {{ aluna.idade }} anos
@@ -100,6 +126,7 @@
                             <span style="color: #999;">-</span>
                         {% endif %}
                     </td>
+
                     <td style="padding: 1rem;">
                         {% if aluna.ativa %}
                             <span style="background: #d4edda; color: #155724; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem; display: inline-block; white-space: nowrap;">Ativa</span>
@@ -107,9 +134,19 @@
                             <span style="background: #f8d7da; color: #721c24; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem; display: inline-block; white-space: nowrap;">Inativa</span>
                         {% endif %}
                     </td>
+
                     <td style="padding: 1rem; text-align: right; white-space: nowrap;">
                         <a href="{% url 'admin_dashboard:aluna_detalhes' aluna.pk %}" style="color: #b07a84; text-decoration: none; margin-right: 1rem;">Ver</a>
+
                         <a href="{% url 'admin_dashboard:aluna_editar' aluna.pk %}" style="color: #2c3e50; text-decoration: none; margin-right: 1rem;">Editar</a>
+
+                        {% if aluna.tipo_aluna == 'adulto' and aluna.usuario %}
+                            <a href="{% url 'admin_dashboard:aluna_definir_senha' aluna.pk %}"
+                               style="color: #0d6efd; text-decoration: none; margin-right: 1rem;">
+                                Senha
+                            </a>
+                        {% endif %}
+
                         <form method="post"
                               action="{% url 'admin_dashboard:aluna_excluir' aluna.pk %}"
                               style="display: inline;"
