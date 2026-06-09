@@ -3,7 +3,86 @@
 {% block title %}Alunas{% endblock %}
 
 {% block content %}
-<div class="page-header" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 2rem;">
+<style>
+    .alunas-list-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 2rem;
+    }
+
+    .alunas-filter-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 16px;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 8px 20px rgba(107, 45, 143, 0.06);
+        border: 1px solid #ebe3f1;
+    }
+
+    .alunas-filter-form {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr auto;
+        gap: 1rem;
+        align-items: end;
+    }
+
+    .alunas-table-card {
+        background: white;
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: 0 10px 24px rgba(107, 45, 143, 0.08);
+        border: 1px solid #ebe3f1;
+    }
+
+    .alunas-table-wrap {
+        overflow-x: auto;
+    }
+
+    .alunas-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    @media (max-width: 900px) {
+        .alunas-filter-form {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .alunas-list-header > div,
+        .alunas-list-header > a {
+            width: 100%;
+        }
+
+        .alunas-list-header > a {
+            text-align: center;
+        }
+
+        .alunas-filter-form {
+            grid-template-columns: 1fr;
+        }
+
+        .alunas-filter-actions {
+            flex-direction: column;
+        }
+
+        .alunas-filter-actions button,
+        .alunas-filter-actions a {
+            width: 100%;
+            text-align: center;
+        }
+
+        .alunas-table {
+            min-width: 760px;
+        }
+    }
+</style>
+
+<div class="alunas-list-header">
     <div>
         <h2 style="margin: 0 0 0.35rem 0; color: #4a235f;">Alunas</h2>
         <p style="margin: 0; color: #6f6f78;">{{ total_alunas }} aluna{{ total_alunas|pluralize }}</p>
@@ -14,8 +93,8 @@
     </a>
 </div>
 
-<div style="background: white; padding: 1.5rem; border-radius: 16px; margin-bottom: 1.5rem; box-shadow: 0 8px 20px rgba(107, 45, 143, 0.06); border: 1px solid #ebe3f1;">
-    <form method="get" style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 1rem; align-items: end;">
+<div class="alunas-filter-card">
+    <form method="get" class="alunas-filter-form">
         <div>
             <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #4a235f;">Buscar</label>
             <input type="text" 
@@ -44,7 +123,7 @@
             </select>
         </div>
         
-        <div style="display: flex; gap: 0.5rem;">
+        <div class="alunas-filter-actions" style="display: flex; gap: 0.5rem;">
             <button type="submit"
                     style="padding: 0.82rem 1.35rem; background: #6b2d8f; color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer;">
                 Filtrar
@@ -57,9 +136,9 @@
     </form>
 </div>
 
-<div style="background: white; border-radius: 18px; overflow: hidden; box-shadow: 0 10px 24px rgba(107, 45, 143, 0.08); border: 1px solid #ebe3f1;">
-    <div class="table-container">
-        <table style="width: 100%; border-collapse: collapse;">
+<div class="alunas-table-card">
+    <div class="alunas-table-wrap">
+        <table class="alunas-table">
             <thead style="background: linear-gradient(135deg, #faf7fc 0%, #f1ebf6 100%);">
                 <tr>
                     <th style="padding: 1rem; text-align: left; font-size: 0.84rem; color: #6f627b; text-transform: uppercase; font-weight: 700;">Aluna</th>

@@ -3,8 +3,93 @@
 {% block title %}Definir senha da aluna{% endblock %}
 
 {% block content %}
-<div style="max-width: 720px; margin: 0 auto;">
-    <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; gap: 1rem; flex-wrap: wrap;">
+<style>
+    .senha-page {
+        max-width: 720px;
+        margin: 0 auto;
+    }
+
+    .senha-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .senha-card {
+        background: white;
+        border: 1px solid #ebe3f1;
+        border-radius: 18px;
+        box-shadow: 0 10px 24px rgba(107, 45, 143, 0.08);
+        overflow: hidden;
+    }
+
+    .senha-card-top {
+        padding: 1.4rem 1.6rem;
+        background: linear-gradient(135deg, #ffffff 0%, #f6f0fa 100%);
+        border-bottom: 1px solid #ece3f2;
+    }
+
+    .senha-card-body {
+        padding: 1.75rem;
+    }
+
+    .senha-form-grid {
+        display: grid;
+        gap: 1.25rem;
+    }
+
+    .senha-input {
+        width: 100%;
+        padding: 0.9rem 1rem;
+        border: 1px solid #d9cbe4;
+        border-radius: 10px;
+        background: #fff;
+        font-size: 1rem;
+    }
+
+    .senha-actions {
+        display: flex;
+        gap: 0.85rem;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+
+    @media (max-width: 640px) {
+        .senha-page {
+            max-width: 100%;
+        }
+
+        .senha-header {
+            align-items: stretch;
+        }
+
+        .senha-header > div,
+        .senha-header > a {
+            width: 100%;
+        }
+
+        .senha-card-top,
+        .senha-card-body {
+            padding: 1.2rem;
+        }
+
+        .senha-actions {
+            flex-direction: column-reverse;
+        }
+
+        .senha-actions a,
+        .senha-actions button {
+            width: 100%;
+            text-align: center;
+        }
+    }
+</style>
+
+<div class="senha-page">
+    <div class="senha-header">
         <div>
             <h2 style="margin: 0 0 0.35rem 0; color: #4a235f;">Definir senha</h2>
             <p style="color: #6f6f78; margin: 0;">
@@ -17,19 +102,19 @@
         </a>
     </div>
 
-    <div style="background: white; border: 1px solid #ebe3f1; border-radius: 18px; box-shadow: 0 10px 24px rgba(107, 45, 143, 0.08); overflow: hidden;">
-        <div style="padding: 1.4rem 1.6rem; background: linear-gradient(135deg, #ffffff 0%, #f6f0fa 100%); border-bottom: 1px solid #ece3f2;">
+    <div class="senha-card">
+        <div class="senha-card-top">
             <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1.05rem;">Atualização de acesso</h3>
             <p style="margin: 0; color: #7c7682; font-size: 0.93rem;">
                 Defina uma nova senha para o acesso da aluna adulta no sistema.
             </p>
         </div>
 
-        <div style="padding: 1.75rem;">
+        <div class="senha-card-body">
             <form method="post">
                 {% csrf_token %}
 
-                <div style="display: grid; gap: 1.25rem;">
+                <div class="senha-form-grid">
                     <div>
                         <label for="senha" style="display: block; margin-bottom: 0.5rem; font-weight: 700; color: #4a235f;">Nova senha</label>
                         <input type="password"
@@ -37,7 +122,7 @@
                                name="senha"
                                required
                                minlength="6"
-                               style="width: 100%; padding: 0.9rem 1rem; border: 1px solid #d9cbe4; border-radius: 10px; background: #fff; font-size: 1rem;">
+                               class="senha-input">
                     </div>
 
                     <div>
@@ -47,14 +132,14 @@
                                name="confirmar_senha"
                                required
                                minlength="6"
-                               style="width: 100%; padding: 0.9rem 1rem; border: 1px solid #d9cbe4; border-radius: 10px; background: #fff; font-size: 1rem;">
+                               class="senha-input">
                     </div>
 
                     <div style="padding: 1rem; background: #faf7fc; border: 1px solid #ece3f2; border-radius: 12px; color: #6e6775; font-size: 0.93rem;">
                         A senha deve ter pelo menos 6 caracteres.
                     </div>
 
-                    <div style="display: flex; gap: 0.85rem; flex-wrap: wrap; justify-content: flex-end;">
+                    <div class="senha-actions">
                         <a href="{% url 'admin_dashboard:alunas_list' %}"
                            style="padding: 0.85rem 1.35rem; background: #f3f3f3; color: #444; border: 1px solid #ddd; border-radius: 10px; text-decoration: none; font-weight: 600;">
                             Cancelar

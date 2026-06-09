@@ -3,13 +3,143 @@
 {% block title %}Editar {{ aluna.nome }}{% endblock %}
 
 {% block content %}
-<div class="page-header" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 2rem;">
+<style>
+    .aluna-edit-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 2rem;
+    }
+
+    .aluna-edit-header-actions {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .aluna-edit-shell {
+        max-width: 980px;
+    }
+
+    .aluna-edit-main {
+        background: white;
+        border: 1px solid #ebe3f1;
+        border-radius: 18px;
+        box-shadow: 0 8px 24px rgba(107, 45, 143, 0.08);
+        overflow: hidden;
+    }
+
+    .aluna-edit-top {
+        padding: 1.5rem 2rem;
+        background: linear-gradient(135deg, #ffffff 0%, #f5eff9 100%);
+        border-bottom: 1px solid #ece3f2;
+    }
+
+    .aluna-edit-body {
+        padding: 2rem;
+        display: grid;
+        gap: 1.5rem;
+        background: #fcfbfd;
+    }
+
+    .aluna-edit-section {
+        background: white;
+        border: 1px solid #ece3f2;
+        border-radius: 16px;
+        padding: 1.5rem;
+    }
+
+    .aluna-grid-3 {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .aluna-grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .aluna-input,
+    .aluna-select,
+    .aluna-textarea {
+        width: 100%;
+        padding: 0.82rem 0.95rem;
+        border: 1px solid #d9cbe4;
+        border-radius: 10px;
+        font-size: 1rem;
+        background: #fff;
+    }
+
+    .aluna-edit-footer {
+        display: flex;
+        gap: 1rem;
+        margin-top: 0.5rem;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+
+    @media (max-width: 900px) {
+        .aluna-grid-3 {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .aluna-edit-header {
+            align-items: stretch;
+        }
+
+        .aluna-edit-header > div,
+        .aluna-edit-header-actions {
+            width: 100%;
+        }
+
+        .aluna-edit-header-actions a {
+            width: 100%;
+            text-align: center;
+        }
+
+        .aluna-edit-shell {
+            max-width: 100%;
+        }
+
+        .aluna-edit-top,
+        .aluna-edit-body,
+        .aluna-edit-section {
+            padding: 1.2rem;
+        }
+
+        .aluna-grid-3,
+        .aluna-grid-2,
+        #cpf_wrapper {
+            grid-template-columns: 1fr !important;
+        }
+
+        .aluna-edit-footer {
+            flex-direction: column-reverse;
+        }
+
+        .aluna-edit-footer a,
+        .aluna-edit-footer button {
+            width: 100%;
+            text-align: center;
+        }
+    }
+</style>
+
+<div class="aluna-edit-header">
     <div>
         <h2 style="margin: 0 0 0.35rem 0; color: #4a235f;">Editar Aluna</h2>
         <p style="margin: 0; color: #6f6f78;">{{ aluna.nome }}</p>
     </div>
 
-    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+    <div class="aluna-edit-header-actions">
         {% if aluna.tipo_aluna == 'adulto' and aluna.usuario %}
             <a href="{% url 'admin_dashboard:aluna_definir_senha' aluna.pk %}"
                style="padding: 0.78rem 1.25rem; background: linear-gradient(135deg, #6b2d8f 0%, #7e3aa5 100%); color: white; text-decoration: none; border-radius: 10px; font-weight: 700;">
@@ -24,12 +154,12 @@
     </div>
 </div>
 
-<div style="max-width: 980px;">
+<div class="aluna-edit-shell">
     <form method="post">
         {% csrf_token %}
         
-        <div style="background: white; border: 1px solid #ebe3f1; border-radius: 18px; box-shadow: 0 8px 24px rgba(107, 45, 143, 0.08); overflow: hidden;">
-            <div style="padding: 1.5rem 2rem; background: linear-gradient(135deg, #ffffff 0%, #f5eff9 100%); border-bottom: 1px solid #ece3f2;">
+        <div class="aluna-edit-main">
+            <div class="aluna-edit-top">
                 <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
                     <div>
                         <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1.15rem;">Edição da aluna</h3>
@@ -43,9 +173,8 @@
                 </div>
             </div>
 
-            <div style="padding: 2rem; display: grid; gap: 1.5rem; background: #fcfbfd;">
-                
-                <section style="background: white; border: 1px solid #ece3f2; border-radius: 16px; padding: 1.5rem;">
+            <div class="aluna-edit-body">
+                <section class="aluna-edit-section">
                     <div style="margin-bottom: 1.25rem;">
                         <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1rem; font-weight: 700;">
                             Dados da Aluna
@@ -53,7 +182,7 @@
                         <p style="margin: 0; color: #7b7580; font-size: 0.92rem;">Informações principais da aluna e vínculo de acesso.</p>
                     </div>
                     
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div class="aluna-grid-3">
                         <div>
                             <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Nome completo</label>
                             <input type="text"
@@ -61,12 +190,12 @@
                                    name="nome"
                                    value="{{ aluna.nome }}"
                                    required
-                                   style="width: 100%; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; background: #fff;">
+                                   class="aluna-input">
                         </div>
                         
                         <div>
                             <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Genero</label>
-                            <select name="genero" style="width: 100%; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; background: #fff;">
+                            <select name="genero" class="aluna-select">
                                 <option value="">Selecione...</option>
                                 <option value="F" {% if aluna.genero == 'F' %}selected{% endif %}>Feminino</option>
                                 <option value="M" {% if aluna.genero == 'M' %}selected{% endif %}>Masculino</option>
@@ -80,7 +209,7 @@
                                    id="data_nascimento"
                                    name="data_nascimento"
                                    value="{{ aluna.data_nascimento|date:'Y-m-d' }}"
-                                   style="width: 100%; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; background: #fff;">
+                                   class="aluna-input">
                         </div>
                     </div>
 
@@ -120,11 +249,12 @@
                         </div>
                     </div>
                     
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div class="aluna-grid-2">
                         <div>
                             <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Turmas</label>
                             <select id="turmas" name="turmas" multiple
-                                    style="width: 100%; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; min-height: 140px; background: #fff;">
+                                    class="aluna-select"
+                                    style="min-height: 140px;">
                                 {% for turma in turmas %}
                                     <option value="{{ turma.id }}" {% if turma in aluna.turmas.all %}selected{% endif %}>
                                         {{ turma.nome }} ({{ turma.total_alunas }}/{{ turma.capacidade_maxima }} vagas)
@@ -136,19 +266,17 @@
                         
                         <div>
                             <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Tipo da aluna</label>
-                            <select id="tipo_aluna" name="tipo_aluna"
-                                    style="width: 100%; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; background: #fff;">
+                            <select id="tipo_aluna" name="tipo_aluna" class="aluna-select">
                                 <option value="infantil" {% if aluna.tipo_aluna == 'infantil' %}selected{% endif %}>Infantil</option>
                                 <option value="adulto" {% if aluna.tipo_aluna == 'adulto' %}selected{% endif %}>Adulto</option>
                             </select>
                         </div>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div class="aluna-grid-2">
                         <div id="responsavel_wrapper" {% if aluna.tipo_aluna == 'adulto' %}style="display:none;"{% endif %}>
                             <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Responsavel</label>
-                            <select id="responsavel" name="responsavel"
-                                    style="width: 100%; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; background: #fff;">
+                            <select id="responsavel" name="responsavel" class="aluna-select">
                                 <option value="">Sem responsavel</option>
                                 {% for resp in responsaveis %}
                                     <option value="{{ resp.id }}" {% if aluna.responsavel and aluna.responsavel.id == resp.id %}selected{% endif %}>
@@ -160,8 +288,7 @@
 
                         <div id="usuario_wrapper" {% if aluna.tipo_aluna != 'adulto' %}style="display:none;"{% endif %}>
                             <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Usuário da aluna adulta</label>
-                            <select id="usuario" name="usuario"
-                                    style="width: 100%; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; background: #fff;">
+                            <select id="usuario" name="usuario" class="aluna-select">
                                 <option value="">Selecione um usuário</option>
                                 {% for usuario in usuarios_adultas %}
                                     <option value="{{ usuario.id }}" {% if aluna.usuario and aluna.usuario.id == usuario.id %}selected{% endif %}>
@@ -173,7 +300,7 @@
                         </div>
                     </div>
 
-                    <div id="cpf_wrapper" style="display: {% if aluna.tipo_aluna == 'adulto' %}none{% else %}grid{% endif %}; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div id="cpf_wrapper" class="aluna-grid-2" style="display: {% if aluna.tipo_aluna == 'adulto' %}none{% else %}grid{% endif %};">
                         <div>
                             <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">CPF do responsável</label>
                             <input type="text"
@@ -181,7 +308,7 @@
                                    name="cpf"
                                    value="{{ perfil.cpf|default:'' }}"
                                    placeholder="000.000.000-00"
-                                   style="width: 100%; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; background: #fff;">
+                                   class="aluna-input">
                             <small style="display: block; margin-top: 0.45rem; color: #8a8390;">Esse CPF será salvo no perfil do responsável vinculado.</small>
                         </div>
 
@@ -200,7 +327,7 @@
                         <textarea id="observacoes"
                                   name="observacoes"
                                   rows="4"
-                                  style="width: 100%; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; font-family: inherit; background: #fff;">{{ aluna.observacoes }}</textarea>
+                                  class="aluna-textarea">{{ aluna.observacoes }}</textarea>
                     </div>
                     
                     <div style="padding: 0.95rem 1rem; background: #faf7fc; border: 1px solid #ece3f2; border-radius: 12px;">
@@ -211,7 +338,7 @@
                     </div>
                 </section>
 
-                <section style="background: white; border: 1px solid #ece3f2; border-radius: 16px; padding: 1.5rem;">
+                <section class="aluna-edit-section">
                     <div style="margin-bottom: 1.25rem;">
                         <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1rem; font-weight: 700;">
                             Configurações Financeiras
@@ -221,7 +348,7 @@
                         </p>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 1rem; margin-bottom: 1rem; align-items: end;">
+                    <div class="aluna-grid-3" style="align-items: end;">
                         <div>
                             <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
                                 Valor da mensalidade
@@ -231,7 +358,7 @@
                                    step="0.01"
                                    min="0"
                                    value="{{ aluna.valor_mensalidade|default_if_none:'' }}"
-                                   style="width: 100%; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; background: #fff;">
+                                   class="aluna-input">
                         </div>
 
                         <div>
@@ -243,7 +370,7 @@
                                    min="1"
                                    max="31"
                                    value="{{ aluna.dia_vencimento|default:10 }}"
-                                   style="width: 100%; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; background: #fff;">
+                                   class="aluna-input">
                         </div>
 
                         <div style="padding: 0.95rem 1rem; background: #faf7fc; border: 1px solid #ece3f2; border-radius: 12px;">
@@ -255,7 +382,7 @@
                     </div>
                 </section>
                 
-                <div style="display: flex; gap: 1rem; margin-top: 0.5rem; flex-wrap: wrap; justify-content: flex-end;">
+                <div class="aluna-edit-footer">
                     <a href="{% url 'admin_dashboard:aluna_detalhes' aluna.pk %}"
                        style="padding: 0.85rem 1.5rem; background: #f3f3f3; color: #444; border: 1px solid #ddd; border-radius: 10px; text-decoration: none; font-weight: 600;">
                         Cancelar

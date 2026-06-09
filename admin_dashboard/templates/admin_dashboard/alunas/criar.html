@@ -3,112 +3,300 @@
 {% block title %}Nova Aluna{% endblock %}
 
 {% block content %}
-<div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; gap: 1rem; flex-wrap: wrap;">
+<style>
+    .aluna-create-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 2rem;
+    }
+
+    .aluna-create-header-actions {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .aluna-create-shell {
+        max-width: 980px;
+    }
+
+    .aluna-create-main {
+        background: white;
+        border: 1px solid #ebe3f1;
+        border-radius: 18px;
+        box-shadow: 0 8px 24px rgba(107, 45, 143, 0.08);
+        overflow: hidden;
+    }
+
+    .aluna-create-top {
+        padding: 1.5rem 2rem;
+        background: linear-gradient(135deg, #ffffff 0%, #f5eff9 100%);
+        border-bottom: 1px solid #ece3f2;
+    }
+
+    .aluna-create-body {
+        padding: 2rem;
+        display: grid;
+        gap: 1.5rem;
+        background: #fcfbfd;
+    }
+
+    .aluna-create-section {
+        background: white;
+        border: 1px solid #ece3f2;
+        border-radius: 16px;
+        padding: 1.5rem;
+    }
+
+    .aluna-grid-3 {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .aluna-grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .aluna-input,
+    .aluna-select,
+    .aluna-textarea {
+        width: 100%;
+        padding: 0.82rem 0.95rem;
+        border: 1px solid #d9cbe4;
+        border-radius: 10px;
+        font-size: 1rem;
+        background: #fff;
+    }
+
+    .aluna-create-footer {
+        display: flex;
+        gap: 1rem;
+        margin-top: 0.5rem;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+
+    @media (max-width: 900px) {
+        .aluna-grid-3 {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .aluna-create-header {
+            align-items: stretch;
+        }
+
+        .aluna-create-header > div,
+        .aluna-create-header-actions {
+            width: 100%;
+        }
+
+        .aluna-create-header-actions a {
+            width: 100%;
+            text-align: center;
+        }
+
+        .aluna-create-shell {
+            max-width: 100%;
+        }
+
+        .aluna-create-top,
+        .aluna-create-body,
+        .aluna-create-section {
+            padding: 1.2rem;
+        }
+
+        .aluna-grid-3,
+        .aluna-grid-2,
+        #cpf_wrapper {
+            grid-template-columns: 1fr !important;
+        }
+
+        .aluna-create-footer {
+            flex-direction: column-reverse;
+        }
+
+        .aluna-create-footer a,
+        .aluna-create-footer button {
+            width: 100%;
+            text-align: center;
+        }
+    }
+</style>
+
+<div class="aluna-create-header">
     <div>
         <h2 style="margin: 0 0 0.35rem 0; color: #4a235f;">Nova Aluna</h2>
-        <p style="margin: 0; color: #6f6f78;">Cadastrar nova aluna no sistema</p>
+        <p style="margin: 0; color: #6f6f78;">Cadastro de aluna e configurações iniciais</p>
+    </div>
+
+    <div class="aluna-create-header-actions">
+        <a href="{% url 'admin_dashboard:alunas_list' %}"
+           style="padding: 0.78rem 1.25rem; background: #f3f3f3; color: #444; text-decoration: none; border: 1px solid #ddd; border-radius: 10px; font-weight: 600;">
+            Voltar
+        </a>
     </div>
 </div>
 
-<div style="max-width: 980px;">
+<div class="aluna-create-shell">
     <form method="post">
         {% csrf_token %}
-
-        <div style="background: white; border: 1px solid #ebe3f1; border-radius: 18px; box-shadow: 0 8px 24px rgba(107, 45, 143, 0.08); overflow: hidden;">
-            
-            <!-- topo do form -->
-            <div style="padding: 1.5rem 2rem; background: linear-gradient(135deg, #ffffff 0%, #f5eff9 100%); border-bottom: 1px solid #ece3f2;">
+        
+        <div class="aluna-create-main">
+            <div class="aluna-create-top">
                 <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
                     <div>
                         <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1.15rem;">Cadastro da aluna</h3>
                         <p style="margin: 0; color: #7a7280; font-size: 0.95rem;">
-                            Preencha os dados abaixo e configure o tipo de vínculo e cobrança.
+                            Preencha os dados principais, vínculo e configurações financeiras.
                         </p>
                     </div>
                     <div style="padding: 0.55rem 0.9rem; border-radius: 999px; background: #efe7f5; color: #6b2d8f; font-size: 0.85rem; font-weight: 600;">
-                        Padrão BKN Tech
+                        BKN Tech
                     </div>
                 </div>
             </div>
 
-            <div style="padding: 2rem; display: grid; gap: 1.5rem; background: #fcfbfd;">
-
-                <!-- Dados da Aluna -->
-                <section style="background: white; border: 1px solid #ece3f2; border-radius: 16px; padding: 1.5rem;">
+            <div class="aluna-create-body">
+                <section class="aluna-create-section">
                     <div style="margin-bottom: 1.25rem;">
-                        <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1rem; font-weight: 700;">Dados da Aluna</h3>
-                        <p style="margin: 0; color: #7b7580; font-size: 0.92rem;">Informações principais de cadastro e vínculo com turmas.</p>
+                        <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1rem; font-weight: 700;">
+                            Dados da Aluna
+                        </h3>
+                        <p style="margin: 0; color: #7b7580; font-size: 0.92rem;">Informações principais e definição do tipo de acesso.</p>
                     </div>
-
-                    <div style="margin-bottom: 1.5rem;">
-                        <label style="display: block; margin-bottom: 0.75rem; font-weight: 600; color: #4a235f;">Tipo de Aluna</label>
-                        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                            <label style="flex: 1; min-width: 240px; display: flex; align-items: center; gap: 0.75rem; cursor: pointer; padding: 1rem 1.1rem; border: 1px solid #dccce8; border-radius: 14px; background: #faf7fc;">
-                                <input type="radio" name="tipo_aluna" value="infantil" checked onchange="toggleTipoAluna()" style="accent-color: #6b2d8f;">
-                                <div>
-                                    <div style="font-weight: 700; color: #4a235f;">Infantil</div>
-                                    <div style="font-size: 0.9rem; color: #7b7580;">Cadastro com responsável vinculado</div>
-                                </div>
-                            </label>
-
-                            <label style="flex: 1; min-width: 240px; display: flex; align-items: center; gap: 0.75rem; cursor: pointer; padding: 1rem 1.1rem; border: 1px solid #dccce8; border-radius: 14px; background: #faf7fc;">
-                                <input type="radio" name="tipo_aluna" value="adulto" onchange="toggleTipoAluna()" style="accent-color: #6b2d8f;">
-                                <div>
-                                    <div style="font-weight: 700; color: #4a235f;">Adulta</div>
-                                    <div style="font-size: 0.9rem; color: #7b7580;">Cadastro com acesso próprio</div>
-                                </div>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    
+                    <div class="aluna-grid-3">
                         <div>
                             <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Nome completo</label>
-                            <input type="text" id="nome" name="nome" required
-                                   style="width: 100%; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; background: #fff; color: #333;">
+                            <input type="text"
+                                   id="nome"
+                                   name="nome"
+                                   required
+                                   class="aluna-input">
                         </div>
-
+                        
                         <div>
                             <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Genero</label>
-                            <select name="genero"
-                                    style="width: 100%; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; background: #fff; color: #333;">
+                            <select name="genero" class="aluna-select">
                                 <option value="">Selecione...</option>
                                 <option value="F">Feminino</option>
                                 <option value="M">Masculino</option>
                                 <option value="O">Outro</option>
                             </select>
                         </div>
-
+                        
                         <div>
                             <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Data de nascimento</label>
-                            <input type="date" id="data_nascimento" name="data_nascimento"
-                                   style="width: 100%; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; background: #fff; color: #333;">
+                            <input type="date"
+                                   id="data_nascimento"
+                                   name="data_nascimento"
+                                   class="aluna-input">
                         </div>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div style="margin-bottom: 1rem; padding: 1rem; background: #faf7fc; border: 1px solid #ece3f2; border-radius: 12px;">
+                        <div style="display: flex; flex-direction: column; gap: 0.45rem;">
+                            <div>
+                                <strong style="color: #4a235f;">Tipo da aluna:</strong>
+                                <span id="tipo_aluna_texto" style="color: #6f627b; font-weight: 600;">Infantil</span>
+                            </div>
+
+                            <div id="tipo_aluna_descricao" style="color: #6f6875; font-size: 0.92rem;">
+                                Para aluna infantil, o acesso é feito pela conta da responsável vinculada.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="aluna-grid-2">
                         <div>
                             <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Turmas</label>
                             <select id="turmas" name="turmas" multiple
-                                    style="width: 100%; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; min-height: 140px; background: #fff; color: #333;">
+                                    class="aluna-select"
+                                    style="min-height: 140px;">
                                 {% for turma in turmas %}
                                     <option value="{{ turma.id }}">
                                         {{ turma.nome }} ({{ turma.total_alunas }}/{{ turma.capacidade_maxima }} vagas)
                                     </option>
                                 {% endfor %}
                             </select>
-                            <small style="display: block; margin-top: 0.45rem; color: #8a8390;">
-                                Segure Ctrl (ou Cmd no Mac) para selecionar múltiplas turmas.
-                            </small>
+                            <small style="display: block; margin-top: 0.45rem; color: #8a8390;">Segure Ctrl (ou Cmd no Mac) para selecionar multiplas turmas</small>
                         </div>
-
+                        
                         <div>
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Observacoes</label>
-                            <textarea id="observacoes" name="observacoes" rows="5"
-                                      style="width: 100%; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; font-family: inherit; background: #fff; color: #333; resize: vertical;"></textarea>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Tipo da aluna</label>
+                            <select id="tipo_aluna" name="tipo_aluna" class="aluna-select">
+                                <option value="infantil" selected>Infantil</option>
+                                <option value="adulto">Adulto</option>
+                            </select>
                         </div>
                     </div>
 
+                    <div class="aluna-grid-2">
+                        <div id="responsavel_wrapper">
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Responsavel</label>
+                            <select id="responsavel" name="responsavel" class="aluna-select">
+                                <option value="">Sem responsavel</option>
+                                {% for resp in responsaveis %}
+                                    <option value="{{ resp.id }}">
+                                        {{ resp.get_full_name|default:resp.username }} - {{ resp.email }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div id="usuario_wrapper" style="display:none;">
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Usuário da aluna adulta</label>
+                            <select id="usuario" name="usuario" class="aluna-select">
+                                <option value="">Selecione um usuário</option>
+                                {% for usuario in usuarios_adultas %}
+                                    <option value="{{ usuario.id }}">
+                                        {{ usuario.get_full_name|default:usuario.username }} - {{ usuario.email }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <small style="display: block; margin-top: 0.45rem; color: #8a8390;">Esse usuário será usado para login da aluna adulta.</small>
+                        </div>
+                    </div>
+
+                    <div id="cpf_wrapper" class="aluna-grid-2" style="display: grid;">
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">CPF do responsável</label>
+                            <input type="text"
+                                   id="cpf"
+                                   name="cpf"
+                                   placeholder="000.000.000-00"
+                                   class="aluna-input">
+                            <small style="display: block; margin-top: 0.45rem; color: #8a8390;">Esse CPF será salvo no perfil do responsável vinculado.</small>
+                        </div>
+
+                        <div style="display: flex; align-items: end;">
+                            <div style="width: 100%;">
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: transparent;">Info</label>
+                                <div style="padding: 0.95rem 1rem; background: #faf7fc; border: 1px solid #ece3f2; border-radius: 12px; color: #6f6875; font-size: 0.95rem;">
+                                    Necessário para cobranças via Pix no Asaas.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Observacoes</label>
+                        <textarea id="observacoes"
+                                  name="observacoes"
+                                  rows="4"
+                                  class="aluna-textarea"></textarea>
+                    </div>
+                    
                     <div style="padding: 0.95rem 1rem; background: #faf7fc; border: 1px solid #ece3f2; border-radius: 12px;">
                         <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer;">
                             <input type="checkbox" name="ativa" checked style="accent-color: #6b2d8f;">
@@ -117,150 +305,17 @@
                     </div>
                 </section>
 
-                <!-- Dados da Aluna Adulta -->
-                <section id="bloco-adulto" style="display: none; background: white; border: 1px solid #ece3f2; border-radius: 16px; padding: 1.5rem;">
-                    <div style="margin-bottom: 1.25rem;">
-                        <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1rem; font-weight: 700;">Dados de Acesso da Aluna Adulta</h3>
-                        <p style="margin: 0; color: #7b7580; font-size: 0.92rem;">Esses dados serão usados para login e acesso individual no sistema.</p>
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
-                        <div>
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Email</label>
-                            <input type="email" name="adulto_email" id="adulto_email"
-                                   style="width: 100%; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; background: #fff;">
-                        </div>
-
-                        <div>
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Senha</label>
-                            <input type="text" name="adulto_senha" id="adulto_senha"
-                                   placeholder="Deixe em branco para gerar automaticamente"
-                                   style="width: 100%; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; background: #fff;">
-                        </div>
-
-                        <div>
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">CPF</label>
-                            <input type="text" name="cpf" id="cpf_adulto"
-                                   placeholder="000.000.000-00"
-                                   style="width: 100%; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; background: #fff;">
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Responsável -->
-                <section id="bloco-responsavel" style="background: white; border: 1px solid #ece3f2; border-radius: 16px; padding: 1.5rem;">
-                    <div style="margin-bottom: 1.25rem;">
-                        <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1rem; font-weight: 700;">Responsavel</h3>
-                        <p style="margin: 0; color: #7b7580; font-size: 0.92rem;">Escolha se deseja criar um novo responsável ou reutilizar um já existente.</p>
-                    </div>
-
-                    <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem;">
-                        <label style="flex: 1; min-width: 240px; display: flex; align-items: center; gap: 0.75rem; cursor: pointer; padding: 1rem 1.1rem; border: 1px solid #dccce8; border-radius: 14px; background: #faf7fc;">
-                            <input type="radio" name="tipo_responsavel" value="novo" checked onchange="toggleResponsavel()" style="accent-color: #6b2d8f;">
-                            <div>
-                                <div style="font-weight: 700; color: #4a235f;">Criar novo responsável</div>
-                                <div style="font-size: 0.9rem; color: #7b7580;">Cadastrar um novo acesso para a família</div>
-                            </div>
-                        </label>
-
-                        <label style="flex: 1; min-width: 240px; display: flex; align-items: center; gap: 0.75rem; cursor: pointer; padding: 1rem 1.1rem; border: 1px solid #dccce8; border-radius: 14px; background: #faf7fc;">
-                            <input type="radio" name="tipo_responsavel" value="existente" onchange="toggleResponsavel()" style="accent-color: #6b2d8f;">
-                            <div>
-                                <div style="font-weight: 700; color: #4a235f;">Usar responsável existente</div>
-                                <div style="font-size: 0.9rem; color: #7b7580;">Vincular a aluna a um cadastro já existente</div>
-                            </div>
-                        </label>
-                    </div>
-
-                    <!-- Responsável Existente -->
-                    <div id="responsavel-existente" style="display: none; margin-bottom: 1.25rem; padding: 1rem; border: 1px solid #ece3f2; border-radius: 14px; background: #fcfafe;">
-                        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem;">
-                            <div>
-                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
-                                    Selecione o responsável
-                                </label>
-                                <select name="responsavel_existente" id="select-responsavel"
-                                        style="width: 100%; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; background: #fff;">
-                                    <option value="">Selecione...</option>
-                                    {% for resp in responsaveis %}
-                                        <option value="{{ resp.id }}">
-                                            {{ resp.get_full_name|default:resp.username }} - {{ resp.email }} ({{ resp.alunas.count }} aluna{{ resp.alunas.count|pluralize }})
-                                        </option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-
-                            <div>
-                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">CPF do responsável</label>
-                                <input type="text" name="cpf" id="cpf_existente"
-                                       placeholder="000.000.000-00"
-                                       style="width: 100%; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; background: #fff;">
-                            </div>
-                        </div>
-                        <small style="display: block; margin-top: 0.45rem; color: #8a8390;">
-                            Se preencher aqui, o CPF será salvo no perfil do responsável selecionado.
-                        </small>
-                    </div>
-
-                    <!-- Novo Responsável -->
-                    <div id="novo-responsavel" style="padding: 1rem; border: 1px solid #ece3f2; border-radius: 14px; background: #fcfafe;">
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-                            <div>
-                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Nome</label>
-                                <input type="text" name="responsavel_nome" id="responsavel_nome"
-                                       style="width: 100%; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; background: #fff;">
-                            </div>
-
-                            <div>
-                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Sobrenome</label>
-                                <input type="text" name="responsavel_sobrenome" id="responsavel_sobrenome"
-                                       style="width: 100%; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; background: #fff;">
-                            </div>
-                        </div>
-
-                        <div style="display: grid; grid-template-columns: 1.2fr 1fr 1fr 1fr; gap: 1rem;">
-                            <div>
-                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Email</label>
-                                <input type="email" name="responsavel_email" id="responsavel_email" required
-                                       style="width: 100%; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; background: #fff;">
-                            </div>
-
-                            <div>
-                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Telefone</label>
-                                <input type="text" name="responsavel_telefone" id="responsavel_telefone"
-                                       placeholder="(15) 99999-9999"
-                                       style="width: 100%; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; background: #fff;">
-                            </div>
-
-                            <div>
-                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">CPF</label>
-                                <input type="text" name="cpf" id="cpf_novo"
-                                       placeholder="000.000.000-00"
-                                       style="width: 100%; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; background: #fff;">
-                            </div>
-
-                            <div>
-                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Senha</label>
-                                <input type="text" name="responsavel_senha" id="responsavel_senha"
-                                       placeholder="Senha inicial (opcional)"
-                                       style="width: 100%; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; background: #fff;">
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Configurações Financeiras -->
-                <section style="background: white; border: 1px solid #ece3f2; border-radius: 16px; padding: 1.5rem;">
+                <section class="aluna-create-section">
                     <div style="margin-bottom: 1.25rem;">
                         <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1rem; font-weight: 700;">
                             Configurações Financeiras
                         </h3>
                         <p style="margin: 0; color: #7b7580; font-size: 0.92rem;">
-                            Defina a mensalidade padrão e o comportamento automático de cobrança.
+                            Defina a mensalidade padrão e o vencimento.
                         </p>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 1rem; align-items: end;">
+                    <div class="aluna-grid-3" style="align-items: end;">
                         <div>
                             <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
                                 Valor da mensalidade
@@ -269,8 +324,7 @@
                                    name="valor_mensalidade"
                                    step="0.01"
                                    min="0"
-                                   placeholder="Ex: 150.00"
-                                   style="width: 100%; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; background: #fff;">
+                                   class="aluna-input">
                         </div>
 
                         <div>
@@ -282,7 +336,7 @@
                                    min="1"
                                    max="31"
                                    value="10"
-                                   style="width: 100%; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; background: #fff;">
+                                   class="aluna-input">
                         </div>
 
                         <div style="padding: 0.95rem 1rem; background: #faf7fc; border: 1px solid #ece3f2; border-radius: 12px;">
@@ -293,9 +347,8 @@
                         </div>
                     </div>
                 </section>
-
-                <!-- Botões -->
-                <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 0.25rem; flex-wrap: wrap;">
+                
+                <div class="aluna-create-footer">
                     <a href="{% url 'admin_dashboard:alunas_list' %}"
                        style="padding: 0.85rem 1.5rem; background: #f3f3f3; color: #444; border: 1px solid #ddd; border-radius: 10px; text-decoration: none; font-weight: 600;">
                         Cancelar
@@ -303,94 +356,47 @@
 
                     <button type="submit"
                             style="background: linear-gradient(135deg, #6b2d8f 0%, #7e3aa5 100%); color: white; border: none; padding: 0.85rem 1.6rem; border-radius: 10px; cursor: pointer; font-weight: 700; box-shadow: 0 8px 18px rgba(107, 45, 143, 0.18);">
-                        Cadastrar Aluna
+                        Criar Aluna
                     </button>
                 </div>
-
             </div>
         </div>
     </form>
 </div>
 
 <script>
-function toggleTipoAluna() {
-    const tipo = document.querySelector('input[name="tipo_aluna"]:checked').value;
-    const blocoResponsavel = document.getElementById('bloco-responsavel');
-    const blocoAdulto = document.getElementById('bloco-adulto');
-    
-    if (tipo === 'adulto') {
-        blocoResponsavel.style.display = 'none';
-        blocoAdulto.style.display = 'block';
-        
-        const camposResponsavel = [
-            'responsavel_nome', 'responsavel_sobrenome', 'responsavel_email',
-            'responsavel_telefone', 'responsavel_senha', 'select-responsavel'
-        ];
-        camposResponsavel.forEach(id => {
-            const campo = document.getElementById(id);
-            if (campo) campo.required = false;
-        });
-        
-        const emailAdulto = document.getElementById('adulto_email');
-        if (emailAdulto) emailAdulto.required = true;
-        
-    } else {
-        blocoResponsavel.style.display = 'block';
-        blocoAdulto.style.display = 'none';
-        
-        const emailAdulto = document.getElementById('adulto_email');
-        if (emailAdulto) emailAdulto.required = false;
-        
-        toggleResponsavel();
+document.addEventListener('DOMContentLoaded', function () {
+    const tipoAluna = document.getElementById('tipo_aluna');
+    const tipoAlunaTexto = document.getElementById('tipo_aluna_texto');
+    const tipoAlunaDescricao = document.getElementById('tipo_aluna_descricao');
+    const responsavelWrapper = document.getElementById('responsavel_wrapper');
+    const usuarioWrapper = document.getElementById('usuario_wrapper');
+    const cpfWrapper = document.getElementById('cpf_wrapper');
+
+    function atualizarCamposTipo() {
+        const tipo = tipoAluna.value;
+
+        if (tipo === 'adulto') {
+            tipoAlunaTexto.textContent = 'Adulta';
+            tipoAlunaTexto.style.color = '#6b2d8f';
+            tipoAlunaDescricao.textContent = 'Para aluna adulta, o acesso é feito pelo usuário vinculado abaixo.';
+            responsavelWrapper.style.display = 'none';
+            usuarioWrapper.style.display = 'block';
+            cpfWrapper.style.display = 'none';
+        } else {
+            tipoAlunaTexto.textContent = 'Infantil';
+            tipoAlunaTexto.style.color = '#6f627b';
+            tipoAlunaDescricao.textContent = 'Para aluna infantil, o acesso é feito pela conta da responsável vinculada.';
+            responsavelWrapper.style.display = 'block';
+            usuarioWrapper.style.display = 'none';
+            cpfWrapper.style.display = 'grid';
+        }
     }
-}
 
-function toggleResponsavel() {
-    const tipo = document.querySelector('input[name="tipo_responsavel"]:checked').value;
-    
-    const novoDiv = document.getElementById('novo-responsavel');
-    const existenteDiv = document.getElementById('responsavel-existente');
-    const selectResp = document.getElementById('select-responsavel');
-
-    const camposNovo = [
-        'responsavel_nome',
-        'responsavel_sobrenome',
-        'responsavel_email',
-        'responsavel_telefone',
-        'responsavel_senha'
-    ];
-    
-    if (tipo === 'existente') {
-        novoDiv.style.display = 'none';
-        existenteDiv.style.display = 'block';
-
-        if (selectResp) selectResp.required = true;
-
-        camposNovo.forEach(id => {
-            const campo = document.getElementById(id);
-            if (campo) campo.required = false;
-        });
-
-    } else {
-        novoDiv.style.display = 'block';
-        existenteDiv.style.display = 'none';
-
-        if (selectResp) selectResp.required = false;
-
-        const emailCampo = document.getElementById('responsavel_email');
-        if (emailCampo) emailCampo.required = true;
-        
-        camposNovo.forEach(id => {
-            const campo = document.getElementById(id);
-            if (campo && id !== 'responsavel_email') campo.required = false;
-        });
+    if (tipoAluna) {
+        tipoAluna.addEventListener('change', atualizarCamposTipo);
+        atualizarCamposTipo();
     }
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    toggleTipoAluna();
-    toggleResponsavel();
 });
 </script>
-
 {% endblock %}
