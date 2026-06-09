@@ -24,9 +24,20 @@
                     <strong>Aluna:</strong> {{ cobranca.participacao.aluna.nome }}<br>
                     <strong>Tipo:</strong> {{ cobranca.get_tipo_display }}<br>
                     <strong>Descrição:</strong> {{ cobranca.descricao }}<br>
-                    <strong>Valor base:</strong> R$ {{ cobranca.valor_total }}<br>
+
+                    {% if cobranca.tipo == 'figurino' %}
+                        <strong>Valor base:</strong> R$ {{ cobranca.valor_total }}<br>
+                        <strong>Valor do figurino à vista:</strong> R$ {{ cobranca.valor_figurino_avista|default:"-" }}<br>
+                        {% if cobranca.permitir_parcelamento %}
+                            <strong>Valor do figurino parcelado:</strong> R$ {{ cobranca.valor_figurino_parcelado|default:"-" }}<br>
+                        {% endif %}
+                    {% else %}
+                        <strong>Valor base:</strong> R$ {{ cobranca.valor_total }}<br>
+                    {% endif %}
+
                     <strong>Status:</strong> {{ cobranca.get_status_display }}
-                    {% if cobranca.desconto_irmaos %}
+
+                    {% if cobranca.desconto_irmaos and cobranca.tipo != 'figurino' %}
                         <br><strong>Desconto especial:</strong> Irmãs(ãos)
                     {% endif %}
                 </p>
@@ -114,9 +125,15 @@
                                 {% endfor %}
                             </div>
 
-                            <p style="margin-top: 1rem; color: #666; font-size: 0.95rem;">
-                                Os valores e descontos exibidos acima já consideram automaticamente o tipo da cobrança, a forma de pagamento escolhida e as regras vigentes do período.
-                            </p>
+                            {% if cobranca.tipo == 'figurino' %}
+                                <p style="margin-top: 1rem; color: #666; font-size: 0.95rem;">
+                                    Para o figurino, o valor exibido acima muda conforme a forma de pagamento escolhida: à vista ou parcelado.
+                                </p>
+                            {% else %}
+                                <p style="margin-top: 1rem; color: #666; font-size: 0.95rem;">
+                                    Os valores e descontos exibidos acima já consideram automaticamente o tipo da cobrança, a forma de pagamento escolhida e as regras vigentes do período.
+                                </p>
+                            {% endif %}
 
                             <p style="margin-top: 0.5rem; color: #666; font-size: 0.95rem;">
                                 Após escolher, as parcelas serão geradas e liberadas para pagamento via Pix.

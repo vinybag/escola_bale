@@ -2267,7 +2267,9 @@ def participacao_cobrancas(request, pk):
         return redirect('home')
 
     try:
-        from decimal import Decimal
+        from decimal import Decimal, InvalidOperation
+        from django.core.exceptions import ValidationError
+        from django.shortcuts import get_object_or_404
         from django.utils.dateparse import parse_date
         from espetaculo.models import ParticipacaoEspetaculo, CobrancaEspetaculo
 
@@ -2282,22 +2284,49 @@ def participacao_cobrancas(request, pk):
 
         if request.method == 'POST':
             tipo = request.POST.get('tipo')
-            descricao = request.POST.get('descricao')
-            valor_total = request.POST.get('valor_total')
+            descricao = (request.POST.get('descricao') or '').strip()
+            valor_total = (request.POST.get('valor_total') or '').strip()
             permitir_parcelamento = request.POST.get('permitir_parcelamento') == 'on'
             desconto_irmaos = request.POST.get('desconto_irmaos') == 'on'
             max_parcelas = request.POST.get('max_parcelas') or 1
             vencimento_primeira_parcela = request.POST.get('vencimento_primeira_parcela')
+
+            valor_figurino_avista = (request.POST.get('valor_figurino_avista') or '').strip()
+            valor_figurino_parcelado = (request.POST.get('valor_figurino_parcelado') or '').strip()
 
             if not tipo or not descricao or not valor_total:
                 messages.error(request, 'Preencha os campos obrigatórios da cobrança.')
                 return redirect('admin_dashboard:participacao_cobrancas', pk=pk)
 
             try:
-                valor_total = Decimal(str(valor_total))
-            except Exception:
+                valor_total = Decimal(valor_total.replace(',', '.'))
+            except (InvalidOperation, AttributeError):
                 messages.error(request, 'Valor total inválido.')
                 return redirect('admin_dashboard:participacao_cobrancas', pk=pk)
+
+            valor_figurino_avista_decimal = None
+            valor_figurino_parcelado_decimal = None
+
+            if tipo == 'figurino':
+                if not valor_figurino_avista:
+                    messages.error(request, 'Informe o valor à vista do figurino.')
+                    return redirect('admin_dashboard:participacao_cobrancas', pk=pk)
+
+                try:
+                    valor_figurino_avista_decimal = Decimal(valor_figurino_avista.replace(',', '.'))
+                except (InvalidOperation, AttributeError):
+                    messages.error(request, 'Valor à vista do figurino inválido.')
+                    return redirect('admin_dashboard:participacao_cobrancas', pk=pk)
+
+                if permitir_parcelamento and valor_figurino_parcelado:
+                    try:
+                        valor_figurino_parcelado_decimal = Decimal(valor_figurino_parcelado.replace(',', '.'))
+                    except (InvalidOperation, AttributeError):
+                        messages.error(request, 'Valor parcelado do figurino inválido.')
+                        return redirect('admin_dashboard:participacao_cobrancas', pk=pk)
+                elif permitir_parcelamento and not valor_figurino_parcelado:
+                    messages.error(request, 'Informe o valor parcelado do figurino.')
+                    return redirect('admin_dashboard:participacao_cobrancas', pk=pk)
 
             try:
                 max_parcelas = int(max_parcelas)
@@ -2318,7 +2347,7 @@ def participacao_cobrancas(request, pk):
                 messages.error(request, 'Data de vencimento inválida.')
                 return redirect('admin_dashboard:participacao_cobrancas', pk=pk)
 
-            CobrancaEspetaculo.objects.create(
+            cobranca = CobrancaEspetaculo(
                 participacao=participacao,
                 tipo=tipo,
                 descricao=descricao,
@@ -2327,7 +2356,21 @@ def participacao_cobrancas(request, pk):
                 max_parcelas=max_parcelas,
                 vencimento_primeira_parcela=data_vencimento,
                 desconto_irmaos=desconto_irmaos,
+                valor_figurino_avista=valor_figurino_avista_decimal,
+                valor_figurino_parcelado=valor_figurino_parcelado_decimal,
             )
+
+            try:
+                cobranca.full_clean()
+                cobranca.save()
+            except ValidationError as e:
+                if hasattr(e, 'message_dict'):
+                    for mensagens in e.message_dict.values():
+                        for mensagem in mensagens:
+                            messages.error(request, mensagem)
+                else:
+                    messages.error(request, 'Erro de validação ao criar cobrança.')
+                return redirect('admin_dashboard:participacao_cobrancas', pk=pk)
 
             messages.success(request, 'Cobrança criada com sucesso.')
             return redirect('admin_dashboard:participacao_cobrancas', pk=pk)
@@ -2436,7 +2479,7 @@ from django.db import transaction
 
 @login_required
 def cobranca_espetaculo_escolher_parcelas(request, pk):
-    """Aluna escolhe quantidade de parcelas e cria cobranças Pix no Asaas."""
+    """Responsável escolhe quantidade de parcelas e cria cobranças Pix no Asaas."""
 
     if request.method != 'POST':
         messages.error(request, 'Método inválido.')
@@ -2444,6 +2487,8 @@ def cobranca_espetaculo_escolher_parcelas(request, pk):
 
     try:
         from decimal import Decimal
+        from django.db import transaction
+        from django.shortcuts import get_object_or_404
         from espetaculo.models import CobrancaEspetaculo, ParcelaCobrancaEspetaculo
         from pagamentos.services.asaas import (
             AsaasError,
@@ -2515,7 +2560,12 @@ def cobranca_espetaculo_escolher_parcelas(request, pk):
             f'{cobranca.participacao.aluna.nome}'
         )
 
-        if percentual_desconto > Decimal('0.00'):
+        if cobranca.tipo == 'figurino':
+            if num_parcelas == 1:
+                descricao_base += ' - valor à vista'
+            else:
+                descricao_base += f' - {num_parcelas}x com valor parcelado'
+        elif percentual_desconto > Decimal('0.00'):
             descricao_base += f' - desconto de {percentual_desconto}%'
 
         billing_type = 'PIX'
@@ -2571,7 +2621,12 @@ def cobranca_espetaculo_escolher_parcelas(request, pk):
 
                 cobranca.atualizar_status()
 
-            if percentual_desconto > Decimal('0.00'):
+            if cobranca.tipo == 'figurino':
+                messages.success(
+                    request,
+                    f'Cobrança de figurino em {num_parcelas}x enviada com sucesso! Pague via Pix abaixo.'
+                )
+            elif percentual_desconto > Decimal('0.00'):
                 messages.success(
                     request,
                     f'Cobrança em {num_parcelas}x enviada com sucesso, com {percentual_desconto}% de desconto! Pague via Pix abaixo.'
@@ -2618,7 +2673,12 @@ def cobranca_espetaculo_escolher_parcelas(request, pk):
 
                 cobranca.atualizar_status()
 
-            if percentual_desconto > Decimal('0.00'):
+            if cobranca.tipo == 'figurino':
+                messages.success(
+                    request,
+                    'Cobrança de figurino à vista enviada com sucesso! Pague via Pix abaixo.'
+                )
+            elif percentual_desconto > Decimal('0.00'):
                 messages.success(
                     request,
                     f'Cobrança à vista enviada com sucesso, com {percentual_desconto}% de desconto! Pague via Pix abaixo.'

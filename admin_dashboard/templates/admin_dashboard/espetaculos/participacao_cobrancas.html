@@ -37,7 +37,9 @@
                 </div>
 
                 <div>
-                    <label for="valor_total" style="display: block; margin-bottom: 0.5rem; font-weight: bold;">Valor total</label>
+                    <label for="valor_total" style="display: block; margin-bottom: 0.5rem; font-weight: bold;">
+                        Valor total/base
+                    </label>
                     <input type="number" step="0.01" min="0" name="valor_total" id="valor_total" required
                            style="width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 6px;">
                 </div>
@@ -55,6 +57,36 @@
                 </div>
             </div>
 
+            <div id="campos_figurino"
+                 style="display: none; background: #f8f9fa; border: 1px solid #e2e6ea; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+                <p style="margin: 0 0 1rem 0; font-weight: bold; color: #2c3e50;">
+                    Valores específicos do figurino
+                </p>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;">
+                    <div>
+                        <label for="valor_figurino_avista" style="display: block; margin-bottom: 0.5rem; font-weight: bold;">
+                            Valor do figurino à vista
+                        </label>
+                        <input type="number" step="0.01" min="0" name="valor_figurino_avista" id="valor_figurino_avista"
+                               style="width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 6px;">
+                    </div>
+
+                    <div>
+                        <label for="valor_figurino_parcelado" style="display: block; margin-bottom: 0.5rem; font-weight: bold;">
+                            Valor do figurino parcelado
+                        </label>
+                        <input type="number" step="0.01" min="0" name="valor_figurino_parcelado" id="valor_figurino_parcelado"
+                               style="width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 6px;">
+                    </div>
+                </div>
+
+                <p style="margin: 0.85rem 0 0 0; color: #666; font-size: 0.92rem; line-height: 1.4;">
+                    Para figurino, a área da responsável exibirá o valor à vista quando escolher 1 parcela
+                    e o valor parcelado quando escolher 2x ou mais.
+                </p>
+            </div>
+
             <div style="margin-bottom: 1rem;">
                 <label for="descricao" style="display: block; margin-bottom: 0.5rem; font-weight: bold;">Descrição</label>
                 <input type="text" name="descricao" id="descricao" required
@@ -67,7 +99,7 @@
                     Permitir parcelamento
                 </label>
 
-                <label style="display: flex; align-items: center; gap: 0.5rem;">
+                <label id="campo_desconto_irmaos_wrapper" style="display: flex; align-items: center; gap: 0.5rem;">
                     <input type="checkbox" name="desconto_irmaos" id="desconto_irmaos">
                     Aplicar desconto de irmãs(ãos)
                 </label>
@@ -78,7 +110,7 @@
                     <strong>Regras atuais:</strong>
                 </p>
                 <p style="margin: 0.2rem 0;">Taxa de palco: 5% à vista; 12% à vista para irmãs(ãos); 10% parcelado para irmãs(ãos).</p>
-                <p style="margin: 0.2rem 0;">Figurino: 10% à vista.</p>
+                <p style="margin: 0.2rem 0;">Figurino: usa valores fixos cadastrados, um à vista e outro parcelado.</p>
                 <p style="margin: 0.2rem 0;">A escolha entre à vista ou parcelado é feita pela própria responsável na área dela.</p>
             </div>
 
@@ -122,7 +154,15 @@
                                     {{ cobranca.descricao }}
                                 </td>
                                 <td style="padding: 0.75rem; border: 1px solid #ddd;">
-                                    R$ {{ cobranca.valor_total }}
+                                    {% if cobranca.tipo == 'figurino' %}
+                                        <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                                            <span>Base: R$ {{ cobranca.valor_total }}</span>
+                                            <span>À vista: R$ {{ cobranca.valor_figurino_avista|default:"0.00" }}</span>
+                                            <span>Parcelado: R$ {{ cobranca.valor_figurino_parcelado|default:"0.00" }}</span>
+                                        </div>
+                                    {% else %}
+                                        R$ {{ cobranca.valor_total }}
+                                    {% endif %}
                                 </td>
                                 <td style="padding: 0.75rem; border: 1px solid #ddd;">
                                     {% if cobranca.permitir_parcelamento %}
@@ -132,10 +172,14 @@
                                     {% endif %}
                                 </td>
                                 <td style="padding: 0.75rem; border: 1px solid #ddd;">
-                                    {% if cobranca.desconto_irmaos %}
-                                        Sim
+                                    {% if cobranca.tipo == 'figurino' %}
+                                        —
                                     {% else %}
-                                        Não
+                                        {% if cobranca.desconto_irmaos %}
+                                            Sim
+                                        {% else %}
+                                            Não
+                                        {% endif %}
                                     {% endif %}
                                 </td>
                                 <td style="padding: 0.75rem; border: 1px solid #ddd;">
@@ -221,4 +265,55 @@
         {% endif %}
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const tipo = document.getElementById('tipo');
+        const permitirParcelamento = document.getElementById('permitir_parcelamento');
+        const maxParcelas = document.getElementById('max_parcelas');
+        const descontoIrmaos = document.getElementById('desconto_irmaos');
+        const descontoIrmaosWrapper = document.getElementById('campo_desconto_irmaos_wrapper');
+        const camposFigurino = document.getElementById('campos_figurino');
+        const valorFigurinoAvista = document.getElementById('valor_figurino_avista');
+        const valorFigurinoParcelado = document.getElementById('valor_figurino_parcelado');
+
+        function atualizarFormulario() {
+            const tipoSelecionado = tipo.value;
+            const parcelamentoMarcado = permitirParcelamento.checked;
+            const ehFigurino = tipoSelecionado === 'figurino';
+
+            camposFigurino.style.display = ehFigurino ? 'block' : 'none';
+            descontoIrmaosWrapper.style.display = ehFigurino ? 'none' : 'flex';
+
+            if (ehFigurino) {
+                descontoIrmaos.checked = false;
+                valorFigurinoAvista.required = true;
+                valorFigurinoParcelado.required = parcelamentoMarcado;
+            } else {
+                valorFigurinoAvista.required = false;
+                valorFigurinoParcelado.required = false;
+                valorFigurinoAvista.value = '';
+                valorFigurinoParcelado.value = '';
+            }
+
+            if (!parcelamentoMarcado) {
+                maxParcelas.value = 1;
+                maxParcelas.setAttribute('readonly', 'readonly');
+                if (ehFigurino) {
+                    valorFigurinoParcelado.required = false;
+                }
+            } else {
+                maxParcelas.removeAttribute('readonly');
+                if (ehFigurino) {
+                    valorFigurinoParcelado.required = true;
+                }
+            }
+        }
+
+        tipo.addEventListener('change', atualizarFormulario);
+        permitirParcelamento.addEventListener('change', atualizarFormulario);
+
+        atualizarFormulario();
+    });
+</script>
 {% endblock %}

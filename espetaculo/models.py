@@ -1,4 +1,5 @@
 from decimal import Decimal, ROUND_HALF_UP
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 
@@ -174,6 +175,21 @@ class CobrancaEspetaculo(models.Model):
         help_text='Aplicar desconto especial para irmãos/irmãs'
     )
 
+    valor_figurino_avista = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text='Preencha apenas para cobranças do tipo figurino.'
+    )
+    valor_figurino_parcelado = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text='Preencha apenas para cobranças do tipo figurino parcelado.'
+    )
+
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pendente')
     ativo = models.BooleanField(default=True)
 
@@ -189,6 +205,41 @@ class CobrancaEspetaculo(models.Model):
 
     def __str__(self):
         return f'{self.get_tipo_display()} - {self.participacao.aluna.nome}'
+
+    def clean(self):
+        super().clean()
+
+        if self.max_parcelas < 1:
+            raise ValidationError({'max_parcelas': 'O número máximo de parcelas deve ser pelo menos 1.'})
+
+        if not self.permitir_parcelamento:
+            self.max_parcelas = 1
+
+        if self.tipo == 'figurino':
+            if self.valor_figurino_avista is None:
+                raise ValidationError({
+                    'valor_figurino_avista': 'Informe o valor à vista do figurino.'
+                })
+
+            if self.permitir_parcelamento:
+                if self.valor_figurino_parcelado is None:
+                    raise ValidationError({
+                        'valor_figurino_parcelado': 'Informe o valor parcelado do figurino.'
+                    })
+
+            if self.valor_figurino_avista is not None and self.valor_figurino_avista <= Decimal('0.00'):
+                raise ValidationError({
+                    'valor_figurino_avista': 'O valor à vista do figurino deve ser maior que zero.'
+                })
+
+            if (
+                self.permitir_parcelamento
+                and self.valor_figurino_parcelado is not None
+                and self.valor_figurino_parcelado <= Decimal('0.00')
+            ):
+                raise ValidationError({
+                    'valor_figurino_parcelado': 'O valor parcelado do figurino deve ser maior que zero.'
+                })
 
     @property
     def pode_pagar_a_vista(self):
@@ -231,7 +282,7 @@ class CobrancaEspetaculo(models.Model):
 
     @property
     def valor_por_parcela_de(self):
-        """Retorna dict {n: valor_por_parcela} considerando descontos."""
+        """Retorna dict {n: valor_por_parcela} considerando descontos ou valores fixos."""
         resultado = {}
         for n in self.opcoes_parcelas:
             if n > 0:
@@ -246,19 +297,33 @@ class CobrancaEspetaculo(models.Model):
     def percentual_desconto_para(self, parcelas):
         parcelas = int(parcelas)
 
+        if self.tipo == 'figurino':
+            return Decimal('0.00')
+
         if self.tipo == 'taxa_palco':
             if parcelas == 1:
                 return Decimal('12.00') if self.desconto_irmaos else Decimal('5.00')
             return Decimal('10.00') if self.desconto_irmaos else Decimal('0.00')
 
-        if self.tipo == 'figurino':
-            if parcelas == 1:
-                return Decimal('10.00')
-            return Decimal('0.00')
-
         return Decimal('0.00')
 
     def valor_com_desconto(self, parcelas):
+        parcelas = int(parcelas)
+
+        if self.tipo == 'figurino':
+            if parcelas == 1:
+                valor = self.valor_figurino_avista if self.valor_figurino_avista is not None else self.valor_total
+                return Decimal(str(valor)).quantize(
+                    Decimal('0.01'),
+                    rounding=ROUND_HALF_UP,
+                )
+
+            valor = self.valor_figurino_parcelado if self.valor_figurino_parcelado is not None else self.valor_total
+            return Decimal(str(valor)).quantize(
+                Decimal('0.01'),
+                rounding=ROUND_HALF_UP,
+            )
+
         percentual = self.percentual_desconto_para(parcelas)
         desconto = (Decimal(str(self.valor_total)) * percentual / Decimal('100')).quantize(
             Decimal('0.01'),
@@ -291,14 +356,16 @@ class CobrancaEspetaculo(models.Model):
                     else:
                         observacao = '5% de desconto à vista'
                 elif self.tipo == 'figurino':
-                    observacao = '10% de desconto à vista'
+                    observacao = 'Valor à vista definido no cadastro'
                 else:
                     observacao = 'Pagamento à vista'
             else:
                 label = f'{parcelas}x'
                 texto_valor = f'R$ {valor_parcela} por parcela'
 
-                if self.tipo == 'taxa_palco' and self.desconto_irmaos:
+                if self.tipo == 'figurino':
+                    observacao = 'Valor parcelado definido no cadastro'
+                elif self.tipo == 'taxa_palco' and self.desconto_irmaos:
                     observacao = '10% de desconto para irmãs(ãos)'
                 else:
                     observacao = 'Sem desconto'
@@ -321,8 +388,18 @@ class CobrancaEspetaculo(models.Model):
         )['total']
         return total or Decimal('0.00')
 
+    def valor_total_efetivo(self):
+        if self.parcelas.exists():
+            total = self.parcelas.aggregate(
+                total=models.Sum('valor')
+            )['total']
+            return total or Decimal('0.00')
+
+        return self.valor_total
+
     def total_pendente(self):
-        return self.valor_total - self.total_pago()
+        pendente = self.valor_total_efetivo() - self.total_pago()
+        return pendente if pendente > Decimal('0.00') else Decimal('0.00')
 
     def atualizar_status(self):
         parcelas = self.parcelas.all()
