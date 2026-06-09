@@ -406,39 +406,44 @@ def aluna_criar(request):
 @login_required
 def aluna_detalhes(request, pk):
     """Detalhes de uma aluna"""
-    
+
     if not request.user.is_staff:
         return redirect('home')
-    
+
     try:
+        from decimal import Decimal
         from usuarios.models import Aluna
         from pagamentos.models import Mensalidade
         from django.db.models import Sum
-        
-        aluna = Aluna.objects.select_related('responsavel').get(pk=pk)
-        
-        # Mensalidades da aluna
+        from django.contrib import messages
+
+        aluna = Aluna.objects.select_related(
+            'responsavel',
+            'usuario'
+        ).prefetch_related(
+            'turmas'
+        ).get(pk=pk)
+
         mensalidades = Mensalidade.objects.filter(aluna=aluna).order_by('-mes_referencia')
-        
-        # Estatisticas
+
         total_pago = mensalidades.filter(status='pago').aggregate(
             total=Sum('valor')
         )['total'] or Decimal('0.00')
-        
+
         total_pendente = mensalidades.filter(status='pendente').count()
-        
+
     except Exception as e:
         from django.contrib import messages
         messages.error(request, f'Aluna nao encontrada: {e}')
         return redirect('admin_dashboard:alunas_list')
-    
+
     context = {
         'aluna': aluna,
-        'mensalidades': mensalidades[:12],  # Ultimas 12 mensalidades
+        'mensalidades': mensalidades[:12],
         'total_pago': total_pago,
         'total_pendente': total_pendente,
     }
-    
+
     return render(request, 'admin_dashboard/alunas/detalhes.html', context)
 
 
