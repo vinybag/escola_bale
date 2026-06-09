@@ -445,33 +445,33 @@ def aluna_detalhes(request, pk):
 @login_required
 def aluna_editar(request, pk):
     """Editar aluna existente"""
-    
+
     if not request.user.is_staff:
         return redirect('home')
-    
+
     try:
         from usuarios.models import Aluna, Perfil
-        aluna = Aluna.objects.get(pk=pk)
+        aluna = Aluna.objects.select_related('responsavel', 'usuario').get(pk=pk)
     except Exception as e:
         from django.contrib import messages
         messages.error(request, f'Aluna nao encontrada: {e}')
         return redirect('admin_dashboard:alunas_list')
-    
+
     if request.method == 'POST':
         try:
             from decimal import Decimal, InvalidOperation
             from django.contrib.auth.models import User
             from usuarios.models import Turma, Perfil
             from django.contrib import messages
-            
-            # Atualiza dados básicos
+            from django.db.models import Q
+
             aluna.nome = request.POST.get('nome')
             aluna.genero = request.POST.get('genero') or None
             aluna.data_nascimento = request.POST.get('data_nascimento') or None
             aluna.ativa = request.POST.get('ativa') == 'on'
             aluna.observacoes = request.POST.get('observacoes', '')
+            aluna.tipo_aluna = request.POST.get('tipo_aluna') or aluna.tipo_aluna
 
-            # NOVOS CAMPOS FINANCEIROS
             valor_mensalidade = request.POST.get('valor_mensalidade')
             dia_vencimento = request.POST.get('dia_vencimento') or 10
             gerar_mensalidade_automatica = request.POST.get('gerar_mensalidade_automatica') == 'on'
@@ -500,15 +500,41 @@ def aluna_editar(request, pk):
                 return redirect('admin_dashboard:aluna_editar', pk=pk)
 
             aluna.gerar_mensalidade_automatica = gerar_mensalidade_automatica
-            
-            # Atualiza responsavel se mudou
+
             responsavel_id = request.POST.get('responsavel')
-            if responsavel_id:
-                aluna.responsavel = User.objects.get(id=responsavel_id)
-            else:
+            usuario_id = request.POST.get('usuario')
+
+            if aluna.tipo_aluna == 'adulto':
                 aluna.responsavel = None
 
-            # NOVO: salva CPF no perfil do responsável
+                if usuario_id:
+                    try:
+                        usuario = User.objects.get(id=usuario_id, is_staff=False)
+                    except User.DoesNotExist:
+                        messages.error(request, 'Usuario selecionado nao foi encontrado.')
+                        return redirect('admin_dashboard:aluna_editar', pk=pk)
+
+                    conflito = Aluna.objects.filter(usuario=usuario).exclude(pk=aluna.pk).exists()
+                    if conflito:
+                        messages.error(request, 'Este usuario ja esta vinculado a outra aluna.')
+                        return redirect('admin_dashboard:aluna_editar', pk=pk)
+
+                    aluna.usuario = usuario
+                else:
+                    aluna.usuario = None
+
+            else:
+                aluna.usuario = None
+
+                if responsavel_id:
+                    try:
+                        aluna.responsavel = User.objects.get(id=responsavel_id, is_staff=False)
+                    except User.DoesNotExist:
+                        messages.error(request, 'Responsavel selecionado nao foi encontrado.')
+                        return redirect('admin_dashboard:aluna_editar', pk=pk)
+                else:
+                    aluna.responsavel = None
+
             cpf = request.POST.get('cpf', '').strip()
             if aluna.responsavel:
                 perfil, _ = Perfil.objects.get_or_create(
@@ -517,8 +543,7 @@ def aluna_editar(request, pk):
                 )
                 perfil.cpf = cpf
                 perfil.save()
-            
-            # Atualiza as turmas
+
             turmas_ids = request.POST.getlist('turmas')
             turmas_selecionadas = []
             for turma_id in turmas_ids:
@@ -530,37 +555,52 @@ def aluna_editar(request, pk):
 
             aluna.save()
             aluna.turmas.set(turmas_selecionadas)
-            
+
             messages.success(request, f'Aluna {aluna.nome} atualizada com sucesso!')
             return redirect('admin_dashboard:aluna_detalhes', pk=aluna.pk)
-            
+
         except Exception as e:
             from django.contrib import messages
             messages.error(request, f'Erro ao atualizar aluna: {e}')
             return redirect('admin_dashboard:aluna_editar', pk=pk)
-    
-    # GET - mostra form preenchido
+
     try:
         from django.contrib.auth.models import User
         from usuarios.models import Turma, Perfil
-        
-        responsaveis = User.objects.filter(is_staff=False).order_by('first_name')
+        from django.db.models import Q
+
+        responsaveis = User.objects.filter(is_staff=False).order_by('first_name', 'username')
+
+        usuarios_adultas = User.objects.filter(is_staff=False).exclude(
+            aluna_vinculada__isnull=False
+        )
+
+        if aluna.usuario_id:
+            usuarios_adultas = User.objects.filter(
+                Q(is_staff=False) &
+                (Q(aluna_vinculada__isnull=True) | Q(id=aluna.usuario_id))
+            ).order_by('first_name', 'username')
+        else:
+            usuarios_adultas = usuarios_adultas.order_by('first_name', 'username')
+
         turmas = Turma.objects.filter(ativa=True).order_by('nome')
         perfil = Perfil.objects.filter(user=aluna.responsavel).first() if aluna.responsavel else None
-        
+
     except Exception as e:
         print(f"Erro ao buscar dados: {e}")
         responsaveis = []
+        usuarios_adultas = []
         turmas = []
         perfil = None
-    
+
     context = {
         'aluna': aluna,
         'responsaveis': responsaveis,
+        'usuarios_adultas': usuarios_adultas,
         'turmas': turmas,
         'perfil': perfil,
     }
-    
+
     return render(request, 'admin_dashboard/alunas/editar.html', context)
 
 from django.contrib import messages

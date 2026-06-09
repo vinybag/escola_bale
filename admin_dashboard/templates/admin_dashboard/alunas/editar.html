@@ -3,10 +3,24 @@
 {% block title %}Editar {{ aluna.nome }}{% endblock %}
 
 {% block content %}
-<div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
+<div class="page-header" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
     <div>
         <h2>Editar Aluna</h2>
         <p>{{ aluna.nome }}</p>
+    </div>
+
+    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+        {% if aluna.tipo_aluna == 'adulto' and aluna.usuario %}
+            <a href="{% url 'admin_dashboard:aluna_definir_senha' aluna.pk %}"
+               style="padding: 0.75rem 1.25rem; background: #0d6efd; color: white; text-decoration: none; border-radius: 6px; font-weight: 500;">
+                Definir senha
+            </a>
+        {% endif %}
+
+        <a href="{% url 'admin_dashboard:aluna_detalhes' aluna.pk %}"
+           style="padding: 0.75rem 1.25rem; background: #f5f5f5; color: #333; text-decoration: none; border-radius: 6px; font-weight: 500;">
+            Voltar
+        </a>
     </div>
 </div>
 
@@ -18,7 +32,9 @@
             
             <!-- Dados da Aluna -->
             <div>
-                <h3 style="margin-bottom: 1rem; color: #2c3e50; font-size: 1rem; text-transform: uppercase; font-weight: 600;">Dados da Aluna</h3>
+                <h3 style="margin-bottom: 1rem; color: #2c3e50; font-size: 1rem; text-transform: uppercase; font-weight: 600;">
+                    Dados da Aluna
+                </h3>
                 
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                     <div>
@@ -50,6 +66,42 @@
                                style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
                     </div>
                 </div>
+
+                <div style="margin-bottom: 1rem; padding: 1rem; background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px;">
+                    <div style="display: flex; flex-direction: column; gap: 0.45rem;">
+                        <div>
+                            <strong style="color: #2c3e50;">Tipo da aluna:</strong>
+                            {% if aluna.tipo_aluna == 'adulto' %}
+                                <span style="color: #0d6efd;">Adulta</span>
+                            {% else %}
+                                <span style="color: #6c757d;">Infantil</span>
+                            {% endif %}
+                        </div>
+
+                        {% if aluna.tipo_aluna == 'adulto' %}
+                            {% if aluna.usuario %}
+                                <div style="color: #555;">
+                                    <strong>Usuário vinculado:</strong>
+                                    {{ aluna.usuario.get_full_name|default:aluna.usuario.username }}
+                                    {% if aluna.usuario.email %}
+                                        - {{ aluna.usuario.email }}
+                                    {% endif %}
+                                </div>
+                                <div style="color: #666; font-size: 0.92rem;">
+                                    A senha dessa aluna pode ser redefinida pelo botão "Definir senha".
+                                </div>
+                            {% else %}
+                                <div style="color: #856404; font-size: 0.92rem;">
+                                    Esta aluna adulta ainda não possui um usuário vinculado, então o botão de senha não aparece.
+                                </div>
+                            {% endif %}
+                        {% else %}
+                            <div style="color: #666; font-size: 0.92rem;">
+                                Para aluna infantil, o acesso é feito pela conta da responsável vinculada.
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
                 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                     <div>
@@ -66,6 +118,17 @@
                     </div>
                     
                     <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Tipo da aluna</label>
+                        <select id="tipo_aluna" name="tipo_aluna"
+                                style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                            <option value="infantil" {% if aluna.tipo_aluna == 'infantil' %}selected{% endif %}>Infantil</option>
+                            <option value="adulto" {% if aluna.tipo_aluna == 'adulto' %}selected{% endif %}>Adulto</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div id="responsavel_wrapper" {% if aluna.tipo_aluna == 'adulto' %}style="display:none;"{% endif %}>
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Responsavel</label>
                         <select id="responsavel" name="responsavel"
                                 style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
@@ -77,9 +140,23 @@
                             {% endfor %}
                         </select>
                     </div>
+
+                    <div id="usuario_wrapper" {% if aluna.tipo_aluna != 'adulto' %}style="display:none;"{% endif %}>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Usuário da aluna adulta</label>
+                        <select id="usuario" name="usuario"
+                                style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                            <option value="">Selecione um usuário</option>
+                            {% for usuario in usuarios_adultas %}
+                                <option value="{{ usuario.id }}" {% if aluna.usuario and aluna.usuario.id == usuario.id %}selected{% endif %}>
+                                    {{ usuario.get_full_name|default:usuario.username }} - {{ usuario.email }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <small style="color: #888;">Esse usuário será usado para login e redefinição de senha da aluna adulta.</small>
+                    </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div id="cpf_wrapper" style="display: {% if aluna.tipo_aluna == 'adulto' %}none{% else %}grid{% endif %}; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                     <div>
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">CPF do responsável</label>
                         <input type="text"
@@ -158,10 +235,18 @@
             </div>
             
             <!-- Botoes -->
-            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+            <div style="display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap;">
                 <button type="submit" class="btn btn-primary" style="background: #3498db; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 5px; cursor: pointer;">
                     Salvar Alteracoes
                 </button>
+
+                {% if aluna.tipo_aluna == 'adulto' and aluna.usuario %}
+                    <a href="{% url 'admin_dashboard:aluna_definir_senha' aluna.pk %}"
+                       style="padding: 0.75rem 1.5rem; background: #0d6efd; color: white; border-radius: 5px; text-decoration: none; font-weight: 500;">
+                        Definir senha
+                    </a>
+                {% endif %}
+
                 <a href="{% url 'admin_dashboard:aluna_detalhes' aluna.pk %}"
                    style="padding: 0.75rem 1.5rem; background: #f5f5f5; color: #333; border-radius: 5px; text-decoration: none; font-weight: 500;">
                     Cancelar
@@ -171,4 +256,33 @@
         </div>
     </form>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const tipoAluna = document.getElementById('tipo_aluna');
+    const responsavelWrapper = document.getElementById('responsavel_wrapper');
+    const usuarioWrapper = document.getElementById('usuario_wrapper');
+    const cpfWrapper = document.getElementById('cpf_wrapper');
+
+    function atualizarCamposTipo() {
+        const tipo = tipoAluna.value;
+
+        if (tipo === 'adulto') {
+            responsavelWrapper.style.display = 'none';
+            usuarioWrapper.style.display = 'block';
+            cpfWrapper.style.display = 'none';
+        } else {
+            responsavelWrapper.style.display = 'block';
+            usuarioWrapper.style.display = 'block';
+            usuarioWrapper.style.display = 'none';
+            cpfWrapper.style.display = 'grid';
+        }
+    }
+
+    if (tipoAluna) {
+        tipoAluna.addEventListener('change', atualizarCamposTipo);
+        atualizarCamposTipo();
+    }
+});
+</script>
 {% endblock %}
