@@ -472,3 +472,21 @@ class ParcelaCobrancaEspetaculo(models.Model):
         self.data_pagamento = timezone.now()
         self.save(update_fields=['status', 'data_pagamento'])
         self.cobranca.atualizar_status()
+
+    def atualizar_status_asaas(self, novo_status):
+        novo_status = (novo_status or '').strip()
+
+        campos_para_salvar = ['asaas_status']
+        self.asaas_status = novo_status
+
+        if novo_status in ['RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH']:
+            if self.status != 'pago':
+                self.status = 'pago'
+                campos_para_salvar.append('status')
+
+            if not self.data_pagamento:
+                self.data_pagamento = timezone.now()
+                campos_para_salvar.append('data_pagamento')
+
+        self.save(update_fields=campos_para_salvar)
+        self.cobranca.atualizar_status()

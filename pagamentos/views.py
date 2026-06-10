@@ -254,9 +254,22 @@ def pagamento_cancelado(request):
 
 # ==================== WEBHOOK DO ASAAS ====================
 
+def localizar_parcela_espetaculo_por_payment_id(payment_id):
+    from espetaculo.models import ParcelaCobrancaEspetaculo
+
+    if not payment_id:
+        return None
+
+    return (
+        ParcelaCobrancaEspetaculo.objects
+        .select_related('cobranca', 'cobranca__participacao')
+        .filter(asaas_payment_id=payment_id)
+        .first()
+    )
+
 @csrf_exempt
 def webhook_asaas(request):
-    """Recebe notificações do Asaas quando um pagamento PIX é confirmado"""
+    """Recebe notificações do Asaas quando um pagamento é atualizado"""
 
     if request.method == 'POST':
         token_recebido = (
@@ -276,13 +289,15 @@ def webhook_asaas(request):
         try:
             dados = json.loads(request.body)
             evento = dados.get('event')
-            payment = dados.get('payment', {})
+            payment = dados.get('payment', {}) or {}
             payment_id = payment.get('id')
             external_reference = payment.get('externalReference')
             customer_id = payment.get('customer')
+            payment_status = payment.get('status')
 
             print(f"[WEBHOOK] Evento: {evento}, Payment ID: {payment_id}")
             print(f"[WEBHOOK] External Reference: {external_reference}")
+            print(f"[WEBHOOK] Payment status: {payment_status}")
             print(f"[WEBHOOK] Dados completos: {json.dumps(dados, indent=2, ensure_ascii=False)}")
 
             if evento == 'PAYMENT_RECEIVED' and payment_id:
@@ -295,8 +310,15 @@ def webhook_asaas(request):
                 if mensalidade:
                     marcar_mensalidade_como_paga(mensalidade, 'pix', payment_id)
                     print(f"[WEBHOOK] Mensalidade {mensalidade.id} atualizada para PAGO")
+                    return HttpResponse(status=200)
+
+                parcela = localizar_parcela_espetaculo_por_payment_id(payment_id)
+
+                if parcela:
+                    parcela.atualizar_status_asaas(payment_status)
+                    print(f"[WEBHOOK] Parcela de espetáculo {parcela.id} atualizada com status {payment_status}")
                 else:
-                    print(f"[WEBHOOK] Nenhuma mensalidade localizada para payment_id {payment_id}")
+                    print(f"[WEBHOOK] Nenhuma mensalidade ou parcela de espetáculo localizada para payment_id {payment_id}")
 
                 return HttpResponse(status=200)
 
