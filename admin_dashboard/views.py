@@ -642,74 +642,161 @@ def mensalidades_list(request):
     return render(request, 'admin_dashboard/mensalidades/list.html', context)
 
 
+from decimal import Decimal, InvalidOperation
+from datetime import datetime
+
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.db import IntegrityError
+from django.shortcuts import redirect, render
+
+from pagamentos.models import Mensalidade
+from usuarios.models import Aluna
+
+
 @login_required
 def mensalidade_criar(request):
     """Criar mensalidade manual"""
-    
+
     if not request.user.is_staff:
         return redirect('home')
-    
+
+    def get_alunas():
+        return Aluna.objects.filter(ativa=True).order_by('nome')
+
+    def resolver_responsavel_financeiro(aluna):
+        if aluna.responsavel:
+            return aluna.responsavel
+
+        if aluna.tipo_aluna == 'adulto' and aluna.usuario:
+            return aluna.usuario
+
+        return None
+
     if request.method == 'POST':
+        aluna_id = (request.POST.get('aluna') or '').strip()
+        mes_referencia = (request.POST.get('mes_referencia') or '').strip()
+        data_vencimento = (request.POST.get('data_vencimento') or '').strip()
+        valor = (request.POST.get('valor') or '').strip()
+        status = (request.POST.get('status') or 'pendente').strip()
+
+        alunas = get_alunas()
+
+        context = {
+            'alunas': alunas,
+            'form_data': {
+                'aluna': aluna_id,
+                'mes_referencia': mes_referencia,
+                'data_vencimento': data_vencimento,
+                'valor': valor,
+                'status': status or 'pendente',
+            }
+        }
+
+        if not all([aluna_id, mes_referencia, data_vencimento, valor]):
+            messages.error(request, 'Preencha todos os campos obrigatórios.')
+            return render(request, 'admin_dashboard/mensalidades/criar.html', context)
+
         try:
-            from pagamentos.models import Mensalidade
-            from usuarios.models import Aluna
-            from django.contrib import messages
-            from datetime import datetime
-            
-            # Pega dados do form
-            aluna_id = request.POST.get('aluna')
-            mes_referencia = request.POST.get('mes_referencia')
-            data_vencimento = request.POST.get('data_vencimento')
-            valor = request.POST.get('valor')
-            status = request.POST.get('status', 'pendente')
-            
-            # Validacao
-            if not all([aluna_id, mes_referencia, data_vencimento, valor]):
-                messages.error(request, 'Preencha todos os campos obrigatorios!')
-                return redirect('admin_dashboard:mensalidade_criar')
-            
-            # Busca aluna
-            aluna = Aluna.objects.get(id=aluna_id)
-            
-            # Converte mes_referencia de "2026-03" para date "2026-03-01"
-            mes_ref_date = datetime.strptime(mes_referencia + '-01', '%Y-%m-%d').date()
-            
-            # Converte data_vencimento de string para date
+            aluna = Aluna.objects.get(id=aluna_id, ativa=True)
+        except Aluna.DoesNotExist:
+            messages.error(request, 'Aluna não encontrada ou inativa.')
+            return render(request, 'admin_dashboard/mensalidades/criar.html', context)
+
+        responsavel_financeiro = resolver_responsavel_financeiro(aluna)
+
+        if not responsavel_financeiro:
+            if aluna.tipo_aluna == 'infantil':
+                mensagem = (
+                    f'Não foi possível criar a mensalidade de {aluna.nome}, '
+                    'pois ela é infantil e não possui responsável vinculado.'
+                )
+            else:
+                mensagem = (
+                    f'Não foi possível criar a mensalidade de {aluna.nome}, '
+                    'pois ela não possui responsável financeiro nem usuário próprio vinculado.'
+                )
+
+            messages.error(request, mensagem)
+            return render(request, 'admin_dashboard/mensalidades/criar.html', context)
+
+        try:
+            mes_ref_date = datetime.strptime(f'{mes_referencia}-01', '%Y-%m-%d').date()
+        except ValueError:
+            messages.error(request, 'Mês de referência inválido.')
+            return render(request, 'admin_dashboard/mensalidades/criar.html', context)
+
+        try:
             data_venc_date = datetime.strptime(data_vencimento, '%Y-%m-%d').date()
-            
-            # Cria mensalidade COM RESPONSAVEL
+        except ValueError:
+            messages.error(request, 'Data de vencimento inválida.')
+            return render(request, 'admin_dashboard/mensalidades/criar.html', context)
+
+        try:
+            valor_decimal = Decimal(valor)
+        except (InvalidOperation, TypeError):
+            messages.error(request, 'Valor inválido para a mensalidade.')
+            return render(request, 'admin_dashboard/mensalidades/criar.html', context)
+
+        if valor_decimal <= 0:
+            messages.error(request, 'O valor da mensalidade deve ser maior que zero.')
+            return render(request, 'admin_dashboard/mensalidades/criar.html', context)
+
+        if status not in ['pendente', 'pago', 'atrasado', 'cancelado']:
+            messages.error(request, 'Status inválido.')
+            return render(request, 'admin_dashboard/mensalidades/criar.html', context)
+
+        mensalidade_existente = Mensalidade.objects.filter(
+            aluna=aluna,
+            mes_referencia=mes_ref_date
+        ).first()
+
+        if mensalidade_existente:
+            messages.error(
+                request,
+                f'Já existe uma mensalidade para {aluna.nome} no mês {mes_ref_date.strftime("%m/%Y")}.'
+            )
+            return render(request, 'admin_dashboard/mensalidades/criar.html', context)
+
+        try:
             mensalidade = Mensalidade.objects.create(
                 aluna=aluna,
-                responsavel=aluna.responsavel,
+                responsavel=responsavel_financeiro,
                 mes_referencia=mes_ref_date,
                 data_vencimento=data_venc_date,
-                valor=Decimal(valor),
+                valor=valor_decimal,
                 status=status,
             )
-            
-            messages.success(request, f'Mensalidade criada com sucesso!')
-            return redirect('admin_dashboard:mensalidades_list')
-            
-        except Exception as e:
-            from django.contrib import messages
-            messages.error(request, f'Erro ao criar mensalidade: {e}')
-            print(f"Erro detalhado: {e}")
-            import traceback
-            traceback.print_exc()
-            return redirect('admin_dashboard:mensalidade_criar')
-    
-    # GET - mostra form
+        except IntegrityError:
+            messages.error(
+                request,
+                f'Não foi possível criar a mensalidade de {aluna.nome}. Verifique se já existe uma mensalidade para esse mês.'
+            )
+            return render(request, 'admin_dashboard/mensalidades/criar.html', context)
+
+        messages.success(
+            request,
+            f'Mensalidade criada com sucesso para {mensalidade.aluna.nome}.'
+        )
+        return redirect('admin_dashboard:mensalidades_list')
+
     try:
-        from usuarios.models import Aluna
         alunas = Aluna.objects.filter(ativa=True).order_by('nome')
     except Exception as e:
         print(f"Erro ao buscar alunas: {e}")
         alunas = []
-    
+
     context = {
         'alunas': alunas,
+        'form_data': {
+            'aluna': '',
+            'mes_referencia': '',
+            'data_vencimento': '',
+            'valor': '',
+            'status': 'pendente',
+        }
     }
-    
+
     return render(request, 'admin_dashboard/mensalidades/criar.html', context)
 
 @login_required

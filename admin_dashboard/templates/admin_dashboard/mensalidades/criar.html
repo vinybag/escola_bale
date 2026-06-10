@@ -3,93 +3,474 @@
 {% block title %}Nova Mensalidade{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <h2>Nova Mensalidade</h2>
-    <p>Criar mensalidade manual</p>
+<style>
+    .mensalidade-create-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 2rem;
+    }
+
+    .mensalidade-create-header-actions {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .mensalidade-create-shell {
+        max-width: 980px;
+    }
+
+    .mensalidade-create-main {
+        background: white;
+        border: 1px solid #ebe3f1;
+        border-radius: 18px;
+        box-shadow: 0 8px 24px rgba(107, 45, 143, 0.08);
+        overflow: hidden;
+    }
+
+    .mensalidade-create-top {
+        padding: 1.5rem 2rem;
+        background: linear-gradient(135deg, #ffffff 0%, #f5eff9 100%);
+        border-bottom: 1px solid #ece3f2;
+    }
+
+    .mensalidade-create-body {
+        padding: 2rem;
+        display: grid;
+        gap: 1.5rem;
+        background: #fcfbfd;
+    }
+
+    .mensalidade-create-section {
+        background: white;
+        border: 1px solid #ece3f2;
+        border-radius: 16px;
+        padding: 1.5rem;
+    }
+
+    .mensalidade-grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .mensalidade-grid-1 {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .mensalidade-input,
+    .mensalidade-select {
+        width: 100%;
+        padding: 0.82rem 0.95rem;
+        border: 1px solid #d9cbe4;
+        border-radius: 10px;
+        font-size: 1rem;
+        background: #fff;
+        color: #2f2438;
+    }
+
+    .mensalidade-input:focus,
+    .mensalidade-select:focus {
+        outline: none;
+        border-color: #b895cd;
+        box-shadow: 0 0 0 4px rgba(107, 45, 143, 0.10);
+    }
+
+    .mensalidade-help {
+        display: block;
+        margin-top: 0.45rem;
+        color: #8a8390;
+        font-size: 0.88rem;
+    }
+
+    .mensalidade-info-box {
+        display: none;
+        margin-top: 1rem;
+        padding: 1rem;
+        background: #faf7fc;
+        border: 1px solid #ece3f2;
+        border-radius: 12px;
+    }
+
+    .mensalidade-info-box.is-visible {
+        display: block;
+    }
+
+    .mensalidade-info-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.85rem;
+    }
+
+    .mensalidade-info-item {
+        padding: 0.9rem 1rem;
+        background: white;
+        border: 1px solid #ece3f2;
+        border-radius: 12px;
+    }
+
+    .mensalidade-info-item span {
+        display: block;
+        margin-bottom: 0.3rem;
+        color: #8a8390;
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        font-weight: 700;
+    }
+
+    .mensalidade-info-item strong {
+        color: #4a235f;
+        font-size: 0.95rem;
+        line-height: 1.45;
+    }
+
+    .mensalidade-alert {
+        display: none;
+        margin-top: 0.9rem;
+        padding: 0.95rem 1rem;
+        border-radius: 12px;
+        font-size: 0.93rem;
+        line-height: 1.5;
+        border: 1px solid transparent;
+    }
+
+    .mensalidade-alert.is-visible {
+        display: block;
+    }
+
+    .mensalidade-alert-warning {
+        background: #fff7e8;
+        border-color: #f0ddb0;
+        color: #8a6508;
+    }
+
+    .mensalidade-alert-danger {
+        background: #fff1f3;
+        border-color: #f2c7cf;
+        color: #a3344f;
+    }
+
+    .mensalidade-create-footer {
+        display: flex;
+        gap: 1rem;
+        margin-top: 0.5rem;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+
+    @media (max-width: 640px) {
+        .mensalidade-create-header {
+            align-items: stretch;
+        }
+
+        .mensalidade-create-header > div,
+        .mensalidade-create-header-actions {
+            width: 100%;
+        }
+
+        .mensalidade-create-header-actions a {
+            width: 100%;
+            text-align: center;
+        }
+
+        .mensalidade-create-shell {
+            max-width: 100%;
+        }
+
+        .mensalidade-create-top,
+        .mensalidade-create-body,
+        .mensalidade-create-section {
+            padding: 1.2rem;
+        }
+
+        .mensalidade-grid-2,
+        .mensalidade-info-grid {
+            grid-template-columns: 1fr !important;
+        }
+
+        .mensalidade-create-footer {
+            flex-direction: column-reverse;
+        }
+
+        .mensalidade-create-footer a,
+        .mensalidade-create-footer button {
+            width: 100%;
+            text-align: center;
+        }
+    }
+</style>
+
+<div class="mensalidade-create-header">
+    <div>
+        <h2 style="margin: 0 0 0.35rem 0; color: #4a235f;">Nova Mensalidade</h2>
+        <p style="margin: 0; color: #6f6f78;">Criar mensalidade manual com validação do responsável financeiro</p>
+    </div>
+
+    <div class="mensalidade-create-header-actions">
+        <a href="{% url 'admin_dashboard:mensalidades_list' %}"
+           style="padding: 0.78rem 1.25rem; background: #f3f3f3; color: #444; text-decoration: none; border: 1px solid #ddd; border-radius: 10px; font-weight: 600;">
+            Voltar
+        </a>
+    </div>
 </div>
 
-<div style="background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); max-width: 800px;">
+<div class="mensalidade-create-shell">
     <form method="post">
         {% csrf_token %}
-        
-        <div style="display: grid; gap: 1.5rem;">
-            
-            <!-- Aluna -->
-            <div>
-                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
-                    Aluna <span style="color: red;">*</span>
-                </label>
-                <select name="aluna" 
-                        required
-                        style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
-                    <option value="">Selecione...</option>
-                    {% for aluna in alunas %}
-                        <option value="{{ aluna.id }}">{{ aluna.nome }} - {{ aluna.turma_atual|default:"Sem turma" }}</option>
-                    {% endfor %}
-                </select>
+
+        <div class="mensalidade-create-main">
+            <div class="mensalidade-create-top">
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
+                    <div>
+                        <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1.15rem;">Cadastro da mensalidade</h3>
+                        <p style="margin: 0; color: #7a7280; font-size: 0.95rem;">
+                            Preencha os dados da cobrança e confira o vínculo financeiro da aluna.
+                        </p>
+                    </div>
+                    <div style="padding: 0.55rem 0.9rem; border-radius: 999px; background: #efe7f5; color: #6b2d8f; font-size: 0.85rem; font-weight: 600;">
+                        BKN Tech
+                    </div>
+                </div>
             </div>
-            
-            <!-- Mês Referência -->
-            <div>
-                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
-                    Mes de Referencia <span style="color: red;">*</span>
-                </label>
-                <input type="month" 
-                       name="mes_referencia" 
-                       required
-                       style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
-                <small style="color: #666;">Ex: 2026-03 para Marco/2026</small>
+
+            <div class="mensalidade-create-body">
+                <section class="mensalidade-create-section">
+                    <div style="margin-bottom: 1.25rem;">
+                        <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1rem; font-weight: 700;">
+                            Dados da mensalidade
+                        </h3>
+                        <p style="margin: 0; color: #7b7580; font-size: 0.92rem;">
+                            Escolha a aluna, o mês de referência, vencimento, valor e status inicial.
+                        </p>
+                    </div>
+
+                    <div class="mensalidade-grid-1">
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
+                                Aluna <span style="color: #c23b5b;">*</span>
+                            </label>
+
+                            <select id="id_aluna" name="aluna" required class="mensalidade-select">
+                                <option value="">Selecione...</option>
+                                {% for aluna in alunas %}
+                                    <option
+                                        value="{{ aluna.id }}"
+                                        {% if form_data.aluna == aluna.id|stringformat:"s" %}selected{% endif %}
+                                        data-nome="{{ aluna.nome }}"
+                                        data-tipo="{{ aluna.tipo_aluna }}"
+                                        data-responsavel="{% if aluna.responsavel %}{{ aluna.responsavel.get_full_name|default:aluna.responsavel.username }}{% endif %}"
+                                        data-usuario="{% if aluna.usuario %}{{ aluna.usuario.get_full_name|default:aluna.usuario.username }}{% endif %}"
+                                        data-tem-responsavel="{% if aluna.responsavel %}true{% else %}false{% endif %}"
+                                        data-tem-usuario="{% if aluna.usuario %}true{% else %}false{% endif %}"
+                                    >
+                                        {{ aluna.nome }} - {{ aluna.get_tipo_aluna_display }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+
+                            <small class="mensalidade-help">
+                                Para aluna infantil, normalmente deve existir responsável vinculado. Para aluna adulta, pode ser usado o usuário da própria aluna quando houver login.
+                            </small>
+
+                            <div id="aluna-info" class="mensalidade-info-box">
+                                <div style="margin-bottom: 0.75rem;">
+                                    <strong style="color: #4a235f; font-size: 0.96rem;">Resumo da aluna selecionada</strong>
+                                </div>
+
+                                <div class="mensalidade-info-grid">
+                                    <div class="mensalidade-info-item">
+                                        <span>Nome</span>
+                                        <strong id="info-nome">—</strong>
+                                    </div>
+
+                                    <div class="mensalidade-info-item">
+                                        <span>Tipo</span>
+                                        <strong id="info-tipo">—</strong>
+                                    </div>
+
+                                    <div class="mensalidade-info-item">
+                                        <span>Responsável cadastrado</span>
+                                        <strong id="info-responsavel">—</strong>
+                                    </div>
+
+                                    <div class="mensalidade-info-item">
+                                        <span>Usuário próprio</span>
+                                        <strong id="info-usuario">—</strong>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="alert-warning" class="mensalidade-alert mensalidade-alert-warning"></div>
+                            <div id="alert-danger" class="mensalidade-alert mensalidade-alert-danger"></div>
+                        </div>
+                    </div>
+
+                    <div class="mensalidade-grid-2">
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
+                                Mês de referência <span style="color: #c23b5b;">*</span>
+                            </label>
+                            <input type="month"
+                                   id="id_mes_referencia"
+                                   name="mes_referencia"
+                                   required
+                                   value="{{ form_data.mes_referencia|default:'' }}"
+                                   class="mensalidade-input">
+                            <small class="mensalidade-help">Ex.: 2026-06 para junho de 2026.</small>
+                        </div>
+
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
+                                Data de vencimento <span style="color: #c23b5b;">*</span>
+                            </label>
+                            <input type="date"
+                                   id="id_data_vencimento"
+                                   name="data_vencimento"
+                                   required
+                                   value="{{ form_data.data_vencimento|default:'' }}"
+                                   class="mensalidade-input">
+                        </div>
+                    </div>
+
+                    <div class="mensalidade-grid-2" style="margin-bottom: 0;">
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
+                                Valor (R$) <span style="color: #c23b5b;">*</span>
+                            </label>
+                            <input type="number"
+                                   id="id_valor"
+                                   name="valor"
+                                   step="0.01"
+                                   min="0"
+                                   placeholder="150.00"
+                                   required
+                                   value="{{ form_data.valor|default:'' }}"
+                                   class="mensalidade-input">
+                        </div>
+
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
+                                Status
+                            </label>
+                            <select id="id_status" name="status" class="mensalidade-select">
+                                <option value="pendente" {% if form_data.status == 'pendente' %}selected{% endif %}>Pendente</option>
+                                <option value="pago" {% if form_data.status == 'pago' %}selected{% endif %}>Pago</option>
+                                <option value="atrasado" {% if form_data.status == 'atrasado' %}selected{% endif %}>Atrasado</option>
+                                <option value="cancelado" {% if form_data.status == 'cancelado' %}selected{% endif %}>Cancelado</option>
+                            </select>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="mensalidade-create-footer">
+                    <a href="{% url 'admin_dashboard:mensalidades_list' %}"
+                       style="padding: 0.85rem 1.5rem; background: #f3f3f3; color: #444; border: 1px solid #ddd; border-radius: 10px; text-decoration: none; font-weight: 600;">
+                        Cancelar
+                    </a>
+
+                    <button type="submit"
+                            style="background: linear-gradient(135deg, #6b2d8f 0%, #7e3aa5 100%); color: white; border: none; padding: 0.85rem 1.6rem; border-radius: 10px; cursor: pointer; font-weight: 700; box-shadow: 0 8px 18px rgba(107, 45, 143, 0.18);">
+                        Criar Mensalidade
+                    </button>
+                </div>
             </div>
-            
-            <!-- Data Vencimento -->
-            <div>
-                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
-                    Data de Vencimento <span style="color: red;">*</span>
-                </label>
-                <input type="date" 
-                       name="data_vencimento" 
-                       required
-                       style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
-            </div>
-            
-            <!-- Valor -->
-            <div>
-                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
-                    Valor (R$) <span style="color: red;">*</span>
-                </label>
-                <input type="number" 
-                       name="valor" 
-                       step="0.01"
-                       min="0"
-                       placeholder="150.00"
-                       required
-                       style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
-            </div>
-            
-            <!-- Status -->
-            <div>
-                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
-                    Status
-                </label>
-                <select name="status" 
-                        style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
-                    <option value="pendente">Pendente</option>
-                    <option value="pago">Pago</option>
-                </select>
-            </div>
-                                  
-            <!-- Botões -->
-            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
-                <button type="submit" class="btn btn-primary">
-                    Criar Mensalidade
-                </button>
-                <a href="{% url 'admin_dashboard:mensalidades_list' %}" 
-                   style="padding: 0.75rem 1.5rem; background: #f5f5f5; color: #333; border-radius: 5px; text-decoration: none; font-weight: 500;">
-                    Cancelar
-                </a>
-            </div>
-            
         </div>
     </form>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const selectAluna = document.getElementById('id_aluna');
+    const infoPanel = document.getElementById('aluna-info');
+    const warningBox = document.getElementById('alert-warning');
+    const dangerBox = document.getElementById('alert-danger');
+
+    const infoNome = document.getElementById('info-nome');
+    const infoTipo = document.getElementById('info-tipo');
+    const infoResponsavel = document.getElementById('info-responsavel');
+    const infoUsuario = document.getElementById('info-usuario');
+
+    function formatTipo(tipo) {
+        if (tipo === 'infantil') return 'Infantil';
+        if (tipo === 'adulto') return 'Adulto';
+        return '—';
+    }
+
+    function limparAlertas() {
+        warningBox.classList.remove('is-visible');
+        dangerBox.classList.remove('is-visible');
+        warningBox.textContent = '';
+        dangerBox.textContent = '';
+    }
+
+    function resetarPainel() {
+        infoPanel.classList.remove('is-visible');
+        limparAlertas();
+        infoNome.textContent = '—';
+        infoTipo.textContent = '—';
+        infoResponsavel.textContent = '—';
+        infoUsuario.textContent = '—';
+    }
+
+    function atualizarPainelAluna() {
+        const selected = selectAluna.options[selectAluna.selectedIndex];
+
+        if (!selected || !selected.value) {
+            resetarPainel();
+            return;
+        }
+
+        const nome = selected.dataset.nome || '—';
+        const tipo = selected.dataset.tipo || '';
+        const responsavel = selected.dataset.responsavel || 'Não informado';
+        const usuario = selected.dataset.usuario || 'Não informado';
+        const temResponsavel = selected.dataset.temResponsavel === 'true';
+        const temUsuario = selected.dataset.temUsuario === 'true';
+
+        infoPanel.classList.add('is-visible');
+        infoNome.textContent = nome;
+        infoTipo.textContent = formatTipo(tipo);
+        infoResponsavel.textContent = responsavel;
+        infoUsuario.textContent = usuario;
+
+        limparAlertas();
+
+        if (tipo === 'infantil' && !temResponsavel) {
+            dangerBox.textContent = 'Aluna infantil sem responsável vinculado. Cadastre ou vincule um responsável antes de criar a mensalidade.';
+            dangerBox.classList.add('is-visible');
+            return;
+        }
+
+        if (tipo === 'adulto' && !temResponsavel && !temUsuario) {
+            dangerBox.textContent = 'Aluna adulta sem usuário próprio e sem responsável vinculado. O sistema pode bloquear a criação da mensalidade.';
+            dangerBox.classList.add('is-visible');
+            return;
+        }
+
+        if (tipo === 'adulto' && !temResponsavel && temUsuario) {
+            warningBox.textContent = 'Aluna adulta com login próprio. Nesse caso, o sistema pode usar o usuário da própria aluna como responsável financeiro.';
+            warningBox.classList.add('is-visible');
+            return;
+        }
+
+        if (tipo === 'infantil' && temResponsavel) {
+            warningBox.textContent = 'Responsável identificado. Confira os dados antes de salvar.';
+            warningBox.classList.add('is-visible');
+        }
+    }
+
+    if (selectAluna) {
+        selectAluna.addEventListener('change', atualizarPainelAluna);
+        atualizarPainelAluna();
+    }
+});
+</script>
 {% endblock %}
