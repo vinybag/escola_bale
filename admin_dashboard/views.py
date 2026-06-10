@@ -170,50 +170,47 @@ def alunas_list(request):
 
 @login_required
 def aluna_criar(request):
-    """Criar nova aluna (suporta infantil com responsável e adulto sem responsável)"""
-    
+    """Criar nova aluna (infantil com responsável existente ou adulta com usuário existente)"""
+
     if not request.user.is_staff:
         return redirect('home')
-    
+
+    from decimal import Decimal, InvalidOperation
+    from django.contrib import messages
+    from django.contrib.auth.models import User
+    from usuarios.models import Aluna, Turma, Perfil
+
     if request.method == 'POST':
         try:
-            from decimal import Decimal, InvalidOperation
-            from usuarios.models import Aluna, Turma, Perfil
-            from django.contrib.auth.models import User
-            from django.contrib import messages
-            
-            # Pega dados da aluna
-            nome = request.POST.get('nome')
+            nome = request.POST.get('nome', '').strip()
             genero = request.POST.get('genero') or None
             data_nascimento = request.POST.get('data_nascimento') or None
             turmas_ids = request.POST.getlist('turmas')
             ativa = request.POST.get('ativa') == 'on'
-            observacoes = request.POST.get('observacoes', '')
+            observacoes = request.POST.get('observacoes', '').strip()
             tipo_aluna = request.POST.get('tipo_aluna', 'infantil')
 
-            # NOVO CAMPO CPF
+            responsavel_id = request.POST.get('responsavel', '').strip()
+            usuario_id = request.POST.get('usuario', '').strip()
             cpf = request.POST.get('cpf', '').strip()
 
-            # NOVOS CAMPOS FINANCEIROS
             valor_mensalidade = request.POST.get('valor_mensalidade')
             dia_vencimento = request.POST.get('dia_vencimento') or 10
             gerar_mensalidade_automatica = request.POST.get('gerar_mensalidade_automatica') == 'on'
-            
-            # Valida dados básicos
+
             if not nome:
-                messages.error(request, 'O nome da aluna e obrigatorio!')
+                messages.error(request, 'O nome da aluna é obrigatório!')
                 return redirect('admin_dashboard:aluna_criar')
 
-            # Validação financeira
             valor_mensalidade_decimal = None
             if valor_mensalidade:
                 try:
                     valor_mensalidade_decimal = Decimal(valor_mensalidade)
                     if valor_mensalidade_decimal < 0:
-                        messages.error(request, 'O valor da mensalidade nao pode ser negativo!')
+                        messages.error(request, 'O valor da mensalidade não pode ser negativo!')
                         return redirect('admin_dashboard:aluna_criar')
                 except (InvalidOperation, ValueError):
-                    messages.error(request, 'Informe um valor de mensalidade valido!')
+                    messages.error(request, 'Informe um valor de mensalidade válido!')
                     return redirect('admin_dashboard:aluna_criar')
 
             try:
@@ -222,146 +219,77 @@ def aluna_criar(request):
                     messages.error(request, 'O dia de vencimento deve estar entre 1 e 31!')
                     return redirect('admin_dashboard:aluna_criar')
             except (TypeError, ValueError):
-                messages.error(request, 'Informe um dia de vencimento valido!')
+                messages.error(request, 'Informe um dia de vencimento válido!')
                 return redirect('admin_dashboard:aluna_criar')
-            
+
             responsavel = None
-            
-            # Só processa responsável se for aluna infantil
+            usuario = None
+
             if tipo_aluna == 'infantil':
-                tipo_responsavel = request.POST.get('tipo_responsavel')
-                
-                if tipo_responsavel == 'existente':
-                    responsavel_id = request.POST.get('responsavel_existente')
-                    if not responsavel_id:
-                        messages.error(request, 'Selecione um responsavel!')
-                        return redirect('admin_dashboard:aluna_criar')
+                if not responsavel_id:
+                    messages.error(request, 'Selecione um responsável!')
+                    return redirect('admin_dashboard:aluna_criar')
 
-                    responsavel = User.objects.get(id=responsavel_id)
-
-                    if cpf:
-                        perfil, created = Perfil.objects.get_or_create(
-                            user=responsavel,
-                            defaults={'telefone': '', 'is_responsavel': True}
-                        )
-                        perfil.cpf = cpf
-                        perfil.is_responsavel = True
-                        perfil.save()
-                    
-                else:
-                    resp_nome = request.POST.get('responsavel_nome', '')
-                    resp_sobrenome = request.POST.get('responsavel_sobrenome', '')
-                    resp_email = request.POST.get('responsavel_email', '')
-                    resp_senha = request.POST.get('responsavel_senha', '')
-                    resp_telefone = request.POST.get('responsavel_telefone', '')
-                    
-                    if not resp_nome:
-                        messages.error(request, 'Nome do responsavel e obrigatorio!')
-                        return redirect('admin_dashboard:aluna_criar')
-                    
-                    if not resp_email:
-                        messages.error(request, 'Email do responsavel e obrigatorio!')
-                        return redirect('admin_dashboard:aluna_criar')
-                    
-                    if User.objects.filter(email=resp_email).exists():
-                        messages.error(request, f'Ja existe um usuario com o email {resp_email}!')
-                        return redirect('admin_dashboard:aluna_criar')
-                    
-                    username = resp_email.split('@')[0]
-                    base_username = username
-                    counter = 1
-                    while User.objects.filter(username=username).exists():
-                        username = f"{base_username}{counter}"
-                        counter += 1
-                    
-                    if not resp_senha:
-                        resp_senha = User.objects.make_random_password()
-                    
-                    responsavel = User.objects.create_user(
-                        username=username,
-                        email=resp_email,
-                        password=resp_senha,
-                        first_name=resp_nome,
-                        last_name=resp_sobrenome
+                try:
+                    responsavel = User.objects.get(
+                        id=responsavel_id,
+                        is_staff=False,
+                        perfil__is_responsavel=True
                     )
-                    
+                except User.DoesNotExist:
+                    messages.error(request, 'Responsável inválido!')
+                    return redirect('admin_dashboard:aluna_criar')
+
+                if cpf:
                     perfil, created = Perfil.objects.get_or_create(
                         user=responsavel,
-                        defaults={
-                            'telefone': resp_telefone or '',
-                            'cpf': cpf,
-                            'is_responsavel': True
-                        }
+                        defaults={'telefone': '', 'is_responsavel': True}
                     )
-                    if not created:
-                        if resp_telefone:
-                            perfil.telefone = resp_telefone
-                        perfil.cpf = cpf
-                        perfil.is_responsavel = True
-                        perfil.save()
-                    
-                    messages.success(request, f'Responsavel {resp_nome} {resp_sobrenome} cadastrado! Login: {resp_email} / Senha: {resp_senha}')
-            
+                    perfil.cpf = cpf
+                    perfil.is_responsavel = True
+                    perfil.save()
+
             else:
-                adulto_email = request.POST.get('adulto_email', '')
-                adulto_senha = request.POST.get('adulto_senha', '')
-                
-                if not adulto_email:
-                    messages.error(request, 'Email da aluna adulta e obrigatorio!')
+                if not usuario_id:
+                    messages.error(request, 'Selecione o usuário da aluna adulta!')
                     return redirect('admin_dashboard:aluna_criar')
-                
-                if User.objects.filter(email=adulto_email).exists():
-                    messages.error(request, f'Ja existe um usuario com o email {adulto_email}!')
+
+                try:
+                    usuario = User.objects.get(
+                        id=usuario_id,
+                        is_staff=False
+                    )
+                except User.DoesNotExist:
+                    messages.error(request, 'Usuário da aluna adulta inválido!')
                     return redirect('admin_dashboard:aluna_criar')
-                
-                username = adulto_email.split('@')[0]
-                base_username = username
-                counter = 1
-                while User.objects.filter(username=username).exists():
-                    username = f"{base_username}{counter}"
-                    counter += 1
-                
-                if not adulto_senha:
-                    adulto_senha = User.objects.make_random_password()
-                
-                responsavel = User.objects.create_user(
-                    username=username,
-                    email=adulto_email,
-                    password=adulto_senha,
-                    first_name=nome.split()[0] if ' ' in nome else nome,
-                    last_name=nome.split()[-1] if ' ' in nome else ''
-                )
-                
+
                 perfil, created = Perfil.objects.get_or_create(
-                    user=responsavel,
+                    user=usuario,
                     defaults={
                         'telefone': '',
-                        'cpf': cpf,
+                        'cpf': cpf or None,
                         'is_responsavel': False
                     }
                 )
-                if not created:
+                if cpf:
                     perfil.cpf = cpf
-                    perfil.is_responsavel = False
-                    perfil.save()
-                
-                messages.success(request, f'Aluna adulta {nome} cadastrada! Login: {adulto_email} / Senha: {adulto_senha}')
-            
-            # Busca as turmas selecionadas
+                perfil.is_responsavel = False
+                perfil.save()
+
             turmas_selecionadas = []
             for turma_id in turmas_ids:
                 try:
-                    turma = Turma.objects.get(id=turma_id)
+                    turma = Turma.objects.get(id=turma_id, ativa=True)
                     turmas_selecionadas.append(turma)
                 except Turma.DoesNotExist:
                     pass
-            
-            # Cria a aluna
+
             aluna = Aluna.objects.create(
                 nome=nome,
                 genero=genero,
                 data_nascimento=data_nascimento,
                 responsavel=responsavel,
+                usuario=usuario,
                 tipo_aluna=tipo_aluna,
                 ativa=ativa,
                 observacoes=observacoes,
@@ -369,38 +297,45 @@ def aluna_criar(request):
                 dia_vencimento=dia_vencimento,
                 gerar_mensalidade_automatica=gerar_mensalidade_automatica,
             )
-            
-            # Adiciona as turmas (ManyToMany)
+
             aluna.turmas.set(turmas_selecionadas)
-            
+
             messages.success(request, f'Aluna {nome} criada com sucesso!')
             return redirect('admin_dashboard:alunas_list')
-            
+
         except Exception as e:
             messages.error(request, f'Erro ao criar aluna: {e}')
             print(f"Erro detalhado: {e}")
             import traceback
             traceback.print_exc()
             return redirect('admin_dashboard:aluna_criar')
-    
-    # GET - mostra form
+
     try:
-        from django.contrib.auth.models import User
-        from usuarios.models import Turma
-        
-        responsaveis = User.objects.filter(is_staff=False).order_by('first_name')
+        responsaveis = User.objects.filter(
+            is_staff=False,
+            perfil__is_responsavel=True
+        ).order_by('first_name', 'last_name', 'username')
+
+        usuarios_adultas = User.objects.filter(
+            is_staff=False
+        ).exclude(
+            aluna_vinculada__isnull=False
+        ).order_by('first_name', 'last_name', 'username')
+
         turmas = Turma.objects.filter(ativa=True).order_by('nome')
-        
+
     except Exception as e:
         print(f"Erro ao buscar dados: {e}")
         responsaveis = []
+        usuarios_adultas = []
         turmas = []
-    
+
     context = {
         'responsaveis': responsaveis,
+        'usuarios_adultas': usuarios_adultas,
         'turmas': turmas,
     }
-    
+
     return render(request, 'admin_dashboard/alunas/criar.html', context)
 
 @login_required
