@@ -1244,56 +1244,168 @@ def responsaveis_list(request):
     
     return render(request, 'admin_dashboard/responsaveis/list.html', context)
 
+from django.contrib import messages
+from django.contrib.auth import get_user_model
+from django.contrib.auth.decorators import login_required
+from django.db import transaction
+from django.shortcuts import redirect, render
+
+User = get_user_model()
+
+
+@login_required
+@transaction.atomic
+def responsavel_criar(request):
+    """Criar novo responsável no admin_dashboard"""
+
+    if not request.user.is_staff:
+        return redirect('home')
+
+    from usuarios.models import Perfil
+
+    if request.method == 'POST':
+        nome = request.POST.get('nome', '').strip()
+        email = request.POST.get('email', '').strip().lower()
+        username = request.POST.get('username', '').strip()
+        senha = request.POST.get('senha', '')
+        confirmar_senha = request.POST.get('confirmar_senha', '')
+        cpf = request.POST.get('cpf', '').strip()
+        telefone = request.POST.get('telefone', '').strip()
+        data_nascimento = request.POST.get('data_nascimento', '').strip()
+        endereco = request.POST.get('endereco', '').strip()
+        genero = request.POST.get('genero', '').strip()
+        ativo = request.POST.get('ativo') == 'on'
+
+        form_data = request.POST
+
+        if not nome:
+            messages.error(request, 'Informe o nome completo do responsável.')
+            return render(request, 'admin_dashboard/responsaveis/criar.html', {
+                'form_data': form_data
+            })
+
+        if not email:
+            messages.error(request, 'Informe o e-mail do responsável.')
+            return render(request, 'admin_dashboard/responsaveis/criar.html', {
+                'form_data': form_data
+            })
+
+        if not username:
+            messages.error(request, 'Informe o nome de usuário.')
+            return render(request, 'admin_dashboard/responsaveis/criar.html', {
+                'form_data': form_data
+            })
+
+        if not senha:
+            messages.error(request, 'Informe a senha.')
+            return render(request, 'admin_dashboard/responsaveis/criar.html', {
+                'form_data': form_data
+            })
+
+        if len(senha) < 6:
+            messages.error(request, 'A senha deve ter no mínimo 6 caracteres.')
+            return render(request, 'admin_dashboard/responsaveis/criar.html', {
+                'form_data': form_data
+            })
+
+        if senha != confirmar_senha:
+            messages.error(request, 'A confirmação da senha não confere.')
+            return render(request, 'admin_dashboard/responsaveis/criar.html', {
+                'form_data': form_data
+            })
+
+        if User.objects.filter(username__iexact=username).exists():
+            messages.error(request, 'Já existe um responsável com esse nome de usuário.')
+            return render(request, 'admin_dashboard/responsaveis/criar.html', {
+                'form_data': form_data
+            })
+
+        if User.objects.filter(email__iexact=email).exists():
+            messages.error(request, 'Já existe um usuário com esse e-mail.')
+            return render(request, 'admin_dashboard/responsaveis/criar.html', {
+                'form_data': form_data
+            })
+
+        partes_nome = nome.split()
+        first_name = partes_nome[0] if partes_nome else ''
+        last_name = ' '.join(partes_nome[1:]) if len(partes_nome) > 1 else ''
+
+        responsavel = User.objects.create_user(
+            username=username,
+            email=email,
+            password=senha,
+            first_name=first_name,
+            last_name=last_name,
+            is_active=ativo,
+            is_staff=False,
+            is_superuser=False,
+        )
+
+        Perfil.objects.create(
+            user=responsavel,
+            telefone=telefone or None,
+            cpf=cpf or None,
+            data_nascimento=data_nascimento or None,
+            endereco=endereco or None,
+            genero=genero or None,
+            is_responsavel=True,
+            is_tambem_aluno=False,
+        )
+
+        messages.success(request, f'Responsável "{responsavel.get_full_name() or responsavel.username}" criado com sucesso!')
+        return redirect('admin_dashboard:responsaveis_list')
+
+    return render(request, 'admin_dashboard/responsaveis/criar.html')
+
 @login_required
 def responsavel_editar(request, pk):
     """Editar dados do responsavel"""
-    
+
     if not request.user.is_staff:
         return redirect('home')
-    
+
     try:
         from django.contrib.auth.models import User
         from usuarios.models import Perfil, Aluna, Turma
         from django.contrib import messages
-        
+
         responsavel = User.objects.get(pk=pk, is_staff=False)
-        
-        # Pega ou cria perfil
-        perfil, created = Perfil.objects.get_or_create(user=responsavel)
-        
-        # Lista de alunas vinculadas a este responsável
+
+        # Pega ou cria perfil, garantindo is_responsavel=True
+        perfil, created = Perfil.objects.get_or_create(
+            user=responsavel,
+            defaults={'is_responsavel': True}
+        )
+        if not perfil.is_responsavel:
+            perfil.is_responsavel = True
+            perfil.save()
+
         alunas_vinculadas = Aluna.objects.filter(responsavel=responsavel).order_by('nome')
-        
-        # Lista de alunas não vinculadas a nenhum responsável (para adicionar)
         alunas_nao_vinculadas = Aluna.objects.filter(responsavel__isnull=True, tipo_aluna='infantil').order_by('nome')
-        
-        # Busca a aluna associada a este responsável (se existir)
         aluna_associada = Aluna.objects.filter(responsavel=responsavel, tipo_aluna='adulto').first()
-        
+
         if request.method == 'POST':
-            # Atualiza dados do User
             responsavel.first_name = request.POST.get('first_name', '')
             responsavel.last_name = request.POST.get('last_name', '')
             responsavel.email = request.POST.get('email', '')
             responsavel.save()
-            
-            # Atualiza dados do Perfil
+
             perfil.telefone = request.POST.get('telefone', '')
             perfil.cpf = request.POST.get('cpf', '')
             perfil.endereco = request.POST.get('endereco', '')
-            
+            perfil.genero = request.POST.get('genero', '') or None
+
             data_nascimento = request.POST.get('data_nascimento')
             if data_nascimento:
                 perfil.data_nascimento = data_nascimento
-            
-            # NOVO CAMPO: Este responsável também é aluno
+            else:
+                perfil.data_nascimento = None
+
             is_tambem_aluno = request.POST.get('is_tambem_aluno') == 'on'
             perfil.is_tambem_aluno = is_tambem_aluno
             perfil.save()
-            
-            # Se marcou "também é aluno", criar/atualizar a aluna associada
+
             if is_tambem_aluno:
-                # Busca as turmas selecionadas
                 turmas_ids = request.POST.getlist('turmas_aluno')
                 turmas_selecionadas = []
                 for turma_id in turmas_ids:
@@ -1302,17 +1414,15 @@ def responsavel_editar(request, pk):
                         turmas_selecionadas.append(turma)
                     except Turma.DoesNotExist:
                         pass
-                
+
                 if aluna_associada:
-                    # Atualiza aluna existente
                     aluna_associada.nome = responsavel.get_full_name() or responsavel.username
                     aluna_associada.data_nascimento = data_nascimento or None
                     aluna_associada.ativa = True
                     aluna_associada.save()
                     aluna_associada.turmas.set(turmas_selecionadas)
-                    messages.success(request, f'Aluno {aluna_associada.nome} atualizado como aluno da escola!')
+                    messages.success(request, f'Aluno {aluna_associada.nome} atualizado!')
                 else:
-                    # Cria nova aluna
                     aluna_associada = Aluna.objects.create(
                         nome=responsavel.get_full_name() or responsavel.username,
                         responsavel=responsavel,
@@ -1323,14 +1433,12 @@ def responsavel_editar(request, pk):
                     aluna_associada.turmas.set(turmas_selecionadas)
                     messages.success(request, f'Aluno {aluna_associada.nome} cadastrado como aluno da escola!')
             else:
-                # Se desmarcou "também é aluno", remove a associação (mas não deleta a aluna)
                 if aluna_associada:
                     aluna_associada.responsavel = None
                     aluna_associada.ativa = False
                     aluna_associada.save()
-                    messages.info(request, f'Aluno {aluna_associada.nome} foi desvinculado')
-            
-            # Vincular nova aluna (se selecionada)
+                    messages.info(request, f'Aluno {aluna_associada.nome} foi desvinculado.')
+
             vincular_aluna_id = request.POST.get('vincular_aluna')
             if vincular_aluna_id:
                 try:
@@ -1340,8 +1448,7 @@ def responsavel_editar(request, pk):
                     messages.success(request, f'Aluna {aluna.nome} vinculada com sucesso!')
                 except Aluna.DoesNotExist:
                     messages.error(request, 'Aluna não encontrada!')
-            
-            # Remover vínculo de aluna (se solicitado)
+
             remover_aluna_id = request.POST.get('remover_aluna')
             if remover_aluna_id:
                 try:
@@ -1351,10 +1458,9 @@ def responsavel_editar(request, pk):
                     messages.success(request, f'Vínculo com {aluna.nome} removido!')
                 except Aluna.DoesNotExist:
                     messages.error(request, 'Aluna não encontrada!')
-            
+
             return redirect('admin_dashboard:responsavel_editar', pk=responsavel.pk)
-        
-        # GET - mostra form
+
         context = {
             'responsavel': responsavel,
             'perfil': perfil,
@@ -1364,10 +1470,10 @@ def responsavel_editar(request, pk):
             'turmas': Turma.objects.filter(ativa=True).order_by('nome'),
         }
         return render(request, 'admin_dashboard/responsaveis/editar.html', context)
-        
+
     except Exception as e:
         from django.contrib import messages
-        messages.error(request, f'Responsavel nao encontrado: {e}')
+        messages.error(request, f'Responsável não encontrado: {e}')
         return redirect('admin_dashboard:responsaveis_list')
 
 
