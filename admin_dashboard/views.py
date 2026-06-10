@@ -2847,4 +2847,49 @@ def cobranca_espetaculo_excluir(request, pk):
 
     except Exception as e:
         messages.error(request, f'Erro ao excluir cobrança: {e}')
-        return redirect('admin_dashboard:espetaculos_list')   
+        return redirect('admin_dashboard:espetaculos_list')
+
+@login_required
+def parcela_cobranca_espetaculo_marcar_pago(request, pk):
+    if not request.user.is_staff:
+        return redirect('home')
+
+    if request.method != 'POST':
+        messages.error(request, 'Método inválido.')
+        return redirect('admin_dashboard:espetaculos_list')
+
+    try:
+        from django.shortcuts import get_object_or_404
+        from espetaculo.models import ParcelaCobrancaEspetaculo
+
+        parcela = get_object_or_404(
+            ParcelaCobrancaEspetaculo.objects.select_related(
+                'cobranca',
+                'cobranca__participacao',
+                'cobranca__participacao__aluna',
+                'cobranca__participacao__espetaculo',
+            ),
+            pk=pk
+        )
+
+        if parcela.status == 'pago':
+            messages.info(request, 'Essa parcela já está marcada como paga.')
+            return redirect(
+                'admin_dashboard:participacao_cobrancas',
+                pk=parcela.cobranca.participacao.pk
+            )
+
+        parcela.marcar_como_pago()
+
+        messages.success(
+            request,
+            f'Parcela {parcela.numero_parcela}/{parcela.total_parcelas} marcada como paga com sucesso.'
+        )
+        return redirect(
+            'admin_dashboard:participacao_cobrancas',
+            pk=parcela.cobranca.participacao.pk
+        )
+
+    except Exception as e:
+        messages.error(request, f'Erro ao marcar parcela como paga: {e}')
+        return redirect('admin_dashboard:espetaculos_list')

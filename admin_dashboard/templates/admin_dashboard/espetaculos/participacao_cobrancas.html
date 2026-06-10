@@ -190,12 +190,20 @@
                                     {% endif %}
                                 </td>
                                 <td style="padding: 0.75rem; border: 1px solid #ddd;">
-                                    {{ cobranca.get_status_display }}
+                                    <div style="display: flex; flex-direction: column; gap: 0.35rem;">
+                                        <span>{{ cobranca.get_status_display }}</span>
+                                        <span style="font-size: 0.82rem; color: #666;">
+                                            Pago: R$ {{ cobranca.total_pago }}
+                                        </span>
+                                        <span style="font-size: 0.82rem; color: #666;">
+                                            Pendente: R$ {{ cobranca.total_pendente }}
+                                        </span>
+                                    </div>
                                 </td>
                                 <td style="padding: 0.75rem; border: 1px solid #ddd;">
                                     {{ cobranca.parcelas.count }}
                                 </td>
-                                <td style="padding: 0.75rem; border: 1px solid #ddd; min-width: 240px;">
+                                <td style="padding: 0.75rem; border: 1px solid #ddd; min-width: 280px;">
                                     {% if cobranca.enviado_asaas %}
                                         <div style="display: flex; flex-direction: column; gap: 0.5rem;">
                                             <span style="display: inline-block; padding: 0.35rem 0.6rem; background: #d4edda; color: #155724; border-radius: 5px; font-size: 0.85rem; width: fit-content;">
@@ -211,21 +219,64 @@
                                             {% if cobranca.parcelas.all %}
                                                 <div style="display: flex; flex-direction: column; gap: 0.35rem;">
                                                     {% for parcela in cobranca.parcelas.all %}
-                                                        <div style="padding: 0.5rem; background: #f8f9fa; border-radius: 6px; font-size: 0.85rem;">
-                                                            Parcela {{ parcela.numero_parcela }}/{{ parcela.total_parcelas }}
-                                                            {% if parcela.asaas_status %}
-                                                                - {{ parcela.asaas_status }}
-                                                            {% endif %}
+                                                        <div style="padding: 0.6rem; background: #f8f9fa; border-radius: 6px; font-size: 0.85rem; border: 1px solid #e5e5e5;">
+                                                            <div style="display: flex; flex-direction: column; gap: 0.35rem;">
+                                                                <span>
+                                                                    Parcela {{ parcela.numero_parcela }}/{{ parcela.total_parcelas }}
+                                                                    - R$ {{ parcela.valor }}
+                                                                </span>
 
-                                                            {% if parcela.asaas_invoice_url %}
-                                                                <br>
-                                                                <a href="{{ parcela.asaas_invoice_url }}" target="_blank" rel="noopener noreferrer">Fatura</a>
-                                                            {% endif %}
+                                                                <span style="color: #666;">
+                                                                    Status local:
+                                                                    {% if parcela.status == 'pago' %}
+                                                                        <strong style="color: #155724;">Pago</strong>
+                                                                    {% else %}
+                                                                        <strong style="color: #856404;">Pendente</strong>
+                                                                    {% endif %}
+                                                                </span>
 
-                                                            {% if parcela.asaas_bank_slip_url %}
-                                                                |
-                                                                <a href="{{ parcela.asaas_bank_slip_url }}" target="_blank" rel="noopener noreferrer">Boleto</a>
-                                                            {% endif %}
+                                                                {% if parcela.asaas_status %}
+                                                                    <span style="color: #666;">
+                                                                        Status Asaas: {{ parcela.asaas_status }}
+                                                                    </span>
+                                                                {% endif %}
+
+                                                                {% if parcela.vencimento %}
+                                                                    <span style="color: #666;">
+                                                                        Vencimento: {{ parcela.vencimento|date:"d/m/Y" }}
+                                                                    </span>
+                                                                {% endif %}
+
+                                                                {% if parcela.data_pagamento %}
+                                                                    <span style="color: #666;">
+                                                                        Pago em: {{ parcela.data_pagamento|date:"d/m/Y H:i" }}
+                                                                    </span>
+                                                                {% endif %}
+
+                                                                <div>
+                                                                    {% if parcela.asaas_invoice_url %}
+                                                                        <a href="{{ parcela.asaas_invoice_url }}" target="_blank" rel="noopener noreferrer">Fatura</a>
+                                                                    {% endif %}
+
+                                                                    {% if parcela.asaas_bank_slip_url %}
+                                                                        {% if parcela.asaas_invoice_url %} | {% endif %}
+                                                                        <a href="{{ parcela.asaas_bank_slip_url }}" target="_blank" rel="noopener noreferrer">Boleto</a>
+                                                                    {% endif %}
+                                                                </div>
+
+                                                                {% if parcela.status != 'pago' %}
+                                                                    <form method="post"
+                                                                          action="{% url 'admin_dashboard:parcela_cobranca_espetaculo_marcar_pago' parcela.pk %}"
+                                                                          onsubmit="return confirm('Confirmar marcação desta parcela como paga?');"
+                                                                          style="margin-top: 0.35rem;">
+                                                                        {% csrf_token %}
+                                                                        <button type="submit"
+                                                                                style="padding: 0.45rem 0.75rem; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">
+                                                                            Marcar como pago
+                                                                        </button>
+                                                                    </form>
+                                                                {% endif %}
+                                                            </div>
                                                         </div>
                                                     {% endfor %}
                                                 </div>
