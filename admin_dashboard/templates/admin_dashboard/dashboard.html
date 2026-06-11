@@ -4,96 +4,256 @@
 
 {% block extra_css %}
 <style>
-    .chart-container {
+    .dash-shell {
+        max-width: 1200px;
+    }
+
+    .dash-main {
         background: white;
-        padding: 1.5rem;
-        border-radius: 10px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        margin-bottom: 1.5rem;
+        border: 1px solid #ebe3f1;
+        border-radius: 18px;
+        box-shadow: 0 8px 24px rgba(107, 45, 143, 0.08);
+        overflow: hidden;
     }
-    .chart-container h3 {
-        margin-bottom: 1.5rem;
-        color: #2c3e50;
-        font-size: 1rem;
-        text-transform: uppercase;
+
+    .dash-top {
+        padding: 1.5rem 2rem;
+        background: linear-gradient(135deg, #ffffff 0%, #f5eff9 100%);
+        border-bottom: 1px solid #ece3f2;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .dash-top h2 {
+        margin: 0 0 0.3rem 0;
+        color: #4a235f;
+        font-size: 1.35rem;
+        font-weight: 700;
+    }
+
+    .dash-top p {
+        margin: 0;
+        color: #7a7280;
+        font-size: 0.95rem;
+    }
+
+    .dash-badge {
+        padding: 0.55rem 0.9rem;
+        border-radius: 999px;
+        background: #efe7f5;
+        color: #6b2d8f;
+        font-size: 0.85rem;
         font-weight: 600;
+        white-space: nowrap;
     }
-    .charts-grid {
+
+    .dash-body {
+        padding: 2rem;
+        background: #fcfbfd;
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-        gap: 1.5rem;
-        margin-top: 2rem;
+        gap: 1.75rem;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+        gap: 1.25rem;
+    }
+
+    .stat-card {
+        background: white;
+        border: 1px solid #ece3f2;
+        border-radius: 16px;
+        padding: 1.4rem 1.25rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+        box-shadow: 0 2px 8px rgba(107, 45, 143, 0.06);
+    }
+
+    .stat-card h3 {
+        margin: 0;
+        color: #7a7280;
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 700;
+    }
+
+    .stat-value {
+        font-size: 1.9rem;
+        font-weight: 800;
+        color: #4a235f;
+        line-height: 1;
+    }
+
+    .stat-value.money {
+        font-size: 1.45rem;
+    }
+
+    .stat-card.primary .stat-value { color: #4a235f; }
+    .stat-card.primary { border-left: 3px solid #6b2d8f; }
+
+    .stat-card.success .stat-value { color: #206a38; }
+    .stat-card.success { border-left: 3px solid #28a745; }
+
+    .stat-card.warn .stat-value { color: #8a6508; }
+    .stat-card.warn { border-left: 3px solid #ffc107; }
+
+    .stat-card.danger .stat-value { color: #a12c2c; }
+    .stat-card.danger { border-left: 3px solid #dc3545; }
+
+    .charts-section {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+        gap: 1.25rem;
+    }
+
+    .chart-card {
+        background: white;
+        border: 1px solid #ece3f2;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 8px rgba(107, 45, 143, 0.06);
+    }
+
+    .chart-card.full-width {
+        grid-column: 1 / -1;
+    }
+
+    .chart-card h3 {
+        margin: 0 0 1.25rem 0;
+        color: #4a235f;
+        font-size: 0.82rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 700;
+    }
+
+    @media (max-width: 900px) {
+        .charts-section {
+            grid-template-columns: 1fr;
+        }
+
+        .chart-card.full-width {
+            grid-column: auto;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .dash-body {
+            padding: 1.2rem;
+            gap: 1.25rem;
+        }
+
+        .dash-top {
+            padding: 1.2rem;
+        }
+
+        .stats-grid {
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+        }
+
+        .stat-value.money {
+            font-size: 1.2rem;
+        }
+    }
+
+    @media (max-width: 400px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
-    <div>
-        <h2>Dashboard</h2>
-        <p>Visão geral - {{ mes_atual }}</p>
-    </div>
-</div>
+<div class="dash-shell">
+    <div class="dash-main">
+        <div class="dash-top">
+            <div>
+                <h2>Dashboard</h2>
+                <p>Visão geral - {{ mes_atual }}</p>
+            </div>
+            <span class="dash-badge">BKN Tech</span>
+        </div>
 
-<!-- Cards de estatísticas padronizados -->
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem;">
-    
-    <div style="background: white; border-radius: 10px; padding: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
-        <h3 style="margin: 0 0 0.5rem 0; color: #2c3e50; font-size: 0.875rem; text-transform: uppercase; font-weight: 600;">Alunas Ativas</h3>
-        <div style="font-size: 2rem; font-weight: bold; color: #b07a84;">{{ total_alunas }}</div>
-    </div>
+        <div class="dash-body">
+            <div class="stats-grid">
+                <div class="stat-card primary">
+                    <h3>Alunas Ativas</h3>
+                    <div class="stat-value">{{ total_alunas }}</div>
+                </div>
 
-    <div style="background: white; border-radius: 10px; padding: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
-        <h3 style="margin: 0 0 0.5rem 0; color: #2c3e50; font-size: 0.875rem; text-transform: uppercase; font-weight: 600;">Turmas Ativas</h3>
-        <div style="font-size: 2rem; font-weight: bold; color: #b07a84;">{{ total_turmas }}</div>
-    </div>
-    
-    <div style="background: white; border-radius: 10px; padding: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
-        <h3 style="margin: 0 0 0.5rem 0; color: #2c3e50; font-size: 0.875rem; text-transform: uppercase; font-weight: 600;">Recebido no Mês</h3>
-        <div style="font-size: 1.5rem; font-weight: bold; color: #b07a84;">R$ {{ total_recebido|floatformat:2 }}</div>
-    </div>
-    
-    <div style="background: white; border-radius: 10px; padding: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
-        <h3 style="margin: 0 0 0.5rem 0; color: #2c3e50; font-size: 0.875rem; text-transform: uppercase; font-weight: 600;">Mensalidades Pendentes</h3>
-        <div style="font-size: 2rem; font-weight: bold; color: #b07a84;">{{ mensalidades_pendentes }}</div>
-    </div>
-    
-    <div style="background: white; border-radius: 10px; padding: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
-        <h3 style="margin: 0 0 0.5rem 0; color: #2c3e50; font-size: 0.875rem; text-transform: uppercase; font-weight: 600;">Mensalidades Pagas</h3>
-        <div style="font-size: 2rem; font-weight: bold; color: #b07a84;">{{ mensalidades_pagas }}</div>
-    </div>
-</div>
+                <div class="stat-card primary">
+                    <h3>Turmas Ativas</h3>
+                    <div class="stat-value">{{ total_turmas }}</div>
+                </div>
 
-<!-- Gráficos -->
-<div class="charts-grid">
-    
-    <!-- Gráfico 1 - Faturamento -->
-    <div class="chart-container" style="grid-column: 1 / -1;">
-        <h3>Faturamento - Últimos 6 Meses</h3>
-        <canvas id="faturamentoChart" height="80"></canvas>
+                <div class="stat-card success">
+                    <h3>Recebido no Mês</h3>
+                    <div class="stat-value money">R$ {{ total_recebido|floatformat:2 }}</div>
+                </div>
+
+                <div class="stat-card success">
+                    <h3>Mensalidades Pagas</h3>
+                    <div class="stat-value">{{ mensalidades_pagas }}</div>
+                </div>
+
+                <div class="stat-card warn">
+                    <h3>Mensalidades Pendentes</h3>
+                    <div class="stat-value">{{ mensalidades_pendentes }}</div>
+                </div>
+
+                <div class="stat-card warn">
+                    <h3>Falta Receber</h3>
+                    <div class="stat-value money">R$ {{ total_a_receber|floatformat:2 }}</div>
+                </div>
+
+                <div class="stat-card danger">
+                    <h3>Mensalidades Atrasadas</h3>
+                    <div class="stat-value">{{ mensalidades_atrasadas }}</div>
+                </div>
+
+                <div class="stat-card danger">
+                    <h3>Em Aberto</h3>
+                    <div class="stat-value money">R$ {{ total_em_aberto|floatformat:2 }}</div>
+                </div>
+            </div>
+
+            <div class="charts-section">
+                <div class="chart-card full-width">
+                    <h3>Faturamento - Últimos 6 Meses</h3>
+                    <canvas id="faturamentoChart" height="70"></canvas>
+                </div>
+
+                <div class="chart-card">
+                    <h3>Alunas por Turma</h3>
+                    <canvas id="turmasChart"></canvas>
+                </div>
+
+                <div class="chart-card">
+                    <h3>Mensalidades - {{ mes_atual }}</h3>
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+        </div>
     </div>
-    
-    <!-- Gráfico 2 - Alunas por Turma -->
-    <div class="chart-container">
-        <h3>Alunas por Turma</h3>
-        <canvas id="turmasChart"></canvas>
-    </div>
-    
-    <!-- Gráfico 3 - Status Mensalidades -->
-    <div class="chart-container">
-        <h3>Mensalidades - {{ mes_atual }}</h3>
-        <canvas id="statusChart"></canvas>
-    </div>
-    
 </div>
 {% endblock %}
 
 {% block extra_js %}
-<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
 <script>
-// Dados do Django
 const faturamentoMeses = {{ faturamento_meses|safe }};
 const faturamentoValores = {{ faturamento_valores|safe }};
 const turmasLabels = {{ turmas_labels|safe }};
@@ -101,59 +261,55 @@ const turmasValores = {{ turmas_valores|safe }};
 const statusLabels = {{ status_labels|safe }};
 const statusValores = {{ status_valores|safe }};
 
-// Cores padronizadas
-const primaryColor = '#b07a84';
-const secondaryColor = '#2c3e50';
-const colors = [
-    '#b07a84',
-    '#2c3e50',
-    '#e8d5f2',
-    '#d4a5a5',
-    '#9a9a9a',
-    '#f0c0c0',
-    '#c4c4c4'
-];
+const purple = '#6b2d8f';
+const purpleLight = 'rgba(107, 45, 143, 0.12)';
+const colors = ['#6b2d8f','#b895cd','#4a235f','#d4b3e8','#8a5fa5','#e8d5f2','#c4a0d8'];
 
-// Gráfico 1 - Faturamento (Linha)
-const faturamentoCtx = document.getElementById('faturamentoChart').getContext('2d');
-new Chart(faturamentoCtx, {
+Chart.defaults.font.family = "'Segoe UI', system-ui, sans-serif";
+Chart.defaults.color = '#7a7280';
+
+new Chart(document.getElementById('faturamentoChart'), {
     type: 'line',
     data: {
         labels: faturamentoMeses,
         datasets: [{
             label: 'Faturamento (R$)',
             data: faturamentoValores,
-            borderColor: primaryColor,
-            backgroundColor: 'rgba(176, 122, 132, 0.1)',
-            borderWidth: 3,
+            borderColor: purple,
+            backgroundColor: purpleLight,
+            borderWidth: 2.5,
             fill: true,
-            tension: 0.4
+            tension: 0.4,
+            pointBackgroundColor: purple,
+            pointRadius: 4,
         }]
     },
     options: {
         responsive: true,
         maintainAspectRatio: true,
         plugins: {
-            legend: {
-                display: false
-            }
+            legend: { display: false }
         },
         scales: {
             y: {
                 beginAtZero: true,
+                grid: { color: 'rgba(107,45,143,0.07)' },
                 ticks: {
                     callback: function(value) {
-                        return 'R$ ' + value.toFixed(2);
+                        return 'R$ ' + Number(value).toLocaleString('pt-BR', {
+                            minimumFractionDigits: 2
+                        });
                     }
                 }
+            },
+            x: {
+                grid: { display: false }
             }
         }
     }
 });
 
-// Gráfico 2 - Alunas por Turma (Barra)
-const turmasCtx = document.getElementById('turmasChart').getContext('2d');
-new Chart(turmasCtx, {
+new Chart(document.getElementById('turmasChart'), {
     type: 'bar',
     data: {
         labels: turmasLabels,
@@ -161,6 +317,7 @@ new Chart(turmasCtx, {
             label: 'Alunas',
             data: turmasValores,
             backgroundColor: colors,
+            borderRadius: 6,
             borderWidth: 0
         }]
     },
@@ -168,35 +325,30 @@ new Chart(turmasCtx, {
         responsive: true,
         maintainAspectRatio: true,
         plugins: {
-            legend: {
-                display: false
-            }
+            legend: { display: false }
         },
         scales: {
             y: {
                 beginAtZero: true,
-                ticks: {
-                    stepSize: 1
-                }
+                grid: { color: 'rgba(107,45,143,0.07)' },
+                ticks: { stepSize: 1 }
+            },
+            x: {
+                grid: { display: false }
             }
         }
     }
 });
 
-// Gráfico 3 - Status Mensalidades (Doughnut)
-const statusCtx = document.getElementById('statusChart').getContext('2d');
-new Chart(statusCtx, {
+new Chart(document.getElementById('statusChart'), {
     type: 'doughnut',
     data: {
         labels: statusLabels,
         datasets: [{
             data: statusValores,
-            backgroundColor: [
-                '#28a745',  // Verde - Pagas
-                '#ffc107',  // Amarelo - Pendentes
-                '#dc3545'   // Vermelho - Vencidas
-            ],
-            borderWidth: 0
+            backgroundColor: ['#28a745', '#ffc107', '#dc3545'],
+            borderWidth: 0,
+            hoverOffset: 6
         }]
     },
     options: {
@@ -204,7 +356,11 @@ new Chart(statusCtx, {
         maintainAspectRatio: true,
         plugins: {
             legend: {
-                position: 'bottom'
+                position: 'bottom',
+                labels: {
+                    padding: 16,
+                    boxWidth: 12
+                }
             }
         }
     }

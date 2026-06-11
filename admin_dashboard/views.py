@@ -10,96 +10,111 @@ from django.db.models import Case, When, Value, IntegerField
 @login_required
 def dashboard(request):
     """Dashboard com dados reais do banco e graficos"""
-    
+
     if not request.user.is_staff:
         return redirect('home')
-    
+
     meses_pt = {
-        1: 'Janeiro', 2: 'Fevereiro', 3: 'Marco', 4: 'Abril',
+        1: 'Janeiro', 2: 'Fevereiro', 3: 'Março', 4: 'Abril',
         5: 'Maio', 6: 'Junho', 7: 'Julho', 8: 'Agosto',
         9: 'Setembro', 10: 'Outubro', 11: 'Novembro', 12: 'Dezembro'
     }
-    
+
     total_alunas = 0
     total_recebido = Decimal('0.00')
     mensalidades_pendentes = 0
+    mensalidades_atrasadas = 0
     mensalidades_pagas = 0
+    total_a_receber = Decimal('0.00')
+    total_em_aberto = Decimal('0.00')
     hoje = datetime.now()
     mes_atual = f"{meses_pt[hoje.month]} {hoje.year}"
     total_turmas = 0
-    
+
     faturamento_meses = []
     faturamento_valores = []
     turmas_labels = []
     turmas_valores = []
     status_labels = ['Pagas', 'Pendentes', 'Atrasadas']
     status_valores = [0, 0, 0]
-    
+
     try:
         from usuarios.models import Aluna, Turma
         from pagamentos.models import Mensalidade
-        from django.db.models import Sum, Count, Q
+        from django.db.models import Sum
         from datetime import timedelta
-        
+
         hoje = datetime.now().date()
         mes = hoje.month
         ano = hoje.year
-        
+
         total_alunas = Aluna.objects.filter(ativa=True).count()
         total_turmas = Turma.objects.filter(ativa=True).count()
-        
+
         mensalidades_mes = Mensalidade.objects.filter(
             mes_referencia__month=mes,
             mes_referencia__year=ano
         )
-        
+
         total_recebido = mensalidades_mes.filter(
             status='pago'
         ).aggregate(total=Sum('valor'))['total'] or Decimal('0.00')
-        
+
         mensalidades_pendentes = mensalidades_mes.filter(status='pendente').count()
+        mensalidades_atrasadas = mensalidades_mes.filter(status='atrasado').count()
         mensalidades_pagas = mensalidades_mes.filter(status='pago').count()
-        
+
+        total_a_receber = mensalidades_mes.filter(
+            status='pendente'
+        ).aggregate(total=Sum('valor'))['total'] or Decimal('0.00')
+
+        total_em_aberto = mensalidades_mes.filter(
+            status__in=['pendente', 'atrasado']
+        ).aggregate(total=Sum('valor'))['total'] or Decimal('0.00')
+
         for i in range(5, -1, -1):
             mes_calc = hoje - timedelta(days=30 * i)
             mes_nome = mes_calc.strftime('%b/%y')
-            
+
             valor = Mensalidade.objects.filter(
                 mes_referencia__month=mes_calc.month,
                 mes_referencia__year=mes_calc.year,
                 status='pago'
             ).aggregate(total=Sum('valor'))['total'] or 0
-            
+
             faturamento_meses.append(mes_nome)
             faturamento_valores.append(float(valor))
-        
+
         turmas = Turma.objects.filter(ativa=True).order_by('nome')
-        
+
         for turma in turmas:
             total_alunas_turma = Aluna.objects.filter(
                 turmas=turma,
                 ativa=True
             ).count()
-            
+
             if total_alunas_turma > 0:
                 turmas_labels.append(turma.nome)
                 turmas_valores.append(total_alunas_turma)
-        
+
         status_valores[0] = mensalidades_mes.filter(status='pago').count()
         status_valores[1] = mensalidades_mes.filter(status='pendente').count()
         status_valores[2] = mensalidades_mes.filter(status='atrasado').count()
-        
+
     except Exception as e:
         print(f"Erro no dashboard: {e}")
         import traceback
         traceback.print_exc()
-    
+
     context = {
         'total_alunas': total_alunas,
         'total_turmas': total_turmas,
         'total_recebido': total_recebido,
         'mensalidades_pendentes': mensalidades_pendentes,
+        'mensalidades_atrasadas': mensalidades_atrasadas,
         'mensalidades_pagas': mensalidades_pagas,
+        'total_a_receber': total_a_receber,
+        'total_em_aberto': total_em_aberto,
         'mes_atual': mes_atual,
         'faturamento_meses': faturamento_meses,
         'faturamento_valores': faturamento_valores,
@@ -108,7 +123,7 @@ def dashboard(request):
         'status_labels': status_labels,
         'status_valores': status_valores,
     }
-    
+
     return render(request, 'admin_dashboard/dashboard.html', context)
 
 @login_required
