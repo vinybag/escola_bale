@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from datetime import datetime
 from decimal import Decimal
+from django.db.models import Sum
 from django.db import models
 from django.db.models import Case, When, Value, IntegerField
 
@@ -2388,9 +2389,6 @@ def ficha_pdf(request, pk):
     messages.warning(request, 'Função de PDF temporariamente indisponível. Use Ctrl+P para imprimir.')
     return redirect('admin_dashboard:inscricoes_audicao')
 
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib import messages
 
 @login_required
 def espetaculo_participacoes(request, pk):
@@ -2398,7 +2396,11 @@ def espetaculo_participacoes(request, pk):
         return redirect('home')
 
     try:
-        from espetaculo.models import Espetaculo, ParticipacaoEspetaculo
+        from espetaculo.models import (
+            Espetaculo,
+            ParticipacaoEspetaculo,
+            ParcelaCobrancaEspetaculo,
+        )
         from usuarios.models import Aluna
 
         espetaculo = get_object_or_404(Espetaculo, pk=pk)
@@ -2440,11 +2442,29 @@ def espetaculo_participacoes(request, pk):
             .order_by('nome')
         )
 
+        parcelas_pagas = ParcelaCobrancaEspetaculo.objects.filter(
+            cobranca__participacao__espetaculo=espetaculo,
+            status='pago'
+        )
+
+        total_recebido_taxa_palco = parcelas_pagas.filter(
+            cobranca__tipo='taxa_palco'
+        ).aggregate(total=Sum('valor'))['total'] or Decimal('0.00')
+
+        total_recebido_figurino = parcelas_pagas.filter(
+            cobranca__tipo='figurino'
+        ).aggregate(total=Sum('valor'))['total'] or Decimal('0.00')
+
+        total_recebido_geral = total_recebido_taxa_palco + total_recebido_figurino
+
         context = {
             'espetaculo': espetaculo,
             'participacoes': participacoes,
             'total_participacoes': participacoes.count(),
             'alunas_disponiveis': alunas_disponiveis,
+            'total_recebido_taxa_palco': total_recebido_taxa_palco,
+            'total_recebido_figurino': total_recebido_figurino,
+            'total_recebido_geral': total_recebido_geral,
         }
 
         return render(request, 'admin_dashboard/espetaculos/participacoes.html', context)

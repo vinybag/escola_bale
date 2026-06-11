@@ -3,104 +3,538 @@
 {% block title %}Participações - {{ espetaculo.titulo }}{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="h3 mb-1">Participações do espetáculo</h1>
-            <p class="text-muted mb-0">
-                <strong>{{ espetaculo.titulo }}</strong>
-                {% if espetaculo.subtitulo %}
-                    — {{ espetaculo.subtitulo }}
-                {% endif %}
-            </p>
-            <p class="text-muted mb-0">Total de participações: {{ total_participacoes }}</p>
-        </div>
+<style>
+    .partic-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 2rem;
+    }
 
-        <div>
-            <a href="{% url 'admin_dashboard:espetaculos_list' %}" class="btn btn-outline-secondary">
-                Voltar para espetáculos
-            </a>
-        </div>
+    .partic-header-actions {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .partic-shell {
+        max-width: 1100px;
+    }
+
+    .partic-main {
+        background: white;
+        border: 1px solid #ebe3f1;
+        border-radius: 18px;
+        box-shadow: 0 8px 24px rgba(107, 45, 143, 0.08);
+        overflow: hidden;
+    }
+
+    .partic-top {
+        padding: 1.5rem 2rem;
+        background: linear-gradient(135deg, #ffffff 0%, #f5eff9 100%);
+        border-bottom: 1px solid #ece3f2;
+    }
+
+    .partic-body {
+        padding: 2rem;
+        display: grid;
+        gap: 1.5rem;
+        background: #fcfbfd;
+    }
+
+    .partic-section {
+        background: white;
+        border: 1px solid #ece3f2;
+        border-radius: 16px;
+        padding: 1.5rem;
+    }
+
+    .partic-section-title {
+        margin: 0 0 0.35rem 0;
+        color: #4a235f;
+        font-size: 1rem;
+        font-weight: 700;
+    }
+
+    .partic-section-subtitle {
+        margin: 0 0 1.25rem 0;
+        color: #7b7580;
+        font-size: 0.92rem;
+    }
+
+    /* Cards de totais */
+    .partic-totais-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+    }
+
+    .partic-total-card {
+        border-radius: 14px;
+        padding: 1.25rem 1.35rem;
+        border: 1px solid #ece3f2;
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+    }
+
+    .partic-total-card.card-palco {
+        background: linear-gradient(135deg, #f0e8fa 0%, #e9dff6 100%);
+        border-color: #d9cce8;
+    }
+
+    .partic-total-card.card-figurino {
+        background: linear-gradient(135deg, #e8f4fb 0%, #d9ecf8 100%);
+        border-color: #c8dff0;
+    }
+
+    .partic-total-card.card-geral {
+        background: linear-gradient(135deg, #edf7ee 0%, #dff0e0 100%);
+        border-color: #c8e0ca;
+    }
+
+    .partic-total-label {
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #7a7280;
+    }
+
+    .partic-total-card.card-palco .partic-total-label { color: #6b2d8f; }
+    .partic-total-card.card-figurino .partic-total-label { color: #1a6fa3; }
+    .partic-total-card.card-geral .partic-total-label { color: #2a7a36; }
+
+    .partic-total-valor {
+        font-size: 1.55rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        color: #2f2438;
+    }
+
+    .partic-total-card.card-palco .partic-total-valor { color: #4a235f; }
+    .partic-total-card.card-figurino .partic-total-valor { color: #1a4f78; }
+    .partic-total-card.card-geral .partic-total-valor { color: #1c5425; }
+
+    .partic-total-desc {
+        font-size: 0.85rem;
+        color: #9a8fa4;
+    }
+
+    /* Form adicionar aluna */
+    .partic-add-grid {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 1rem;
+        align-items: end;
+    }
+
+    .partic-input,
+    .partic-select {
+        width: 100%;
+        padding: 0.82rem 0.95rem;
+        border: 1px solid #d9cbe4;
+        border-radius: 10px;
+        font-size: 1rem;
+        background: #fff;
+        color: #2f2438;
+    }
+
+    .partic-input:focus,
+    .partic-select:focus {
+        outline: none;
+        border-color: #b895cd;
+        box-shadow: 0 0 0 4px rgba(107, 45, 143, 0.10);
+    }
+
+    /* Tabela */
+    .partic-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .partic-table thead tr {
+        background: #faf7fc;
+        border-bottom: 1px solid #ece3f2;
+    }
+
+    .partic-table thead th {
+        padding: 0.85rem 1rem;
+        font-size: 0.82rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #7a7280;
+        text-align: left;
+        white-space: nowrap;
+    }
+
+    .partic-table tbody tr {
+        border-bottom: 1px solid #f3eff8;
+        transition: background 0.15s;
+    }
+
+    .partic-table tbody tr:last-child {
+        border-bottom: none;
+    }
+
+    .partic-table tbody tr:hover {
+        background: #faf7fc;
+    }
+
+    .partic-table td {
+        padding: 0.95rem 1rem;
+        font-size: 0.97rem;
+        color: #3a3045;
+        vertical-align: middle;
+    }
+
+    .badge-sim {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.3rem 0.75rem;
+        border-radius: 999px;
+        background: #e6f7eb;
+        color: #1d6b36;
+        font-size: 0.82rem;
+        font-weight: 700;
+    }
+
+    .badge-nao {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.3rem 0.75rem;
+        border-radius: 999px;
+        background: #f3f0f8;
+        color: #7a7280;
+        font-size: 0.82rem;
+        font-weight: 700;
+    }
+
+    .badge-count {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.3rem 0.75rem;
+        border-radius: 999px;
+        background: #efe7f5;
+        color: #6b2d8f;
+        font-size: 0.82rem;
+        font-weight: 700;
+    }
+
+    .partic-empty {
+        text-align: center;
+        padding: 3rem 1rem;
+    }
+
+    .partic-empty h5 {
+        color: #4a235f;
+        margin: 0 0 0.5rem;
+    }
+
+    .partic-empty p {
+        color: #9a8fa4;
+        margin: 0;
+        font-size: 0.95rem;
+    }
+
+    /* Botões */
+    .btn-partic-primary {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.82rem 1.35rem;
+        background: linear-gradient(135deg, #6b2d8f 0%, #7e3aa5 100%);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 0.95rem;
+        cursor: pointer;
+        white-space: nowrap;
+        box-shadow: 0 6px 14px rgba(107, 45, 143, 0.18);
+        text-decoration: none;
+        transition: box-shadow 0.18s, transform 0.18s;
+    }
+
+    .btn-partic-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 18px rgba(107, 45, 143, 0.22);
+        color: white;
+    }
+
+    .btn-partic-sm {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.45rem 0.9rem;
+        background: #efe7f5;
+        color: #6b2d8f;
+        border: 1px solid #d9cbe4;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 0.85rem;
+        text-decoration: none;
+        transition: background 0.15s;
+        white-space: nowrap;
+    }
+
+    .btn-partic-sm:hover {
+        background: #e4d7f0;
+        color: #4a235f;
+    }
+
+    .btn-partic-back {
+        padding: 0.78rem 1.25rem;
+        background: #f3f3f3;
+        color: #444;
+        text-decoration: none;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        font-weight: 600;
+        display: inline-block;
+    }
+
+    .btn-partic-back:hover {
+        background: #ececec;
+        color: #222;
+    }
+
+    @media (max-width: 900px) {
+        .partic-totais-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .partic-header {
+            align-items: stretch;
+        }
+
+        .partic-header > div,
+        .partic-header-actions {
+            width: 100%;
+        }
+
+        .partic-header-actions a {
+            width: 100%;
+            text-align: center;
+        }
+
+        .partic-shell {
+            max-width: 100%;
+        }
+
+        .partic-top,
+        .partic-body,
+        .partic-section {
+            padding: 1.2rem;
+        }
+
+        .partic-totais-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .partic-add-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .partic-add-grid button {
+            width: 100%;
+        }
+
+        .partic-table thead {
+            display: none;
+        }
+
+        .partic-table tbody tr {
+            display: block;
+            border: 1px solid #ece3f2;
+            border-radius: 14px;
+            margin-bottom: 1rem;
+            padding: 0.5rem;
+        }
+
+        .partic-table td {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.6rem 0.75rem;
+            border-bottom: 1px solid #f3eff8;
+            font-size: 0.93rem;
+        }
+
+        .partic-table td:last-child {
+            border-bottom: none;
+        }
+
+        .partic-table td::before {
+            content: attr(data-label);
+            font-weight: 700;
+            font-size: 0.8rem;
+            color: #7a7280;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            min-width: 110px;
+        }
+    }
+</style>
+
+<div class="partic-header">
+    <div>
+        <h2 style="margin: 0 0 0.25rem 0; color: #4a235f;">Participações do espetáculo</h2>
+        <p style="margin: 0 0 0.2rem; color: #6f6f78; font-weight: 600; font-size: 1rem;">
+            {{ espetaculo.titulo }}{% if espetaculo.subtitulo %} — {{ espetaculo.subtitulo }}{% endif %}
+        </p>
+        <p style="margin: 0; color: #9a8fa4; font-size: 0.92rem;">
+            {{ total_participacoes }} participação{{ total_participacoes|pluralize:",ões" }} cadastrada{{ total_participacoes|pluralize }}
+        </p>
     </div>
 
-    <div class="card shadow-sm mb-4">
-        <div class="card-body">
-            <h5 class="mb-3">Adicionar aluna ao espetáculo</h5>
-
-            <form method="post">
-                {% csrf_token %}
-                <div class="row g-3 align-items-end">
-                    <div class="col-md-8">
-                        <label for="aluna_id" class="form-label">Aluna</label>
-                        <select name="aluna_id" id="aluna_id" class="form-select" required>
-                            <option value="">Selecione uma aluna</option>
-                            {% for aluna in alunas_disponiveis %}
-                                <option value="{{ aluna.id }}">{{ aluna.nome }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <button type="submit" class="btn btn-primary w-100">
-                            Adicionar participação
-                        </button>
-                    </div>
-                </div>
-            </form>
-        </div>
+    <div class="partic-header-actions">
+        <a href="{% url 'admin_dashboard:espetaculos_list' %}" class="btn-partic-back">
+            Voltar para espetáculos
+        </a>
     </div>
+</div>
 
-    <div class="card shadow-sm">
-        <div class="card-body">
-            {% if participacoes %}
-                <div class="table-responsive">
-                    <table class="table table-striped align-middle">
-                        <thead>
-                            <tr>
-                                <th>Aluna</th>
-                                <th>Responsável</th>
-                                <th>Vai dançar?</th>
-                                <th>Cobranças</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for participacao in participacoes %}
-                                <tr>
-                                    <td>{{ participacao.aluna.nome }}</td>
-                                    <td>
-                                        {% if participacao.aluna.responsavel %}
-                                            {{ participacao.aluna.responsavel.first_name }} {{ participacao.aluna.responsavel.last_name }}
-                                        {% else %}
-                                            —
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if participacao.vai_dancar %}
-                                            <span class="badge bg-success">Sim</span>
-                                        {% else %}
-                                            <span class="badge bg-secondary">Não</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>{{ participacao.cobrancas.count }}</td>
-                                    <td>
-                                        <a href="{% url 'admin_dashboard:participacao_cobrancas' participacao.pk %}" 
-                                        class="btn btn-sm btn-primary">
-                                            Gerenciar cobranças
-                                        </a>
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            {% else %}
-                <div class="text-center py-4">
-                    <h5 class="mb-2">Nenhuma participação cadastrada</h5>
-                    <p class="text-muted mb-0">
-                        Ainda não há alunas vinculadas a este espetáculo.
+<div class="partic-shell">
+    <div class="partic-main">
+        <div class="partic-top">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
+                <div>
+                    <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1.15rem;">Gestão de participações</h3>
+                    <p style="margin: 0; color: #7a7280; font-size: 0.95rem;">
+                        Gerencie as alunas, cobranças e veja os totais recebidos por categoria.
                     </p>
                 </div>
-            {% endif %}
+                <div style="padding: 0.55rem 0.9rem; border-radius: 999px; background: #efe7f5; color: #6b2d8f; font-size: 0.85rem; font-weight: 600;">
+                    BKN Tech
+                </div>
+            </div>
+        </div>
+
+        <div class="partic-body">
+
+            <!-- Cards de totais recebidos -->
+            <section class="partic-section">
+                <h3 class="partic-section-title">Totais recebidos</h3>
+                <p class="partic-section-subtitle">Valores já confirmados como pagos para este espetáculo.</p>
+
+                <div class="partic-totais-grid">
+                    <div class="partic-total-card card-palco">
+                        <span class="partic-total-label">Taxa de palco</span>
+                        <span class="partic-total-valor">
+                            R$ {{ total_recebido_taxa_palco|floatformat:2 }}
+                        </span>
+                        <span class="partic-total-desc">Cobranças pagas de taxa de palco</span>
+                    </div>
+
+                    <div class="partic-total-card card-figurino">
+                        <span class="partic-total-label">Figurino</span>
+                        <span class="partic-total-valor">
+                            R$ {{ total_recebido_figurino|floatformat:2 }}
+                        </span>
+                        <span class="partic-total-desc">Cobranças pagas de figurino</span>
+                    </div>
+
+                    <div class="partic-total-card card-geral">
+                        <span class="partic-total-label">Total geral</span>
+                        <span class="partic-total-valor">
+                            R$ {{ total_recebido_geral|floatformat:2 }}
+                        </span>
+                        <span class="partic-total-desc">Soma de todos os pagamentos</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Adicionar aluna -->
+            <section class="partic-section">
+                <h3 class="partic-section-title">Adicionar aluna ao espetáculo</h3>
+                <p class="partic-section-subtitle">Selecione uma aluna disponível e confirme a participação.</p>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="partic-add-grid">
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Aluna</label>
+                            <select name="aluna_id" id="aluna_id" class="partic-select" required>
+                                <option value="">Selecione uma aluna...</option>
+                                {% for aluna in alunas_disponiveis %}
+                                    <option value="{{ aluna.id }}">{{ aluna.nome }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: transparent;">Ação</label>
+                            <button type="submit" class="btn-partic-primary" style="width: 100%;">
+                                Adicionar participação
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Tabela de participações -->
+            <section class="partic-section">
+                <h3 class="partic-section-title">Participações cadastradas</h3>
+                <p class="partic-section-subtitle">Lista de todas as alunas vinculadas a este espetáculo.</p>
+
+                {% if participacoes %}
+                    <div style="overflow-x: auto;">
+                        <table class="partic-table">
+                            <thead>
+                                <tr>
+                                    <th>Aluna</th>
+                                    <th>Responsável</th>
+                                    <th>Vai dançar?</th>
+                                    <th>Cobranças</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for participacao in participacoes %}
+                                    <tr>
+                                        <td data-label="Aluna">
+                                            <strong style="color: #4a235f;">{{ participacao.aluna.nome }}</strong>
+                                        </td>
+                                        <td data-label="Responsável">
+                                            {% if participacao.aluna.responsavel %}
+                                                {{ participacao.aluna.responsavel.first_name }} {{ participacao.aluna.responsavel.last_name }}
+                                            {% else %}
+                                                <span style="color: #b0a8b8;">—</span>
+                                            {% endif %}
+                                        </td>
+                                        <td data-label="Vai dançar?">
+                                            {% if participacao.vai_dancar %}
+                                                <span class="badge-sim">Sim</span>
+                                            {% else %}
+                                                <span class="badge-nao">Não</span>
+                                            {% endif %}
+                                        </td>
+                                        <td data-label="Cobranças">
+                                            <span class="badge-count">{{ participacao.cobrancas.count }}</span>
+                                        </td>
+                                        <td data-label="Ações">
+                                            <a href="{% url 'admin_dashboard:participacao_cobrancas' participacao.pk %}"
+                                               class="btn-partic-sm">
+                                                Gerenciar cobranças
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="partic-empty">
+                        <h5>Nenhuma participação cadastrada</h5>
+                        <p>Ainda não há alunas vinculadas a este espetáculo.</p>
+                    </div>
+                {% endif %}
+            </section>
+
         </div>
     </div>
 </div>

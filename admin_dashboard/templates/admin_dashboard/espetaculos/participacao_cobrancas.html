@@ -3,317 +3,713 @@
 {% block title %}Cobranças da Participação{% endblock %}
 
 {% block content %}
-<div style="max-width: 1100px; margin: 0 auto; padding: 2rem;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; gap: 1rem; flex-wrap: wrap;">
-        <div>
-            <h1 style="margin: 0; font-size: 2rem; color: #2c3e50;">Cobranças da Participação</h1>
-            <p style="margin: 0.5rem 0 0 0; color: #666;">
-                <strong>Aluna:</strong> {{ participacao.aluna.nome }}<br>
-                <strong>Espetáculo:</strong> {{ participacao.espetaculo.titulo }}
-            </p>
-        </div>
+<style>
+    .cobranca-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 2rem;
+    }
 
-        <a href="{% url 'admin_dashboard:espetaculos_list' %}"
-           style="padding: 0.75rem 1.25rem; background: #6c757d; color: white; text-decoration: none; border-radius: 6px;">
+    .cobranca-header-actions {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .cobranca-shell {
+        max-width: 1100px;
+    }
+
+    .cobranca-main {
+        background: white;
+        border: 1px solid #ebe3f1;
+        border-radius: 18px;
+        box-shadow: 0 8px 24px rgba(107, 45, 143, 0.08);
+        overflow: hidden;
+    }
+
+    .cobranca-top {
+        padding: 1.5rem 2rem;
+        background: linear-gradient(135deg, #ffffff 0%, #f5eff9 100%);
+        border-bottom: 1px solid #ece3f2;
+    }
+
+    .cobranca-body {
+        padding: 2rem;
+        display: grid;
+        gap: 1.5rem;
+        background: #fcfbfd;
+    }
+
+    .cobranca-section {
+        background: white;
+        border: 1px solid #ece3f2;
+        border-radius: 16px;
+        padding: 1.5rem;
+    }
+
+    .cobranca-grid-4 {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .cobranca-grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .cobranca-grid-1 {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .cobranca-input,
+    .cobranca-select {
+        width: 100%;
+        padding: 0.82rem 0.95rem;
+        border: 1px solid #d9cbe4;
+        border-radius: 10px;
+        font-size: 1rem;
+        background: #fff;
+        color: #2f2438;
+    }
+
+    .cobranca-input:focus,
+    .cobranca-select:focus {
+        outline: none;
+        border-color: #b895cd;
+        box-shadow: 0 0 0 4px rgba(107, 45, 143, 0.10);
+    }
+
+    .cobranca-help {
+        display: block;
+        margin-top: 0.45rem;
+        color: #8a8390;
+        font-size: 0.88rem;
+        line-height: 1.45;
+    }
+
+    .cobranca-muted-box {
+        padding: 1rem;
+        background: #faf7fc;
+        border: 1px solid #ece3f2;
+        border-radius: 12px;
+    }
+
+    .cobranca-rules {
+        margin: 0;
+        color: #6f6875;
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+
+    .cobranca-rules p {
+        margin: 0.25rem 0;
+    }
+
+    .figurino-box {
+        display: none;
+        background: #faf7fc;
+        border: 1px solid #ece3f2;
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .figurino-box-title {
+        margin: 0 0 1rem 0;
+        font-weight: 700;
+        color: #4a235f;
+        font-size: 0.95rem;
+    }
+
+    .cobranca-check-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .cobranca-check-row label {
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+        color: #44384c;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .cobranca-check-row input[type="checkbox"] {
+        accent-color: #6b2d8f;
+    }
+
+    .status-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.32rem 0.75rem;
+        border-radius: 999px;
+        font-size: 0.82rem;
+        font-weight: 700;
+        width: fit-content;
+    }
+
+    .status-success {
+        background: #dff3e4;
+        color: #206a38;
+    }
+
+    .status-warning {
+        background: #fff4d6;
+        color: #8a6508;
+    }
+
+    .status-neutral {
+        background: #efe7f5;
+        color: #6b2d8f;
+    }
+
+    .cobranca-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .cobranca-table thead tr {
+        background: #faf7fc;
+    }
+
+    .cobranca-table th {
+        padding: 0.85rem 0.9rem;
+        border-bottom: 1px solid #ece3f2;
+        text-align: left;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #7a7280;
+        white-space: nowrap;
+    }
+
+    .cobranca-table td {
+        padding: 0.9rem;
+        border-bottom: 1px solid #f1ebf6;
+        vertical-align: top;
+        color: #3f3548;
+        font-size: 0.94rem;
+    }
+
+    .cobranca-table tbody tr:hover {
+        background: #fcf9fe;
+    }
+
+    .cobranca-mini-card {
+        padding: 0.7rem;
+        background: #faf7fc;
+        border: 1px solid #ece3f2;
+        border-radius: 10px;
+        font-size: 0.85rem;
+    }
+
+    .cobranca-mini-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .cobranca-actions-col {
+        min-width: 170px;
+    }
+
+    .btn-primary-purple {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.85rem 1.4rem;
+        background: linear-gradient(135deg, #6b2d8f 0%, #7e3aa5 100%);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: 700;
+        text-decoration: none;
+        box-shadow: 0 8px 18px rgba(107, 45, 143, 0.18);
+    }
+
+    .btn-primary-purple:hover {
+        color: white;
+    }
+
+    .btn-secondary-gray {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.78rem 1.25rem;
+        background: #f3f3f3;
+        color: #444;
+        text-decoration: none;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        font-weight: 600;
+    }
+
+    .btn-danger-red {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.7rem 1rem;
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        white-space: nowrap;
+        font-weight: 600;
+    }
+
+    .btn-success-green {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.45rem 0.75rem;
+        background: #28a745;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 2rem 1rem;
+        color: #7b7580;
+    }
+
+    @media (max-width: 1100px) {
+        .cobranca-grid-4 {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .cobranca-table thead {
+            display: none;
+        }
+
+        .cobranca-table,
+        .cobranca-table tbody,
+        .cobranca-table tr,
+        .cobranca-table td {
+            display: block;
+            width: 100%;
+        }
+
+        .cobranca-table tr {
+            background: white;
+            border: 1px solid #ece3f2;
+            border-radius: 14px;
+            margin-bottom: 1rem;
+            padding: 0.25rem 0;
+        }
+
+        .cobranca-table td {
+            border-bottom: 1px solid #f1ebf6;
+            padding: 0.75rem 0.9rem;
+        }
+
+        .cobranca-table td:last-child {
+            border-bottom: none;
+        }
+
+        .cobranca-table td::before {
+            content: attr(data-label);
+            display: block;
+            margin-bottom: 0.3rem;
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #7a7280;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .cobranca-header {
+            align-items: stretch;
+        }
+
+        .cobranca-header > div,
+        .cobranca-header-actions {
+            width: 100%;
+        }
+
+        .cobranca-header-actions a {
+            width: 100%;
+            text-align: center;
+        }
+
+        .cobranca-shell {
+            max-width: 100%;
+        }
+
+        .cobranca-top,
+        .cobranca-body,
+        .cobranca-section {
+            padding: 1.2rem;
+        }
+
+        .cobranca-grid-4,
+        .cobranca-grid-2 {
+            grid-template-columns: 1fr !important;
+        }
+    }
+</style>
+
+<div class="cobranca-header">
+    <div>
+        <h2 style="margin: 0 0 0.35rem 0; color: #4a235f;">Cobranças da Participação</h2>
+        <p style="margin: 0; color: #6f6f78;">
+            <strong>Aluna:</strong> {{ participacao.aluna.nome }}
+        </p>
+        <p style="margin: 0.2rem 0 0 0; color: #6f6f78;">
+            <strong>Espetáculo:</strong> {{ participacao.espetaculo.titulo }}
+        </p>
+    </div>
+
+    <div class="cobranca-header-actions">
+        <a href="{% url 'admin_dashboard:espetaculos_list' %}" class="btn-secondary-gray">
             Voltar
         </a>
     </div>
+</div>
 
-    <div style="background: #fff; border: 1px solid #ddd; border-radius: 10px; padding: 1.5rem; margin-bottom: 2rem;">
-        <h2 style="margin-top: 0; color: #2c3e50;">Nova cobrança</h2>
-
-        <form method="post">
-            {% csrf_token %}
-
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+<div class="cobranca-shell">
+    <div class="cobranca-main">
+        <div class="cobranca-top">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
                 <div>
-                    <label for="tipo" style="display: block; margin-bottom: 0.5rem; font-weight: bold;">Tipo</label>
-                    <select name="tipo" id="tipo" required
-                            style="width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 6px;">
-                        <option value="">Selecione</option>
-                        <option value="taxa_palco">Taxa de palco</option>
-                        <option value="figurino">Figurino</option>
-                    </select>
+                    <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1.15rem;">Gestão de cobranças</h3>
+                    <p style="margin: 0; color: #7a7280; font-size: 0.95rem;">
+                        Crie cobranças, acompanhe parcelas e visualize o status de envio ao Asaas.
+                    </p>
                 </div>
-
-                <div>
-                    <label for="valor_total" style="display: block; margin-bottom: 0.5rem; font-weight: bold;">
-                        Valor total/base
-                    </label>
-                    <input type="number" step="0.01" min="0" name="valor_total" id="valor_total" required
-                           style="width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 6px;">
-                </div>
-
-                <div>
-                    <label for="max_parcelas" style="display: block; margin-bottom: 0.5rem; font-weight: bold;">Máx. parcelas</label>
-                    <input type="number" min="1" name="max_parcelas" id="max_parcelas" value="1"
-                           style="width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 6px;">
-                </div>
-
-                <div>
-                    <label for="vencimento_primeira_parcela" style="display: block; margin-bottom: 0.5rem; font-weight: bold;">Vencimento da 1ª parcela</label>
-                    <input type="date" name="vencimento_primeira_parcela" id="vencimento_primeira_parcela" required
-                           style="width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 6px;">
+                <div style="padding: 0.55rem 0.9rem; border-radius: 999px; background: #efe7f5; color: #6b2d8f; font-size: 0.85rem; font-weight: 600;">
+                    BKN Tech
                 </div>
             </div>
-
-            <div id="campos_figurino"
-                 style="display: none; background: #f8f9fa; border: 1px solid #e2e6ea; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
-                <p style="margin: 0 0 1rem 0; font-weight: bold; color: #2c3e50;">
-                    Valores específicos do figurino
-                </p>
-
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;">
-                    <div>
-                        <label for="valor_figurino_avista" style="display: block; margin-bottom: 0.5rem; font-weight: bold;">
-                            Valor do figurino à vista
-                        </label>
-                        <input type="number" step="0.01" min="0" name="valor_figurino_avista" id="valor_figurino_avista"
-                               style="width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 6px;">
-                    </div>
-
-                    <div>
-                        <label for="valor_figurino_parcelado" style="display: block; margin-bottom: 0.5rem; font-weight: bold;">
-                            Valor do figurino parcelado
-                        </label>
-                        <input type="number" step="0.01" min="0" name="valor_figurino_parcelado" id="valor_figurino_parcelado"
-                               style="width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 6px;">
-                    </div>
-                </div>
-
-                <p style="margin: 0.85rem 0 0 0; color: #666; font-size: 0.92rem; line-height: 1.4;">
-                    Para figurino, a área da responsável exibirá o valor à vista quando escolher 1 parcela
-                    e o valor parcelado quando escolher 2x ou mais.
-                </p>
-            </div>
-
-            <div style="margin-bottom: 1rem;">
-                <label for="descricao" style="display: block; margin-bottom: 0.5rem; font-weight: bold;">Descrição</label>
-                <input type="text" name="descricao" id="descricao" required
-                       style="width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 6px;">
-            </div>
-
-            <div style="display: flex; flex-wrap: wrap; gap: 1.5rem; margin-bottom: 1.5rem;">
-                <label style="display: flex; align-items: center; gap: 0.5rem;">
-                    <input type="checkbox" name="permitir_parcelamento" id="permitir_parcelamento">
-                    Permitir parcelamento
-                </label>
-
-                <label id="campo_desconto_irmaos_wrapper" style="display: flex; align-items: center; gap: 0.5rem;">
-                    <input type="checkbox" name="desconto_irmaos" id="desconto_irmaos">
-                    Aplicar desconto de irmãs(ãos)
-                </label>
-            </div>
-
-            <div style="margin-bottom: 1.5rem; color: #666; font-size: 0.95rem;">
-                <p style="margin: 0 0 0.4rem 0;">
-                    <strong>Regras atuais:</strong>
-                </p>
-                <p style="margin: 0.2rem 0;">Taxa de palco: 5% à vista; 12% à vista para irmãs(ãos); 10% parcelado para irmãs(ãos).</p>
-                <p style="margin: 0.2rem 0;">Figurino: usa valores fixos cadastrados, um à vista e outro parcelado.</p>
-                <p style="margin: 0.2rem 0;">A escolha entre à vista ou parcelado é feita pela própria responsável na área dela.</p>
-            </div>
-
-            <button type="submit"
-                    style="padding: 0.85rem 1.4rem; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer;">
-                Criar cobrança
-            </button>
-        </form>
-    </div>
-
-    <div style="background: #fff; border: 1px solid #ddd; border-radius: 10px; padding: 1.5rem;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
-            <h2 style="margin: 0; color: #2c3e50;">Cobranças cadastradas</h2>
-            <span style="color: #666;">Total: {{ total_cobrancas }}</span>
         </div>
 
-        {% if cobrancas %}
-            <div style="overflow-x: auto;">
-                <table style="width: 100%; border-collapse: collapse;">
-                    <thead>
-                        <tr style="background: #f8f9fa;">
-                            <th style="padding: 0.75rem; border: 1px solid #ddd; text-align: left;">Tipo</th>
-                            <th style="padding: 0.75rem; border: 1px solid #ddd; text-align: left;">Descrição</th>
-                            <th style="padding: 0.75rem; border: 1px solid #ddd; text-align: left;">Valor</th>
-                            <th style="padding: 0.75rem; border: 1px solid #ddd; text-align: left;">Parcelamento</th>
-                            <th style="padding: 0.75rem; border: 1px solid #ddd; text-align: left;">Desconto especial</th>
-                            <th style="padding: 0.75rem; border: 1px solid #ddd; text-align: left;">Vencimento</th>
-                            <th style="padding: 0.75rem; border: 1px solid #ddd; text-align: left;">Status</th>
-                            <th style="padding: 0.75rem; border: 1px solid #ddd; text-align: left;">Parcelas</th>
-                            <th style="padding: 0.75rem; border: 1px solid #ddd; text-align: left;">Asaas</th>
-                            <th style="padding: 0.75rem; border: 1px solid #ddd; text-align: left; min-width: 160px;">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for cobranca in cobrancas %}
-                            <tr>
-                                <td style="padding: 0.75rem; border: 1px solid #ddd;">
-                                    {{ cobranca.get_tipo_display }}
-                                </td>
-                                <td style="padding: 0.75rem; border: 1px solid #ddd;">
-                                    {{ cobranca.descricao }}
-                                </td>
-                                <td style="padding: 0.75rem; border: 1px solid #ddd;">
-                                    {% if cobranca.tipo == 'figurino' %}
-                                        <div style="display: flex; flex-direction: column; gap: 0.25rem;">
-                                            <span>Base: R$ {{ cobranca.valor_total }}</span>
-                                            <span>À vista: R$ {{ cobranca.valor_figurino_avista|default:"0.00" }}</span>
-                                            <span>Parcelado: R$ {{ cobranca.valor_figurino_parcelado|default:"0.00" }}</span>
-                                        </div>
-                                    {% else %}
-                                        R$ {{ cobranca.valor_total }}
-                                    {% endif %}
-                                </td>
-                                <td style="padding: 0.75rem; border: 1px solid #ddd;">
-                                    {% if cobranca.permitir_parcelamento %}
-                                        Sim (até {{ cobranca.max_parcelas }}x)
-                                    {% else %}
-                                        Não
-                                    {% endif %}
-                                </td>
-                                <td style="padding: 0.75rem; border: 1px solid #ddd;">
-                                    {% if cobranca.tipo == 'figurino' %}
-                                        —
-                                    {% else %}
-                                        {% if cobranca.desconto_irmaos %}
-                                            Sim
-                                        {% else %}
-                                            Não
-                                        {% endif %}
-                                    {% endif %}
-                                </td>
-                                <td style="padding: 0.75rem; border: 1px solid #ddd;">
-                                    {% if cobranca.vencimento_primeira_parcela %}
-                                        {{ cobranca.vencimento_primeira_parcela|date:"d/m/Y" }}
-                                    {% else %}
-                                        —
-                                    {% endif %}
-                                </td>
-                                <td style="padding: 0.75rem; border: 1px solid #ddd;">
-                                    <div style="display: flex; flex-direction: column; gap: 0.35rem;">
-                                        <span>{{ cobranca.get_status_display }}</span>
-                                        <span style="font-size: 0.82rem; color: #666;">
-                                            Pago: R$ {{ cobranca.total_pago }}
-                                        </span>
-                                        <span style="font-size: 0.82rem; color: #666;">
-                                            Pendente: R$ {{ cobranca.total_pendente }}
-                                        </span>
-                                    </div>
-                                </td>
-                                <td style="padding: 0.75rem; border: 1px solid #ddd;">
-                                    {{ cobranca.parcelas.count }}
-                                </td>
-                                <td style="padding: 0.75rem; border: 1px solid #ddd; min-width: 280px;">
-                                    {% if cobranca.enviado_asaas %}
-                                        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                                            <span style="display: inline-block; padding: 0.35rem 0.6rem; background: #d4edda; color: #155724; border-radius: 5px; font-size: 0.85rem; width: fit-content;">
-                                                Enviado
-                                            </span>
+        <div class="cobranca-body">
 
-                                            {% if cobranca.billing_type %}
-                                                <span style="font-size: 0.85rem; color: #666;">
-                                                    Tipo: {{ cobranca.billing_type }}
-                                                </span>
+            <section class="cobranca-section">
+                <div style="margin-bottom: 1.25rem;">
+                    <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1rem; font-weight: 700;">
+                        Nova cobrança
+                    </h3>
+                    <p style="margin: 0; color: #7b7580; font-size: 0.92rem;">
+                        Configure o tipo de cobrança, vencimento, parcelamento e regras específicas.
+                    </p>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="cobranca-grid-4">
+                        <div>
+                            <label for="tipo" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Tipo</label>
+                            <select name="tipo" id="tipo" required class="cobranca-select">
+                                <option value="">Selecione</option>
+                                <option value="taxa_palco">Taxa de palco</option>
+                                <option value="figurino">Figurino</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="valor_total" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
+                                Valor total/base
+                            </label>
+                            <input type="number" step="0.01" min="0" name="valor_total" id="valor_total" required class="cobranca-input">
+                        </div>
+
+                        <div>
+                            <label for="max_parcelas" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Máx. parcelas</label>
+                            <input type="number" min="1" name="max_parcelas" id="max_parcelas" value="1" class="cobranca-input">
+                        </div>
+
+                        <div>
+                            <label for="vencimento_primeira_parcela" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
+                                Vencimento da 1ª parcela
+                            </label>
+                            <input type="date" name="vencimento_primeira_parcela" id="vencimento_primeira_parcela" required class="cobranca-input">
+                        </div>
+                    </div>
+
+                    <div id="campos_figurino" class="figurino-box">
+                        <p class="figurino-box-title">Valores específicos do figurino</p>
+
+                        <div class="cobranca-grid-2" style="margin-bottom: 0;">
+                            <div>
+                                <label for="valor_figurino_avista" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
+                                    Valor do figurino à vista
+                                </label>
+                                <input type="number" step="0.01" min="0" name="valor_figurino_avista" id="valor_figurino_avista" class="cobranca-input">
+                            </div>
+
+                            <div>
+                                <label for="valor_figurino_parcelado" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
+                                    Valor do figurino parcelado
+                                </label>
+                                <input type="number" step="0.01" min="0" name="valor_figurino_parcelado" id="valor_figurino_parcelado" class="cobranca-input">
+                            </div>
+                        </div>
+
+                        <small class="cobranca-help">
+                            Para figurino, a área da responsável exibirá o valor à vista quando escolher 1 parcela e o valor parcelado quando escolher 2x ou mais.
+                        </small>
+                    </div>
+
+                    <div class="cobranca-grid-1">
+                        <div>
+                            <label for="descricao" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Descrição</label>
+                            <input type="text" name="descricao" id="descricao" required class="cobranca-input">
+                        </div>
+                    </div>
+
+                    <div class="cobranca-check-row">
+                        <label>
+                            <input type="checkbox" name="permitir_parcelamento" id="permitir_parcelamento">
+                            Permitir parcelamento
+                        </label>
+
+                        <label id="campo_desconto_irmaos_wrapper">
+                            <input type="checkbox" name="desconto_irmaos" id="desconto_irmaos">
+                            Aplicar desconto de irmãs(ãos)
+                        </label>
+                    </div>
+
+                    <div class="cobranca-muted-box" style="margin-bottom: 1.5rem;">
+                        <div class="cobranca-rules">
+                            <p><strong>Regras atuais:</strong></p>
+                            <p>Taxa de palco: 5% à vista; 12% à vista para irmãs(ãos); 10% parcelado para irmãs(ãos).</p>
+                            <p>Figurino: usa valores fixos cadastrados, um à vista e outro parcelado.</p>
+                            <p>A escolha entre à vista ou parcelado é feita pela própria responsável na área dela.</p>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-primary-purple">
+                        Criar cobrança
+                    </button>
+                </form>
+            </section>
+
+            <section class="cobranca-section">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; gap: 0.75rem; flex-wrap: wrap;">
+                    <div>
+                        <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1rem; font-weight: 700;">
+                            Cobranças cadastradas
+                        </h3>
+                        <p style="margin: 0; color: #7b7580; font-size: 0.92rem;">
+                            Total de cobranças: {{ total_cobrancas }}
+                        </p>
+                    </div>
+                </div>
+
+                {% if cobrancas %}
+                    <div style="overflow-x: auto;">
+                        <table class="cobranca-table">
+                            <thead>
+                                <tr>
+                                    <th>Tipo</th>
+                                    <th>Descrição</th>
+                                    <th>Valor</th>
+                                    <th>Parcelamento</th>
+                                    <th>Desconto especial</th>
+                                    <th>Vencimento</th>
+                                    <th>Status</th>
+                                    <th>Parcelas</th>
+                                    <th>Asaas</th>
+                                    <th class="cobranca-actions-col">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for cobranca in cobrancas %}
+                                    <tr>
+                                        <td data-label="Tipo">
+                                            <strong style="color: #4a235f;">{{ cobranca.get_tipo_display }}</strong>
+                                        </td>
+
+                                        <td data-label="Descrição">
+                                            {{ cobranca.descricao }}
+                                        </td>
+
+                                        <td data-label="Valor">
+                                            {% if cobranca.tipo == 'figurino' %}
+                                                <div class="cobranca-mini-stack">
+                                                    <div class="cobranca-mini-card">Base: R$ {{ cobranca.valor_total }}</div>
+                                                    <div class="cobranca-mini-card">À vista: R$ {{ cobranca.valor_figurino_avista|default:"0.00" }}</div>
+                                                    <div class="cobranca-mini-card">Parcelado: R$ {{ cobranca.valor_figurino_parcelado|default:"0.00" }}</div>
+                                                </div>
+                                            {% else %}
+                                                <strong>R$ {{ cobranca.valor_total }}</strong>
                                             {% endif %}
+                                        </td>
 
-                                            {% if cobranca.parcelas.all %}
-                                                <div style="display: flex; flex-direction: column; gap: 0.35rem;">
-                                                    {% for parcela in cobranca.parcelas.all %}
-                                                        <div style="padding: 0.6rem; background: #f8f9fa; border-radius: 6px; font-size: 0.85rem; border: 1px solid #e5e5e5;">
-                                                            <div style="display: flex; flex-direction: column; gap: 0.35rem;">
-                                                                <span>
-                                                                    Parcela {{ parcela.numero_parcela }}/{{ parcela.total_parcelas }}
-                                                                    - R$ {{ parcela.valor }}
-                                                                </span>
+                                        <td data-label="Parcelamento">
+                                            {% if cobranca.permitir_parcelamento %}
+                                                <span class="status-pill status-neutral">Sim (até {{ cobranca.max_parcelas }}x)</span>
+                                            {% else %}
+                                                <span class="status-pill status-warning">Não</span>
+                                            {% endif %}
+                                        </td>
 
-                                                                <span style="color: #666;">
-                                                                    Status local:
-                                                                    {% if parcela.status == 'pago' %}
-                                                                        <strong style="color: #155724;">Pago</strong>
-                                                                    {% else %}
-                                                                        <strong style="color: #856404;">Pendente</strong>
-                                                                    {% endif %}
-                                                                </span>
+                                        <td data-label="Desconto especial">
+                                            {% if cobranca.tipo == 'figurino' %}
+                                                —
+                                            {% else %}
+                                                {% if cobranca.desconto_irmaos %}
+                                                    <span class="status-pill status-success">Sim</span>
+                                                {% else %}
+                                                    <span class="status-pill status-warning">Não</span>
+                                                {% endif %}
+                                            {% endif %}
+                                        </td>
 
-                                                                {% if parcela.asaas_status %}
-                                                                    <span style="color: #666;">
-                                                                        Status Asaas: {{ parcela.asaas_status }}
-                                                                    </span>
-                                                                {% endif %}
+                                        <td data-label="Vencimento">
+                                            {% if cobranca.vencimento_primeira_parcela %}
+                                                {{ cobranca.vencimento_primeira_parcela|date:"d/m/Y" }}
+                                            {% else %}
+                                                —
+                                            {% endif %}
+                                        </td>
 
-                                                                {% if parcela.vencimento %}
-                                                                    <span style="color: #666;">
-                                                                        Vencimento: {{ parcela.vencimento|date:"d/m/Y" }}
-                                                                    </span>
-                                                                {% endif %}
+                                        <td data-label="Status">
+                                            <div class="cobranca-mini-stack">
+                                                <strong style="color: #4a235f;">{{ cobranca.get_status_display }}</strong>
+                                                <span style="font-size: 0.82rem; color: #666;">Pago: R$ {{ cobranca.total_pago }}</span>
+                                                <span style="font-size: 0.82rem; color: #666;">Pendente: R$ {{ cobranca.total_pendente }}</span>
+                                            </div>
+                                        </td>
 
-                                                                {% if parcela.data_pagamento %}
-                                                                    <span style="color: #666;">
-                                                                        Pago em: {{ parcela.data_pagamento|date:"d/m/Y H:i" }}
-                                                                    </span>
-                                                                {% endif %}
+                                        <td data-label="Parcelas">
+                                            <span class="status-pill status-neutral">{{ cobranca.parcelas.count }}</span>
+                                        </td>
 
-                                                                <div>
-                                                                    {% if parcela.asaas_invoice_url %}
-                                                                        <a href="{{ parcela.asaas_invoice_url }}" target="_blank" rel="noopener noreferrer">Fatura</a>
-                                                                    {% endif %}
+                                        <td data-label="Asaas">
+                                            {% if cobranca.enviado_asaas %}
+                                                <div class="cobranca-mini-stack">
+                                                    <span class="status-pill status-success">Enviado</span>
 
-                                                                    {% if parcela.asaas_bank_slip_url %}
-                                                                        {% if parcela.asaas_invoice_url %} | {% endif %}
-                                                                        <a href="{{ parcela.asaas_bank_slip_url }}" target="_blank" rel="noopener noreferrer">Boleto</a>
-                                                                    {% endif %}
+                                                    {% if cobranca.billing_type %}
+                                                        <span style="font-size: 0.85rem; color: #666;">
+                                                            Tipo: {{ cobranca.billing_type }}
+                                                        </span>
+                                                    {% endif %}
+
+                                                    {% if cobranca.parcelas.all %}
+                                                        <div class="cobranca-mini-stack">
+                                                            {% for parcela in cobranca.parcelas.all %}
+                                                                <div class="cobranca-mini-card">
+                                                                    <div class="cobranca-mini-stack">
+                                                                        <span>
+                                                                            Parcela {{ parcela.numero_parcela }}/{{ parcela.total_parcelas }} - R$ {{ parcela.valor }}
+                                                                        </span>
+
+                                                                        <span style="color: #666;">
+                                                                            Status local:
+                                                                            {% if parcela.status == 'pago' %}
+                                                                                <strong style="color: #155724;">Pago</strong>
+                                                                            {% else %}
+                                                                                <strong style="color: #856404;">Pendente</strong>
+                                                                            {% endif %}
+                                                                        </span>
+
+                                                                        {% if parcela.asaas_status %}
+                                                                            <span style="color: #666;">
+                                                                                Status Asaas: {{ parcela.asaas_status }}
+                                                                            </span>
+                                                                        {% endif %}
+
+                                                                        {% if parcela.vencimento %}
+                                                                            <span style="color: #666;">
+                                                                                Vencimento: {{ parcela.vencimento|date:"d/m/Y" }}
+                                                                            </span>
+                                                                        {% endif %}
+
+                                                                        {% if parcela.data_pagamento %}
+                                                                            <span style="color: #666;">
+                                                                                Pago em: {{ parcela.data_pagamento|date:"d/m/Y H:i" }}
+                                                                            </span>
+                                                                        {% endif %}
+
+                                                                        <div>
+                                                                            {% if parcela.asaas_invoice_url %}
+                                                                                <a href="{{ parcela.asaas_invoice_url }}" target="_blank" rel="noopener noreferrer">Fatura</a>
+                                                                            {% endif %}
+
+                                                                            {% if parcela.asaas_bank_slip_url %}
+                                                                                {% if parcela.asaas_invoice_url %} | {% endif %}
+                                                                                <a href="{{ parcela.asaas_bank_slip_url }}" target="_blank" rel="noopener noreferrer">Boleto</a>
+                                                                            {% endif %}
+                                                                        </div>
+
+                                                                        {% if parcela.status != 'pago' %}
+                                                                            <form method="post"
+                                                                                  action="{% url 'admin_dashboard:parcela_cobranca_espetaculo_marcar_pago' parcela.pk %}"
+                                                                                  onsubmit="return confirm('Confirmar marcação desta parcela como paga?');"
+                                                                                  style="margin-top: 0.35rem;">
+                                                                                {% csrf_token %}
+                                                                                <button type="submit" class="btn-success-green">
+                                                                                    Marcar como pago
+                                                                                </button>
+                                                                            </form>
+                                                                        {% endif %}
+                                                                    </div>
                                                                 </div>
-
-                                                                {% if parcela.status != 'pago' %}
-                                                                    <form method="post"
-                                                                          action="{% url 'admin_dashboard:parcela_cobranca_espetaculo_marcar_pago' parcela.pk %}"
-                                                                          onsubmit="return confirm('Confirmar marcação desta parcela como paga?');"
-                                                                          style="margin-top: 0.35rem;">
-                                                                        {% csrf_token %}
-                                                                        <button type="submit"
-                                                                                style="padding: 0.45rem 0.75rem; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">
-                                                                            Marcar como pago
-                                                                        </button>
-                                                                    </form>
-                                                                {% endif %}
-                                                            </div>
+                                                            {% endfor %}
                                                         </div>
-                                                    {% endfor %}
+                                                    {% endif %}
+                                                </div>
+                                            {% else %}
+                                                <div class="cobranca-mini-stack">
+                                                    <span class="status-pill status-warning">Aguardando escolha da responsável</span>
+                                                    <span style="font-size: 0.85rem; color: #666; line-height: 1.4;">
+                                                        A cobrança será enviada ao Asaas quando a responsável escolher à vista ou a quantidade de parcelas na área dela.
+                                                    </span>
                                                 </div>
                                             {% endif %}
-                                        </div>
-                                    {% else %}
-                                        <div style="display: flex; flex-direction: column; gap: 0.4rem;">
-                                            <span style="display: inline-block; padding: 0.35rem 0.6rem; background: #fff3cd; color: #856404; border-radius: 5px; font-size: 0.85rem; width: fit-content;">
-                                                Aguardando escolha da responsável
-                                            </span>
+                                        </td>
 
-                                            <span style="font-size: 0.85rem; color: #666; line-height: 1.4;">
-                                                A cobrança será enviada ao Asaas quando a responsável escolher à vista ou a quantidade de parcelas na área dela.
-                                            </span>
-                                        </div>
-                                    {% endif %}
-                                </td>
-                                <td style="padding: 0.75rem; border: 1px solid #ddd;">
-                                    <form method="post"
-                                          action="{% url 'admin_dashboard:cobranca_espetaculo_excluir' cobranca.pk %}"
-                                          onsubmit="return confirm('Tem certeza que deseja excluir esta cobrança? Essa ação também removerá as parcelas vinculadas.');"
-                                          style="display: inline;">
-                                        {% csrf_token %}
-                                        <button type="submit"
-                                                style="padding: 0.7rem 1rem; background: #dc3545; color: white; border: none; border-radius: 6px; cursor: pointer; white-space: nowrap;">
-                                            Excluir cobrança
-                                        </button>
-                                    </form>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        {% else %}
-            <p style="color: #666; margin: 0;">Nenhuma cobrança cadastrada para esta participação.</p>
-        {% endif %}
+                                        <td data-label="Ações">
+                                            <form method="post"
+                                                  action="{% url 'admin_dashboard:cobranca_espetaculo_excluir' cobranca.pk %}"
+                                                  onsubmit="return confirm('Tem certeza que deseja excluir esta cobrança? Essa ação também removerá as parcelas vinculadas.');"
+                                                  style="display: inline;">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn-danger-red">
+                                                    Excluir cobrança
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <p style="margin: 0;">Nenhuma cobrança cadastrada para esta participação.</p>
+                    </div>
+                {% endif %}
+            </section>
+        </div>
     </div>
 </div>
 
