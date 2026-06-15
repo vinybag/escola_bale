@@ -1,0 +1,513 @@
+{% extends 'base_public.html' %}
+{% load static %}
+
+{% block title %}Audição - Rosa Branca{% endblock %}
+
+{% block content %}
+<style>
+    .audicao-page {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 1.5rem 1rem 3rem;
+    }
+
+    .audicao-back {
+        display: inline-block;
+        margin-bottom: 1rem;
+        color: #b07a84;
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+    .audicao-card {
+        background: white;
+        border-radius: 18px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    .audicao-hero {
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+
+    .audicao-hero-inner {
+        padding: 1rem;
+        background: linear-gradient(135deg, #f8f4f5 0%, #fffdfd 100%);
+    }
+
+    .audicao-hero img {
+        width: 100%;
+        height: auto;
+        display: block;
+        border-radius: 12px;
+    }
+
+    .audicao-info-grid {
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .audicao-main {
+        padding: 2rem;
+    }
+
+    .audicao-side {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .audicao-title {
+        margin: 0 0 0.75rem 0;
+        color: #2c3e50;
+        font-size: 2rem;
+        line-height: 1.2;
+    }
+
+    .audicao-text {
+        color: #666;
+        line-height: 1.7;
+        margin-bottom: 1.25rem;
+    }
+
+    .audicao-highlight {
+        background: #faf7f8;
+        border-left: 4px solid #b07a84;
+        padding: 1rem 1rem 1rem 1.25rem;
+        border-radius: 10px;
+        margin-bottom: 1.25rem;
+    }
+
+    .audicao-highlight h3,
+    .audicao-soft-box h3,
+    .audicao-summary h3,
+    .audicao-form h2 {
+        margin-top: 0;
+        color: #2c3e50;
+    }
+
+    .audicao-highlight ul {
+        margin: 0;
+        padding-left: 1.2rem;
+        color: #444;
+        line-height: 1.7;
+    }
+
+    .audicao-soft-box {
+        background: #f8f9fa;
+        padding: 1rem 1.2rem;
+        border-radius: 10px;
+    }
+
+    .audicao-summary {
+        background: linear-gradient(135deg, #2c3e50, #b07a84);
+        color: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 14px rgba(0, 0, 0, 0.08);
+    }
+
+    .audicao-summary h3 {
+        color: white;
+        margin-bottom: 0.75rem;
+        font-size: 1.1rem;
+    }
+
+    .audicao-summary-grid {
+        display: grid;
+        gap: 0.8rem;
+        font-size: 0.95rem;
+    }
+
+    .audicao-summary-label {
+        opacity: 0.85;
+        font-size: 0.8rem;
+        margin-bottom: 0.1rem;
+    }
+
+    .audicao-summary-value {
+        font-weight: 600;
+    }
+
+    .audicao-alert {
+        background: #fff7f8;
+        border: 1px solid #f0d7dc;
+        border-radius: 16px;
+        padding: 1.25rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .audicao-alert p {
+        margin: 0;
+        color: #666;
+        line-height: 1.7;
+        font-size: 0.95rem;
+    }
+
+    .audicao-form {
+        padding: 2rem;
+    }
+
+    .audicao-form h2 {
+        margin-bottom: 0.5rem;
+    }
+
+    .audicao-form-intro {
+        color: #666;
+        margin-bottom: 1.5rem;
+        line-height: 1.6;
+    }
+
+    .audicao-form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .audicao-field {
+        margin-bottom: 1rem;
+    }
+
+    .audicao-field label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: #333;
+    }
+
+    .audicao-input,
+    .audicao-textarea {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 0.85rem;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-family: inherit;
+        background: white;
+    }
+
+    .audicao-input:focus,
+    .audicao-textarea:focus {
+        outline: none;
+        border-color: #b07a84;
+        box-shadow: 0 0 0 3px rgba(176, 122, 132, 0.15);
+    }
+
+    .audicao-textarea {
+        resize: vertical;
+        min-height: 120px;
+    }
+
+    .audicao-help {
+        display: block;
+        margin-top: 0.5rem;
+        color: #888;
+        font-size: 0.9rem;
+    }
+
+    .audicao-confirmacao {
+        background: #fff8f8;
+        border: 1px solid #f1d9de;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .audicao-confirmacao label {
+        display: flex;
+        gap: 0.75rem;
+        align-items: flex-start;
+        cursor: pointer;
+        margin: 0;
+    }
+
+    .audicao-confirmacao span {
+        color: #555;
+        line-height: 1.6;
+    }
+
+    .audicao-actions {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .audicao-submit {
+        background: #b07a84;
+        color: white;
+        padding: 0.9rem 2rem;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: opacity 0.2s ease;
+    }
+
+    .audicao-status {
+        color: #888;
+        font-size: 0.9rem;
+    }
+
+    @media (max-width: 900px) {
+        .audicao-info-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .audicao-page {
+            padding: 1rem 0.85rem 2rem;
+        }
+
+        .audicao-main,
+        .audicao-form {
+            padding: 1.25rem;
+        }
+
+        .audicao-form-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .audicao-title {
+            font-size: 1.6rem;
+        }
+    }
+
+    @media (max-width: 520px) {
+        .audicao-actions {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .audicao-submit {
+            width: 100%;
+        }
+
+        .audicao-status {
+            text-align: center;
+        }
+    }
+</style>
+
+<div class="audicao-page">
+    <a href="{% url 'espetaculo:lista_publica' %}" class="audicao-back">
+        ← Voltar para espetáculos
+    </a>
+
+    <div class="audicao-card audicao-hero">
+        <div class="audicao-hero-inner">
+            <img src="{% static 'imagens/AUDICAO-ROSA-BRANCA.jpg' %}"
+                 alt="Audição Rosa Branca">
+        </div>
+    </div>
+
+    <div class="audicao-info-grid">
+        <div class="audicao-card audicao-main">
+            <h1 class="audicao-title">Audição Rosa Branca</h1>
+
+            <p class="audicao-text">
+                Estamos procurando a <strong>Rosa Branca</strong> para uma participação especial no espetáculo.
+                Esta audição é destinada a crianças a partir de 6 anos e foi pensada para selecionar uma aluna
+                com brilho em cena, compromisso e disponibilidade para os ensaios.
+            </p>
+
+            <div class="audicao-highlight">
+                <h3>Pré-requisitos</h3>
+                <ul>
+                    <li>Ter <strong>6 anos ou mais</strong>.</li>
+                    <li>Estar matriculada ativamente nas aulas de balé.</li>
+                    <li>Ter comprometimento e disponibilidade para ensaios extras noturnos.</li>
+                    <li>Ter disposição para participar de uma coreografia especial no espetáculo.</li>
+                </ul>
+            </div>
+
+            <div class="audicao-soft-box">
+                <h3>Importante</h3>
+                <p style="margin: 0; color: #555; line-height: 1.7;">
+                    Após o envio da inscrição, nossa equipe analisará os dados e entrará em contato pelo WhatsApp
+                    com os próximos passos da audição.
+                </p>
+            </div>
+        </div>
+
+        <div class="audicao-side">
+            <div class="audicao-summary">
+                <h3>Resumo da Audição</h3>
+
+                <div class="audicao-summary-grid">
+                    <div>
+                        <div class="audicao-summary-label">Faixa etária</div>
+                        <div class="audicao-summary-value">A partir de 6 anos</div>
+                    </div>
+
+                    <div>
+                        <div class="audicao-summary-label">Público</div>
+                        <div class="audicao-summary-value">Alunas ativas da escola</div>
+                    </div>
+
+                    <div>
+                        <div class="audicao-summary-label">Categoria</div>
+                        <div class="audicao-summary-value">Participação especial</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="audicao-alert">
+                <h3 style="margin: 0 0 0.5rem 0; color: #2c3e50; font-size: 1rem;">Antes de se inscrever</h3>
+                <p>
+                    Confirme com a família a disponibilidade para ensaios extras e certifique-se de preencher
+                    o WhatsApp corretamente, pois o contato será feito por ele.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="audicao-card audicao-form">
+        <h2>Inscreva-se para a Audição</h2>
+        <p class="audicao-form-intro">
+            Preencha os dados abaixo para participar da seleção da Rosa Branca.
+        </p>
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="audicao-form-grid">
+                <div class="audicao-field">
+                    <label for="nome_completo">Nome completo *</label>
+                    <input type="text"
+                           id="nome_completo"
+                           name="nome_completo"
+                           required
+                           class="audicao-input">
+                </div>
+
+                <div class="audicao-field">
+                    <label for="whatsapp">WhatsApp *</label>
+                    <input type="text"
+                           id="whatsapp"
+                           name="whatsapp"
+                           required
+                           placeholder="(11) 99999-9999"
+                           class="audicao-input">
+                </div>
+            </div>
+
+            <div class="audicao-form-grid">
+                <div class="audicao-field">
+                    <label for="idade">Idade *</label>
+                    <input type="number"
+                           id="idade"
+                           name="idade"
+                           min="1"
+                           required
+                           class="audicao-input">
+                    <small id="idade-ajuda" class="audicao-help">
+                        Permitido para crianças a partir de 6 anos.
+                    </small>
+                </div>
+
+                <div class="audicao-field">
+                    <label for="turma_atual">Turma atual *</label>
+                    <input type="text"
+                           id="turma_atual"
+                           name="turma_atual"
+                           required
+                           placeholder="Ex: Baby Class / Ballet Infantil / Jazz"
+                           class="audicao-input">
+                </div>
+            </div>
+
+            <div class="audicao-field">
+                <label for="responsavel">Nome do responsável *</label>
+                <input type="text"
+                       id="responsavel"
+                       name="responsavel"
+                       required
+                       class="audicao-input">
+            </div>
+
+            <div class="audicao-field">
+                <label for="observacoes">Observações</label>
+                <textarea id="observacoes"
+                          name="observacoes"
+                          rows="4"
+                          placeholder="Se quiser, informe algo importante sobre disponibilidade, experiência ou algum recado para a equipe."
+                          class="audicao-textarea"></textarea>
+            </div>
+
+            <div class="audicao-confirmacao">
+                <label for="confirmacao_requisitos">
+                    <input type="checkbox"
+                           id="confirmacao_requisitos"
+                           name="confirmacao_requisitos"
+                           required
+                           style="margin-top: 0.2rem;">
+                    <span>
+                        Confirmo que a candidata tem 6 anos ou mais, está matriculada ativamente na escola
+                        e possui disponibilidade para os ensaios extras.
+                    </span>
+                </label>
+            </div>
+
+            <div class="audicao-actions">
+                <button type="submit" id="btn-enviar" class="audicao-submit">
+                    Enviar inscrição
+                </button>
+
+                <span id="idade-status" class="audicao-status">
+                    Preencha os dados para continuar.
+                </span>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    const idadeInput = document.getElementById('idade');
+    const idadeAjuda = document.getElementById('idade-ajuda');
+    const idadeStatus = document.getElementById('idade-status');
+    const btnEnviar = document.getElementById('btn-enviar');
+
+    function validarIdadeAudicao() {
+        const valor = idadeInput.value.trim();
+        const idade = parseInt(valor || '0', 10);
+
+        if (!valor) {
+            idadeAjuda.textContent = 'Permitido para crianças a partir de 6 anos.';
+            idadeAjuda.style.color = '#888';
+            idadeStatus.textContent = 'Preencha os dados para continuar.';
+            idadeStatus.style.color = '#888';
+            btnEnviar.disabled = false;
+            btnEnviar.style.opacity = '1';
+            btnEnviar.style.cursor = 'pointer';
+            return;
+        }
+
+        if (idade < 6) {
+            idadeAjuda.textContent = 'Esta audição é permitida somente para crianças a partir de 6 anos.';
+            idadeAjuda.style.color = '#b00020';
+            idadeStatus.textContent = 'Idade mínima não atingida para esta audição.';
+            idadeStatus.style.color = '#b00020';
+            btnEnviar.disabled = true;
+            btnEnviar.style.opacity = '0.6';
+            btnEnviar.style.cursor = 'not-allowed';
+        } else {
+            idadeAjuda.textContent = 'Idade válida para participar da audição.';
+            idadeAjuda.style.color = '#2e7d32';
+            idadeStatus.textContent = 'Tudo certo para enviar a inscrição.';
+            idadeStatus.style.color = '#2e7d32';
+            btnEnviar.disabled = false;
+            btnEnviar.style.opacity = '1';
+            btnEnviar.style.cursor = 'pointer';
+        }
+    }
+
+    idadeInput.addEventListener('input', validarIdadeAudicao);
+    document.addEventListener('DOMContentLoaded', validarIdadeAudicao);
+</script>
+{% endblock %}

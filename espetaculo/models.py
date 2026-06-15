@@ -72,6 +72,7 @@ class InscricaoAudicao(models.Model):
         ('aurelia', 'Aurélia'),
         ('cora_del_amour', 'Cora del Amour'),
         ('3_marias', '3 Marias'),
+        ('rosa_branca', 'Rosa Branca'),
     ]
 
     nome_completo = models.CharField(max_length=200, verbose_name='Nome completo')

@@ -21,6 +21,7 @@ def formatar_personagens(valor):
         'aurelia': 'Aurélia',
         'cora_del_amour': 'Cora del Amour',
         '3_marias': '3 Marias',
+        'rosa_branca': 'Rosa Branca',
     }
     
     try:

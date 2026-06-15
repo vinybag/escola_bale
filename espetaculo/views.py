@@ -88,3 +88,53 @@ def get_personagens_por_idade(request):
             personagens_disponiveis.append({'id': personagem_id, 'nome': nome})
     
     return JsonResponse({'personagens': personagens_disponiveis})
+
+
+def audicao_rosa_branca(request):
+    if request.method == 'POST':
+        try:
+            espetaculo = Espetaculo.objects.filter(ativo=True).first()
+
+            nome_completo = request.POST.get('nome_completo', '').strip()
+            whatsapp = request.POST.get('whatsapp', '').strip()
+            idade = request.POST.get('idade', '').strip()
+            confirmacao = request.POST.get('confirmacao_requisitos')
+
+            if not nome_completo or not whatsapp or not idade:
+                messages.error(request, 'Preencha todos os campos obrigatórios.')
+                return render(request, 'espetaculo/audicao_rosa_branca.html')
+
+            try:
+                idade_int = int(idade)
+            except ValueError:
+                messages.error(request, 'Informe uma idade válida.')
+                return render(request, 'espetaculo/audicao_rosa_branca.html')
+
+            if idade_int < 6:
+                messages.error(request, 'Esta audição é permitida somente para crianças a partir de 6 anos.')
+                return render(request, 'espetaculo/audicao_rosa_branca.html')
+
+            if not confirmacao:
+                messages.error(request, 'Confirme os requisitos para continuar.')
+                return render(request, 'espetaculo/audicao_rosa_branca.html')
+
+            InscricaoAudicao.objects.create(
+                nome_completo=nome_completo,
+                whatsapp=whatsapp,
+                idade=idade_int,
+                personagens='rosa_branca',
+                espetaculo=espetaculo,
+            )
+
+            messages.success(request, 'Inscrição realizada com sucesso!')
+            return redirect('espetaculo:audicao_rosa_branca_sucesso')
+
+        except Exception as e:
+            messages.error(request, f'Erro ao enviar inscrição: {e}')
+            return render(request, 'espetaculo/audicao_rosa_branca.html')
+
+    return render(request, 'espetaculo/audicao_rosa_branca.html')
+
+def audicao_nova_publica(request):
+    espetaculo = Espetaculo.objects.filter(ativo=True).first()
+    return render(request, 'espetaculo/audicao_nova_publica.html', {'espetaculo': espetaculo})
