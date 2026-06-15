@@ -40,6 +40,7 @@
         height: auto;
         display: block;
         border-radius: 12px;
+        object-fit: cover;
     }
 
     .audicao-info-grid {
@@ -68,7 +69,7 @@
     .audicao-text {
         color: #666;
         line-height: 1.7;
-        margin-bottom: 1.25rem;
+        margin-bottom: 1rem;
     }
 
     .audicao-highlight {
@@ -85,13 +86,6 @@
     .audicao-form h2 {
         margin-top: 0;
         color: #2c3e50;
-    }
-
-    .audicao-highlight ul {
-        margin: 0;
-        padding-left: 1.2rem;
-        color: #444;
-        line-height: 1.7;
     }
 
     .audicao-soft-box {
@@ -301,58 +295,75 @@
 
     <div class="audicao-card audicao-hero">
         <div class="audicao-hero-inner">
-            <img src="{% static 'imagens/AUDICAO-ROSA-BRANCA.jpg' %}"
-                 alt="Audição Rosa Branca">
+            <img src="{% static 'imagens/audicao-rosa-branca.png' %}"
+                 alt="Audição Rosa Branca"
+                 onerror="this.onerror=null; this.src='{% static 'imagens/AUDICAO-ROSA-BRANCA.jpg' %}';">
         </div>
     </div>
 
     <div class="audicao-info-grid">
         <div class="audicao-card audicao-main">
-            <h1 class="audicao-title">Audição Rosa Branca</h1>
+            <h1 class="audicao-title">Como funcionará a seleção da Rosa Branca</h1>
 
             <p class="audicao-text">
-                Estamos procurando a <strong>Rosa Branca</strong> para uma participação especial no espetáculo.
-                Esta audição é destinada a crianças a partir de 6 anos e foi pensada para selecionar uma aluna
-                com brilho em cena, compromisso e disponibilidade para os ensaios.
+                A seleção acontecerá em duas etapas:
             </p>
 
             <div class="audicao-highlight">
-                <h3>Pré-requisitos</h3>
-                <ul>
-                    <li>Ter <strong>6 anos ou mais</strong>.</li>
-                    <li>Estar matriculada ativamente nas aulas de balé.</li>
-                    <li>Ter comprometimento e disponibilidade para ensaios extras noturnos.</li>
-                    <li>Ter disposição para participar de uma coreografia especial no espetáculo.</li>
-                </ul>
+                <h3>🌹 Etapa 1 – Aula-Audição</h3>
+                <p class="audicao-text" style="margin-bottom: 0.6rem;">
+                    <strong>22/06 (segunda-feira)</strong><br>
+                    <strong>Das 20h às 21h</strong>
+                </p>
+                <p class="audicao-text" style="margin-bottom: 0;">
+                    As candidatas participarão de uma Aula-Audição conduzida pela professora
+                    <strong>Tia Gabi</strong>, que aplicará exercícios técnicos de balé e ensinará
+                    uma sequência coreográfica especialmente preparada para a seleção. Durante a aula
+                    serão observados aspectos como postura, musicalidade, atenção, dedicação e desempenho geral.
+                </p>
+            </div>
+
+            <div class="audicao-highlight">
+                <h3>🌹 Etapa 2 – Aula-Ensaio</h3>
+                <p class="audicao-text" style="margin-bottom: 0.6rem;">
+                    <strong>29/06 (segunda-feira)</strong><br>
+                    <strong>Horário a confirmar</strong>
+                </p>
+                <p class="audicao-text" style="margin-bottom: 0;">
+                    As alunas aprovadas na primeira etapa serão convidadas para uma aula-ensaio especial
+                    com as intérpretes das <strong>Três Rosas</strong> do espetáculo. Neste encontro,
+                    será realizada uma vivência prática e um teste de integração ao grupo, permitindo
+                    avaliar a adaptação à coreografia e ao trabalho em conjunto.
+                </p>
             </div>
 
             <div class="audicao-soft-box">
-                <h3>Importante</h3>
+                <h3>Resultado final</h3>
                 <p style="margin: 0; color: #555; line-height: 1.7;">
-                    Após o envio da inscrição, nossa equipe analisará os dados e entrará em contato pelo WhatsApp
-                    com os próximos passos da audição.
+                    Ao final da segunda etapa, será escolhida a bailarina que interpretará a
+                    <strong>Rosa Branca</strong> em nosso espetáculo.
                 </p>
             </div>
         </div>
 
         <div class="audicao-side">
             <div class="audicao-summary">
-                <h3>Resumo da Audição</h3>
+                <h3>Resumo da Seleção</h3>
 
                 <div class="audicao-summary-grid">
                     <div>
-                        <div class="audicao-summary-label">Faixa etária</div>
-                        <div class="audicao-summary-value">A partir de 6 anos</div>
+                        <div class="audicao-summary-label">Etapa 1</div>
+                        <div class="audicao-summary-value">22/06, das 20h às 21h</div>
                     </div>
 
                     <div>
-                        <div class="audicao-summary-label">Público</div>
-                        <div class="audicao-summary-value">Alunas ativas da escola</div>
+                        <div class="audicao-summary-label">Etapa 2</div>
+                        <div class="audicao-summary-value">29/06, horário a confirmar</div>
                     </div>
 
                     <div>
-                        <div class="audicao-summary-label">Categoria</div>
-                        <div class="audicao-summary-value">Participação especial</div>
+                        <div class="audicao-summary-label">Personagem</div>
+                        <div class="audicao-summary-value">Rosa Branca</div>
                     </div>
                 </div>
             </div>
@@ -360,8 +371,8 @@
             <div class="audicao-alert">
                 <h3 style="margin: 0 0 0.5rem 0; color: #2c3e50; font-size: 1rem;">Antes de se inscrever</h3>
                 <p>
-                    Confirme com a família a disponibilidade para ensaios extras e certifique-se de preencher
-                    o WhatsApp corretamente, pois o contato será feito por ele.
+                    Confira atentamente a disponibilidade para as duas etapas e preencha o WhatsApp
+                    corretamente, pois o contato da equipe será feito por ele.
                 </p>
             </div>
         </div>
@@ -379,33 +390,19 @@
             <div class="audicao-form-grid">
                 <div class="audicao-field">
                     <label for="nome_completo">Nome completo *</label>
-                    <input type="text"
-                           id="nome_completo"
-                           name="nome_completo"
-                           required
-                           class="audicao-input">
+                    <input type="text" id="nome_completo" name="nome_completo" required class="audicao-input">
                 </div>
 
                 <div class="audicao-field">
                     <label for="whatsapp">WhatsApp *</label>
-                    <input type="text"
-                           id="whatsapp"
-                           name="whatsapp"
-                           required
-                           placeholder="(11) 99999-9999"
-                           class="audicao-input">
+                    <input type="text" id="whatsapp" name="whatsapp" required placeholder="(11) 99999-9999" class="audicao-input">
                 </div>
             </div>
 
             <div class="audicao-form-grid">
                 <div class="audicao-field">
                     <label for="idade">Idade *</label>
-                    <input type="number"
-                           id="idade"
-                           name="idade"
-                           min="1"
-                           required
-                           class="audicao-input">
+                    <input type="number" id="idade" name="idade" min="1" required class="audicao-input">
                     <small id="idade-ajuda" class="audicao-help">
                         Permitido para crianças a partir de 6 anos.
                     </small>
@@ -413,43 +410,27 @@
 
                 <div class="audicao-field">
                     <label for="turma_atual">Turma atual *</label>
-                    <input type="text"
-                           id="turma_atual"
-                           name="turma_atual"
-                           required
-                           placeholder="Ex: Baby Class / Ballet Infantil / Jazz"
-                           class="audicao-input">
+                    <input type="text" id="turma_atual" name="turma_atual" required class="audicao-input">
                 </div>
             </div>
 
             <div class="audicao-field">
                 <label for="responsavel">Nome do responsável *</label>
-                <input type="text"
-                       id="responsavel"
-                       name="responsavel"
-                       required
-                       class="audicao-input">
+                <input type="text" id="responsavel" name="responsavel" required class="audicao-input">
             </div>
 
             <div class="audicao-field">
                 <label for="observacoes">Observações</label>
-                <textarea id="observacoes"
-                          name="observacoes"
-                          rows="4"
-                          placeholder="Se quiser, informe algo importante sobre disponibilidade, experiência ou algum recado para a equipe."
-                          class="audicao-textarea"></textarea>
+                <textarea id="observacoes" name="observacoes" rows="4" class="audicao-textarea"
+                    placeholder="Se quiser, informe algo importante sobre disponibilidade, experiência ou algum recado para a equipe."></textarea>
             </div>
 
             <div class="audicao-confirmacao">
                 <label for="confirmacao_requisitos">
-                    <input type="checkbox"
-                           id="confirmacao_requisitos"
-                           name="confirmacao_requisitos"
-                           required
-                           style="margin-top: 0.2rem;">
+                    <input type="checkbox" id="confirmacao_requisitos" name="confirmacao_requisitos" required style="margin-top: 0.2rem;">
                     <span>
-                        Confirmo que a candidata tem 6 anos ou mais, está matriculada ativamente na escola
-                        e possui disponibilidade para os ensaios extras.
+                        Confirmo que a candidata possui disponibilidade para participar das etapas da seleção
+                        da Rosa Branca e que os dados informados acima estão corretos.
                     </span>
                 </label>
             </div>

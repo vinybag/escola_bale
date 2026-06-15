@@ -91,49 +91,48 @@ def get_personagens_por_idade(request):
 
 
 def audicao_rosa_branca(request):
+    espetaculo = Espetaculo.objects.filter(ativo=True).first()
+
     if request.method == 'POST':
+        nome_completo = request.POST.get('nome_completo', '').strip()
+        whatsapp = request.POST.get('whatsapp', '').strip()
+        idade = request.POST.get('idade', '').strip()
+        turma_atual = request.POST.get('turma_atual', '').strip()
+        responsavel = request.POST.get('responsavel', '').strip()
+        observacoes = request.POST.get('observacoes', '').strip()
+        confirmacao = request.POST.get('confirmacao_requisitos')
+
+        if not all([nome_completo, whatsapp, idade, turma_atual, responsavel, confirmacao]):
+            messages.error(request, 'Preencha todos os campos obrigatórios.')
+            return render(request, 'espetaculo/audicao_rosa_branca.html', {'espetaculo': espetaculo})
+
         try:
-            espetaculo = Espetaculo.objects.filter(ativo=True).first()
+            idade_int = int(idade)
+        except ValueError:
+            messages.error(request, 'Idade inválida.')
+            return render(request, 'espetaculo/audicao_rosa_branca.html', {'espetaculo': espetaculo})
 
-            nome_completo = request.POST.get('nome_completo', '').strip()
-            whatsapp = request.POST.get('whatsapp', '').strip()
-            idade = request.POST.get('idade', '').strip()
-            confirmacao = request.POST.get('confirmacao_requisitos')
+        if idade_int < 6:
+            messages.error(request, 'Essa audição é permitida somente para crianças a partir de 6 anos.')
+            return render(request, 'espetaculo/audicao_rosa_branca.html', {'espetaculo': espetaculo})
 
-            if not nome_completo or not whatsapp or not idade:
-                messages.error(request, 'Preencha todos os campos obrigatórios.')
-                return render(request, 'espetaculo/audicao_rosa_branca.html')
+        texto_observacoes = f'Turma atual: {turma_atual}'
+        if observacoes:
+            texto_observacoes += f'\n\n{observacoes}'
 
-            try:
-                idade_int = int(idade)
-            except ValueError:
-                messages.error(request, 'Informe uma idade válida.')
-                return render(request, 'espetaculo/audicao_rosa_branca.html')
+        InscricaoAudicao.objects.create(
+            nomecompleto=nome_completo,
+            whatsapp=whatsapp,
+            idade=idade_int,
+            responsavel=responsavel,
+            personagens='Rosa Branca',
+            observacoes=texto_observacoes,
+        )
 
-            if idade_int < 6:
-                messages.error(request, 'Esta audição é permitida somente para crianças a partir de 6 anos.')
-                return render(request, 'espetaculo/audicao_rosa_branca.html')
+        messages.success(request, 'Inscrição enviada com sucesso!')
+        return redirect('espetaculo:audicao_rosa_branca_sucesso')
 
-            if not confirmacao:
-                messages.error(request, 'Confirme os requisitos para continuar.')
-                return render(request, 'espetaculo/audicao_rosa_branca.html')
-
-            InscricaoAudicao.objects.create(
-                nome_completo=nome_completo,
-                whatsapp=whatsapp,
-                idade=idade_int,
-                personagens='rosa_branca',
-                espetaculo=espetaculo,
-            )
-
-            messages.success(request, 'Inscrição realizada com sucesso!')
-            return redirect('espetaculo:audicao_rosa_branca_sucesso')
-
-        except Exception as e:
-            messages.error(request, f'Erro ao enviar inscrição: {e}')
-            return render(request, 'espetaculo/audicao_rosa_branca.html')
-
-    return render(request, 'espetaculo/audicao_rosa_branca.html')
+    return render(request, 'espetaculo/audicao_rosa_branca.html', {'espetaculo': espetaculo})
 
 def audicao_nova_publica(request):
     espetaculo = Espetaculo.objects.filter(ativo=True).first()
