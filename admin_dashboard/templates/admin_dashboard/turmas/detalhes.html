@@ -3,121 +3,427 @@
 {% block title %}Detalhes da Turma - {{ turma.nome }}{% endblock %}
 
 {% block content %}
-<div style="margin-bottom: 1rem;">
-    <a href="{% url 'admin_dashboard:turmas_list' %}" style="color: #b07a84; text-decoration: none;">← Voltar para turmas</a>
+<style>
+    .turma-det-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 2rem;
+    }
+
+    .turma-det-shell {
+        width: 100%;
+        max-width: 1100px;
+        min-width: 0;
+    }
+
+    .turma-det-main,
+    .turma-det-top,
+    .turma-det-body,
+    .turma-det-section {
+        min-width: 0;
+    }
+
+    .turma-det-main {
+        background: white;
+        border: 1px solid #ebe3f1;
+        border-radius: 18px;
+        box-shadow: 0 8px 24px rgba(107, 45, 143, 0.08);
+        overflow: hidden;
+    }
+
+    .turma-det-top {
+        padding: 1.5rem 2rem;
+        background: linear-gradient(135deg, #ffffff 0%, #f5eff9 100%);
+        border-bottom: 1px solid #ece3f2;
+    }
+
+    .turma-det-body {
+        padding: 2rem;
+        display: grid;
+        gap: 1.5rem;
+        background: #fcfbfd;
+    }
+
+    .turma-det-section {
+        background: white;
+        border: 1px solid #ece3f2;
+        border-radius: 16px;
+        padding: 1.5rem;
+    }
+
+    .turma-info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+        gap: 1rem;
+        margin-top: 1.25rem;
+        padding-top: 1.25rem;
+        border-top: 1px solid #ece3f2;
+    }
+
+    .turma-info-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .turma-info-label {
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #7a7280;
+        font-weight: 700;
+    }
+
+    .turma-info-value {
+        font-size: 0.97rem;
+        color: #3f3548;
+        font-weight: 500;
+    }
+
+    .status-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.32rem 0.75rem;
+        border-radius: 999px;
+        font-size: 0.82rem;
+        font-weight: 700;
+        width: fit-content;
+    }
+
+    .status-success { background: #dff3e4; color: #206a38; }
+    .status-danger  { background: #f8d7da; color: #721c24; }
+    .status-green   { background: #e8f5e9; color: #2e7d32; }
+    .status-neutral { background: #efe7f5; color: #6b2d8f; }
+
+    .turma-det-table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: auto;
+    }
+
+    .turma-det-table thead tr {
+        background: #faf7fc;
+    }
+
+    .turma-det-table th {
+        padding: 0.85rem 0.9rem;
+        border-bottom: 1px solid #ece3f2;
+        text-align: left;
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #7a7280;
+        white-space: nowrap;
+        font-weight: 700;
+    }
+
+    .turma-det-table td {
+        padding: 0.9rem;
+        border-bottom: 1px solid #f1ebf6;
+        vertical-align: middle;
+        color: #3f3548;
+        font-size: 0.94rem;
+        word-break: break-word;
+    }
+
+    .turma-det-table tbody tr:hover {
+        background: #fcf9fe;
+    }
+
+    .turma-det-table td:last-child,
+    .turma-det-table th:last-child {
+        text-align: right;
+    }
+
+    .turma-det-table td:nth-child(4),
+    .turma-det-table th:nth-child(4) {
+        text-align: center;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: #7b7580;
+    }
+
+    .turma-footer-bar {
+        background: #faf7fc;
+        padding: 1rem 1.5rem;
+        border-top: 1px solid #ece3f2;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    @media (max-width: 768px) {
+        .turma-det-table thead {
+            display: none;
+        }
+
+        .turma-det-table,
+        .turma-det-table tbody,
+        .turma-det-table tr,
+        .turma-det-table td {
+            display: block;
+            width: 100%;
+        }
+
+        .turma-det-table tr {
+            background: white;
+            border: 1px solid #ece3f2;
+            border-radius: 14px;
+            margin-bottom: 1rem;
+            padding: 0.25rem 0;
+        }
+
+        .turma-det-table td {
+            border-bottom: 1px solid #f1ebf6;
+            padding: 0.75rem 0.9rem;
+            text-align: left !important;
+        }
+
+        .turma-det-table td:last-child {
+            border-bottom: none;
+        }
+
+        .turma-det-table td::before {
+            content: attr(data-label);
+            display: block;
+            margin-bottom: 0.3rem;
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #7a7280;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .turma-info-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .turma-det-header {
+            align-items: stretch;
+        }
+
+        .turma-det-header > div,
+        .turma-det-header > a {
+            width: 100%;
+            text-align: center;
+        }
+
+        .turma-det-shell {
+            max-width: 100%;
+        }
+
+        .turma-det-top,
+        .turma-det-body,
+        .turma-det-section {
+            padding: 1.2rem;
+        }
+
+        .turma-info-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .turma-footer-bar {
+            flex-direction: column;
+            align-items: stretch;
+            text-align: center;
+        }
+
+        .turma-footer-bar a {
+            text-align: center;
+        }
+    }
+</style>
+
+<div class="turma-det-header">
+    <div>
+        <h2 style="margin: 0 0 0.35rem 0; color: #4a235f;">{{ turma.nome }}</h2>
+        <p style="margin: 0; color: #6f6f78;">Detalhes e alunas matriculadas</p>
+    </div>
+
+    <a href="{% url 'admin_dashboard:turmas_list' %}"
+       style="padding: 0.78rem 1.25rem; background: #f3f3f3; color: #444; text-decoration: none; border: 1px solid #ddd; border-radius: 10px; font-weight: 600;">
+        Voltar
+    </a>
 </div>
 
-<!-- Informações da Turma -->
-<div style="background: white; border-radius: 10px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
-    <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 1rem;">
-        <div>
-            <h2 style="margin: 0 0 0.5rem 0; color: #2c3e50;">{{ turma.nome }}</h2>
-            {% if turma.descricao %}
-                <p style="color: #666; margin: 0;">{{ turma.descricao }}</p>
-            {% endif %}
-        </div>
-        <div style="text-align: right;">
-            <div style="font-size: 1.5rem; font-weight: bold; color: #2c3e50;">{{ total_alunas }}</div>
-            <div style="color: #888;">alunas matriculadas</div>
-            <div style="color: {% if turma.total_alunas >= turma.capacidade_maxima %}#721c24{% else %}#155724{% endif %};">
-                Capacidade: {{ turma.total_alunas }}/{{ turma.capacidade_maxima }}
+<div class="turma-det-shell">
+    <div class="turma-det-main">
+        <div class="turma-det-top">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
+                <div>
+                    <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1.15rem;">Informações da turma</h3>
+                    <p style="margin: 0; color: #7a7280; font-size: 0.95rem;">
+                        Confira os dados gerais e as alunas matriculadas.
+                    </p>
+                </div>
+                <div style="padding: 0.55rem 0.9rem; border-radius: 999px; background: #efe7f5; color: #6b2d8f; font-size: 0.85rem; font-weight: 600;">
+                    BKN Tech
+                </div>
             </div>
         </div>
-    </div>
-    
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee;">
-        {% if turma.horario %}
-            <div>⏰ <strong>Horário:</strong> {{ turma.horario }}</div>
-        {% endif %}
-        {% if turma.professor %}
-            <div>👩‍🏫 <strong>Professora:</strong> {{ turma.professor }}</div>
-        {% endif %}
-        <div>📅 <strong>Status:</strong> 
-            {% if turma.ativa %}
-                <span style="background: #d4edda; color: #155724; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">Ativa</span>
-            {% else %}
-                <span style="background: #f8d7da; color: #721c24; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">Inativa</span>
-            {% endif %}
+
+        <div class="turma-det-body">
+
+            <!-- SEÇÃO: Dados gerais -->
+            <section class="turma-det-section">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+                    <div>
+                        <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1rem; font-weight: 700;">
+                            {{ turma.nome }}
+                        </h3>
+                        {% if turma.descricao %}
+                            <p style="margin: 0; color: #7b7580; font-size: 0.92rem;">{{ turma.descricao }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div style="text-align: right;">
+                        <div style="font-size: 1.9rem; font-weight: 800; color: #4a235f; line-height: 1;">{{ total_alunas }}</div>
+                        <div style="color: #7a7280; font-size: 0.88rem; margin-top: 0.2rem;">alunas matriculadas</div>
+                        <span class="status-pill {% if turma.total_alunas >= turma.capacidade_maxima %}status-danger{% else %}status-success{% endif %}" style="margin-top: 0.5rem;">
+                            {{ turma.total_alunas }}/{{ turma.capacidade_maxima }} vagas
+                        </span>
+                    </div>
+                </div>
+
+                <div class="turma-info-grid">
+                    {% if turma.horario %}
+                        <div class="turma-info-item">
+                            <span class="turma-info-label">Horário</span>
+                            <span class="turma-info-value">{{ turma.horario }}</span>
+                        </div>
+                    {% endif %}
+
+                    {% if turma.professor %}
+                        <div class="turma-info-item">
+                            <span class="turma-info-label">Professor(a)</span>
+                            <span class="turma-info-value">{{ turma.professor }}</span>
+                        </div>
+                    {% endif %}
+
+                    {% if turma.dia_semana %}
+                        <div class="turma-info-item">
+                            <span class="turma-info-label">Dia da semana</span>
+                            <span class="turma-info-value">{{ turma.dia_semana }}</span>
+                        </div>
+                    {% endif %}
+
+                    <div class="turma-info-item">
+                        <span class="turma-info-label">Status</span>
+                        <span class="status-pill {% if turma.ativa %}status-success{% else %}status-danger{% endif %}">
+                            {% if turma.ativa %}Ativa{% else %}Inativa{% endif %}
+                        </span>
+                    </div>
+
+                    <div class="turma-info-item">
+                        <span class="turma-info-label">Aula experimental</span>
+                        <span class="status-pill {% if turma.disponivel_experimental %}status-neutral{% else %}status-danger{% endif %}">
+                            {% if turma.disponivel_experimental %}Disponível{% else %}Indisponível{% endif %}
+                        </span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SEÇÃO: Alunas -->
+            <section class="turma-det-section" style="padding: 0; overflow: hidden;">
+                <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid #ece3f2;">
+                    <h3 style="margin: 0 0 0.2rem 0; color: #4a235f; font-size: 1rem; font-weight: 700;">
+                        Alunas Matriculadas
+                    </h3>
+                    <p style="margin: 0; color: #7b7580; font-size: 0.92rem;">
+                        Total: {{ total_alunas }} aluna{% if total_alunas != 1 %}s{% endif %}
+                    </p>
+                </div>
+
+                {% if alunas %}
+                    <div style="overflow-x: auto;">
+                        <table class="turma-det-table">
+                            <thead>
+                                <tr>
+                                    <th>Aluna</th>
+                                    <th>Data de Matrícula</th>
+                                    <th>Tempo de Escola</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for aluna in alunas %}
+                                <tr>
+                                    <td data-label="Aluna">
+                                        <strong style="color: #4a235f;">{{ aluna.nome }}</strong>
+                                        {% if aluna.observacoes %}
+                                            <br>
+                                            <small style="color: #7a7280; font-size: 0.78rem;">
+                                                {{ aluna.observacoes|truncatechars:30 }}
+                                            </small>
+                                        {% endif %}
+                                    </td>
+
+                                    <td data-label="Data de Matrícula" style="color: #6f6875;">
+                                        {% if aluna.data_matricula %}
+                                            {{ aluna.data_matricula|date:"d/m/Y" }}
+                                        {% else %}
+                                            <span style="color: #bab9b4;">Não registrada</span>
+                                        {% endif %}
+                                    </td>
+
+                                    <td data-label="Tempo de Escola">
+                                        <span class="status-pill status-green">
+                                            {{ aluna.tempo_matricula }}
+                                        </span>
+                                    </td>
+
+                                    <td data-label="Status">
+                                        <span class="status-pill {% if aluna.ativa %}status-success{% else %}status-danger{% endif %}">
+                                            {% if aluna.ativa %}Ativa{% else %}Inativa{% endif %}
+                                        </span>
+                                    </td>
+
+                                    <td data-label="Ações">
+                                        <a href="{% url 'admin_dashboard:aluna_detalhes' aluna.pk %}"
+                                           style="color: #6b2d8f; text-decoration: none; font-weight: 600; font-size: 0.9rem;">
+                                            Ver detalhes →
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="turma-footer-bar">
+                        <p style="margin: 0; color: #7a7280; font-size: 0.92rem;">
+                            Total: <strong style="color: #4a235f;">{{ total_alunas }}</strong> aluna{% if total_alunas != 1 %}s{% endif %}
+                        </p>
+
+                        <a href="{% url 'admin_dashboard:aluna_criar' %}"
+                           style="display: inline-flex; align-items: center; padding: 0.75rem 1.25rem; background: linear-gradient(135deg, #6b2d8f 0%, #7e3aa5 100%); color: white; border-radius: 10px; text-decoration: none; font-weight: 700; font-size: 0.92rem; box-shadow: 0 4px 12px rgba(107,45,143,0.18);">
+                            + Matricular nova aluna
+                        </a>
+                    </div>
+
+                {% else %}
+                    <div class="empty-state">
+                        <p style="margin: 0 0 1.25rem 0;">Nenhuma aluna matriculada nesta turma ainda.</p>
+                        <a href="{% url 'admin_dashboard:aluna_criar' %}"
+                           style="display: inline-flex; align-items: center; padding: 0.78rem 1.4rem; background: linear-gradient(135deg, #6b2d8f 0%, #7e3aa5 100%); color: white; border-radius: 10px; text-decoration: none; font-weight: 700; box-shadow: 0 4px 12px rgba(107,45,143,0.18);">
+                            + Matricular nova aluna
+                        </a>
+                    </div>
+                {% endif %}
+            </section>
+
         </div>
     </div>
-</div>
-
-<!-- Lista de Alunas -->
-<div style="background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
-    <div style="background: #f8f9fa; padding: 1rem 1.5rem; border-bottom: 1px solid #eee;">
-        <h3 style="margin: 0; font-size: 1.1rem;">👩‍🎓 Alunas Matriculadas</h3>
-    </div>
-    
-    {% if alunas %}
-    <div class="table-container">
-        <table style="width: 100%; border-collapse: collapse;">
-            <thead style="background: #f8f9fa;">
-                <tr>
-                    <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Aluna</th>
-                    <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Data de Matrícula</th>
-                    <th style="padding: 1rem; text-align: left; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Tempo de Escola</th>
-                    <th style="padding: 1rem; text-align: center; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Status</th>
-                    <th style="padding: 1rem; text-align: right; font-size: 0.875rem; color: #666; text-transform: uppercase; font-weight: 600;">Ações</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for aluna in alunas %}
-                <tr style="border-top: 1px solid #eee;">
-                    <td style="padding: 1rem;">
-                        <strong style="color: #2c3e50;">{{ aluna.nome }}</strong>
-                        {% if aluna.observacoes %}
-                            <br>
-                            <small style="color: #888; font-size: 0.75rem;">{{ aluna.observacoes|truncatechars:30 }}</small>
-                        {% endif %}
-                    </td>
-                    
-                    <td style="padding: 1rem; color: #666;">
-                        {% if aluna.data_matricula %}
-                            {{ aluna.data_matricula|date:"d/m/Y" }}
-                        {% else %}
-                            <span style="color: #999;">Não registrada</span>
-                        {% endif %}
-                    </td>
-                    
-                    <td style="padding: 1rem;">
-                        <span style="background: #e8f5e9; color: #2e7d32; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">
-                            {{ aluna.tempo_matricula }}
-                        </span>
-                    </td>
-                    
-                    <td style="padding: 1rem; text-align: center;">
-                        {% if aluna.ativa %}
-                            <span style="background: #d4edda; color: #155724; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">Ativa</span>
-                        {% else %}
-                            <span style="background: #f8d7da; color: #721c24; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem;">Inativa</span>
-                        {% endif %}
-                    </td>
-                    
-                    <td style="padding: 1rem; text-align: right;">
-                        <a href="{% url 'admin_dashboard:aluna_detalhes' aluna.pk %}" style="color: #b07a84; text-decoration: none;">Ver detalhes →</a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    
-    <!-- Resumo -->
-    <div style="background: #f8f9fa; padding: 1rem 1.5rem; border-top: 1px solid #eee;">
-        <p style="margin: 0; color: #666;">
-            Total de alunas: <strong>{{ total_alunas }}</strong>
-        </p>
-    </div>
-    
-    {% else %}
-    <div style="padding: 3rem; text-align: center; color: #999;">
-        Nenhuma aluna matriculada nesta turma ainda.
-    </div>
-    {% endif %}
-</div>
-
-<!-- Botão de ação -->
-<div style="margin-top: 1.5rem; text-align: center;">
-    <a href="{% url 'admin_dashboard:aluna_criar' %}" class="btn btn-primary">+ Matricular nova aluna</a>
 </div>
 {% endblock %}
