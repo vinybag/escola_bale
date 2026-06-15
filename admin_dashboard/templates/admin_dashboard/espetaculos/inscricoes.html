@@ -4,96 +4,256 @@
 {% block title %}Inscrições para Audição{% endblock %}
 
 {% block content %}
-<div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
+<style>
+    .inscricoes-list-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 2rem;
+    }
+
+    .inscricoes-filter-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 16px;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 8px 20px rgba(107, 45, 143, 0.06);
+        border: 1px solid #ebe3f1;
+    }
+
+    .inscricoes-filter-form {
+        display: grid;
+        grid-template-columns: 2fr auto;
+        gap: 1rem;
+        align-items: end;
+    }
+
+    .inscricoes-table-card {
+        background: white;
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: 0 10px 24px rgba(107, 45, 143, 0.08);
+        border: 1px solid #ebe3f1;
+    }
+
+    .inscricoes-table-wrap {
+        overflow-x: auto;
+    }
+
+    .inscricoes-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .inscricoes-actions {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .inscricoes-tag {
+        padding: 0.28rem 0.72rem;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        display: inline-block;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .inscricoes-tag--nova {
+        background: #f8e8ee;
+        color: #a14a67;
+    }
+
+    .inscricoes-tag--lida {
+        background: #efe7f5;
+        color: #6b2d8f;
+    }
+
+    .inscricoes-personagem {
+        background: #efe7f5;
+        color: #6b2d8f;
+        padding: 0.28rem 0.7rem;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        display: inline-block;
+        margin: 0.12rem 0.18rem 0.12rem 0;
+        font-weight: 600;
+    }
+
+    @media (max-width: 900px) {
+        .inscricoes-filter-form {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .inscricoes-list-header > div {
+            width: 100%;
+        }
+
+        .inscricoes-filter-actions {
+            flex-direction: column;
+        }
+
+        .inscricoes-filter-actions button,
+        .inscricoes-filter-actions a {
+            width: 100%;
+            text-align: center;
+        }
+
+        .inscricoes-table {
+            min-width: 980px;
+        }
+    }
+</style>
+
+<div class="inscricoes-list-header">
     <div>
-        <h2>Inscrições para Audição</h2>
-        <p>{{ inscricoes.count }} inscriç{{ inscricoes.count|pluralize:"ão,ões" }}</p>
+        <h2 style="margin: 0 0 0.35rem 0; color: #4a235f;">Inscrições para Audição</h2>
+        <p style="margin: 0; color: #6f6f78;">
+            {{ inscricoes.count }} inscriç{{ inscricoes.count|pluralize:"ão,ões" }}
+        </p>
     </div>
 </div>
 
-<!-- Filtro por Personagem -->
-<div style="background: white; padding: 1.5rem; border-radius: 10px; margin-bottom: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
-    <form method="get" style="display: flex; gap: 1rem; align-items: end; flex-wrap: wrap;">
-        <div style="flex: 2;">
-            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Filtrar por Personagem</label>
-            <input type="text" 
-                   name="personagem" 
+<div class="inscricoes-filter-card">
+    <form method="get" class="inscricoes-filter-form">
+        <div>
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #4a235f;">
+                Filtrar por personagem
+            </label>
+            <input type="text"
+                   name="personagem"
                    value="{{ personagem_filtro }}"
-                   placeholder="Digite o nome do personagem (ex: Thessália, Zyara, Kai Ignus...)"
-                   style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                   placeholder="Digite o nome do personagem..."
+                   style="width: 100%; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; background: #fff;">
         </div>
-        <div style="display: flex; gap: 0.5rem;">
-            <button type="submit" class="btn btn-primary">Filtrar</button>
-            {% if personagem_filtro %}
-                <a href="{% url 'admin_dashboard:inscricoes_audicao' %}" 
-                   style="padding: 0.75rem 1.5rem; background: #f5f5f5; color: #333; border-radius: 5px; text-decoration: none;">
-                    Limpar
-                </a>
-            {% endif %}
+
+        <div class="inscricoes-filter-actions" style="display: flex; gap: 0.5rem;">
+            <button type="submit"
+                    style="padding: 0.82rem 1.35rem; background: #6b2d8f; color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer;">
+                Filtrar
+            </button>
+            <a href="{% url 'admin_dashboard:inscricoes_audicao' %}"
+               style="padding: 0.82rem 1.35rem; background: #f3f3f3; color: #444; border: 1px solid #ddd; border-radius: 10px; text-decoration: none; font-weight: 600;">
+                Limpar
+            </a>
         </div>
     </form>
 </div>
 
-<div style="background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
-    <div class="table-container">
-        <table style="width: 100%; border-collapse: collapse;">
-            <thead style="background: #f8f9fa;">
+<div class="inscricoes-table-card">
+    <div class="inscricoes-table-wrap">
+        <table class="inscricoes-table">
+            <thead style="background: linear-gradient(135deg, #faf7fc 0%, #f1ebf6 100%);">
                 <tr>
-                    <th style="padding: 1rem; text-align: left;">Nome</th>
-                    <th style="padding: 1rem; text-align: left;">Whatsapp</th>
-                    <th style="padding: 1rem; text-align: center;">Idade</th>
-                    <th style="padding: 1rem; text-align: left;">Personagens</th>
-                    <th style="padding: 1rem; text-align: center;">Data</th>
-                    <th style="padding: 1rem; text-align: center;">Status</th>
-                    <th style="padding: 1rem; text-align: right;">Ações</th>
+                    <th style="padding: 1rem; text-align: left; font-size: 0.84rem; color: #6f627b; text-transform: uppercase; font-weight: 700;">
+                        Candidata
+                    </th>
+                    <th style="padding: 1rem; text-align: left; font-size: 0.84rem; color: #6f627b; text-transform: uppercase; font-weight: 700;">
+                        WhatsApp
+                    </th>
+                    <th style="padding: 1rem; text-align: center; font-size: 0.84rem; color: #6f627b; text-transform: uppercase; font-weight: 700;">
+                        Idade
+                    </th>
+                    <th style="padding: 1rem; text-align: left; font-size: 0.84rem; color: #6f627b; text-transform: uppercase; font-weight: 700;">
+                        Personagens
+                    </th>
+                    <th style="padding: 1rem; text-align: center; font-size: 0.84rem; color: #6f627b; text-transform: uppercase; font-weight: 700;">
+                        Data
+                    </th>
+                    <th style="padding: 1rem; text-align: center; font-size: 0.84rem; color: #6f627b; text-transform: uppercase; font-weight: 700;">
+                        Status
+                    </th>
+                    <th style="padding: 1rem; text-align: right; font-size: 0.84rem; color: #6f627b; text-transform: uppercase; font-weight: 700; white-space: nowrap;">
+                        Ações
+                    </th>
                 </tr>
             </thead>
             <tbody>
                 {% for inscricao in inscricoes %}
-                <tr style="border-top: 1px solid #eee;">
+                <tr style="border-top: 1px solid #eee7f3;">
                     <td style="padding: 1rem;">
-                        <strong>{{ inscricao.nome_completo }}</strong>
+                        <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                            <strong style="color: #35203f;">{{ inscricao.nome_completo }}</strong>
+                            <span style="font-size: 0.75rem; color: #8a6a9f;">
+                                Inscrição #{{ inscricao.pk }}
+                            </span>
+                        </div>
                     </td>
+
                     <td style="padding: 1rem;">
-                        <a href="https://wa.me/55{{ inscricao.whatsapp|cut:' '|cut:'('|cut:')'|cut:'-' }}" 
-                           target="_blank"
-                           style="color: #25D366; text-decoration: none;">
-                            {{ inscricao.whatsapp }}
-                        </a>
-                    </td>
-                    <td style="padding: 1rem; text-align: center;">
-                        {{ inscricao.idade }} anos
-                    </td>
-                    <td style="padding: 1rem;">
-                        {{ inscricao.personagens|formatar_personagens }}
-                    </td>
-                    <td style="padding: 1rem; text-align: center;">
-                        {{ inscricao.data_inscricao|date:"d/m/Y H:i" }}
-                    </td>
-                    <td style="padding: 1rem; text-align: center;">
-                        {% if inscricao.lida %}
-                            <span style="background: #d4edda; color: #155724; padding: 0.25rem 0.75rem; border-radius: 20px;">Lida</span>
+                        {% if inscricao.whatsapp %}
+                            <a href="https://wa.me/55{{ inscricao.whatsapp|cut:' '|cut:'('|cut:')'|cut:'-' }}"
+                               target="_blank"
+                               rel="noopener noreferrer"
+                               style="color: #25D366; text-decoration: none; font-weight: 600;">
+                                {{ inscricao.whatsapp }}
+                            </a>
                         {% else %}
-                            <span style="background: #f8d7da; color: #721c24; padding: 0.25rem 0.75rem; border-radius: 20px;">Nova</span>
+                            <span style="color: #999;">-</span>
                         {% endif %}
                     </td>
-                    <td style="padding: 1rem; text-align: right;">
-                        <a href="{% url 'admin_dashboard:ficha_audicao' inscricao.pk %}" 
-                           style="color: #b07a84; text-decoration: none; margin-right: 1rem;">Ficha</a>
-                        <form method="post" 
-                              action="{% url 'admin_dashboard:inscricao_audicao_excluir' inscricao.pk %}" 
-                              style="display: inline-block;"
-                              onsubmit="return confirm('Tem certeza que deseja excluir a inscrição de {{ inscricao.nome_completo }}?');">
-                            {% csrf_token %}
-                            <button type="submit" 
-                                    style="background: none; border: none; color: #e74c3c; cursor: pointer;">
-                                Excluir
-                            </button>
-                        </form>
+
+                    <td style="padding: 1rem; text-align: center; color: #666; white-space: nowrap;">
+                        {% if inscricao.idade %}
+                            {{ inscricao.idade }} anos
+                        {% else %}
+                            <span style="color: #999;">-</span>
+                        {% endif %}
+                    </td>
+
+                    <td style="padding: 1rem;">
+                        {% with personagens_formatados=inscricao.personagens|formatar_personagens %}
+                            {% if ',' in personagens_formatados %}
+                                {% for personagem in personagens_formatados.split|default:'' %}
+                                {% endfor %}
+                                <span style="color: #35203f;">{{ personagens_formatados }}</span>
+                            {% else %}
+                                <span class="inscricoes-personagem">{{ personagens_formatados }}</span>
+                            {% endif %}
+                        {% endwith %}
+                    </td>
+
+                    <td style="padding: 1rem; text-align: center; color: #666; white-space: nowrap;">
+                        {{ inscricao.data_inscricao|date:"d/m/Y H:i" }}
+                    </td>
+
+                    <td style="padding: 1rem; text-align: center;">
+                        {% if inscricao.lida %}
+                            <span class="inscricoes-tag inscricoes-tag--lida">Lida</span>
+                        {% else %}
+                            <span class="inscricoes-tag inscricoes-tag--nova">Nova</span>
+                        {% endif %}
+                    </td>
+
+                    <td style="padding: 1rem; text-align: right; white-space: nowrap;">
+                        <div class="inscricoes-actions">
+                            <a href="{% url 'admin_dashboard:ficha_audicao' inscricao.pk %}"
+                               style="color: #6b2d8f; text-decoration: none; font-weight: 600;">
+                                Ficha
+                            </a>
+
+                            <form method="post"
+                                  action="{% url 'admin_dashboard:inscricao_audicao_excluir' inscricao.pk %}"
+                                  style="display: inline;"
+                                  onsubmit="return confirm('Tem certeza que deseja excluir a inscrição de {{ inscricao.nome_completo }}?');">
+                                {% csrf_token %}
+                                <button type="submit"
+                                        style="background: none; border: none; color: #8a6a9f; cursor: pointer; text-decoration: underline; font-weight: 600;">
+                                    Excluir
+                                </button>
+                            </form>
+                        </div>
                     </td>
                 </tr>
                 {% empty %}
-                <tr style="border-top: 1px solid #eee;">
+                <tr style="border-top: 1px solid #eee7f3;">
                     <td colspan="7" style="padding: 3rem; text-align: center; color: #999;">
                         Nenhuma inscrição encontrada.
                     </td>
