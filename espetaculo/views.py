@@ -3,6 +3,7 @@ from .models import Espetaculo, InscricaoAudicao
 from .forms import InscricaoAudicaoForm
 from django.contrib import messages
 from django.http import JsonResponse
+import traceback
 
 def espetaculo_home(request):
     """Página inicial do espetáculo"""
@@ -94,44 +95,49 @@ def audicao_rosa_branca(request):
     espetaculo = Espetaculo.objects.filter(ativo=True).first()
 
     if request.method == 'POST':
-        nome_completo = request.POST.get('nome_completo', '').strip()
-        whatsapp = request.POST.get('whatsapp', '').strip()
-        idade = request.POST.get('idade', '').strip()
-        turma_atual = request.POST.get('turma_atual', '').strip()
-        responsavel = request.POST.get('responsavel', '').strip()
-        observacoes = request.POST.get('observacoes', '').strip()
-        confirmacao = request.POST.get('confirmacao_requisitos')
-
-        if not all([nome_completo, whatsapp, idade, turma_atual, responsavel, confirmacao]):
-            messages.error(request, 'Preencha todos os campos obrigatórios.')
-            return render(request, 'espetaculo/audicao_rosa_branca.html', {'espetaculo': espetaculo})
-
         try:
+            nome_completo = request.POST.get('nome_completo', '').strip()
+            whatsapp = request.POST.get('whatsapp', '').strip()
+            idade = request.POST.get('idade', '').strip()
+            turma_atual = request.POST.get('turma_atual', '').strip()
+            responsavel = request.POST.get('responsavel', '').strip()
+            confirmacao = request.POST.get('confirmacao_requisitos')
+
+            if not all([nome_completo, whatsapp, idade, turma_atual, responsavel, confirmacao]):
+                messages.error(request, 'Preencha todos os campos obrigatórios.')
+                return render(request, 'espetaculo/audicao_rosa_branca.html', {'espetaculo': espetaculo})
+
             idade_int = int(idade)
-        except ValueError:
-            messages.error(request, 'Idade inválida.')
-            return render(request, 'espetaculo/audicao_rosa_branca.html', {'espetaculo': espetaculo})
 
-        if idade_int < 6:
-            messages.error(request, 'Essa audição é permitida somente para crianças a partir de 6 anos.')
-            return render(request, 'espetaculo/audicao_rosa_branca.html', {'espetaculo': espetaculo})
+            if idade_int < 6:
+                messages.error(request, 'Essa audição é permitida somente para crianças a partir de 6 anos.')
+                return render(request, 'espetaculo/audicao_rosa_branca.html', {'espetaculo': espetaculo})
 
-        try:
-            InscricaoAudicao.objects.create(
+            inscricao = InscricaoAudicao.objects.create(
                 nome_completo=nome_completo,
                 whatsapp=whatsapp,
                 idade=idade_int,
                 personagens='rosa_branca',
                 espetaculo=espetaculo,
             )
+
+            print(f'INSCRIÇÃO AUDIÇÃO CRIADA: id={inscricao.id}, nome={inscricao.nome_completo}, personagem={inscricao.personagens}')
+
+            messages.success(request, 'Inscrição enviada com sucesso!')
+            return redirect('espetaculo:audicao_rosa_branca_sucesso')
+
         except Exception as e:
-            messages.error(request, f'Erro ao salvar inscrição: {e}')
+            print('ERRO AO SALVAR INSCRIÇÃO DA ROSA BRANCA')
+            print(str(e))
+            traceback.print_exc()
+            messages.error(request, f'Erro ao enviar inscrição: {e}')
             return render(request, 'espetaculo/audicao_rosa_branca.html', {'espetaculo': espetaculo})
 
-        messages.success(request, 'Inscrição enviada com sucesso!')
-        return redirect('espetaculo:audicao_rosa_branca_sucesso')
-
     return render(request, 'espetaculo/audicao_rosa_branca.html', {'espetaculo': espetaculo})
+
+
+def audicao_rosa_branca_sucesso(request):
+    return render(request, 'espetaculo/audicao_rosa_branca_sucesso.html')
 
 def audicao_nova_publica(request):
     espetaculo = Espetaculo.objects.filter(ativo=True).first()

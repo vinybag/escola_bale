@@ -384,7 +384,7 @@
             Preencha os dados abaixo para participar da seleção da Rosa Branca.
         </p>
 
-        <form method="post">
+        <form method="post" action="{% url 'espetaculo:audicao_rosa_branca' %}">
             {% csrf_token %}
 
             <div class="audicao-form-grid">
