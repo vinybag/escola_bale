@@ -138,3 +138,6 @@ def audicao_rosa_branca(request):
 def audicao_nova_publica(request):
     espetaculo = Espetaculo.objects.filter(ativo=True).first()
     return render(request, 'espetaculo/audicao_nova_publica.html', {'espetaculo': espetaculo})
+
+def audicao_rosa_branca_sucesso(request):
+    return render(request, 'espetaculo/audicao_rosa_branca_sucesso.html')
