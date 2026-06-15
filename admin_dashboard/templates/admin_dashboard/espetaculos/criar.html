@@ -3,187 +3,356 @@
 {% block title %}Novo Espetáculo{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <h2>Novo Espetáculo</h2>
-    <p>Criar espetaculo de fim de ano</p>
+<style>
+    .esp-create-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 2rem;
+    }
+
+    .esp-create-shell {
+        width: 100%;
+        max-width: 980px;
+        min-width: 0;
+    }
+
+    .esp-create-main,
+    .esp-create-top,
+    .esp-create-body,
+    .esp-create-section {
+        min-width: 0;
+    }
+
+    .esp-create-main {
+        background: white;
+        border: 1px solid #ebe3f1;
+        border-radius: 18px;
+        box-shadow: 0 8px 24px rgba(107, 45, 143, 0.08);
+        overflow: hidden;
+    }
+
+    .esp-create-top {
+        padding: 1.5rem 2rem;
+        background: linear-gradient(135deg, #ffffff 0%, #f5eff9 100%);
+        border-bottom: 1px solid #ece3f2;
+    }
+
+    .esp-create-body {
+        padding: 2rem;
+        display: grid;
+        gap: 1.5rem;
+        background: #fcfbfd;
+    }
+
+    .esp-create-section {
+        background: white;
+        border: 1px solid #ece3f2;
+        border-radius: 16px;
+        padding: 1.5rem;
+    }
+
+    .esp-grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .esp-grid-2 > div { min-width: 0; }
+
+    .esp-input,
+    .esp-select,
+    .esp-textarea {
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        padding: 0.82rem 0.95rem;
+        border: 1px solid #d9cbe4;
+        border-radius: 10px;
+        font-size: 1rem;
+        background: #fff;
+        color: #2f2438;
+        font-family: inherit;
+    }
+
+    .esp-textarea { resize: vertical; }
+
+    .esp-input:focus,
+    .esp-select:focus,
+    .esp-textarea:focus {
+        outline: none;
+        border-color: #b895cd;
+        box-shadow: 0 0 0 4px rgba(107, 45, 143, 0.10);
+    }
+
+    .esp-input[type="file"] {
+        padding: 0.6rem 0.95rem;
+        cursor: pointer;
+    }
+
+    .esp-check-box {
+        padding: 0.95rem 1rem;
+        background: #faf7fc;
+        border: 1px solid #ece3f2;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+    }
+
+    .esp-help {
+        display: block;
+        margin-top: 0.45rem;
+        color: #8a8390;
+        font-size: 0.88rem;
+    }
+
+    .esp-create-footer {
+        display: flex;
+        gap: 1rem;
+        margin-top: 0.5rem;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+
+    @media (max-width: 640px) {
+        .esp-create-header {
+            align-items: stretch;
+        }
+
+        .esp-create-header > div,
+        .esp-create-header > a {
+            width: 100%;
+            text-align: center;
+        }
+
+        .esp-create-shell { max-width: 100%; }
+
+        .esp-create-top,
+        .esp-create-body,
+        .esp-create-section {
+            padding: 1.2rem;
+        }
+
+        .esp-grid-2 {
+            grid-template-columns: 1fr !important;
+        }
+
+        .esp-create-footer {
+            flex-direction: column-reverse;
+        }
+
+        .esp-create-footer a,
+        .esp-create-footer button {
+            width: 100%;
+            text-align: center;
+            justify-content: center;
+        }
+    }
+</style>
+
+<div class="esp-create-header">
+    <div>
+        <h2 style="margin: 0 0 0.35rem 0; color: #4a235f;">Novo Espetáculo</h2>
+        <p style="margin: 0; color: #6f6f78;">Criar espetáculo de fim de ano</p>
+    </div>
+
+    <a href="{% url 'admin_dashboard:espetaculos_list' %}"
+       style="padding: 0.78rem 1.25rem; background: #f3f3f3; color: #444; text-decoration: none; border: 1px solid #ddd; border-radius: 10px; font-weight: 600;">
+        Voltar
+    </a>
 </div>
 
-<div style="background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); max-width: 900px;">
+<div class="esp-create-shell">
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
-        
-        <div style="display: grid; gap: 2rem;">
-            
-            <!-- Informações Básicas -->
-            <div style="border-left: 4px solid #b07a84; padding-left: 1rem;">
-                <h3 style="color: #2c3e50; margin-bottom: 1rem;">Informacoes Basicas</h3>
-                
-                <div style="display: grid; gap: 1rem;">
+
+        <div class="esp-create-main">
+            <div class="esp-create-top">
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
                     <div>
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
-                            Titulo <span style="color: red;">*</span>
+                        <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1.15rem;">Cadastro do espetáculo</h3>
+                        <p style="margin: 0; color: #7a7280; font-size: 0.95rem;">
+                            Preencha as informações, datas, audição e venda de ingressos.
+                        </p>
+                    </div>
+                    <div style="padding: 0.55rem 0.9rem; border-radius: 999px; background: #efe7f5; color: #6b2d8f; font-size: 0.85rem; font-weight: 600;">
+                        BKN Tech
+                    </div>
+                </div>
+            </div>
+
+            <div class="esp-create-body">
+
+                <!-- Informações Básicas -->
+                <section class="esp-create-section">
+                    <div style="margin-bottom: 1.25rem;">
+                        <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1rem; font-weight: 700;">Informações Básicas</h3>
+                        <p style="margin: 0; color: #7b7580; font-size: 0.92rem;">Título, descrição e arquivo de informações.</p>
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
+                            Título *
                         </label>
                         <input type="text" name="titulo" required
                                placeholder="Ex: O Quebra-Nozes"
-                               style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                               class="esp-input">
                     </div>
-                    
-                    <div>
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
-                            Subtitulo
+
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
+                            Subtítulo
                         </label>
                         <input type="text" name="subtitulo"
-                               placeholder="Ex: Espetaculo de Fim de Ano 2026"
-                               style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                               placeholder="Ex: Espetáculo de Fim de Ano 2026"
+                               class="esp-input">
                     </div>
-                    
-                    <div>
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
-                            Descricao <span style="color: red;">*</span>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
+                            Descrição *
                         </label>
-                        <textarea name="descricao" rows="6" required
-                                  placeholder="Descreva o espetaculo..."
-                                  style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem; font-family: inherit; resize: vertical;"></textarea>
+                        <textarea name="descricao" rows="5" required
+                                  placeholder="Descreva o espetáculo..."
+                                  class="esp-textarea"></textarea>
                     </div>
+
                     <div>
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
-                             PDF com Informacoes Completas
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
+                            PDF com Informações Completas
                         </label>
                         <input type="file" name="arquivo_informacoes" accept=".pdf"
-                               style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
-                        <small style="display: block; margin-top: 0.5rem; color: #666;">
-                            📄 Upload do PDF com sinopse, personagens, audicao, etc. (Arquivo do Canva)
+                               class="esp-input">
+                        <small class="esp-help">
+                            Upload do PDF com sinopse, personagens, audição, etc. (Arquivo do Canva)
                         </small>
                     </div>
-                </div>
-            </div>
-            
-            <!-- Data e Local -->
-            <div style="border-left: 4px solid #2c3e50; padding-left: 1rem;">
-                <h3 style="color: #2c3e50; margin-bottom: 1rem;">Data e Local</h3>
-                
-                <div style="display: grid; gap: 1rem;">
-                    <div>
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
-                            Data e Horario da Apresentacao <span style="color: red;">*</span>
-                        </label>
-                        <input type="datetime-local" name="data_apresentacao" required
-                               style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                </section>
+
+                <!-- Data e Local -->
+                <section class="esp-create-section">
+                    <div style="margin-bottom: 1.25rem;">
+                        <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1rem; font-weight: 700;">Data e Local</h3>
+                        <p style="margin: 0; color: #7b7580; font-size: 0.92rem;">Data, horário e endereço da apresentação.</p>
                     </div>
-                    
-                    <div>
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
-                            Local <span style="color: red;">*</span>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
+                            Data e Horário da Apresentação *
+                        </label>
+                        <input type="datetime-local" name="data_apresentacao" required class="esp-input">
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
+                            Local *
                         </label>
                         <input type="text" name="local" required
-                               placeholder="Ex: Teatro Municipal de Ipero"
-                               style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                               placeholder="Ex: Teatro Municipal de Iperó"
+                               class="esp-input">
                     </div>
-                    
+
                     <div>
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
-                            Endereco <span style="color: red;">*</span>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
+                            Endereço *
                         </label>
                         <textarea name="endereco" rows="3" required
-                                  placeholder="Rua, numero, bairro..."
-                                  style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem; font-family: inherit; resize: vertical;"></textarea>
+                                  placeholder="Rua, número, bairro..."
+                                  class="esp-textarea"></textarea>
                     </div>
-                </div>
-            </div>
-            
-            <!-- Audição -->
-            <div style="border-left: 4px solid #b07a84; padding-left: 1rem;">
-                <h3 style="color: #2c3e50; margin-bottom: 1rem;">Audicao</h3>
-                
-                <div style="display: grid; gap: 1rem;">
-                    <div>
-                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                            <input type="checkbox" name="audicao_aberta"
-                                   style="width: 20px; height: 20px; cursor: pointer;">
-                            <span style="font-weight: 500; color: #333;">Audicao aberta</span>
+                </section>
+
+                <!-- Audição -->
+                <section class="esp-create-section">
+                    <div style="margin-bottom: 1.25rem;">
+                        <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1rem; font-weight: 700;">Audição</h3>
+                        <p style="margin: 0; color: #7b7580; font-size: 0.92rem;">Configurações de período e instruções para audição.</p>
+                    </div>
+
+                    <div class="esp-check-box">
+                        <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer;">
+                            <input type="checkbox" name="audicao_aberta" style="accent-color: #6b2d8f; width: 18px; height: 18px;">
+                            <span style="font-weight: 600; color: #4a235f;">Audição aberta</span>
                         </label>
                     </div>
-                    
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+
+                    <div class="esp-grid-2">
                         <div>
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
-                                Data Inicio
-                            </label>
-                            <input type="date" name="audicao_data_inicio"
-                                   style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Data Início</label>
+                            <input type="date" name="audicao_data_inicio" class="esp-input">
                         </div>
                         <div>
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
-                                Data Fim
-                            </label>
-                            <input type="date" name="audicao_data_fim"
-                                   style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Data Fim</label>
+                            <input type="date" name="audicao_data_fim" class="esp-input">
                         </div>
                     </div>
-                    
+
                     <div>
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
-                            Instrucoes para Audicao
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
+                            Instruções para Audição
                         </label>
                         <textarea name="audicao_instrucoes" rows="4"
-                                  placeholder="Instrucoes para as alunas..."
-                                  style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem; font-family: inherit; resize: vertical;"></textarea>
+                                  placeholder="Instruções para as alunas..."
+                                  class="esp-textarea"></textarea>
                     </div>
-                </div>
-            </div>
-            
-            <!-- Venda de Ingressos -->
-            <div style="border-left: 4px solid #28a745; padding-left: 1rem;">
-                <h3 style="color: #2c3e50; margin-bottom: 1rem;">Venda de Ingressos</h3>
-                
-                <div style="display: grid; gap: 1rem;">
-                    <div>
-                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                            <input type="checkbox" name="venda_aberta"
-                                   style="width: 20px; height: 20px; cursor: pointer;">
-                            <span style="font-weight: 500; color: #333;">Vendas abertas</span>
+                </section>
+
+                <!-- Venda de Ingressos -->
+                <section class="esp-create-section">
+                    <div style="margin-bottom: 1.25rem;">
+                        <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1rem; font-weight: 700;">Venda de Ingressos</h3>
+                        <p style="margin: 0; color: #7b7580; font-size: 0.92rem;">Preço e período de abertura das vendas.</p>
+                    </div>
+
+                    <div class="esp-check-box">
+                        <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer;">
+                            <input type="checkbox" name="venda_aberta" style="accent-color: #6b2d8f; width: 18px; height: 18px;">
+                            <span style="font-weight: 600; color: #4a235f;">Vendas abertas</span>
                         </label>
                     </div>
-                    
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+
+                    <div class="esp-grid-2">
                         <div>
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
-                                Data Inicio das Vendas
-                            </label>
-                            <input type="date" name="venda_data_inicio"
-                                   style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Data Início das Vendas</label>
+                            <input type="date" name="venda_data_inicio" class="esp-input">
                         </div>
                         <div>
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
-                                Preco do Ingresso (R$)
-                            </label>
-                            <input type="number" name="preco_ingresso" step="0.01" min="0" value="30.00"
-                                   style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Preço do Ingresso (R$)</label>
+                            <input type="number" name="preco_ingresso" step="0.01" min="0" value="30.00" class="esp-input">
                         </div>
                     </div>
+                </section>
+
+                <!-- Visibilidade -->
+                <section class="esp-create-section">
+                    <div style="margin-bottom: 1.25rem;">
+                        <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1rem; font-weight: 700;">Visibilidade</h3>
+                        <p style="margin: 0; color: #7b7580; font-size: 0.92rem;">Controle se o espetáculo está visível no site.</p>
+                    </div>
+
+                    <div class="esp-check-box" style="margin-bottom: 0;">
+                        <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer;">
+                            <input type="checkbox" name="ativo" checked style="accent-color: #6b2d8f; width: 18px; height: 18px;">
+                            <span style="font-weight: 600; color: #4a235f;">Espetáculo ativo (visível no site)</span>
+                        </label>
+                    </div>
+                </section>
+
+                <div class="esp-create-footer">
+                    <a href="{% url 'admin_dashboard:espetaculos_list' %}"
+                       style="padding: 0.85rem 1.5rem; background: #f3f3f3; color: #444; border: 1px solid #ddd; border-radius: 10px; text-decoration: none; font-weight: 600;">
+                        Cancelar
+                    </a>
+
+                    <button type="submit"
+                            style="background: linear-gradient(135deg, #6b2d8f 0%, #7e3aa5 100%); color: white; border: none; padding: 0.85rem 1.6rem; border-radius: 10px; cursor: pointer; font-weight: 700; box-shadow: 0 8px 18px rgba(107, 45, 143, 0.18);">
+                        Criar Espetáculo
+                    </button>
                 </div>
+
             </div>
-            
-            <!-- Ativo -->
-            <div>
-                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                    <input type="checkbox" name="ativo" checked
-                           style="width: 20px; height: 20px; cursor: pointer;">
-                    <span style="font-weight: 500; color: #333;">Espetaculo ativo (visivel no site)</span>
-                </label>
-            </div>
-            
-            <!-- Botões -->
-            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
-                <button type="submit" class="btn btn-primary">
-                    Criar Espetaculo
-                </button>
-                <a href="{% url 'admin_dashboard:espetaculos_list' %}" 
-                   style="padding: 0.75rem 1.5rem; background: #f5f5f5; color: #333; border-radius: 5px; text-decoration: none; font-weight: 500;">
-                    Cancelar
-                </a>
-            </div>
-            
         </div>
     </form>
 </div>
