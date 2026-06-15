@@ -116,18 +116,17 @@ def audicao_rosa_branca(request):
             messages.error(request, 'Essa audição é permitida somente para crianças a partir de 6 anos.')
             return render(request, 'espetaculo/audicao_rosa_branca.html', {'espetaculo': espetaculo})
 
-        texto_observacoes = f'Turma atual: {turma_atual}'
-        if observacoes:
-            texto_observacoes += f'\n\n{observacoes}'
-
-        InscricaoAudicao.objects.create(
-            nomecompleto=nome_completo,
-            whatsapp=whatsapp,
-            idade=idade_int,
-            responsavel=responsavel,
-            personagens='Rosa Branca',
-            observacoes=texto_observacoes,
-        )
+        try:
+            InscricaoAudicao.objects.create(
+                nome_completo=nome_completo,
+                whatsapp=whatsapp,
+                idade=idade_int,
+                personagens='rosa_branca',
+                espetaculo=espetaculo,
+            )
+        except Exception as e:
+            messages.error(request, f'Erro ao salvar inscrição: {e}')
+            return render(request, 'espetaculo/audicao_rosa_branca.html', {'espetaculo': espetaculo})
 
         messages.success(request, 'Inscrição enviada com sucesso!')
         return redirect('espetaculo:audicao_rosa_branca_sucesso')
