@@ -4,15 +4,20 @@
 
 {% block content %}
 <div style="max-width: 760px; margin: 0 auto; padding: 2rem 1rem 3rem;">
-    <div style="background: white; border-radius: 18px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); padding: 2rem;">
+
+    <a href="{% url 'espetaculo:evento_detalhe_publico' evento.id %}" style="color: #b07a84; text-decoration: none;">
+        ← Voltar para o evento
+    </a>
+
+    <div style="background: white; border-radius: 18px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); padding: 2rem; margin-top: 1rem;">
         <h1 style="margin-top: 0;">Comprar ingresso</h1>
-        <p style="color: #666;">{{ evento.titulo }}</p>
+        <p style="color: #666; margin-bottom: 1.5rem;">{{ evento.titulo }}</p>
 
         <div style="background: #faf7f8; border-radius: 12px; padding: 1rem; margin-bottom: 1.5rem;">
-            <p><strong>Evento:</strong> {{ evento.titulo }}</p>
-            <p><strong>Data:</strong> {{ evento.data_apresentacao|date:"d/m/Y H:i" }}</p>
-            <p><strong>Local:</strong> {{ evento.local }}</p>
-            <p><strong>Valor unitário:</strong> R$ {{ evento.preco_ingresso|floatformat:2 }}</p>
+            <p style="margin: 0 0 0.5rem 0;"><strong>Evento:</strong> {{ evento.titulo }}</p>
+            <p style="margin: 0 0 0.5rem 0;"><strong>Data:</strong> {{ evento.data_apresentacao|date:"d/m/Y H:i" }}</p>
+            <p style="margin: 0 0 0.5rem 0;"><strong>Local:</strong> {{ evento.local }}</p>
+            <p style="margin: 0;"><strong>Valor unitário:</strong> R$ {{ evento.preco_ingresso|floatformat:2 }}</p>
         </div>
 
         {% if erro %}
@@ -26,41 +31,84 @@
 
             <div style="display: grid; gap: 1rem;">
                 <div>
-                    <label for="nome_completo"><strong>Nome completo *</strong></label>
-                    <input type="text" name="nome_completo" id="nome_completo" required
-                           style="width: 100%; padding: 0.9rem; border: 1px solid #ddd; border-radius: 8px;">
+                    <label for="nome_completo" style="display: block; margin-bottom: 0.45rem;"><strong>Nome completo *</strong></label>
+                    <input type="text"
+                           name="nome_completo"
+                           id="nome_completo"
+                           required
+                           value="{{ request.POST.nome_completo|default:'' }}"
+                           style="width: 100%; box-sizing: border-box; padding: 0.9rem; border: 1px solid #ddd; border-radius: 8px;">
                 </div>
 
                 <div>
-                    <label for="email"><strong>E-mail</strong></label>
-                    <input type="email" name="email" id="email"
-                           style="width: 100%; padding: 0.9rem; border: 1px solid #ddd; border-radius: 8px;">
+                    <label for="email" style="display: block; margin-bottom: 0.45rem;"><strong>E-mail</strong></label>
+                    <input type="email"
+                           name="email"
+                           id="email"
+                           value="{{ request.POST.email|default:'' }}"
+                           style="width: 100%; box-sizing: border-box; padding: 0.9rem; border: 1px solid #ddd; border-radius: 8px;">
                 </div>
 
                 <div>
-                    <label for="whatsapp"><strong>WhatsApp *</strong></label>
-                    <input type="text" name="whatsapp" id="whatsapp" required
-                           style="width: 100%; padding: 0.9rem; border: 1px solid #ddd; border-radius: 8px;">
+                    <label for="whatsapp" style="display: block; margin-bottom: 0.45rem;"><strong>WhatsApp *</strong></label>
+                    <input type="text"
+                           name="whatsapp"
+                           id="whatsapp"
+                           required
+                           value="{{ request.POST.whatsapp|default:'' }}"
+                           style="width: 100%; box-sizing: border-box; padding: 0.9rem; border: 1px solid #ddd; border-radius: 8px;">
                 </div>
 
                 <div>
-                    <label for="cpf"><strong>CPF</strong></label>
-                    <input type="text" name="cpf" id="cpf"
-                           style="width: 100%; padding: 0.9rem; border: 1px solid #ddd; border-radius: 8px;">
+                    <label for="cpf" style="display: block; margin-bottom: 0.45rem;"><strong>CPF</strong></label>
+                    <input type="text"
+                           name="cpf"
+                           id="cpf"
+                           value="{{ request.POST.cpf|default:'' }}"
+                           style="width: 100%; box-sizing: border-box; padding: 0.9rem; border: 1px solid #ddd; border-radius: 8px;">
                 </div>
 
                 <div>
-                    <label for="quantidade"><strong>Quantidade *</strong></label>
-                    <input type="number" name="quantidade" id="quantidade" min="1" value="1" required
-                           style="width: 100%; padding: 0.9rem; border: 1px solid #ddd; border-radius: 8px;">
+                    <label for="quantidade" style="display: block; margin-bottom: 0.45rem;"><strong>Quantidade *</strong></label>
+                    <input type="number"
+                           name="quantidade"
+                           id="quantidade"
+                           min="1"
+                           value="{{ request.POST.quantidade|default:'1' }}"
+                           required
+                           style="width: 100%; box-sizing: border-box; padding: 0.9rem; border: 1px solid #ddd; border-radius: 8px;">
                 </div>
             </div>
 
+            <div style="margin-top: 1.25rem; background: #f8f9fa; border-radius: 10px; padding: 1rem;">
+                <p style="margin: 0; color: #555;">
+                    <strong>Total estimado:</strong>
+                    <span id="total-estimado">R$ {{ evento.preco_ingresso|floatformat:2 }}</span>
+                </p>
+            </div>
+
             <button type="submit"
-                    style="margin-top: 1.5rem; width: 100%; padding: 1rem; border: none; border-radius: 10px; background: #b07a84; color: white; font-weight: 700; font-size: 1rem;">
+                    style="margin-top: 1.5rem; width: 100%; padding: 1rem; border: none; border-radius: 10px; background: #b07a84; color: white; font-weight: 700; font-size: 1rem; cursor: pointer;">
                 Gerar PIX
             </button>
         </form>
     </div>
 </div>
+
+<script>
+    (function () {
+        const quantidadeInput = document.getElementById('quantidade');
+        const totalEl = document.getElementById('total-estimado');
+        const valorUnitario = parseFloat('{{ evento.preco_ingresso|default:0 }}'.replace(',', '.')) || 0;
+
+        function atualizarTotal() {
+            const quantidade = Math.max(parseInt(quantidadeInput.value || '1', 10), 1);
+            const total = (valorUnitario * quantidade).toFixed(2).replace('.', ',');
+            totalEl.textContent = `R$ ${total}`;
+        }
+
+        quantidadeInput.addEventListener('input', atualizarTotal);
+        atualizarTotal();
+    })();
+</script>
 {% endblock %}

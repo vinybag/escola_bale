@@ -11,30 +11,41 @@ from pagamentos.asaas_helper import AsaasAPI
 
 def espetaculo_home(request):
     """Página inicial do espetáculo"""
-    
-    # Pega espetáculo ativo
     try:
-        espetaculo = Espetaculo.objects.filter(ativo=True).first()
-    except:
+        if request.user.is_authenticated:
+            espetaculo = Espetaculo.objects.filter(ativo=True).order_by('-data_apresentacao').first()
+        else:
+            espetaculo = Espetaculo.objects.filter(ativo=True, publico=True).order_by('-data_apresentacao').first()
+    except Exception:
         espetaculo = None
-    
+
     context = {
         'espetaculo': espetaculo,
     }
-    
+
     return render(request, 'espetaculo/home.html', context)
 
 
-# NOVAS VIEWS PÚBLICAS
-
 def espetaculos_lista_publica(request):
-    """Página pública com lista de TODOS os espetáculos ativos"""
-    espetaculos = Espetaculo.objects.filter(ativo=True).order_by('-data_apresentacao')
+    """Página pública com lista de espetáculos/eventos ativos"""
+    if request.user.is_authenticated:
+        espetaculos = Espetaculo.objects.filter(ativo=True).order_by('-data_apresentacao')
+    else:
+        espetaculos = Espetaculo.objects.filter(ativo=True, publico=True).order_by('-data_apresentacao')
+
     return render(request, 'espetaculo/public_list.html', {'espetaculos': espetaculos})
 
+
 def espetaculo_detalhes_publico(request, pk):
-    """Página pública com detalhes de um espetáculo específico"""
-    espetaculo = get_object_or_404(Espetaculo, pk=pk, ativo=True)
+    """Página pública com detalhes de um espetáculo/evento específico"""
+
+    if request.user.is_authenticated:
+        queryset = Espetaculo.objects.filter(ativo=True)
+    else:
+        queryset = Espetaculo.objects.filter(ativo=True, publico=True)
+
+    espetaculo = get_object_or_404(queryset, pk=pk)
+
     return render(request, 'espetaculo/public_detalhes.html', {'espetaculo': espetaculo})
 
 def personagens_publicos(request):
@@ -204,10 +215,18 @@ def localizar_pedido_ingresso_por_payment(payment_id, external_reference=None, c
 
 
 def evento_detalhe_publico(request, pk):
+    """Página pública de detalhe de um evento específico"""
+
+    # Busca o evento ativo
     evento = get_object_or_404(Espetaculo, pk=pk, ativo=True)
 
-    if evento.tipo != 'evento' and not evento.venda_aberta:
-        return render(request, 'espetaculo/evento_detalhe.html', {'evento': evento})
+    # Se for privado e o usuário não estiver logado, nega o acesso
+    if not evento.publico and not request.user.is_authenticated:
+        return redirect('espetaculo:lista_publica')
+
+    # Só abre essa página para itens do tipo 'evento'
+    if evento.tipo != 'evento':
+        return redirect('espetaculo:detalhes_publico', pk=pk)
 
     return render(request, 'espetaculo/evento_detalhe.html', {'evento': evento})
 
@@ -215,8 +234,16 @@ def evento_detalhe_publico(request, pk):
 def comprar_ingresso(request, pk):
     evento = get_object_or_404(Espetaculo, pk=pk, ativo=True)
 
-    if not evento.venda_aberta:
+    # Proteção de acesso para evento privado
+    if not evento.publico and not request.user.is_authenticated:
+        return redirect('espetaculo:lista_publica')
+
+    # Só eventos entram no fluxo de ingresso
+    if evento.tipo != 'evento':
         return redirect('espetaculo:detalhes_publico', pk=evento.pk)
+
+    if not evento.venda_aberta:
+        return redirect('espetaculo:evento_detalhe_publico', pk=evento.pk)
 
     if request.method == 'POST':
         nome_completo = request.POST.get('nome_completo', '').strip()
@@ -265,6 +292,18 @@ def comprar_ingresso(request, pk):
 
 def pagar_ingresso_pix(request, pedido_id):
     pedido = get_object_or_404(PedidoIngressoEvento, id=pedido_id)
+    evento = pedido.evento
+
+    # Proteção de acesso para evento privado
+    if not evento.publico and not request.user.is_authenticated:
+        return redirect('espetaculo:lista_publica')
+
+    # Garante consistência do fluxo
+    if evento.tipo != 'evento':
+        return redirect('espetaculo:detalhes_publico', pk=evento.pk)
+
+    if not evento.venda_aberta and pedido.status != 'pago':
+        return redirect('espetaculo:evento_detalhe_publico', pk=evento.pk)
 
     if pedido.status == 'pago':
         return redirect('espetaculo:ingresso_sucesso', pedido_id=pedido.id)
@@ -301,7 +340,7 @@ def pagar_ingresso_pix(request, pedido_id):
                     pix_data = extrair_pix_data_evento(qrcode_data)
                     return render(request, 'espetaculo/pix_ingresso.html', {
                         'pedido': pedido,
-                        'evento': pedido.evento,
+                        'evento': evento,
                         'payment_id': payment_id_existente,
                         'pix_data': pix_data,
                         'valor': cobranca_existente.get('value', pedido.valor_total),
@@ -316,7 +355,7 @@ def pagar_ingresso_pix(request, pedido_id):
 
         if resultado and 'error' in resultado:
             return render(request, 'espetaculo/comprar_ingresso.html', {
-                'evento': pedido.evento,
+                'evento': evento,
                 'erro': f"Erro Asaas: {resultado['error']}",
             })
 
@@ -324,7 +363,7 @@ def pagar_ingresso_pix(request, pedido_id):
             pedido.asaas_payment_id = resultado['id']
             if 'customer' in resultado:
                 pedido.asaas_customer_id = resultado['customer']
-            pedido.save()
+            pedido.save(update_fields=['asaas_payment_id', 'asaas_customer_id'])
 
             if resultado.get('status') == 'RECEIVED':
                 pedido.marcar_como_pago()
@@ -340,22 +379,21 @@ def pagar_ingresso_pix(request, pedido_id):
 
             return render(request, 'espetaculo/pix_ingresso.html', {
                 'pedido': pedido,
-                'evento': pedido.evento,
+                'evento': evento,
                 'payment_id': resultado['id'],
                 'pix_data': pix_data,
                 'valor': resultado.get('value', pedido.valor_total),
             })
 
         return render(request, 'espetaculo/comprar_ingresso.html', {
-            'evento': pedido.evento,
+            'evento': evento,
             'erro': f'Resposta inesperada do Asaas: {resultado}',
         })
 
     except Exception as e:
-        import traceback
         traceback.print_exc()
         return render(request, 'espetaculo/comprar_ingresso.html', {
-            'evento': pedido.evento,
+            'evento': evento,
             'erro': f'Erro ao gerar PIX: {str(e)}',
         })
 
@@ -372,7 +410,7 @@ def verificar_pagamento_ingresso_pix(request, payment_id):
 
             return JsonResponse({
                 'status': 'paid',
-                'redirect': f'/espetaculos/ingresso/sucesso/{pedido.id}/'
+                'redirect': f"/espetaculos/ingresso/sucesso/{pedido.id}/"
             })
 
         status = resultado.get('status', 'PENDING') if resultado else 'ERROR'
@@ -384,6 +422,14 @@ def verificar_pagamento_ingresso_pix(request, payment_id):
 
 def ingresso_sucesso(request, pedido_id):
     pedido = get_object_or_404(PedidoIngressoEvento, id=pedido_id)
+    evento = pedido.evento
+
+    # Proteção de acesso para evento privado
+    if not evento.publico and not request.user.is_authenticated:
+        return redirect('espetaculo:lista_publica')
+
+    if evento.tipo != 'evento':
+        return redirect('espetaculo:detalhes_publico', pk=evento.pk)
 
     if pedido.status != 'pago':
         return redirect('espetaculo:pagar_ingresso_pix', pedido_id=pedido.id)
@@ -392,6 +438,6 @@ def ingresso_sucesso(request, pedido_id):
 
     return render(request, 'espetaculo/ingresso_sucesso.html', {
         'pedido': pedido,
-        'evento': pedido.evento,
+        'evento': evento,
         'ingressos': ingressos,
     })
