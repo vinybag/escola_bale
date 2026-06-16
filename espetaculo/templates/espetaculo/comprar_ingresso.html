@@ -1,0 +1,66 @@
+{% extends 'base_public.html' %}
+
+{% block title %}Comprar ingresso{% endblock %}
+
+{% block content %}
+<div style="max-width: 760px; margin: 0 auto; padding: 2rem 1rem 3rem;">
+    <div style="background: white; border-radius: 18px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); padding: 2rem;">
+        <h1 style="margin-top: 0;">Comprar ingresso</h1>
+        <p style="color: #666;">{{ evento.titulo }}</p>
+
+        <div style="background: #faf7f8; border-radius: 12px; padding: 1rem; margin-bottom: 1.5rem;">
+            <p><strong>Evento:</strong> {{ evento.titulo }}</p>
+            <p><strong>Data:</strong> {{ evento.data_apresentacao|date:"d/m/Y H:i" }}</p>
+            <p><strong>Local:</strong> {{ evento.local }}</p>
+            <p><strong>Valor unitário:</strong> R$ {{ evento.preco_ingresso|floatformat:2 }}</p>
+        </div>
+
+        {% if erro %}
+            <div style="background: #fdeaea; color: #a12626; padding: 1rem; border-radius: 10px; margin-bottom: 1rem;">
+                {{ erro }}
+            </div>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div style="display: grid; gap: 1rem;">
+                <div>
+                    <label for="nome_completo"><strong>Nome completo *</strong></label>
+                    <input type="text" name="nome_completo" id="nome_completo" required
+                           style="width: 100%; padding: 0.9rem; border: 1px solid #ddd; border-radius: 8px;">
+                </div>
+
+                <div>
+                    <label for="email"><strong>E-mail</strong></label>
+                    <input type="email" name="email" id="email"
+                           style="width: 100%; padding: 0.9rem; border: 1px solid #ddd; border-radius: 8px;">
+                </div>
+
+                <div>
+                    <label for="whatsapp"><strong>WhatsApp *</strong></label>
+                    <input type="text" name="whatsapp" id="whatsapp" required
+                           style="width: 100%; padding: 0.9rem; border: 1px solid #ddd; border-radius: 8px;">
+                </div>
+
+                <div>
+                    <label for="cpf"><strong>CPF</strong></label>
+                    <input type="text" name="cpf" id="cpf"
+                           style="width: 100%; padding: 0.9rem; border: 1px solid #ddd; border-radius: 8px;">
+                </div>
+
+                <div>
+                    <label for="quantidade"><strong>Quantidade *</strong></label>
+                    <input type="number" name="quantidade" id="quantidade" min="1" value="1" required
+                           style="width: 100%; padding: 0.9rem; border: 1px solid #ddd; border-radius: 8px;">
+                </div>
+            </div>
+
+            <button type="submit"
+                    style="margin-top: 1.5rem; width: 100%; padding: 1rem; border: none; border-radius: 10px; background: #b07a84; color: white; font-weight: 700; font-size: 1rem;">
+                Gerar PIX
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

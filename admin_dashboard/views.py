@@ -1091,56 +1091,62 @@ def espetaculos_list(request):
 
 @login_required
 def espetaculo_criar(request):
-    """Criar novo espetaculo"""
-    
+    """Criar novo espetáculo/evento"""
+
     if not request.user.is_staff:
         return redirect('home')
-    
+
     if request.method == 'POST':
         try:
             from espetaculo.models import Espetaculo
             from django.contrib import messages
             from datetime import datetime
-            
-            # Pega dados do form
+
             titulo = request.POST.get('titulo')
             subtitulo = request.POST.get('subtitulo', '')
             descricao = request.POST.get('descricao')
+            tipo = request.POST.get('tipo', 'espetaculo')
+            publico = request.POST.get('publico') == 'on'
+
             data_apresentacao = request.POST.get('data_apresentacao')
             local = request.POST.get('local')
             endereco = request.POST.get('endereco')
-            
+
             audicao_aberta = request.POST.get('audicao_aberta') == 'on'
             audicao_data_inicio = request.POST.get('audicao_data_inicio')
             audicao_data_fim = request.POST.get('audicao_data_fim')
             audicao_instrucoes = request.POST.get('audicao_instrucoes', '')
-            
+
             venda_aberta = request.POST.get('venda_aberta') == 'on'
             venda_data_inicio = request.POST.get('venda_data_inicio')
             preco_ingresso = request.POST.get('preco_ingresso', '0')
-            
+
             ativo = request.POST.get('ativo') == 'on'
-            
-            # ADICIONA: Pega o arquivo PDF
+
+            imagem = request.FILES.get('imagem')
+            arquivo_divulgacao = request.FILES.get('arquivo_divulgacao')
             arquivo_informacoes = request.FILES.get('arquivo_informacoes')
-            
-            # Validacao
+            arquivo_edital = request.FILES.get('arquivo_edital')
+
             if not all([titulo, descricao, data_apresentacao, local, endereco]):
-                messages.error(request, 'Preencha todos os campos obrigatorios!')
+                messages.error(request, 'Preencha todos os campos obrigatórios!')
                 return redirect('admin_dashboard:espetaculo_criar')
-            
-            # Converte data_apresentacao
+
             data_apres = datetime.strptime(data_apresentacao, '%Y-%m-%dT%H:%M')
-            
-            # Cria espetaculo
-            espetaculo = Espetaculo.objects.create(
+
+            Espetaculo.objects.create(
                 titulo=titulo,
                 subtitulo=subtitulo,
                 descricao=descricao,
+                tipo=tipo,
+                publico=publico,
                 data_apresentacao=data_apres,
                 local=local,
                 endereco=endereco,
+                imagem=imagem,
+                arquivo_divulgacao=arquivo_divulgacao,
                 arquivo_informacoes=arquivo_informacoes,
+                arquivo_edital=arquivo_edital,
                 audicao_aberta=audicao_aberta,
                 audicao_data_inicio=audicao_data_inicio if audicao_data_inicio else None,
                 audicao_data_fim=audicao_data_fim if audicao_data_fim else None,
@@ -1150,93 +1156,96 @@ def espetaculo_criar(request):
                 preco_ingresso=preco_ingresso,
                 ativo=ativo
             )
-            
-            messages.success(request, f'Espetaculo "{titulo}" criado com sucesso!')
+
+            messages.success(request, f'"{titulo}" criado com sucesso!')
             return redirect('admin_dashboard:espetaculos_list')
-            
+
         except Exception as e:
             from django.contrib import messages
-            messages.error(request, f'Erro ao criar espetaculo: {e}')
-            print(f"Erro detalhado: {e}")
+            messages.error(request, f'Erro ao criar espetáculo/evento: {e}')
             import traceback
             traceback.print_exc()
             return redirect('admin_dashboard:espetaculo_criar')
-    
-    # GET - mostra form
-    context = {}
-    return render(request, 'admin_dashboard/espetaculos/criar.html', context)
+
+    return render(request, 'admin_dashboard/espetaculos/criar.html', {})
 
 
 @login_required
 def espetaculo_editar(request, pk):
-    """Editar espetaculo existente"""
-    
+    """Editar espetáculo/evento existente"""
+
     if not request.user.is_staff:
         return redirect('home')
-    
+
     try:
         from espetaculo.models import Espetaculo
         espetaculo = Espetaculo.objects.get(pk=pk)
     except Exception as e:
         from django.contrib import messages
-        messages.error(request, f'Espetaculo nao encontrado: {e}')
+        messages.error(request, f'Cadastro não encontrado: {e}')
         return redirect('admin_dashboard:espetaculos_list')
-    
+
     if request.method == 'POST':
         try:
             from django.contrib import messages
             from datetime import datetime
-            
-            # Atualiza dados
+
             espetaculo.titulo = request.POST.get('titulo')
             espetaculo.subtitulo = request.POST.get('subtitulo', '')
             espetaculo.descricao = request.POST.get('descricao')
-            
+            espetaculo.tipo = request.POST.get('tipo', 'espetaculo')
+            espetaculo.publico = request.POST.get('publico') == 'on'
+
             data_apresentacao = request.POST.get('data_apresentacao')
             espetaculo.data_apresentacao = datetime.strptime(data_apresentacao, '%Y-%m-%dT%H:%M')
-            
+
             espetaculo.local = request.POST.get('local')
             espetaculo.endereco = request.POST.get('endereco')
-            
+
             espetaculo.audicao_aberta = request.POST.get('audicao_aberta') == 'on'
             audicao_data_inicio = request.POST.get('audicao_data_inicio')
             espetaculo.audicao_data_inicio = audicao_data_inicio if audicao_data_inicio else None
+
             audicao_data_fim = request.POST.get('audicao_data_fim')
             espetaculo.audicao_data_fim = audicao_data_fim if audicao_data_fim else None
             espetaculo.audicao_instrucoes = request.POST.get('audicao_instrucoes', '')
-            
+
             espetaculo.venda_aberta = request.POST.get('venda_aberta') == 'on'
             venda_data_inicio = request.POST.get('venda_data_inicio')
             espetaculo.venda_data_inicio = venda_data_inicio if venda_data_inicio else None
             espetaculo.preco_ingresso = request.POST.get('preco_ingresso', '0')
-            
+
             espetaculo.ativo = request.POST.get('ativo') == 'on'
-            
-            # Arquivo informações (já existente)
+
+            imagem = request.FILES.get('imagem')
+            if imagem:
+                espetaculo.imagem = imagem
+
+            arquivo_divulgacao = request.FILES.get('arquivo_divulgacao')
+            if arquivo_divulgacao:
+                espetaculo.arquivo_divulgacao = arquivo_divulgacao
+
             arquivo_informacoes = request.FILES.get('arquivo_informacoes')
             if arquivo_informacoes:
                 espetaculo.arquivo_informacoes = arquivo_informacoes
-            
-            # NOVO: Arquivo Edital
+
             arquivo_edital = request.FILES.get('arquivo_edital')
             if arquivo_edital:
                 espetaculo.arquivo_edital = arquivo_edital
-            
+
             espetaculo.save()
-            
-            messages.success(request, f'Espetaculo "{espetaculo.titulo}" atualizado com sucesso!')
+
+            messages.success(request, f'"{espetaculo.titulo}" atualizado com sucesso!')
             return redirect('admin_dashboard:espetaculos_list')
-            
+
         except Exception as e:
             from django.contrib import messages
-            messages.error(request, f'Erro ao atualizar espetaculo: {e}')
+            messages.error(request, f'Erro ao atualizar espetáculo/evento: {e}')
             return redirect('admin_dashboard:espetaculo_editar', pk=pk)
-    
-    # GET - mostra form preenchido
+
     context = {
         'espetaculo': espetaculo,
     }
-    
     return render(request, 'admin_dashboard/espetaculos/editar.html', context)
 
 @login_required

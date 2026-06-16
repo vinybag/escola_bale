@@ -1,22 +1,51 @@
 from decimal import Decimal, ROUND_HALF_UP
+import uuid
+
 from django.core.exceptions import ValidationError
+from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.utils import timezone
 
 
 class Espetaculo(models.Model):
+    TIPO_CHOICES = [
+        ('espetaculo', 'Espetáculo'),
+        ('evento', 'Evento'),
+    ]
+
     # Informações básicas
     titulo = models.CharField(max_length=200)
     subtitulo = models.CharField(max_length=200, blank=True)
     descricao = models.TextField()
+
+    tipo = models.CharField(
+        max_length=20,
+        choices=TIPO_CHOICES,
+        default='espetaculo',
+        verbose_name='Tipo'
+    )
+    publico = models.BooleanField(
+        default=True,
+        verbose_name='Aberto ao público',
+        help_text='Desmarque para eventos privados'
+    )
 
     # Data e local
     data_apresentacao = models.DateTimeField()
     local = models.CharField(max_length=200)
     endereco = models.TextField()
 
-    # Imagem (opcional)
+    # Imagem principal
     imagem = models.ImageField(upload_to='espetaculos/', blank=True, null=True)
+
+    # Arquivo de divulgação (imagem ou PDF)
+    arquivo_divulgacao = models.FileField(
+        upload_to='eventos/divulgacao/',
+        blank=True,
+        null=True,
+        validators=[FileExtensionValidator(['png', 'jpg', 'jpeg', 'pdf'])],
+        help_text='Arquivo de divulgação: PNG, JPG, JPEG ou PDF'
+    )
 
     # PDF com informações completas
     arquivo_informacoes = models.FileField(
@@ -51,12 +80,23 @@ class Espetaculo(models.Model):
     atualizado_em = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = 'Espetáculo'
-        verbose_name_plural = 'Espetáculos'
+        verbose_name = 'Espetáculo / Evento'
+        verbose_name_plural = 'Espetáculos / Eventos'
         ordering = ['-data_apresentacao']
 
     def __str__(self):
         return self.titulo
+
+    @property
+    def is_evento(self):
+        return self.tipo == 'evento'
+
+    @property
+    def arquivo_divulgacao_extensao(self):
+        if not self.arquivo_divulgacao:
+            return ''
+        nome = self.arquivo_divulgacao.name.lower()
+        return nome.split('.')[-1] if '.' in nome else ''
 
 
 class InscricaoAudicao(models.Model):
@@ -265,7 +305,6 @@ class CobrancaEspetaculo(models.Model):
 
     @property
     def opcoes_parcelas(self):
-        """Retorna lista [1, 2, 3, ...] respeitando o mês atual."""
         max_permitidas = self.max_parcelas_permitidas_hoje
 
         if max_permitidas <= 0:
@@ -283,7 +322,6 @@ class CobrancaEspetaculo(models.Model):
 
     @property
     def valor_por_parcela_de(self):
-        """Retorna dict {n: valor_por_parcela} considerando descontos ou valores fixos."""
         resultado = {}
         for n in self.opcoes_parcelas:
             if n > 0:
@@ -491,3 +529,89 @@ class ParcelaCobrancaEspetaculo(models.Model):
 
         self.save(update_fields=campos_para_salvar)
         self.cobranca.atualizar_status()
+
+
+class PedidoIngressoEvento(models.Model):
+    STATUS_CHOICES = [
+        ('pendente', 'Pendente'),
+        ('pago', 'Pago'),
+        ('cancelado', 'Cancelado'),
+    ]
+
+    evento = models.ForeignKey(
+        Espetaculo,
+        on_delete=models.CASCADE,
+        related_name='pedidos_ingresso'
+    )
+    nome_completo = models.CharField(max_length=200)
+    email = models.EmailField(blank=True)
+    whatsapp = models.CharField(max_length=20)
+    cpf = models.CharField(max_length=14, blank=True)
+    quantidade = models.PositiveIntegerField(default=1)
+
+    valor_unitario = models.DecimalField(max_digits=10, decimal_places=2)
+    valor_total = models.DecimalField(max_digits=10, decimal_places=2)
+
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pendente')
+    data_pagamento = models.DateTimeField(blank=True, null=True)
+
+    asaas_payment_id = models.CharField(max_length=100, blank=True, null=True)
+    asaas_customer_id = models.CharField(max_length=100, blank=True, null=True)
+    codigo_pix = models.TextField(blank=True, null=True)
+    external_reference = models.CharField(max_length=100, blank=True, null=True)
+
+    criado_em = models.DateTimeField(auto_now_add=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Pedido de ingresso'
+        verbose_name_plural = 'Pedidos de ingressos'
+        ordering = ['-criado_em']
+
+    def __str__(self):
+        return f'{self.nome_completo} - {self.evento.titulo}'
+
+    def marcar_como_pago(self):
+        if self.status != 'pago':
+            self.status = 'pago'
+            self.data_pagamento = timezone.now()
+            self.save(update_fields=['status', 'data_pagamento'])
+
+    @property
+    def ingresso_gerado(self):
+        return self.ingressos.exists()
+
+
+class IngressoEvento(models.Model):
+    STATUS_CHOICES = [
+        ('ativo', 'Ativo'),
+        ('usado', 'Usado'),
+        ('cancelado', 'Cancelado'),
+    ]
+
+    pedido = models.ForeignKey(
+        PedidoIngressoEvento,
+        on_delete=models.CASCADE,
+        related_name='ingressos'
+    )
+    evento = models.ForeignKey(
+        Espetaculo,
+        on_delete=models.CASCADE,
+        related_name='ingressos'
+    )
+    codigo_unico = models.CharField(max_length=50, unique=True)
+    nome_participante = models.CharField(max_length=200, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='ativo')
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Ingresso'
+        verbose_name_plural = 'Ingressos'
+        ordering = ['-criado_em']
+
+    def __str__(self):
+        return f'{self.evento.titulo} - {self.codigo_unico}'
+
+    @staticmethod
+    def gerar_codigo():
+        return uuid.uuid4().hex[:12].upper()

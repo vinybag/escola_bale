@@ -1,0 +1,61 @@
+{% extends 'base_public.html' %}
+{% load static %}
+
+{% block title %}{{ evento.titulo }}{% endblock %}
+
+{% block content %}
+<div style="max-width: 1000px; margin: 0 auto; padding: 2rem 1rem 3rem;">
+    <div style="background: white; border-radius: 18px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); overflow: hidden;">
+        {% if evento.imagem %}
+            <img src="{{ evento.imagem.url }}" alt="{{ evento.titulo }}" style="width: 100%; display: block; max-height: 420px; object-fit: cover;">
+        {% endif %}
+
+        <div style="padding: 2rem;">
+            <p style="margin: 0 0 0.5rem 0; color: #b07a84; font-weight: 700;">
+                {{ evento.get_tipo_display }}
+            </p>
+
+            <h1 style="margin: 0 0 0.75rem 0; color: #2c3e50;">{{ evento.titulo }}</h1>
+
+            {% if evento.subtitulo %}
+                <p style="margin: 0 0 1rem 0; color: #666; font-size: 1.1rem;">{{ evento.subtitulo }}</p>
+            {% endif %}
+
+            <p style="color: #555; line-height: 1.8;">{{ evento.descricao|linebreaksbr }}</p>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-top: 2rem;">
+                <div style="background: #faf7f8; border-radius: 12px; padding: 1rem;">
+                    <strong>Data</strong><br>
+                    {{ evento.data_apresentacao|date:"d/m/Y H:i" }}
+                </div>
+                <div style="background: #faf7f8; border-radius: 12px; padding: 1rem;">
+                    <strong>Local</strong><br>
+                    {{ evento.local }}
+                </div>
+                <div style="background: #faf7f8; border-radius: 12px; padding: 1rem;">
+                    <strong>Ingresso</strong><br>
+                    R$ {{ evento.preco_ingresso|floatformat:2 }}
+                </div>
+            </div>
+
+            <div style="margin-top: 2rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+                {% if evento.venda_aberta %}
+                    <a href="{% url 'espetaculo:comprar_ingresso' evento.id %}"
+                       style="display: inline-flex; align-items: center; justify-content: center; padding: 0.9rem 1.5rem; background: #b07a84; color: white; border-radius: 10px; text-decoration: none; font-weight: 700;">
+                        Comprar ingresso
+                    </a>
+                {% endif %}
+
+                {% if evento.arquivo_divulgacao %}
+                    <a href="{{ evento.arquivo_divulgacao.url }}"
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       style="display: inline-flex; align-items: center; justify-content: center; padding: 0.9rem 1.5rem; background: #f3f3f3; color: #333; border-radius: 10px; text-decoration: none; font-weight: 600;">
+                        Ver material do evento
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends 'base_public.html' %}
+
+{% block title %}Ingresso confirmado{% endblock %}
+
+{% block content %}
+<div style="max-width: 860px; margin: 0 auto; padding: 2rem 1rem 3rem;">
+    <div style="background: white; border-radius: 18px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); padding: 2rem;">
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <h1 style="color: #2e7d32; margin-bottom: 0.5rem;">Pagamento aprovado!</h1>
+            <p style="color: #666;">Seus ingressos foram gerados com sucesso.</p>
+        </div>
+
+        <div style="background: #faf7f8; border-radius: 12px; padding: 1rem; margin-bottom: 2rem;">
+            <p><strong>Evento:</strong> {{ evento.titulo }}</p>
+            <p><strong>Comprador:</strong> {{ pedido.nome_completo }}</p>
+            <p><strong>Quantidade:</strong> {{ pedido.quantidade }}</p>
+            <p><strong>Valor pago:</strong> R$ {{ pedido.valor_total }}</p>
+            <p><strong>Data do pagamento:</strong> {{ pedido.data_pagamento|date:"d/m/Y H:i" }}</p>
+        </div>
+
+        <h3>Ingressos gerados</h3>
+
+        <div style="display: grid; gap: 1rem;">
+            {% for ingresso in ingressos %}
+                <div style="border: 1px solid #eadde1; border-radius: 12px; padding: 1rem; background: #fffdfd;">
+                    <p style="margin: 0 0 0.4rem 0;"><strong>Código:</strong> {{ ingresso.codigo_unico }}</p>
+                    <p style="margin: 0;"><strong>Status:</strong> {{ ingresso.get_status_display }}</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

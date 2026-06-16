@@ -14,5 +14,11 @@ urlpatterns = [
     path('audicao/rosa-branca/', views.audicao_rosa_branca, name='audicao_rosa_branca'),
     path('audicao/rosa-branca/sucesso/', views.audicao_rosa_branca_sucesso, name='audicao_rosa_branca_sucesso'),
 
+    path('evento/<int:pk>/', views.evento_detalhe_publico, name='evento_detalhe_publico'),
+    path('evento/<int:pk>/comprar/', views.comprar_ingresso, name='comprar_ingresso'),
+    path('ingresso/pix/<int:pedido_id>/', views.pagar_ingresso_pix, name='pagar_ingresso_pix'),
+    path('ingresso/verificar-pix/<str:payment_id>/', views.verificar_pagamento_ingresso_pix, name='verificar_pagamento_ingresso_pix'),
+    path('ingresso/sucesso/<int:pedido_id>/', views.ingresso_sucesso, name='ingresso_sucesso'),
+
     path('<int:pk>/', views.espetaculo_detalhes_publico, name='detalhes_publico'),
 ]

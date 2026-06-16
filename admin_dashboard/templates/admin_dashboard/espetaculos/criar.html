@@ -154,8 +154,8 @@
 
 <div class="esp-create-header">
     <div>
-        <h2 style="margin: 0 0 0.35rem 0; color: #4a235f;">Novo Espetáculo</h2>
-        <p style="margin: 0; color: #6f6f78;">Criar espetáculo de fim de ano</p>
+        <h2 style="margin: 0 0 0.35rem 0; color: #4a235f;">Novo Espetáculo / Evento</h2>
+        <p style="margin: 0; color: #6f6f78;">Crie um espetáculo ou evento com venda de ingressos e material de divulgação</p>
     </div>
 
     <a href="{% url 'admin_dashboard:espetaculos_list' %}"
@@ -172,9 +172,9 @@
             <div class="esp-create-top">
                 <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
                     <div>
-                        <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1.15rem;">Cadastro do espetáculo</h3>
+                        <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1.15rem;">Cadastro do espetáculo / evento</h3>
                         <p style="margin: 0; color: #7a7280; font-size: 0.95rem;">
-                            Preencha as informações, datas, audição e venda de ingressos.
+                            Preencha as informações, arquivos, audição e venda de ingressos.
                         </p>
                     </div>
                     <div style="padding: 0.55rem 0.9rem; border-radius: 999px; background: #efe7f5; color: #6b2d8f; font-size: 0.85rem; font-weight: 600;">
@@ -189,7 +189,31 @@
                 <section class="esp-create-section">
                     <div style="margin-bottom: 1.25rem;">
                         <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1rem; font-weight: 700;">Informações Básicas</h3>
-                        <p style="margin: 0; color: #7b7580; font-size: 0.92rem;">Título, descrição e arquivo de informações.</p>
+                        <p style="margin: 0; color: #7b7580; font-size: 0.92rem;">Tipo, visibilidade ao público, título e descrição.</p>
+                    </div>
+
+                    <div class="esp-grid-2">
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
+                                Tipo *
+                            </label>
+                            <select name="tipo" required class="esp-select">
+                                <option value="espetaculo" selected>Espetáculo</option>
+                                <option value="evento">Evento</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
+                                Público
+                            </label>
+                            <div class="esp-check-box" style="margin-bottom: 0;">
+                                <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer;">
+                                    <input type="checkbox" name="publico" checked style="accent-color: #6b2d8f; width: 18px; height: 18px;">
+                                    <span style="font-weight: 600; color: #4a235f;">Aberto ao público</span>
+                                </label>
+                            </div>
+                        </div>
                     </div>
 
                     <div style="margin-bottom: 1rem;">
@@ -215,18 +239,59 @@
                             Descrição *
                         </label>
                         <textarea name="descricao" rows="5" required
-                                  placeholder="Descreva o espetáculo..."
+                                  placeholder="Descreva o espetáculo ou evento..."
                                   class="esp-textarea"></textarea>
                     </div>
+                </section>
 
-                    <div>
+                <!-- Imagem e Arquivos -->
+                <section class="esp-create-section">
+                    <div style="margin-bottom: 1.25rem;">
+                        <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1rem; font-weight: 700;">Imagem e Arquivos</h3>
+                        <p style="margin: 0; color: #7b7580; font-size: 0.92rem;">Capa principal, arquivo de divulgação e PDFs complementares.</p>
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
+                            Imagem principal
+                        </label>
+                        <input type="file" name="imagem" accept=".jpg,.jpeg,.png,.webp,image/*"
+                               class="esp-input">
+                        <small class="esp-help">
+                            Upload da imagem principal do espetáculo ou evento.
+                        </small>
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
+                            Arquivo de divulgação
+                        </label>
+                        <input type="file" name="arquivo_divulgacao" accept=".png,.jpg,.jpeg,.pdf"
+                               class="esp-input">
+                        <small class="esp-help">
+                            Pode ser PNG, JPG, JPEG ou PDF.
+                        </small>
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
                             PDF com Informações Completas
                         </label>
                         <input type="file" name="arquivo_informacoes" accept=".pdf"
                                class="esp-input">
                         <small class="esp-help">
-                            Upload do PDF com sinopse, personagens, audição, etc. (Arquivo do Canva)
+                            Upload do PDF com sinopse, personagens, audição, etc.
+                        </small>
+                    </div>
+
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
+                            Arquivo Edital / Regulamento
+                        </label>
+                        <input type="file" name="arquivo_edital" accept=".pdf"
+                               class="esp-input">
+                        <small class="esp-help">
+                            PDF com edital, regulamento ou material de apoio para download.
                         </small>
                     </div>
                 </section>
@@ -329,13 +394,13 @@
                 <section class="esp-create-section">
                     <div style="margin-bottom: 1.25rem;">
                         <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1rem; font-weight: 700;">Visibilidade</h3>
-                        <p style="margin: 0; color: #7b7580; font-size: 0.92rem;">Controle se o espetáculo está visível no site.</p>
+                        <p style="margin: 0; color: #7b7580; font-size: 0.92rem;">Controle se o cadastro está ativo e visível no site.</p>
                     </div>
 
                     <div class="esp-check-box" style="margin-bottom: 0;">
                         <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer;">
                             <input type="checkbox" name="ativo" checked style="accent-color: #6b2d8f; width: 18px; height: 18px;">
-                            <span style="font-weight: 600; color: #4a235f;">Espetáculo ativo (visível no site)</span>
+                            <span style="font-weight: 600; color: #4a235f;">Cadastro ativo (visível no site)</span>
                         </label>
                     </div>
                 </section>
@@ -348,7 +413,7 @@
 
                     <button type="submit"
                             style="background: linear-gradient(135deg, #6b2d8f 0%, #7e3aa5 100%); color: white; border: none; padding: 0.85rem 1.6rem; border-radius: 10px; cursor: pointer; font-weight: 700; box-shadow: 0 8px 18px rgba(107, 45, 143, 0.18);">
-                        Criar Espetáculo
+                        Criar cadastro
                     </button>
                 </div>
 
