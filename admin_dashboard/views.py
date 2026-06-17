@@ -1219,6 +1219,9 @@ def espetaculo_editar(request, pk):
 
             espetaculo.ativo = request.POST.get('ativo') == 'on'
 
+            print('FILES keys:', list(request.FILES.keys()))
+            print('Imagem recebida:', request.FILES.get('imagem'))
+
             imagem = request.FILES.get('imagem')
             if imagem:
                 espetaculo.imagem = imagem

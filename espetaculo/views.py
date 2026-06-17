@@ -113,6 +113,8 @@ def get_personagens_por_idade(request):
 
 
 def audicao_rosa_branca(request):
+    template_name = 'espetaculo/audicao_nova_publica.html'
+
     espetaculo = Espetaculo.objects.filter(ativo=True, audicao_aberta=True).order_by('-data_apresentacao').first()
 
     if not espetaculo:
@@ -130,17 +132,17 @@ def audicao_rosa_branca(request):
 
             if not all([nome_completo, whatsapp, idade, turma_atual, responsavel, confirmacao]):
                 messages.error(request, 'Preencha todos os campos obrigatórios.')
-                return render(request, 'espetaculo/audicao_rosa_branca.html', {'espetaculo': espetaculo})
+                return render(request, template_name, {'espetaculo': espetaculo})
 
             try:
                 idade_int = int(idade)
             except (TypeError, ValueError):
                 messages.error(request, 'Informe uma idade válida.')
-                return render(request, 'espetaculo/audicao_rosa_branca.html', {'espetaculo': espetaculo})
+                return render(request, template_name, {'espetaculo': espetaculo})
 
             if idade_int < 6:
                 messages.error(request, 'Essa audição é permitida somente para crianças a partir de 6 anos.')
-                return render(request, 'espetaculo/audicao_rosa_branca.html', {'espetaculo': espetaculo})
+                return render(request, template_name, {'espetaculo': espetaculo})
 
             inscricao = InscricaoAudicao.objects.create(
                 nome_completo=nome_completo,
@@ -168,9 +170,9 @@ def audicao_rosa_branca(request):
             print(str(e))
             traceback.print_exc()
             messages.error(request, f'Erro ao enviar inscrição: {e}')
-            return render(request, 'espetaculo/audicao_rosa_branca.html', {'espetaculo': espetaculo})
+            return render(request, template_name, {'espetaculo': espetaculo})
 
-    return render(request, 'espetaculo/audicao_rosa_branca.html', {'espetaculo': espetaculo})
+    return render(request, template_name, {'espetaculo': espetaculo})
 
 
 def audicao_rosa_branca_sucesso(request):
