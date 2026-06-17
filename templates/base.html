@@ -33,13 +33,13 @@
                         <li><a href="/pagamentos/mensalidades/">Mensalidades</a></li>
                         <li><a href="/avisos/">Avisos</a></li>
                     {% endif %}
-                    <li><a href="/espetaculo/">Espetáculo</a></li>
+                    <li><a href="{% url 'espetaculo:lista_publica' %}">Espetáculo</a></li>
                     <li><a href="/conta/perfil/">Perfil</a></li>
                     <li><a href="/conta/logout/">Sair</a></li>
                 {% else %}
                     <li><a href="/">Início</a></li>
                     <li><a href="/agenda/experimental/">Aula Experimental</a></li>
-                    <li><a href="/espetaculo/">Espetáculo</a></li>
+                    <li><a href="{% url 'espetaculo:lista_publica' %}">Espetáculo</a></li>
                     <li><a href="/conta/login/" class="btn-login">Login</a></li>
                 {% endif %}
             </ul>

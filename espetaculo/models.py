@@ -6,7 +6,6 @@ from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.utils import timezone
 
-
 class Espetaculo(models.Model):
     TIPO_CHOICES = [
         ('espetaculo', 'Espetáculo'),
@@ -36,7 +35,19 @@ class Espetaculo(models.Model):
     endereco = models.TextField()
 
     # Imagem principal
-    imagem = models.ImageField(upload_to='espetaculos/', blank=True, null=True)
+    imagem = models.ImageField(
+        upload_to='espetaculos/',
+        blank=True,
+        null=True
+    )
+
+    # Imagem base do ingresso
+    imagem_ingresso = models.ImageField(
+        upload_to='eventos/ingressos/',
+        blank=True,
+        null=True,
+        help_text='Imagem base usada para compor o ingresso com QR Code'
+    )
 
     # Arquivo de divulgação (imagem ou PDF)
     arquivo_divulgacao = models.FileField(
@@ -99,6 +110,9 @@ class Espetaculo(models.Model):
         return nome.split('.')[-1] if '.' in nome else ''
 
 
+from django.db import models
+
+
 class InscricaoAudicao(models.Model):
     PERSONAGENS_CHOICES = [
         ('thessalia', 'Thessália'),
@@ -120,7 +134,7 @@ class InscricaoAudicao(models.Model):
     idade = models.IntegerField(verbose_name='Idade')
     personagens = models.CharField(max_length=500, verbose_name='Personagens escolhidos')
     espetaculo = models.ForeignKey(
-        Espetaculo,
+        'Espetaculo',
         on_delete=models.CASCADE,
         related_name='inscricoes',
         null=True,
@@ -147,7 +161,11 @@ class AvaliacaoAudicao(models.Model):
         ('destaque', 'Destaque'),
     ]
 
-    inscricao = models.ForeignKey('InscricaoAudicao', on_delete=models.CASCADE, related_name='avaliacoes')
+    inscricao = models.ForeignKey(
+        'InscricaoAudicao',
+        on_delete=models.CASCADE,
+        related_name='avaliacoes'
+    )
     personagem = models.CharField(max_length=100)
     nome_participante = models.CharField(max_length=200)
     nivel = models.CharField(max_length=20, choices=NIVEL_OPCOES, default='regular')
@@ -531,15 +549,22 @@ class ParcelaCobrancaEspetaculo(models.Model):
         self.cobranca.atualizar_status()
 
 
+import uuid
+
+from django.db import models
+from django.utils import timezone
+
+
 class PedidoIngressoEvento(models.Model):
     STATUS_CHOICES = [
         ('pendente', 'Pendente'),
         ('pago', 'Pago'),
         ('cancelado', 'Cancelado'),
+        ('expirado', 'Expirado'),
     ]
 
     evento = models.ForeignKey(
-        Espetaculo,
+        'Espetaculo',
         on_delete=models.CASCADE,
         related_name='pedidos_ingresso'
     )
@@ -552,12 +577,20 @@ class PedidoIngressoEvento(models.Model):
     valor_unitario = models.DecimalField(max_digits=10, decimal_places=2)
     valor_total = models.DecimalField(max_digits=10, decimal_places=2)
 
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pendente')
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='pendente'
+    )
     data_pagamento = models.DateTimeField(blank=True, null=True)
 
     asaas_payment_id = models.CharField(max_length=100, blank=True, null=True)
     asaas_customer_id = models.CharField(max_length=100, blank=True, null=True)
+    asaas_status = models.CharField(max_length=50, blank=True, null=True)
+    asaas_invoice_url = models.URLField(blank=True, null=True)
+
     codigo_pix = models.TextField(blank=True, null=True)
+    qr_code_pix = models.TextField(blank=True, null=True)
     external_reference = models.CharField(max_length=100, blank=True, null=True)
 
     criado_em = models.DateTimeField(auto_now_add=True)
@@ -575,7 +608,7 @@ class PedidoIngressoEvento(models.Model):
         if self.status != 'pago':
             self.status = 'pago'
             self.data_pagamento = timezone.now()
-            self.save(update_fields=['status', 'data_pagamento'])
+            self.save(update_fields=['status', 'data_pagamento', 'atualizado_em'])
 
     @property
     def ingresso_gerado(self):
@@ -595,13 +628,36 @@ class IngressoEvento(models.Model):
         related_name='ingressos'
     )
     evento = models.ForeignKey(
-        Espetaculo,
+        'Espetaculo',
         on_delete=models.CASCADE,
         related_name='ingressos'
     )
-    codigo_unico = models.CharField(max_length=50, unique=True)
+
+    codigo_unico = models.CharField(
+        max_length=50,
+        unique=True,
+        editable=False
+    )
+
     nome_participante = models.CharField(max_length=200, blank=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='ativo')
+
+    qrcode_image = models.ImageField(
+        upload_to='ingressos/qrcodes/',
+        blank=True,
+        null=True
+    )
+    imagem_ingresso = models.ImageField(
+        upload_to='ingressos/finais/',
+        blank=True,
+        null=True
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='ativo'
+    )
+    validado_em = models.DateTimeField(blank=True, null=True)
     criado_em = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -612,6 +668,17 @@ class IngressoEvento(models.Model):
     def __str__(self):
         return f'{self.evento.titulo} - {self.codigo_unico}'
 
+    def save(self, *args, **kwargs):
+        if not self.codigo_unico:
+            self.codigo_unico = self.gerar_codigo()
+        super().save(*args, **kwargs)
+
     @staticmethod
     def gerar_codigo():
         return uuid.uuid4().hex[:12].upper()
+
+    def marcar_como_usado(self):
+        if self.status != 'usado':
+            self.status = 'usado'
+            self.validado_em = timezone.now()
+            self.save(update_fields=['status', 'validado_em'])

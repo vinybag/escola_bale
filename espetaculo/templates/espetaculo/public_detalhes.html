@@ -1,7 +1,7 @@
 {% extends 'base_public.html' %}
 {% load static %}
 
-{% block title %}{{ evento.titulo }} - BAILAH{% endblock %}
+{% block title %}{{ espetaculo.titulo }} - BAILAH{% endblock %}
 
 {% block content %}
 <div style="max-width: 900px; margin: 0 auto; padding: 2rem 1rem 3rem;">
@@ -12,91 +12,139 @@
 
     <div style="background: white; border-radius: 10px; padding: 2rem; margin-top: 1rem; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
 
-        {% if evento.imagem %}
-            <div style="margin-bottom: 1.5rem;">
-                <img src="{{ evento.imagem.url }}"
-                     alt="{{ evento.titulo }}"
-                     style="width: 100%; border-radius: 10px; display: block;">
+        {% if espetaculo.imagem %}
+            <div style="margin-bottom: 1.5rem; width: 100%; min-height: 260px; max-height: 420px; background: #f4f4f4; border-radius: 10px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                <img src="{{ espetaculo.imagem.url }}"
+                     alt="{{ espetaculo.titulo }}"
+                     style="width: 100%; height: 100%; object-fit: contain; object-position: center; display: block; background: #f4f4f4;">
             </div>
         {% endif %}
 
         <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem;">
             <div>
-                <h1 style="color: #2c3e50; margin: 0 0 0.5rem 0;">{{ evento.titulo }}</h1>
+                <h1 style="color: #2c3e50; margin: 0 0 0.5rem 0;">{{ espetaculo.titulo }}</h1>
 
-                {% if evento.subtitulo %}
-                    <h2 style="color: #b07a84; font-size: 1.25rem; margin: 0;">{{ evento.subtitulo }}</h2>
+                {% if espetaculo.subtitulo %}
+                    <h2 style="color: #b07a84; font-size: 1.25rem; margin: 0;">{{ espetaculo.subtitulo }}</h2>
                 {% endif %}
             </div>
 
-            <div style="padding: 0.45rem 0.85rem; border-radius: 999px; background: #fff3e5; color: #9a5b16; font-size: 0.9rem; font-weight: 600;">
-                Evento
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: flex-start;">
+                {% if espetaculo.tipo == 'evento' %}
+                    <span style="padding: 0.45rem 0.85rem; border-radius: 999px; background: #fff3e5; color: #9a5b16; font-size: 0.9rem; font-weight: 600;">
+                        Evento
+                    </span>
+                {% else %}
+                    <span style="padding: 0.45rem 0.85rem; border-radius: 999px; background: #f7eef1; color: #b07a84; font-size: 0.9rem; font-weight: 600;">
+                        Espetáculo
+                    </span>
+                {% endif %}
+
+                {% if espetaculo.audicao_aberta %}
+                    <span style="padding: 0.45rem 0.85rem; border-radius: 999px; background: #e8f5e9; color: #2e7d32; font-size: 0.9rem; font-weight: 600;">
+                        Audição aberta
+                    </span>
+                {% endif %}
             </div>
         </div>
 
         <div style="background: #f8f9fa; padding: 1rem; border-radius: 5px; margin-bottom: 1.5rem;">
             <p style="margin: 0 0 0.5rem 0;">
                 <strong>Data:</strong>
-                {{ evento.data_apresentacao|date:"d/m/Y" }} às {{ evento.data_apresentacao|date:"H:i" }}
+                {{ espetaculo.data_apresentacao|date:"d/m/Y" }} às {{ espetaculo.data_apresentacao|date:"H:i" }}
             </p>
             <p style="margin: 0 0 0.5rem 0;">
-                <strong>Local:</strong> {{ evento.local }}
+                <strong>Local:</strong> {{ espetaculo.local }}
             </p>
             <p style="margin: 0;">
-                <strong>Endereço:</strong> {{ evento.endereco }}
+                <strong>Endereço:</strong> {{ espetaculo.endereco }}
             </p>
         </div>
 
         <div style="margin-bottom: 1.5rem;">
-            <h3 style="color: #2c3e50; margin-bottom: 0.5rem;">Sobre o evento</h3>
-            <p style="color: #555; line-height: 1.6; margin: 0;">{{ evento.descricao }}</p>
+            <h3 style="color: #2c3e50; margin-bottom: 0.5rem;">Sobre o espetáculo</h3>
+            <p style="color: #555; line-height: 1.6; margin: 0;">{{ espetaculo.descricao }}</p>
         </div>
 
-        <div style="background: #fff8f1; padding: 1.25rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid #f3dfc6;">
-            <h3 style="color: #9a5b16; margin: 0 0 0.75rem 0;">Ingressos</h3>
+        {% if espetaculo.audicao_aberta %}
+            <div style="background: #fdf5f7; padding: 1.5rem; border-radius: 10px; margin-bottom: 1.5rem; border: 1px solid #e8c8d2;">
+                <h3 style="color: #8f4f60; margin: 0 0 0.75rem 0;">🌹 Audição aberta</h3>
 
-            {% if evento.venda_aberta %}
-                <p style="color: #6c5a46; margin: 0 0 1rem 0;">
-                    A venda de ingressos está disponível.
-                    {% if evento.preco_ingresso %}
-                        Valor: <strong>R$ {{ evento.preco_ingresso|floatformat:2 }}</strong>
-                    {% endif %}
-                </p>
+                {% if espetaculo.audicao_instrucoes %}
+                    <p style="color: #6b3a47; margin: 0 0 1rem 0; line-height: 1.6; white-space: pre-line;">
+                        {{ espetaculo.audicao_instrucoes }}
+                    </p>
+                {% else %}
+                    <p style="color: #6b3a47; margin: 0 0 1rem 0; line-height: 1.6;">
+                        Estamos com inscrições abertas para audição. Clique abaixo para se inscrever.
+                    </p>
+                {% endif %}
 
-                <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
-                    <a href="{% url 'espetaculo:comprar_ingresso' evento.id %}"
-                       style="display: inline-block; background: #9a5b16; color: white; padding: 0.85rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: 600;">
-                        Comprar ingresso
-                    </a>
-                </div>
-            {% else %}
-                <p style="color: #6c5a46; margin: 0;">
-                    As vendas deste evento ainda não estão abertas.
-                </p>
-            {% endif %}
-        </div>
+                {% if espetaculo.audicao_data_inicio or espetaculo.audicao_data_fim %}
+                    <p style="color: #6b3a47; margin: 0 0 1rem 0; font-size: 0.95rem;">
+                        {% if espetaculo.audicao_data_inicio %}
+                            <strong>Inscrições a partir de:</strong> {{ espetaculo.audicao_data_inicio|date:"d/m/Y" }}
+                        {% endif %}
+                        {% if espetaculo.audicao_data_fim %}
+                            &nbsp;·&nbsp;<strong>Até:</strong> {{ espetaculo.audicao_data_fim|date:"d/m/Y" }}
+                        {% endif %}
+                    </p>
+                {% endif %}
 
-        {% if evento.arquivo_divulgacao or evento.arquivo_informacoes or evento.arquivo_edital %}
+                <a href="{% url 'espetaculo:audicao_rosa_branca' %}"
+                   style="display: inline-block; background: #b07a84; color: white; padding: 0.85rem 1.75rem; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 1rem;">
+                    🌹 Inscrever-se na audição
+                </a>
+            </div>
+        {% endif %}
+
+        {% if espetaculo.tipo == 'evento' %}
+            <div style="background: #fff8f1; padding: 1.25rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid #f3dfc6;">
+                <h3 style="color: #9a5b16; margin: 0 0 0.75rem 0;">Ingressos</h3>
+
+                {% if espetaculo.venda_aberta %}
+                    <p style="color: #6c5a46; margin: 0 0 1rem 0;">
+                        A venda de ingressos está disponível.
+                        {% if espetaculo.preco_ingresso %}
+                            Valor: <strong>R$ {{ espetaculo.preco_ingresso|floatformat:2 }}</strong>
+                        {% endif %}
+                    </p>
+
+                    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                        <a href="{% url 'espetaculo:comprar_ingresso' espetaculo.id %}"
+                           style="display: inline-block; background: #9a5b16; color: white; padding: 0.85rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: 600;">
+                            Comprar ingresso
+                        </a>
+                    </div>
+                {% else %}
+                    <p style="color: #6c5a46; margin: 0;">
+                        As vendas deste evento ainda não estão abertas.
+                    </p>
+                {% endif %}
+            </div>
+        {% endif %}
+
+        {% if espetaculo.arquivo_divulgacao or espetaculo.arquivo_informacoes or espetaculo.arquivo_edital %}
             <div style="margin-top: 1.5rem;">
-                <h3 style="color: #2c3e50; margin-bottom: 1rem;">Materiais do evento</h3>
+                <h3 style="color: #2c3e50; margin-bottom: 1rem;">Materiais</h3>
 
                 <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
-                    {% if evento.arquivo_divulgacao %}
-                        <a href="{{ evento.arquivo_divulgacao.url }}" target="_blank" rel="noopener noreferrer"
+                    {% if espetaculo.arquivo_divulgacao %}
+                        <a href="{{ espetaculo.arquivo_divulgacao.url }}" target="_blank" rel="noopener noreferrer"
                            style="display: inline-block; background: #f7eef1; color: #8f4f60; padding: 0.8rem 1.2rem; border-radius: 6px; text-decoration: none; font-weight: 600;">
                             Abrir arquivo de divulgação
                         </a>
                     {% endif %}
 
-                    {% if evento.arquivo_informacoes %}
-                        <a href="{{ evento.arquivo_informacoes.url }}" target="_blank" rel="noopener noreferrer"
+                    {% if espetaculo.arquivo_informacoes %}
+                        <a href="{{ espetaculo.arquivo_informacoes.url }}" target="_blank" rel="noopener noreferrer"
                            style="display: inline-block; background: #eef4fb; color: #305d8c; padding: 0.8rem 1.2rem; border-radius: 6px; text-decoration: none; font-weight: 600;">
-                            Baixar informações do evento
+                            Baixar informações do espetáculo
                         </a>
                     {% endif %}
 
-                    {% if evento.arquivo_edital %}
-                        <a href="{{ evento.arquivo_edital.url }}" target="_blank" rel="noopener noreferrer"
+                    {% if espetaculo.arquivo_edital %}
+                        <a href="{{ espetaculo.arquivo_edital.url }}" target="_blank" rel="noopener noreferrer"
                            style="display: inline-block; background: #f4f4f4; color: #444; padding: 0.8rem 1.2rem; border-radius: 6px; text-decoration: none; font-weight: 600;">
                             Baixar edital / regulamento
                         </a>

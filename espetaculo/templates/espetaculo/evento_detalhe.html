@@ -7,7 +7,11 @@
 <div style="max-width: 1000px; margin: 0 auto; padding: 2rem 1rem 3rem;">
     <div style="background: white; border-radius: 18px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); overflow: hidden;">
         {% if evento.imagem %}
-            <img src="{{ evento.imagem.url }}" alt="{{ evento.titulo }}" style="width: 100%; display: block; max-height: 420px; object-fit: cover;">
+            <div style="width: 100%; max-height: 420px; min-height: 260px; background: #f4f4f4; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                <img src="{{ evento.imagem.url }}"
+                     alt="{{ evento.titulo }}"
+                     style="width: 100%; height: 100%; max-height: 420px; object-fit: contain; object-position: center; display: block; background: #f4f4f4;">
+            </div>
         {% endif %}
 
         <div style="padding: 2rem;">

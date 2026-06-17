@@ -1,13 +1,16 @@
-from django.shortcuts import render, get_object_or_404, redirect
-from .models import Espetaculo, InscricaoAudicao
-from .forms import InscricaoAudicaoForm
+from decimal import Decimal, InvalidOperation
+import traceback
+
 from django.contrib import messages
 from django.http import JsonResponse
-import traceback
-from decimal import Decimal
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
-from .models import Espetaculo, PedidoIngressoEvento, IngressoEvento
+
 from pagamentos.asaas_helper import AsaasAPI
+
+from .forms import InscricaoAudicaoForm
+from .models import Espetaculo, IngressoEvento, InscricaoAudicao, PedidoIngressoEvento
+
 
 def espetaculo_home(request):
     """Página inicial do espetáculo"""
@@ -38,7 +41,6 @@ def espetaculos_lista_publica(request):
 
 def espetaculo_detalhes_publico(request, pk):
     """Página pública com detalhes de um espetáculo/evento específico"""
-
     if request.user.is_authenticated:
         queryset = Espetaculo.objects.filter(ativo=True)
     else:
@@ -48,11 +50,12 @@ def espetaculo_detalhes_publico(request, pk):
 
     return render(request, 'espetaculo/public_detalhes.html', {'espetaculo': espetaculo})
 
+
 def personagens_publicos(request):
     """Página pública com os personagens clicáveis"""
-    from .models import Espetaculo
     espetaculo = Espetaculo.objects.filter(ativo=True).first()
     return render(request, 'espetaculo/personagens_publicos.html', {'espetaculo': espetaculo})
+
 
 def inscricao_audicao(request):
     """Processa a inscrição para audição"""
@@ -60,8 +63,6 @@ def inscricao_audicao(request):
         form = InscricaoAudicaoForm(request.POST)
         if form.is_valid():
             inscricao = form.save(commit=False)
-            # Pega o espetáculo ativo
-            from .models import Espetaculo
             espetaculo = Espetaculo.objects.filter(ativo=True).first()
             inscricao.espetaculo = espetaculo
             inscricao.save()
@@ -69,18 +70,22 @@ def inscricao_audicao(request):
             return redirect('/espetaculos/inscricao-sucesso/')
         else:
             messages.error(request, 'Erro ao realizar inscrição. Verifique os dados.')
-    
+
     return redirect('/espetaculos/personagens/')
+
 
 def inscricao_sucesso(request):
     """Página de confirmação de inscrição"""
     return render(request, 'espetaculo/inscricao_sucesso.html')
 
+
 def get_personagens_por_idade(request):
     """Retorna os personagens disponíveis para a idade informada"""
-    idade = int(request.GET.get('idade', 0))
-    
-    # Regras de idade por personagem
+    try:
+        idade = int(request.GET.get('idade', 0))
+    except (TypeError, ValueError):
+        idade = 0
+
     regras = {
         'thessalia': idade >= 15,
         'zyara': idade >= 8,
@@ -93,21 +98,25 @@ def get_personagens_por_idade(request):
         'aurelia': idade >= 10,
         'cora_del_amour': idade >= 8,
         '3_marias': 6 <= idade <= 12,
+        'rosa_branca': idade >= 6,
     }
-    
+
     personagens_disponiveis = []
+    dict_choices = dict(InscricaoAudicao.PERSONAGENS_CHOICES)
+
     for personagem_id, disponivel in regras.items():
         if disponivel:
-            # Pega o nome do dicionário PERSONAGENS_CHOICES do modelo
-            dict_choices = dict(InscricaoAudicao.PERSONAGENS_CHOICES)
             nome = dict_choices.get(personagem_id, personagem_id)
             personagens_disponiveis.append({'id': personagem_id, 'nome': nome})
-    
+
     return JsonResponse({'personagens': personagens_disponiveis})
 
 
 def audicao_rosa_branca(request):
-    espetaculo = Espetaculo.objects.filter(ativo=True).first()
+    espetaculo = Espetaculo.objects.filter(ativo=True, audicao_aberta=True).order_by('-data_apresentacao').first()
+
+    if not espetaculo:
+        espetaculo = Espetaculo.objects.filter(ativo=True).order_by('-data_apresentacao').first()
 
     if request.method == 'POST':
         try:
@@ -116,13 +125,18 @@ def audicao_rosa_branca(request):
             idade = request.POST.get('idade', '').strip()
             turma_atual = request.POST.get('turma_atual', '').strip()
             responsavel = request.POST.get('responsavel', '').strip()
+            observacoes = request.POST.get('observacoes', '').strip()
             confirmacao = request.POST.get('confirmacao_requisitos')
 
             if not all([nome_completo, whatsapp, idade, turma_atual, responsavel, confirmacao]):
                 messages.error(request, 'Preencha todos os campos obrigatórios.')
                 return render(request, 'espetaculo/audicao_rosa_branca.html', {'espetaculo': espetaculo})
 
-            idade_int = int(idade)
+            try:
+                idade_int = int(idade)
+            except (TypeError, ValueError):
+                messages.error(request, 'Informe uma idade válida.')
+                return render(request, 'espetaculo/audicao_rosa_branca.html', {'espetaculo': espetaculo})
 
             if idade_int < 6:
                 messages.error(request, 'Essa audição é permitida somente para crianças a partir de 6 anos.')
@@ -136,7 +150,15 @@ def audicao_rosa_branca(request):
                 espetaculo=espetaculo,
             )
 
-            print(f'INSCRIÇÃO AUDIÇÃO CRIADA: id={inscricao.id}, nome={inscricao.nome_completo}, personagem={inscricao.personagens}')
+            print(
+                f'INSCRIÇÃO AUDIÇÃO CRIADA: '
+                f'id={inscricao.id}, '
+                f'nome={inscricao.nome_completo}, '
+                f'personagem={inscricao.personagens}, '
+                f'turma={turma_atual}, '
+                f'responsavel={responsavel}, '
+                f'observacoes={observacoes}'
+            )
 
             messages.success(request, 'Inscrição enviada com sucesso!')
             return redirect('espetaculo:audicao_rosa_branca_sucesso')
@@ -154,14 +176,10 @@ def audicao_rosa_branca(request):
 def audicao_rosa_branca_sucesso(request):
     return render(request, 'espetaculo/audicao_rosa_branca_sucesso.html')
 
+
 def audicao_nova_publica(request):
-    espetaculo = Espetaculo.objects.filter(ativo=True).first()
+    espetaculo = Espetaculo.objects.filter(ativo=True).order_by('-data_apresentacao').first()
     return render(request, 'espetaculo/audicao_nova_publica.html', {'espetaculo': espetaculo})
-
-def audicao_rosa_branca_sucesso(request):
-    return render(request, 'espetaculo/audicao_rosa_branca_sucesso.html')
-
-
 
 
 def gerar_ingressos_do_pedido(pedido):
@@ -216,15 +234,11 @@ def localizar_pedido_ingresso_por_payment(payment_id, external_reference=None, c
 
 def evento_detalhe_publico(request, pk):
     """Página pública de detalhe de um evento específico"""
-
-    # Busca o evento ativo
     evento = get_object_or_404(Espetaculo, pk=pk, ativo=True)
 
-    # Se for privado e o usuário não estiver logado, nega o acesso
     if not evento.publico and not request.user.is_authenticated:
         return redirect('espetaculo:lista_publica')
 
-    # Só abre essa página para itens do tipo 'evento'
     if evento.tipo != 'evento':
         return redirect('espetaculo:detalhes_publico', pk=pk)
 
@@ -234,11 +248,9 @@ def evento_detalhe_publico(request, pk):
 def comprar_ingresso(request, pk):
     evento = get_object_or_404(Espetaculo, pk=pk, ativo=True)
 
-    # Proteção de acesso para evento privado
     if not evento.publico and not request.user.is_authenticated:
         return redirect('espetaculo:lista_publica')
 
-    # Só eventos entram no fluxo de ingresso
     if evento.tipo != 'evento':
         return redirect('espetaculo:detalhes_publico', pk=evento.pk)
 
@@ -294,11 +306,9 @@ def pagar_ingresso_pix(request, pedido_id):
     pedido = get_object_or_404(PedidoIngressoEvento, id=pedido_id)
     evento = pedido.evento
 
-    # Proteção de acesso para evento privado
     if not evento.publico and not request.user.is_authenticated:
         return redirect('espetaculo:lista_publica')
 
-    # Garante consistência do fluxo
     if evento.tipo != 'evento':
         return redirect('espetaculo:detalhes_publico', pk=evento.pk)
 
@@ -424,7 +434,6 @@ def ingresso_sucesso(request, pedido_id):
     pedido = get_object_or_404(PedidoIngressoEvento, id=pedido_id)
     evento = pedido.evento
 
-    # Proteção de acesso para evento privado
     if not evento.publico and not request.user.is_authenticated:
         return redirect('espetaculo:lista_publica')
 
@@ -441,3 +450,121 @@ def ingresso_sucesso(request, pedido_id):
         'evento': evento,
         'ingressos': ingressos,
     })
+
+def evento_ingressos(request, evento_id):
+    evento = get_object_or_404(
+        Espetaculo,
+        pk=evento_id,
+        ativo=True,
+        publico=True,
+        venda_aberta=True
+    )
+
+    context = {
+        'evento': evento,
+    }
+    return render(request, 'espetaculo/evento_ingressos.html', context)
+
+
+def checkout_ingresso(request, evento_id):
+    evento = get_object_or_404(
+        Espetaculo,
+        pk=evento_id,
+        ativo=True,
+        publico=True,
+        venda_aberta=True
+    )
+
+    if request.method == 'POST':
+        nome_completo = request.POST.get('nome_completo', '').strip()
+        email = request.POST.get('email', '').strip()
+        whatsapp = request.POST.get('whatsapp', '').strip()
+        cpf = request.POST.get('cpf', '').strip()
+        quantidade = request.POST.get('quantidade', '1')
+
+        if not nome_completo or not whatsapp:
+            messages.error(request, 'Preencha nome completo e WhatsApp.')
+            return render(request, 'espetaculo/checkout_ingresso.html', {'evento': evento})
+
+        try:
+            quantidade = int(quantidade)
+            if quantidade < 1:
+                raise ValueError
+        except (TypeError, ValueError):
+            messages.error(request, 'Informe uma quantidade válida.')
+            return render(request, 'espetaculo/checkout_ingresso.html', {'evento': evento})
+
+        try:
+            valor_unitario = Decimal(evento.preco_ingresso)
+            valor_total = valor_unitario * quantidade
+        except (InvalidOperation, TypeError):
+            messages.error(request, 'Não foi possível calcular o valor do ingresso.')
+            return render(request, 'espetaculo/checkout_ingresso.html', {'evento': evento})
+
+        pedido = PedidoIngressoEvento.objects.create(
+            evento=evento,
+            nome_completo=nome_completo,
+            email=email,
+            whatsapp=whatsapp,
+            cpf=cpf,
+            quantidade=quantidade,
+            valor_unitario=valor_unitario,
+            valor_total=valor_total,
+            status='pendente',
+        )
+
+        return redirect('espetaculo:pagamento_pix_ingresso', pedido_id=pedido.pk)
+
+    context = {
+        'evento': evento,
+    }
+    return render(request, 'espetaculo/checkout_ingresso.html', context)
+
+
+def pagamento_pix_ingresso(request, pedido_id):
+    pedido = get_object_or_404(
+        PedidoIngressoEvento.objects.select_related('evento'),
+        pk=pedido_id
+    )
+
+    if pedido.status == 'pago':
+        return redirect('espetaculo:ingresso_sucesso', pedido_id=pedido.pk)
+
+    context = {
+        'pedido': pedido,
+        'evento': pedido.evento,
+    }
+    return render(request, 'espetaculo/pagamento_pix_ingresso.html', context)
+
+
+def retorno_pagamento_ingresso(request, pedido_id):
+    pedido = get_object_or_404(
+        PedidoIngressoEvento.objects.select_related('evento'),
+        pk=pedido_id
+    )
+
+    # Aqui depois você pode consultar o Asaas
+    # e atualizar pedido.status / pedido.asaas_status
+
+    if pedido.status == 'pago':
+        return redirect('espetaculo:ingresso_sucesso', pedido_id=pedido.pk)
+
+    messages.info(request, 'O pagamento ainda está pendente.')
+    return redirect('espetaculo:pagamento_pix_ingresso', pedido_id=pedido.pk)
+
+
+def ingresso_sucesso(request, pedido_id):
+    pedido = get_object_or_404(
+        PedidoIngressoEvento.objects.select_related('evento'),
+        pk=pedido_id,
+        status='pago'
+    )
+
+    ingressos = pedido.ingressos.all().order_by('criado_em')
+
+    context = {
+        'pedido': pedido,
+        'evento': pedido.evento,
+        'ingressos': ingressos,
+    }
+    return render(request, 'espetaculo/ingresso_sucesso.html', context)

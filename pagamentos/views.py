@@ -7,6 +7,7 @@ from .models import Mensalidade
 from .asaas_helper import AsaasAPI
 from datetime import datetime
 import json
+from espetaculo.services.ingressos import confirmar_pagamento_pedido
 
 
 ASAAS_WEBHOOK_TOKEN = settings.ASAAS_WEBHOOK_TOKEN
@@ -300,9 +301,11 @@ def webhook_asaas(request):
             print(f"[WEBHOOK] Payment status: {payment_status}")
             print(f"[WEBHOOK] Dados completos: {json.dumps(dados, indent=2, ensure_ascii=False)}")
 
-            if evento == 'PAYMENT_RECEIVED' and payment_id:
+            eventos_confirmacao = {'PAYMENT_RECEIVED', 'PAYMENT_CONFIRMED', 'PAYMENT_UPDATED'}
+            status_confirmados = {'RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH'}
 
-                # 1. Tenta localizar mensalidade
+            if evento in eventos_confirmacao and payment_id and payment_status in status_confirmados:
+
                 mensalidade = localizar_mensalidade_por_payment(
                     payment_id=payment_id,
                     external_reference=external_reference,
@@ -314,7 +317,6 @@ def webhook_asaas(request):
                     print(f"[WEBHOOK] Mensalidade {mensalidade.id} atualizada para PAGO")
                     return HttpResponse(status=200)
 
-                # 2. Tenta localizar parcela de espetáculo
                 parcela = localizar_parcela_espetaculo_por_payment_id(payment_id)
 
                 if parcela:
@@ -322,7 +324,6 @@ def webhook_asaas(request):
                     print(f"[WEBHOOK] Parcela de espetáculo {parcela.id} atualizada com status {payment_status}")
                     return HttpResponse(status=200)
 
-                # 3. Tenta localizar pedido de ingresso de evento
                 pedido = localizar_pedido_ingresso_evento_por_payment(
                     payment_id=payment_id,
                     external_reference=external_reference,
@@ -330,8 +331,7 @@ def webhook_asaas(request):
                 )
 
                 if pedido:
-                    pedido.marcar_como_pago()
-                    gerar_ingressos_do_pedido_webhook(pedido)
+                    confirmar_pagamento_pedido(pedido)
                     print(f"[WEBHOOK] Pedido de ingresso {pedido.id} atualizado para PAGO")
                     return HttpResponse(status=200)
 
@@ -361,32 +361,17 @@ def localizar_pedido_ingresso_evento_por_payment(payment_id, external_reference=
             pedido_id = external_reference.split(':', 1)[1]
             pedido = PedidoIngressoEvento.objects.get(id=pedido_id)
             pedido.asaas_payment_id = payment_id
+
+            update_fields = ['asaas_payment_id']
+
             if customer_id:
                 pedido.asaas_customer_id = customer_id
-                pedido.save(update_fields=['asaas_payment_id', 'asaas_customer_id'])
-            else:
-                pedido.save(update_fields=['asaas_payment_id'])
+                update_fields.append('asaas_customer_id')
+
+            pedido.save(update_fields=update_fields)
             return pedido
+
         except PedidoIngressoEvento.DoesNotExist:
             return None
 
     return None
-
-
-def gerar_ingressos_do_pedido_webhook(pedido):
-    from espetaculo.models import IngressoEvento
-
-    if pedido.ingressos.exists():
-        return
-
-    for _ in range(pedido.quantidade):
-        codigo = IngressoEvento.gerar_codigo()
-        while IngressoEvento.objects.filter(codigo_unico=codigo).exists():
-            codigo = IngressoEvento.gerar_codigo()
-
-        IngressoEvento.objects.create(
-            pedido=pedido,
-            evento=pedido.evento,
-            codigo_unico=codigo,
-            nome_participante=pedido.nome_completo,
-        )
