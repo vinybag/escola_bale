@@ -1124,6 +1124,7 @@ def espetaculo_criar(request):
             ativo = request.POST.get('ativo') == 'on'
 
             imagem = request.FILES.get('imagem')
+            imagem_ingresso = request.FILES.get('imagem_ingresso')
             arquivo_divulgacao = request.FILES.get('arquivo_divulgacao')
             arquivo_informacoes = request.FILES.get('arquivo_informacoes')
             arquivo_edital = request.FILES.get('arquivo_edital')
@@ -1144,6 +1145,7 @@ def espetaculo_criar(request):
                 local=local,
                 endereco=endereco,
                 imagem=imagem,
+                imagem_ingresso=imagem_ingresso,
                 arquivo_divulgacao=arquivo_divulgacao,
                 arquivo_informacoes=arquivo_informacoes,
                 arquivo_edital=arquivo_edital,
@@ -1221,6 +1223,10 @@ def espetaculo_editar(request, pk):
             if imagem:
                 espetaculo.imagem = imagem
 
+            imagem_ingresso = request.FILES.get('imagem_ingresso')
+            if imagem_ingresso:    
+                espetaculo.imagem_ingresso = imagem_ingresso
+                
             arquivo_divulgacao = request.FILES.get('arquivo_divulgacao')
             if arquivo_divulgacao:
                 espetaculo.arquivo_divulgacao = arquivo_divulgacao

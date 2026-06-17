@@ -108,6 +108,24 @@
         font-size: 0.88rem;
     }
 
+    .esp-image-preview {
+        margin-top: 0.85rem;
+        display: inline-block;
+        border: 1px solid #ece3f2;
+        border-radius: 14px;
+        padding: 0.5rem;
+        background: #faf7fc;
+    }
+
+    .esp-image-preview img {
+        display: block;
+        max-width: 220px;
+        max-height: 220px;
+        width: auto;
+        height: auto;
+        border-radius: 10px;
+    }
+
     .esp-create-footer {
         display: flex;
         gap: 1rem;
@@ -248,7 +266,7 @@
                 <section class="esp-create-section">
                     <div style="margin-bottom: 1.25rem;">
                         <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1rem; font-weight: 700;">Imagem e Arquivos</h3>
-                        <p style="margin: 0; color: #7b7580; font-size: 0.92rem;">Capa principal, arquivo de divulgação e PDFs complementares.</p>
+                        <p style="margin: 0; color: #7b7580; font-size: 0.92rem;">Capa principal, arte do ingresso, arquivo de divulgação e PDFs complementares.</p>
                     </div>
 
                     <div style="margin-bottom: 1rem;">
@@ -259,6 +277,17 @@
                                class="esp-input">
                         <small class="esp-help">
                             Upload da imagem principal do espetáculo ou evento.
+                        </small>
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
+                            Imagem do ingresso
+                        </label>
+                        <input type="file" name="imagem_ingresso" accept=".jpg,.jpeg,.png,.webp,image/*"
+                               class="esp-input">
+                        <small class="esp-help">
+                            Essa imagem será usada como base visual para gerar os ingressos com QR code individual.
                         </small>
                     </div>
 
