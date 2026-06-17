@@ -432,27 +432,6 @@ def verificar_pagamento_ingresso_pix(request, payment_id):
         return JsonResponse({'error': str(e)}, status=400)
 
 
-def ingresso_sucesso(request, pedido_id):
-    pedido = get_object_or_404(PedidoIngressoEvento, id=pedido_id)
-    evento = pedido.evento
-
-    if not evento.publico and not request.user.is_authenticated:
-        return redirect('espetaculo:lista_publica')
-
-    if evento.tipo != 'evento':
-        return redirect('espetaculo:detalhes_publico', pk=evento.pk)
-
-    if pedido.status != 'pago':
-        return redirect('espetaculo:pagar_ingresso_pix', pedido_id=pedido.id)
-
-    ingressos = pedido.ingressos.all()
-
-    return render(request, 'espetaculo/ingresso_sucesso.html', {
-        'pedido': pedido,
-        'evento': evento,
-        'ingressos': ingressos,
-    })
-
 def evento_ingressos(request, evento_id):
     evento = get_object_or_404(
         Espetaculo,
@@ -572,20 +551,29 @@ def ingresso_sucesso(request, pedido_id):
     return render(request, 'espetaculo/ingresso_sucesso.html', context)
 
 import os
-
+from django.conf import settings
 from django.http import FileResponse, Http404
-from django.shortcuts import get_object_or_404, render
-
-from espetaculo.models import PedidoIngressoEvento, IngressoEvento
 
 
 def ver_imagem_ingresso(request, ingresso_id):
     ingresso = get_object_or_404(IngressoEvento, id=ingresso_id)
 
     if not ingresso.imagem_ingresso:
+        print("DEBUG VER_IMAGEM ------------------")
+        print("DEBUG ingresso_id:", ingresso_id)
+        print("DEBUG MEDIA_ROOT:", settings.MEDIA_ROOT)
+        print("DEBUG imagem name: None")
         raise Http404("Imagem do ingresso não encontrada.")
 
     arquivo = ingresso.imagem_ingresso.path
+
+    print("DEBUG VER_IMAGEM ------------------")
+    print("DEBUG ingresso_id:", ingresso_id)
+    print("DEBUG MEDIA_ROOT:", settings.MEDIA_ROOT)
+    print("DEBUG imagem name:", ingresso.imagem_ingresso.name)
+    print("DEBUG arquivo path:", arquivo)
+    print("DEBUG exists:", os.path.exists(arquivo))
+    print("DEBUG cwd:", os.getcwd())
 
     if not os.path.exists(arquivo):
         raise Http404("Arquivo da imagem do ingresso não existe no disco.")
@@ -597,9 +585,21 @@ def baixar_ingresso(request, ingresso_id):
     ingresso = get_object_or_404(IngressoEvento, id=ingresso_id)
 
     if not ingresso.imagem_ingresso:
+        print("DEBUG BAIXAR_INGRESSO ------------------")
+        print("DEBUG ingresso_id:", ingresso_id)
+        print("DEBUG MEDIA_ROOT:", settings.MEDIA_ROOT)
+        print("DEBUG imagem name: None")
         raise Http404("Arquivo do ingresso não encontrado.")
 
     arquivo = ingresso.imagem_ingresso.path
+
+    print("DEBUG BAIXAR_INGRESSO ------------------")
+    print("DEBUG ingresso_id:", ingresso_id)
+    print("DEBUG MEDIA_ROOT:", settings.MEDIA_ROOT)
+    print("DEBUG imagem name:", ingresso.imagem_ingresso.name)
+    print("DEBUG arquivo path:", arquivo)
+    print("DEBUG exists:", os.path.exists(arquivo))
+    print("DEBUG cwd:", os.getcwd())
 
     if not os.path.exists(arquivo):
         raise Http404("Arquivo do ingresso não existe no disco.")
@@ -615,9 +615,21 @@ def baixar_qrcode_ingresso(request, ingresso_id):
     ingresso = get_object_or_404(IngressoEvento, id=ingresso_id)
 
     if not ingresso.qrcode_image:
+        print("DEBUG BAIXAR_QRCODE ------------------")
+        print("DEBUG ingresso_id:", ingresso_id)
+        print("DEBUG MEDIA_ROOT:", settings.MEDIA_ROOT)
+        print("DEBUG qrcode name: None")
         raise Http404("QR code não encontrado.")
 
     arquivo = ingresso.qrcode_image.path
+
+    print("DEBUG BAIXAR_QRCODE ------------------")
+    print("DEBUG ingresso_id:", ingresso_id)
+    print("DEBUG MEDIA_ROOT:", settings.MEDIA_ROOT)
+    print("DEBUG qrcode name:", ingresso.qrcode_image.name)
+    print("DEBUG arquivo path:", arquivo)
+    print("DEBUG exists:", os.path.exists(arquivo))
+    print("DEBUG cwd:", os.getcwd())
 
     if not os.path.exists(arquivo):
         raise Http404("Arquivo do QR code não existe no disco.")
@@ -627,4 +639,3 @@ def baixar_qrcode_ingresso(request, ingresso_id):
         as_attachment=True,
         filename=os.path.basename(arquivo),
     )
-
