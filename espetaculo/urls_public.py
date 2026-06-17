@@ -22,6 +22,9 @@ urlpatterns = [
     path('ingresso/pix/<int:pedido_id>/', views.pagar_ingresso_pix, name='pagar_ingresso_pix'),
     path('ingresso/verificar-pix/<str:payment_id>/', views.verificar_pagamento_ingresso_pix, name='verificar_pagamento_ingresso_pix'),
     path('ingresso/sucesso/<int:pedido_id>/', views.ingresso_sucesso, name='ingresso_sucesso'),
+    path('ingressos/<int:ingresso_id>/imagem/', views.ver_imagem_ingresso, name='ver_imagem_ingresso'),
+    path('ingressos/<int:ingresso_id>/baixar/', views.baixar_ingresso, name='baixar_ingresso'),
+    path('ingressos/<int:ingresso_id>/baixar-qr/', views.baixar_qrcode_ingresso, name='baixar_qrcode_ingresso'),
 
     # Detalhe público genérico do espetáculo
     path('<int:pk>/', views.espetaculo_detalhes_publico, name='detalhes_publico'),

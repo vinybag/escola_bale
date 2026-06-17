@@ -570,3 +570,61 @@ def ingresso_sucesso(request, pedido_id):
         'ingressos': ingressos,
     }
     return render(request, 'espetaculo/ingresso_sucesso.html', context)
+
+import os
+
+from django.http import FileResponse, Http404
+from django.shortcuts import get_object_or_404, render
+
+from espetaculo.models import PedidoIngressoEvento, IngressoEvento
+
+
+def ver_imagem_ingresso(request, ingresso_id):
+    ingresso = get_object_or_404(IngressoEvento, id=ingresso_id)
+
+    if not ingresso.imagem_ingresso:
+        raise Http404("Imagem do ingresso não encontrada.")
+
+    arquivo = ingresso.imagem_ingresso.path
+
+    if not os.path.exists(arquivo):
+        raise Http404("Arquivo da imagem do ingresso não existe no disco.")
+
+    return FileResponse(open(arquivo, "rb"), content_type="image/png")
+
+
+def baixar_ingresso(request, ingresso_id):
+    ingresso = get_object_or_404(IngressoEvento, id=ingresso_id)
+
+    if not ingresso.imagem_ingresso:
+        raise Http404("Arquivo do ingresso não encontrado.")
+
+    arquivo = ingresso.imagem_ingresso.path
+
+    if not os.path.exists(arquivo):
+        raise Http404("Arquivo do ingresso não existe no disco.")
+
+    return FileResponse(
+        open(arquivo, "rb"),
+        as_attachment=True,
+        filename=os.path.basename(arquivo),
+    )
+
+
+def baixar_qrcode_ingresso(request, ingresso_id):
+    ingresso = get_object_or_404(IngressoEvento, id=ingresso_id)
+
+    if not ingresso.qrcode_image:
+        raise Http404("QR code não encontrado.")
+
+    arquivo = ingresso.qrcode_image.path
+
+    if not os.path.exists(arquivo):
+        raise Http404("Arquivo do QR code não existe no disco.")
+
+    return FileResponse(
+        open(arquivo, "rb"),
+        as_attachment=True,
+        filename=os.path.basename(arquivo),
+    )
+
