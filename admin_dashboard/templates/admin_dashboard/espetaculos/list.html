@@ -202,10 +202,16 @@
                 </div>
 
                 <div class="esp-actions">
+                    <a href="{% url 'admin_dashboard:espetaculo_ingressos_vendidos' esp.pk %}"
+                       style="display: inline-flex; align-items: center; padding: 0.6rem 1rem; background: #eaf6ea; color: #206a38; border: 1px solid #cfe7d4; border-radius: 8px; text-decoration: none; font-size: 0.88rem; font-weight: 700;">
+                        Ingressos vendidos
+                    </a>
+
                     <a href="{% url 'admin_dashboard:espetaculo_participacoes' esp.pk %}"
                        style="display: inline-flex; align-items: center; padding: 0.6rem 1rem; background: linear-gradient(135deg, #6b2d8f 0%, #7e3aa5 100%); color: white; border-radius: 8px; text-decoration: none; font-size: 0.88rem; font-weight: 700; box-shadow: 0 4px 10px rgba(107,45,143,0.15);">
                         Participações
                     </a>
+
                     <a href="{% url 'admin_dashboard:espetaculo_editar' esp.pk %}"
                        style="display: inline-flex; align-items: center; padding: 0.6rem 1rem; background: #f3f3f3; color: #44384c; border: 1px solid #ddd; border-radius: 8px; text-decoration: none; font-size: 0.88rem; font-weight: 600;">
                         Editar

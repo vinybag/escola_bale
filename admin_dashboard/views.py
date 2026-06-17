@@ -7,6 +7,8 @@ from django.db.models import Sum
 from django.db import models
 from django.db.models import Case, When, Value, IntegerField
 from django.conf import settings
+from espetaculo.models import Espetaculo, PedidoIngressoEvento
+from django.db.models import Q
 
 @login_required
 def dashboard(request):
@@ -3041,3 +3043,39 @@ def parcela_cobranca_espetaculo_marcar_pago(request, pk):
     except Exception as e:
         messages.error(request, f'Erro ao marcar parcela como paga: {e}')
         return redirect('admin_dashboard:espetaculos_list')
+    
+def espetaculo_ingressos_vendidos(request, pk):
+    espetaculo = get_object_or_404(Espetaculo, pk=pk)
+
+    busca = request.GET.get('q', '').strip()
+
+    pedidos = (
+        PedidoIngressoEvento.objects
+        .filter(evento=espetaculo)
+        .prefetch_related('ingressos')
+        .order_by('-criado_em')
+    )
+
+    if busca:
+        pedidos = pedidos.filter(
+            Q(nome_completo__icontains=busca) |
+            Q(email__icontains=busca) |
+            Q(whatsapp__icontains=busca)
+        )
+
+    total_pedidos = pedidos.count()
+    total_ingressos = sum(pedido.ingressos.count() for pedido in pedidos)
+
+    context = {
+        'espetaculo': espetaculo,
+        'pedidos': pedidos,
+        'busca': busca,
+        'total_pedidos': total_pedidos,
+        'total_ingressos': total_ingressos,
+    }
+
+    return render(
+        request,
+        'admin_dashboard/espetaculos/espetaculo_ingressos_vendidos.html',
+        context
+    )
