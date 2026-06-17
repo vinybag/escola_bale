@@ -25,11 +25,41 @@
 
         <h3 style="margin-bottom: 1rem;">Ingressos gerados</h3>
 
-        <div style="display: grid; gap: 1rem;">
+        <div style="display: grid; gap: 1.25rem;">
             {% for ingresso in ingressos %}
                 <div style="border: 1px solid #eadde1; border-radius: 12px; padding: 1rem; background: #fffdfd;">
                     <p style="margin: 0 0 0.4rem 0;"><strong>Código:</strong> {{ ingresso.codigo_unico }}</p>
-                    <p style="margin: 0;"><strong>Status:</strong> {{ ingresso.get_status_display }}</p>
+                    <p style="margin: 0 0 1rem 0;"><strong>Status:</strong> {{ ingresso.get_status_display }}</p>
+
+                    {% if ingresso.imagem_ingresso %}
+                        <div style="margin-bottom: 1rem; background: #f6f6f6; border-radius: 10px; padding: 1rem; display: flex; justify-content: center; align-items: center;">
+                            <img src="{{ ingresso.imagem_ingresso.url }}"
+                                 alt="Ingresso {{ ingresso.codigo_unico }}"
+                                 style="max-width: 100%; max-height: 560px; width: auto; height: auto; display: block; border-radius: 8px;">
+                        </div>
+                    {% endif %}
+
+                    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                        {% if ingresso.imagem_ingresso %}
+                            <a href="{{ ingresso.imagem_ingresso.url }}"
+                               download
+                               target="_blank"
+                               rel="noopener noreferrer"
+                               style="display: inline-block; background: #2c3e50; color: white; padding: 0.8rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600;">
+                                Baixar ingresso
+                            </a>
+                        {% endif %}
+
+                        {% if ingresso.qrcode_image %}
+                            <a href="{{ ingresso.qrcode_image.url }}"
+                               download
+                               target="_blank"
+                               rel="noopener noreferrer"
+                               style="display: inline-block; background: #f3f3f3; color: #333; padding: 0.8rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600;">
+                                Baixar QR Code
+                            </a>
+                        {% endif %}
+                    </div>
                 </div>
             {% empty %}
                 <div style="border: 1px solid #eadde1; border-radius: 12px; padding: 1rem; background: #fffdfd;">
