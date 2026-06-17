@@ -185,21 +185,28 @@ def audicao_nova_publica(request):
 
 
 def gerar_ingressos_do_pedido(pedido):
-    if pedido.ingressos.exists():
+    ingressos_existentes = pedido.ingressos.count()
+
+    if ingressos_existentes >= pedido.quantidade:
+        for ingresso in pedido.ingressos.all():
+            ingresso.garantir_arquivos()
         return
 
-    for _ in range(pedido.quantidade):
+    faltantes = pedido.quantidade - ingressos_existentes
+
+    for _ in range(faltantes):
         codigo = IngressoEvento.gerar_codigo()
 
         while IngressoEvento.objects.filter(codigo_unico=codigo).exists():
             codigo = IngressoEvento.gerar_codigo()
 
-        IngressoEvento.objects.create(
+        ingresso = IngressoEvento.objects.create(
             pedido=pedido,
             evento=pedido.evento,
             codigo_unico=codigo,
             nome_participante=pedido.nome_completo,
         )
+        ingresso.garantir_arquivos()
 
 
 def extrair_pix_data_evento(qrcode_data):
@@ -558,84 +565,75 @@ from django.http import FileResponse, Http404
 def ver_imagem_ingresso(request, ingresso_id):
     ingresso = get_object_or_404(IngressoEvento, id=ingresso_id)
 
+    ingresso.garantir_arquivos()
+
     if not ingresso.imagem_ingresso:
-        print("DEBUG VER_IMAGEM ------------------")
-        print("DEBUG ingresso_id:", ingresso_id)
-        print("DEBUG MEDIA_ROOT:", settings.MEDIA_ROOT)
-        print("DEBUG imagem name: None")
         raise Http404("Imagem do ingresso não encontrada.")
 
-    arquivo = ingresso.imagem_ingresso.path
+    storage = ingresso.imagem_ingresso.storage
+    nome = ingresso.imagem_ingresso.name
 
-    print("DEBUG VER_IMAGEM ------------------")
-    print("DEBUG ingresso_id:", ingresso_id)
-    print("DEBUG MEDIA_ROOT:", settings.MEDIA_ROOT)
-    print("DEBUG imagem name:", ingresso.imagem_ingresso.name)
-    print("DEBUG arquivo path:", arquivo)
-    print("DEBUG exists:", os.path.exists(arquivo))
-    print("DEBUG cwd:", os.getcwd())
+    if not nome or not storage.exists(nome):
+        ingresso.garantir_arquivos(force=True)
+        ingresso.refresh_from_db()
+        nome = ingresso.imagem_ingresso.name
+        storage = ingresso.imagem_ingresso.storage
 
-    if not os.path.exists(arquivo):
+    if not nome or not storage.exists(nome):
         raise Http404("Arquivo da imagem do ingresso não existe no disco.")
 
-    return FileResponse(open(arquivo, "rb"), content_type="image/png")
+    return FileResponse(storage.open(nome, "rb"), content_type="image/png")
 
 
 def baixar_ingresso(request, ingresso_id):
     ingresso = get_object_or_404(IngressoEvento, id=ingresso_id)
 
+    ingresso.garantir_arquivos()
+
     if not ingresso.imagem_ingresso:
-        print("DEBUG BAIXAR_INGRESSO ------------------")
-        print("DEBUG ingresso_id:", ingresso_id)
-        print("DEBUG MEDIA_ROOT:", settings.MEDIA_ROOT)
-        print("DEBUG imagem name: None")
         raise Http404("Arquivo do ingresso não encontrado.")
 
-    arquivo = ingresso.imagem_ingresso.path
+    storage = ingresso.imagem_ingresso.storage
+    nome = ingresso.imagem_ingresso.name
 
-    print("DEBUG BAIXAR_INGRESSO ------------------")
-    print("DEBUG ingresso_id:", ingresso_id)
-    print("DEBUG MEDIA_ROOT:", settings.MEDIA_ROOT)
-    print("DEBUG imagem name:", ingresso.imagem_ingresso.name)
-    print("DEBUG arquivo path:", arquivo)
-    print("DEBUG exists:", os.path.exists(arquivo))
-    print("DEBUG cwd:", os.getcwd())
+    if not nome or not storage.exists(nome):
+        ingresso.garantir_arquivos(force=True)
+        ingresso.refresh_from_db()
+        nome = ingresso.imagem_ingresso.name
+        storage = ingresso.imagem_ingresso.storage
 
-    if not os.path.exists(arquivo):
+    if not nome or not storage.exists(nome):
         raise Http404("Arquivo do ingresso não existe no disco.")
 
     return FileResponse(
-        open(arquivo, "rb"),
+        storage.open(nome, "rb"),
         as_attachment=True,
-        filename=os.path.basename(arquivo),
+        filename=os.path.basename(nome),
     )
 
 
 def baixar_qrcode_ingresso(request, ingresso_id):
     ingresso = get_object_or_404(IngressoEvento, id=ingresso_id)
 
+    ingresso.garantir_arquivos()
+
     if not ingresso.qrcode_image:
-        print("DEBUG BAIXAR_QRCODE ------------------")
-        print("DEBUG ingresso_id:", ingresso_id)
-        print("DEBUG MEDIA_ROOT:", settings.MEDIA_ROOT)
-        print("DEBUG qrcode name: None")
         raise Http404("QR code não encontrado.")
 
-    arquivo = ingresso.qrcode_image.path
+    storage = ingresso.qrcode_image.storage
+    nome = ingresso.qrcode_image.name
 
-    print("DEBUG BAIXAR_QRCODE ------------------")
-    print("DEBUG ingresso_id:", ingresso_id)
-    print("DEBUG MEDIA_ROOT:", settings.MEDIA_ROOT)
-    print("DEBUG qrcode name:", ingresso.qrcode_image.name)
-    print("DEBUG arquivo path:", arquivo)
-    print("DEBUG exists:", os.path.exists(arquivo))
-    print("DEBUG cwd:", os.getcwd())
+    if not nome or not storage.exists(nome):
+        ingresso.garantir_arquivos(force=True)
+        ingresso.refresh_from_db()
+        nome = ingresso.qrcode_image.name
+        storage = ingresso.qrcode_image.storage
 
-    if not os.path.exists(arquivo):
+    if not nome or not storage.exists(nome):
         raise Http404("Arquivo do QR code não existe no disco.")
 
     return FileResponse(
-        open(arquivo, "rb"),
+        storage.open(nome, "rb"),
         as_attachment=True,
-        filename=os.path.basename(arquivo),
+        filename=os.path.basename(nome),
     )

@@ -615,6 +615,18 @@ class PedidoIngressoEvento(models.Model):
         return self.ingressos.exists()
 
 
+import os
+import uuid
+from io import BytesIO
+
+import qrcode
+from PIL import Image, ImageDraw, ImageFont
+
+from django.core.files.base import ContentFile
+from django.db import models
+from django.utils import timezone
+
+
 class IngressoEvento(models.Model):
     STATUS_CHOICES = [
         ('ativo', 'Ativo'),
@@ -682,3 +694,103 @@ class IngressoEvento(models.Model):
             self.status = 'usado'
             self.validado_em = timezone.now()
             self.save(update_fields=['status', 'validado_em'])
+
+    def qr_payload(self):
+        return (
+            f"Ingresso: {self.codigo_unico}\n"
+            f"Evento: {self.evento.titulo}\n"
+            f"Participante: {self.nome_participante}\n"
+            f"Pedido: {self.pedido_id}"
+        )
+
+    def gerar_qrcode_image(self, force=False):
+        if self.qrcode_image and not force:
+            storage = self.qrcode_image.storage
+            if self.qrcode_image.name and storage.exists(self.qrcode_image.name):
+                return
+
+        qr = qrcode.QRCode(
+            version=1,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(self.qr_payload())
+        qr.make(fit=True)
+
+        img_qr = qr.make_image(fill_color="black", back_color="white").convert("RGB")
+
+        buffer = BytesIO()
+        img_qr.save(buffer, format='PNG')
+        buffer.seek(0)
+
+        filename = f"qr-{self.codigo_unico}.png"
+        self.qrcode_image.save(filename, ContentFile(buffer.read()), save=False)
+
+    def gerar_imagem_ingresso(self, force=False):
+        if self.imagem_ingresso and not force:
+            storage = self.imagem_ingresso.storage
+            if self.imagem_ingresso.name and storage.exists(self.imagem_ingresso.name):
+                return
+
+        if not self.qrcode_image or not self.qrcode_image.name or not self.qrcode_image.storage.exists(self.qrcode_image.name):
+            self.gerar_qrcode_image(force=force)
+
+        largura, altura = 1200, 1600
+        canvas = Image.new("RGB", (largura, altura), "white")
+        draw = ImageDraw.Draw(canvas)
+
+        fonte_titulo = ImageFont.load_default()
+        fonte_texto = ImageFont.load_default()
+        fonte_codigo = ImageFont.load_default()
+
+        imagem_evento = None
+        if hasattr(self.evento, 'imagem') and self.evento.imagem:
+            try:
+                self.evento.imagem.open('rb')
+                imagem_evento = Image.open(self.evento.imagem).convert("RGB")
+            except Exception:
+                imagem_evento = None
+
+        if imagem_evento:
+            imagem_evento = imagem_evento.resize((largura, 700))
+            canvas.paste(imagem_evento, (0, 0))
+            draw.rectangle([(0, 700), (largura, altura)], fill="white")
+        else:
+            draw.rectangle([(0, 0), (largura, 700)], fill=(230, 230, 230))
+            draw.rectangle([(0, 700), (largura, altura)], fill="white")
+
+        draw.text((60, 760), self.evento.titulo or "Evento", fill="black", font=fonte_titulo)
+        draw.text((60, 840), f"Participante: {self.nome_participante or '-'}", fill="black", font=fonte_texto)
+        draw.text((60, 900), f"Código: {self.codigo_unico}", fill="black", font=fonte_codigo)
+
+        data_evento = getattr(self.evento, 'data_apresentacao', None)
+        if data_evento:
+            draw.text(
+                (60, 960),
+                f"Data: {timezone.localtime(data_evento).strftime('%d/%m/%Y %H:%M')}" if timezone.is_aware(data_evento) else f"Data: {data_evento.strftime('%d/%m/%Y %H:%M')}",
+                fill="black",
+                font=fonte_texto
+            )
+
+        if self.qrcode_image and self.qrcode_image.name:
+            self.qrcode_image.open('rb')
+            qr_img = Image.open(self.qrcode_image).convert("RGB")
+            qr_img = qr_img.resize((320, 320))
+            canvas.paste(qr_img, (60, 1080))
+
+        draw.text((420, 1120), "Apresente este ingresso na entrada.", fill="black", font=fonte_texto)
+        draw.text((420, 1180), "Formato digital válido com QR code.", fill="black", font=fonte_texto)
+
+        buffer = BytesIO()
+        canvas.save(buffer, format='PNG')
+        buffer.seek(0)
+
+        filename = f"ingresso-{self.codigo_unico}.png"
+        self.imagem_ingresso.save(filename, ContentFile(buffer.read()), save=False)
+
+    def garantir_arquivos(self, force=False, save=True):
+        self.gerar_qrcode_image(force=force)
+        self.gerar_imagem_ingresso(force=force)
+
+        if save:
+            self.save(update_fields=['qrcode_image', 'imagem_ingresso'])
