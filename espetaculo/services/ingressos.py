@@ -38,7 +38,11 @@ def gerar_arquivos_ingresso(ingresso):
     ingresso.qrcode_image.save(qr_name, qr_content, save=True)
 
     if ingresso.evento.imagem_ingresso:
-        base = Image.open(ingresso.evento.imagem_ingresso.path).convert("RGB")
+        try:
+            base = Image.open(ingresso.evento.imagem_ingresso.path).convert("RGB")
+        except FileNotFoundError:
+            print(f"[INGRESSO] Imagem base do evento não encontrada para o ingresso {ingresso.codigo_unico}. Usando fundo branco.")
+        base = Image.new("RGB", (1200, 1400), "white")    
     else:
         base = Image.new("RGB", (1200, 1400), "white")
 
