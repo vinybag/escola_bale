@@ -18,5 +18,4 @@ urlpatterns = [
     path('dashboard/', redirecionar_dashboard, name='redirecionar_dashboard'),
 ]
 
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
