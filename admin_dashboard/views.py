@@ -6,6 +6,7 @@ from decimal import Decimal
 from django.db.models import Sum
 from django.db import models
 from django.db.models import Case, When, Value, IntegerField
+from django.conf import settings
 
 @login_required
 def dashboard(request):
@@ -1242,7 +1243,14 @@ def espetaculo_editar(request, pk):
             if arquivo_edital:
                 espetaculo.arquivo_edital = arquivo_edital
 
+            print('imagem name antes save:', espetaculo.imagem.name)
+            print('MEDIA_ROOT:', settings.MEDIA_ROOT)
+
             espetaculo.save()
+
+            print('imagem name depois save:', espetaculo.imagem.name)
+            print('imagem path depois save:', getattr(espetaculo.imagem, 'path', 'sem path'))
+            print('imagem url depois save:', getattr(espetaculo.imagem, 'url', 'sem url'))
 
             messages.success(request, f'"{espetaculo.titulo}" atualizado com sucesso!')
             return redirect('admin_dashboard:espetaculos_list')
