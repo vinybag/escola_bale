@@ -1083,7 +1083,7 @@ def espetaculos_list(request):
         )
 
         for esp in espetaculos:
-            pedidos_qs = esp.pedidos_ingresso.all()
+            pedidos_qs = esp.pedidos_ingresso.filter(status='pago')
             esp.total_compradores = pedidos_qs.count()
             esp.total_ingressos_vendidos = sum(
                 pedido.ingressos.count() for pedido in pedidos_qs
@@ -3060,7 +3060,7 @@ def espetaculo_ingressos_vendidos(request, pk):
 
     pedidos = (
         PedidoIngressoEvento.objects
-        .filter(evento=espetaculo)
+        .filter(evento=espetaculo, status='pago')
         .prefetch_related('ingressos')
         .order_by('-criado_em')
     )
