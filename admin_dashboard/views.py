@@ -1070,25 +1070,34 @@ def mensalidade_excluir(request, pk):
 
 @login_required
 def espetaculos_list(request):
-    """Lista de espetaculos"""
-    
+    """Lista de espetáculos"""
+
     if not request.user.is_staff:
         return redirect('home')
-    
+
     try:
         from espetaculo.models import Espetaculo
-        
-        espetaculos = Espetaculo.objects.all().order_by('-data_apresentacao')
-        
+
+        espetaculos = list(
+            Espetaculo.objects.all().order_by('-data_apresentacao')
+        )
+
+        for esp in espetaculos:
+            pedidos_qs = esp.pedidos_ingresso.all()
+            esp.total_compradores = pedidos_qs.count()
+            esp.total_ingressos_vendidos = sum(
+                pedido.ingressos.count() for pedido in pedidos_qs
+            )
+
     except Exception as e:
-        print(f"Erro ao buscar espetaculos: {e}")
+        print(f"Erro ao buscar espetáculos: {e}")
         espetaculos = []
-    
+
     context = {
         'espetaculos': espetaculos,
-        'total_espetaculos': espetaculos.count() if espetaculos else 0,
+        'total_espetaculos': len(espetaculos),
     }
-    
+
     return render(request, 'admin_dashboard/espetaculos/list.html', context)
 
 

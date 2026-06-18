@@ -224,13 +224,25 @@
                     <span class="esp-info-label">Data</span>
                     <span class="esp-info-value">{{ esp.data_apresentacao|date:"d/m/Y H:i" }}</span>
                 </div>
+
                 <div class="esp-info-item">
                     <span class="esp-info-label">Local</span>
                     <span class="esp-info-value">{{ esp.local }}</span>
                 </div>
+
                 <div class="esp-info-item">
                     <span class="esp-info-label">Ingresso</span>
                     <span class="esp-info-value">R$ {{ esp.preco_ingresso|floatformat:2 }}</span>
+                </div>
+
+                <div class="esp-info-item">
+                    <span class="esp-info-label">Compradores</span>
+                    <span class="esp-info-value">{{ esp.total_compradores }}</span>
+                </div>
+
+                <div class="esp-info-item">
+                    <span class="esp-info-label">Ingressos vendidos</span>
+                    <span class="esp-info-value">{{ esp.total_ingressos_vendidos }}</span>
                 </div>
             </div>
 
