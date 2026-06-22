@@ -9,11 +9,20 @@ from pagamentos.models import Mensalidade
 
 
 class Command(BaseCommand):
-    help = "Gera mensalidades do mês atual apenas para alunas elegíveis que ainda não possuem mensalidade."
+    help = "Gera mensalidades do mês seguinte apenas para alunas elegíveis que ainda não possuem mensalidade."
 
     def handle(self, *args, **options):
         hoje = date.today()
-        mes_referencia = date(hoje.year, hoje.month, 1)
+
+        # Calcula o próximo mês
+        if hoje.month == 12:
+            proximo_mes = 1
+            proximo_ano = hoje.year + 1
+        else:
+            proximo_mes = hoje.month + 1
+            proximo_ano = hoje.year
+
+        mes_referencia = date(proximo_ano, proximo_mes, 1)
 
         self.stdout.write(
             self.style.WARNING(
@@ -32,7 +41,7 @@ class Command(BaseCommand):
         puladas_mes_matricula = 0
         ja_existiam = 0
 
-        ultimo_dia_mes = calendar.monthrange(hoje.year, hoje.month)[1]
+        ultimo_dia_mes = calendar.monthrange(mes_referencia.year, mes_referencia.month)[1]
 
         for aluna in alunas:
             if not aluna.responsavel:
@@ -55,11 +64,11 @@ class Command(BaseCommand):
 
             if (
                 aluna.data_matricula
-                and aluna.data_matricula.year == hoje.year
-                and aluna.data_matricula.month == hoje.month
+                and aluna.data_matricula.year == mes_referencia.year
+                and aluna.data_matricula.month == mes_referencia.month
             ):
                 self.stdout.write(
-                    f"[PULADA] {aluna.nome}: matrícula no mês atual ({aluna.data_matricula.strftime('%d/%m/%Y')})."
+                    f"[PULADA] {aluna.nome}: matrícula no mês de referência ({aluna.data_matricula.strftime('%d/%m/%Y')})."
                 )
                 puladas_mes_matricula += 1
                 continue
@@ -77,7 +86,7 @@ class Command(BaseCommand):
                 continue
 
             dia_vencimento = min(aluna.dia_vencimento or 10, ultimo_dia_mes)
-            data_vencimento = date(hoje.year, hoje.month, dia_vencimento)
+            data_vencimento = date(mes_referencia.year, mes_referencia.month, dia_vencimento)
 
             try:
                 Mensalidade.objects.create(
@@ -109,4 +118,4 @@ class Command(BaseCommand):
         self.stdout.write(f"- Já existiam: {ja_existiam}")
         self.stdout.write(f"- Puladas sem responsável: {puladas_sem_responsavel}")
         self.stdout.write(f"- Puladas sem valor: {puladas_sem_valor}")
-        self.stdout.write(f"- Puladas por matrícula no mês atual: {puladas_mes_matricula}")
+        self.stdout.write(f"- Puladas por matrícula no mês de referência: {puladas_mes_matricula}")
