@@ -2452,6 +2452,7 @@ def espetaculo_participacoes(request, pk):
             Espetaculo,
             ParticipacaoEspetaculo,
             ParcelaCobrancaEspetaculo,
+            CobrancaEspetaculo,
         )
         from usuarios.models import Aluna
 
@@ -2509,6 +2510,17 @@ def espetaculo_participacoes(request, pk):
 
         total_recebido_geral = total_recebido_taxa_palco + total_recebido_figurino
 
+        # Monta dict de status de figurino e taxa de palco por participação
+        status_por_participacao = {}
+        for p in participacoes:
+            cobrancas_p = p.cobrancas.all()
+            taxa = cobrancas_p.filter(tipo='taxa_palco').first()
+            figurino = cobrancas_p.filter(tipo='figurino').first()
+            status_por_participacao[p.pk] = {
+                'taxa_palco_status': taxa.status if taxa else None,
+                'figurino_status': figurino.status if figurino else None,
+            }
+
         context = {
             'espetaculo': espetaculo,
             'participacoes': participacoes,
@@ -2517,6 +2529,7 @@ def espetaculo_participacoes(request, pk):
             'total_recebido_taxa_palco': total_recebido_taxa_palco,
             'total_recebido_figurino': total_recebido_figurino,
             'total_recebido_geral': total_recebido_geral,
+            'status_por_participacao': status_por_participacao,
         }
 
         return render(request, 'admin_dashboard/espetaculos/participacoes.html', context)
@@ -3088,3 +3101,42 @@ def espetaculo_ingressos_vendidos(request, pk):
         'admin_dashboard/espetaculos/espetaculo_ingressos_vendidos.html',
         context
     )
+
+@login_required
+def excluir_participacao(request, pk):
+    if not request.user.is_staff:
+        return redirect('home')
+
+    from espetaculo.models import ParticipacaoEspetaculo
+
+    participacao = get_object_or_404(ParticipacaoEspetaculo, pk=pk)
+    espetaculo_pk = participacao.espetaculo.pk
+
+    if request.method == 'POST':
+        nome = participacao.aluna.nome
+        participacao.delete()
+        messages.success(request, f'Participação de {nome} removida com sucesso.')
+    else:
+        messages.error(request, 'Ação inválida.')
+
+    return redirect('admin_dashboard:espetaculo_participacoes', pk=espetaculo_pk)
+
+
+@login_required
+def marcar_parcela_pago_dinheiro(request, pk):
+    if not request.user.is_staff:
+        return redirect('home')
+
+    from espetaculo.models import ParcelaCobrancaEspetaculo
+
+    parcela = get_object_or_404(ParcelaCobrancaEspetaculo, pk=pk)
+    participacao_pk = parcela.cobranca.participacao.pk
+
+    if request.method == 'POST':
+        if parcela.status != 'pago':
+            parcela.marcar_como_pago()
+            messages.success(request, f'Parcela {parcela.numero_parcela}/{parcela.total_parcelas} marcada como paga em dinheiro.')
+        else:
+            messages.warning(request, 'Esta parcela já está paga.')
+
+    return redirect('admin_dashboard:participacao_cobrancas', pk=participacao_pk)

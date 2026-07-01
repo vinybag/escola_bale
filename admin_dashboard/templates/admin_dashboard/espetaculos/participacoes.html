@@ -1,4 +1,5 @@
 {% extends 'admin_dashboard/base.html' %}
+{% load dict_extras %}
 
 {% block title %}Participações - {{ espetaculo.titulo }}{% endblock %}
 
@@ -64,7 +65,6 @@
         font-size: 0.92rem;
     }
 
-    /* Cards de totais */
     .partic-totais-grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
@@ -111,7 +111,6 @@
         font-size: 1.55rem;
         font-weight: 800;
         letter-spacing: -0.02em;
-        color: #2f2438;
     }
 
     .partic-total-card.card-palco .partic-total-valor { color: #4a235f; }
@@ -123,7 +122,6 @@
         color: #9a8fa4;
     }
 
-    /* Form adicionar aluna */
     .partic-add-grid {
         display: grid;
         grid-template-columns: 1fr auto;
@@ -149,9 +147,17 @@
         box-shadow: 0 0 0 4px rgba(107, 45, 143, 0.10);
     }
 
-    /* Tabela */
+    /* Tabela responsiva com scroll */
+    .partic-table-wrapper {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border-radius: 10px;
+    }
+
     .partic-table {
         width: 100%;
+        min-width: 700px; /* força scroll antes de quebrar */
         border-collapse: collapse;
     }
 
@@ -189,8 +195,10 @@
         font-size: 0.97rem;
         color: #3a3045;
         vertical-align: middle;
+        white-space: nowrap;
     }
 
+    /* Badges */
     .badge-sim {
         display: inline-flex;
         align-items: center;
@@ -222,6 +230,53 @@
         color: #6b2d8f;
         font-size: 0.82rem;
         font-weight: 700;
+    }
+
+    .badge-pago {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.28rem 0.7rem;
+        border-radius: 999px;
+        background: #e6f7eb;
+        color: #1d6b36;
+        font-size: 0.8rem;
+        font-weight: 700;
+    }
+
+    .badge-parcial {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.28rem 0.7rem;
+        border-radius: 999px;
+        background: #fff8e6;
+        color: #a06000;
+        font-size: 0.8rem;
+        font-weight: 700;
+    }
+
+    .badge-pendente {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.28rem 0.7rem;
+        border-radius: 999px;
+        background: #fdecea;
+        color: #b71c1c;
+        font-size: 0.8rem;
+        font-weight: 700;
+    }
+
+    .badge-sem {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.28rem 0.7rem;
+        border-radius: 999px;
+        background: #f3f0f8;
+        color: #b0a8b8;
+        font-size: 0.8rem;
+        font-weight: 600;
     }
 
     .partic-empty {
@@ -285,6 +340,26 @@
         color: #4a235f;
     }
 
+    .btn-partic-danger {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.45rem 0.9rem;
+        background: #fdecea;
+        color: #b71c1c;
+        border: 1px solid #f5c6c6;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 0.85rem;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: background 0.15s;
+    }
+
+    .btn-partic-danger:hover {
+        background: #fbd5d5;
+        color: #7f1212;
+    }
+
     .btn-partic-back {
         padding: 0.78rem 1.25rem;
         background: #f3f3f3;
@@ -299,6 +374,77 @@
     .btn-partic-back:hover {
         background: #ececec;
         color: #222;
+    }
+
+    .acoes-cell {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+
+    /* Modal de confirmação */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.45);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-overlay.ativo {
+        display: flex;
+    }
+
+    .modal-box {
+        background: white;
+        border-radius: 18px;
+        padding: 2rem;
+        max-width: 420px;
+        width: 90%;
+        box-shadow: 0 12px 40px rgba(0,0,0,0.18);
+        text-align: center;
+    }
+
+    .modal-box h3 {
+        margin: 0 0 0.75rem;
+        color: #2f2438;
+    }
+
+    .modal-box p {
+        color: #7a7280;
+        margin: 0 0 1.5rem;
+        line-height: 1.6;
+        font-size: 0.97rem;
+    }
+
+    .modal-actions {
+        display: flex;
+        gap: 0.75rem;
+        justify-content: center;
+    }
+
+    .btn-modal-cancel {
+        padding: 0.7rem 1.4rem;
+        background: #f3f0f8;
+        color: #4a235f;
+        border: 1px solid #d9cbe4;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 0.95rem;
+    }
+
+    .btn-modal-confirm {
+        padding: 0.7rem 1.4rem;
+        background: #b71c1c;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 700;
+        cursor: pointer;
+        font-size: 0.95rem;
     }
 
     @media (max-width: 900px) {
@@ -344,42 +490,31 @@
             width: 100%;
         }
 
-        .partic-table thead {
-            display: none;
-        }
-
-        .partic-table tbody tr {
-            display: block;
-            border: 1px solid #ece3f2;
-            border-radius: 14px;
-            margin-bottom: 1rem;
-            padding: 0.5rem;
-        }
-
-        .partic-table td {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.6rem 0.75rem;
-            border-bottom: 1px solid #f3eff8;
-            font-size: 0.93rem;
-        }
-
-        .partic-table td:last-child {
-            border-bottom: none;
-        }
-
-        .partic-table td::before {
-            content: attr(data-label);
-            font-weight: 700;
-            font-size: 0.8rem;
-            color: #7a7280;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-            min-width: 110px;
+        /* No mobile, mantém a tabela com scroll — NÃO quebra em cards */
+        .partic-table-wrapper {
+            border-radius: 8px;
         }
     }
 </style>
+
+<!-- Modal de confirmação de exclusão -->
+<div class="modal-overlay" id="modalExcluir">
+    <div class="modal-box">
+        <h3>Remover participação?</h3>
+        <p>
+            Tem certeza que deseja remover a participação de
+            <strong id="modalNomeAluna"></strong>?
+            Todas as cobranças vinculadas também serão excluídas.
+        </p>
+        <div class="modal-actions">
+            <button class="btn-modal-cancel" onclick="fecharModal()">Cancelar</button>
+            <form id="formExcluir" method="post" action="">
+                {% csrf_token %}
+                <button type="submit" class="btn-modal-confirm">Sim, remover</button>
+            </form>
+        </div>
+    </div>
+</div>
 
 <div class="partic-header">
     <div>
@@ -425,25 +560,19 @@
                 <div class="partic-totais-grid">
                     <div class="partic-total-card card-palco">
                         <span class="partic-total-label">Taxa de palco</span>
-                        <span class="partic-total-valor">
-                            R$ {{ total_recebido_taxa_palco|floatformat:2 }}
-                        </span>
+                        <span class="partic-total-valor">R$ {{ total_recebido_taxa_palco|floatformat:2 }}</span>
                         <span class="partic-total-desc">Cobranças pagas de taxa de palco</span>
                     </div>
 
                     <div class="partic-total-card card-figurino">
                         <span class="partic-total-label">Figurino</span>
-                        <span class="partic-total-valor">
-                            R$ {{ total_recebido_figurino|floatformat:2 }}
-                        </span>
+                        <span class="partic-total-valor">R$ {{ total_recebido_figurino|floatformat:2 }}</span>
                         <span class="partic-total-desc">Cobranças pagas de figurino</span>
                     </div>
 
                     <div class="partic-total-card card-geral">
                         <span class="partic-total-label">Total geral</span>
-                        <span class="partic-total-valor">
-                            R$ {{ total_recebido_geral|floatformat:2 }}
-                        </span>
+                        <span class="partic-total-valor">R$ {{ total_recebido_geral|floatformat:2 }}</span>
                         <span class="partic-total-desc">Soma de todos os pagamentos</span>
                     </div>
                 </div>
@@ -482,47 +611,81 @@
                 <p class="partic-section-subtitle">Lista de todas as alunas vinculadas a este espetáculo.</p>
 
                 {% if participacoes %}
-                    <div style="overflow-x: auto;">
+                    <div class="partic-table-wrapper">
                         <table class="partic-table">
                             <thead>
                                 <tr>
                                     <th>Aluna</th>
                                     <th>Responsável</th>
                                     <th>Vai dançar?</th>
+                                    <th>Taxa de palco</th>
+                                    <th>Figurino</th>
                                     <th>Cobranças</th>
                                     <th>Ações</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for participacao in participacoes %}
+                                    {% with status=status_por_participacao|get_item:participacao.pk %}
                                     <tr>
-                                        <td data-label="Aluna">
+                                        <td>
                                             <strong style="color: #4a235f;">{{ participacao.aluna.nome }}</strong>
                                         </td>
-                                        <td data-label="Responsável">
+                                        <td>
                                             {% if participacao.aluna.responsavel %}
                                                 {{ participacao.aluna.responsavel.first_name }} {{ participacao.aluna.responsavel.last_name }}
                                             {% else %}
                                                 <span style="color: #b0a8b8;">—</span>
                                             {% endif %}
                                         </td>
-                                        <td data-label="Vai dançar?">
+                                        <td>
                                             {% if participacao.vai_dancar %}
                                                 <span class="badge-sim">Sim</span>
                                             {% else %}
                                                 <span class="badge-nao">Não</span>
                                             {% endif %}
                                         </td>
-                                        <td data-label="Cobranças">
+                                        <td>
+                                            {% if status.taxa_palco_status == 'pago' %}
+                                                <span class="badge-pago">✓ Pago</span>
+                                            {% elif status.taxa_palco_status == 'parcial' %}
+                                                <span class="badge-parcial">◑ Parcial</span>
+                                            {% elif status.taxa_palco_status == 'pendente' %}
+                                                <span class="badge-pendente">✗ Pendente</span>
+                                            {% else %}
+                                                <span class="badge-sem">Sem cobrança</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if status.figurino_status == 'pago' %}
+                                                <span class="badge-pago">✓ Pago</span>
+                                            {% elif status.figurino_status == 'parcial' %}
+                                                <span class="badge-parcial">◑ Parcial</span>
+                                            {% elif status.figurino_status == 'pendente' %}
+                                                <span class="badge-pendente">✗ Pendente</span>
+                                            {% else %}
+                                                <span class="badge-sem">Sem cobrança</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
                                             <span class="badge-count">{{ participacao.cobrancas.count }}</span>
                                         </td>
-                                        <td data-label="Ações">
-                                            <a href="{% url 'admin_dashboard:participacao_cobrancas' participacao.pk %}"
-                                               class="btn-partic-sm">
-                                                Gerenciar cobranças
-                                            </a>
+                                        <td>
+                                            <div class="acoes-cell">
+                                                <a href="{% url 'admin_dashboard:participacao_cobrancas' participacao.pk %}"
+                                                   class="btn-partic-sm">
+                                                    Cobranças
+                                                </a>
+                                                <button
+                                                    type="button"
+                                                    class="btn-partic-danger"
+                                                    onclick="abrirModal('{{ participacao.aluna.nome|escapejs }}', '{% url 'admin_dashboard:excluir_participacao' participacao.pk %}')">
+                                                    Excluir
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
+                                    {% endwith %}
                                 {% endfor %}
                             </tbody>
                         </table>
@@ -538,4 +701,20 @@
         </div>
     </div>
 </div>
+
+<script>
+    function abrirModal(nome, url) {
+        document.getElementById('modalNomeAluna').textContent = nome;
+        document.getElementById('formExcluir').action = url;
+        document.getElementById('modalExcluir').classList.add('ativo');
+    }
+
+    function fecharModal() {
+        document.getElementById('modalExcluir').classList.remove('ativo');
+    }
+
+    document.getElementById('modalExcluir').addEventListener('click', function(e) {
+        if (e.target === this) fecharModal();
+    });
+</script>
 {% endblock %}

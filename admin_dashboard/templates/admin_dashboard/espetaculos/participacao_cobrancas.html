@@ -311,6 +311,26 @@
         font-weight: 600;
     }
 
+    .btn-cash-green {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.45rem 0.75rem;
+        background: #e8f5e9;
+        color: #1b5e20;
+        border: 1px solid #c8e6c9;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .btn-cash-green:hover {
+        background: #c8e6c9;
+        color: #145214;
+    }
+
     .empty-state {
         text-align: center;
         padding: 2rem 1rem;
@@ -642,7 +662,7 @@
                                                                 <div class="cobranca-mini-card">
                                                                     <div class="cobranca-mini-stack">
                                                                         <span>
-                                                                            Parcela {{ parcela.numero_parcela }}/{{ parcela.total_parcelas }} - R$ {{ parcela.valor }}
+                                                                            Parcela {{ parcela.numero_parcela }}/{{ parcela.total_parcelas }} — R$ {{ parcela.valor }}
                                                                         </span>
 
                                                                         <span style="color: #666;">
@@ -672,7 +692,7 @@
                                                                             </span>
                                                                         {% endif %}
 
-                                                                        <div>
+                                                                        <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
                                                                             {% if parcela.asaas_invoice_url %}
                                                                                 <a href="{{ parcela.asaas_invoice_url }}" target="_blank" rel="noopener noreferrer">Fatura</a>
                                                                             {% endif %}
@@ -684,15 +704,25 @@
                                                                         </div>
 
                                                                         {% if parcela.status != 'pago' %}
-                                                                            <form method="post"
-                                                                                  action="{% url 'admin_dashboard:parcela_cobranca_espetaculo_marcar_pago' parcela.pk %}"
-                                                                                  onsubmit="return confirm('Confirmar marcação desta parcela como paga?');"
-                                                                                  style="margin-top: 0.35rem;">
-                                                                                {% csrf_token %}
-                                                                                <button type="submit" class="btn-success-green">
-                                                                                    Marcar como pago
-                                                                                </button>
-                                                                            </form>
+                                                                            <div style="display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.35rem;">
+                                                                                <form method="post"
+                                                                                      action="{% url 'admin_dashboard:parcela_cobranca_espetaculo_marcar_pago' parcela.pk %}"
+                                                                                      onsubmit="return confirm('Confirmar marcação desta parcela como paga?');">
+                                                                                    {% csrf_token %}
+                                                                                    <button type="submit" class="btn-success-green">
+                                                                                        Marcar como pago
+                                                                                    </button>
+                                                                                </form>
+
+                                                                                <form method="post"
+                                                                                      action="{% url 'admin_dashboard:marcar_parcela_pago_dinheiro' parcela.pk %}"
+                                                                                      onsubmit="return confirm('Marcar parcela {{ parcela.numero_parcela }}/{{ parcela.total_parcelas }} como paga em dinheiro?');">
+                                                                                    {% csrf_token %}
+                                                                                    <button type="submit" class="btn-cash-green">
+                                                                                        Pago em dinheiro
+                                                                                    </button>
+                                                                                </form>
+                                                                            </div>
                                                                         {% endif %}
                                                                     </div>
                                                                 </div>
@@ -706,6 +736,19 @@
                                                     <span style="font-size: 0.85rem; color: #666; line-height: 1.4;">
                                                         A cobrança será enviada ao Asaas quando a responsável escolher à vista ou a quantidade de parcelas na área dela.
                                                     </span>
+
+                                                    {% for parcela in cobranca.parcelas.all %}
+                                                        {% if parcela.status != 'pago' %}
+                                                            <form method="post"
+                                                                  action="{% url 'admin_dashboard:marcar_parcela_pago_dinheiro' parcela.pk %}"
+                                                                  onsubmit="return confirm('Marcar parcela {{ parcela.numero_parcela }}/{{ parcela.total_parcelas }} como paga em dinheiro?');">
+                                                                {% csrf_token %}
+                                                                <button type="submit" class="btn-cash-green">
+                                                                    Parcela {{ parcela.numero_parcela }}/{{ parcela.total_parcelas }} — Pago em dinheiro
+                                                                </button>
+                                                            </form>
+                                                        {% endif %}
+                                                    {% endfor %}
                                                 </div>
                                             {% endif %}
                                         </td>
