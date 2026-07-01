@@ -197,6 +197,11 @@
         color: #6b2d8f;
     }
 
+    .status-danger {
+        background: #fdecea;
+        color: #b71c1c;
+    }
+
     .cobranca-table {
         width: 100%;
         border-collapse: collapse;
@@ -646,16 +651,20 @@
                                         </td>
 
                                         <td data-label="Asaas">
-                                            {% if cobranca.enviado_asaas %}
-                                                <div class="cobranca-mini-stack">
+                                            <div class="cobranca-mini-stack">
+                                                {% if cobranca.enviado_asaas %}
                                                     <span class="status-pill status-success">Enviado</span>
+                                                {% else %}
+                                                    <span class="status-pill status-warning">Não enviado</span>
+                                                {% endif %}
 
-                                                    {% if cobranca.billing_type %}
-                                                        <span style="font-size: 0.85rem; color: #666;">
-                                                            Tipo: {{ cobranca.billing_type }}
-                                                        </span>
-                                                    {% endif %}
+                                                {% if cobranca.billing_type %}
+                                                    <span style="font-size: 0.85rem; color: #666;">
+                                                        Tipo: {{ cobranca.billing_type }}
+                                                    </span>
+                                                {% endif %}
 
+                                                {% if cobranca.enviado_asaas %}
                                                     {% if cobranca.parcelas.all %}
                                                         <div class="cobranca-mini-stack">
                                                             {% for parcela in cobranca.parcelas.all %}
@@ -729,28 +738,62 @@
                                                             {% endfor %}
                                                         </div>
                                                     {% endif %}
-                                                </div>
-                                            {% else %}
-                                                <div class="cobranca-mini-stack">
-                                                    <span class="status-pill status-warning">Aguardando escolha da responsável</span>
+                                                {% else %}
                                                     <span style="font-size: 0.85rem; color: #666; line-height: 1.4;">
-                                                        A cobrança será enviada ao Asaas quando a responsável escolher à vista ou a quantidade de parcelas na área dela.
+                                                        A cobrança não foi enviada ao Asaas.
                                                     </span>
 
-                                                    {% for parcela in cobranca.parcelas.all %}
-                                                        {% if parcela.status != 'pago' %}
-                                                            <form method="post"
-                                                                  action="{% url 'admin_dashboard:marcar_parcela_pago_dinheiro' parcela.pk %}"
-                                                                  onsubmit="return confirm('Marcar parcela {{ parcela.numero_parcela }}/{{ parcela.total_parcelas }} como paga em dinheiro?');">
-                                                                {% csrf_token %}
-                                                                <button type="submit" class="btn-cash-green">
-                                                                    Parcela {{ parcela.numero_parcela }}/{{ parcela.total_parcelas }} — Pago em dinheiro
-                                                                </button>
-                                                            </form>
-                                                        {% endif %}
-                                                    {% endfor %}
-                                                </div>
-                                            {% endif %}
+                                                    {% if cobranca.parcelas.all %}
+                                                        <div class="cobranca-mini-stack">
+                                                            {% for parcela in cobranca.parcelas.all %}
+                                                                <div class="cobranca-mini-card">
+                                                                    <div class="cobranca-mini-stack">
+                                                                        <span>
+                                                                            Parcela {{ parcela.numero_parcela }}/{{ parcela.total_parcelas }} — R$ {{ parcela.valor }}
+                                                                        </span>
+
+                                                                        <span style="color: #666;">
+                                                                            Status local:
+                                                                            {% if parcela.status == 'pago' %}
+                                                                                <strong style="color: #155724;">Pago</strong>
+                                                                            {% else %}
+                                                                                <strong style="color: #856404;">Pendente</strong>
+                                                                            {% endif %}
+                                                                        </span>
+
+                                                                        {% if parcela.vencimento %}
+                                                                            <span style="color: #666;">
+                                                                                Vencimento: {{ parcela.vencimento|date:"d/m/Y" }}
+                                                                            </span>
+                                                                        {% endif %}
+
+                                                                        {% if parcela.data_pagamento %}
+                                                                            <span style="color: #666;">
+                                                                                Pago em: {{ parcela.data_pagamento|date:"d/m/Y H:i" }}
+                                                                            </span>
+                                                                        {% endif %}
+
+                                                                        {% if parcela.status != 'pago' %}
+                                                                            <div style="display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.35rem;">
+                                                                                <form method="post"
+                                                                                      action="{% url 'admin_dashboard:marcar_parcela_pago_dinheiro' parcela.pk %}"
+                                                                                      onsubmit="return confirm('Marcar parcela {{ parcela.numero_parcela }}/{{ parcela.total_parcelas }} como paga em dinheiro?');">
+                                                                                    {% csrf_token %}
+                                                                                    <button type="submit" class="btn-cash-green">
+                                                                                        Pago em dinheiro
+                                                                                    </button>
+                                                                                </form>
+                                                                            </div>
+                                                                        {% endif %}
+                                                                    </div>
+                                                                </div>
+                                                            {% endfor %}
+                                                        </div>
+                                                    {% else %}
+                                                        <span class="status-pill status-danger">Sem parcelas geradas</span>
+                                                    {% endif %}
+                                                {% endif %}
+                                            </div>
                                         </td>
 
                                         <td data-label="Ações">

@@ -24,8 +24,6 @@
 
         --p-green-text:   #1d6b36;
         --p-green-bg:     #e6f7eb;
-        --p-blue-text:    #1a4f78;
-        --p-blue-bg:      #e8f4fb;
         --p-red-text:     #b71c1c;
         --p-red-bg:       #fdecea;
         --p-orange-text:  #a06000;
@@ -36,7 +34,6 @@
         --p-radius-badge: 999px;
 
         --p-shadow-card:  0 2px 8px rgba(107, 45, 143, 0.07), 0 0 0 1px rgba(107, 45, 143, 0.07);
-        --p-shadow-hover: 0 4px 16px rgba(107, 45, 143, 0.10), 0 0 0 1px rgba(107, 45, 143, 0.10);
         --p-transition:   0.18s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
@@ -239,7 +236,7 @@
 
     .p-table {
         width: 100%;
-        min-width: 720px;
+        min-width: 640px;
         border-collapse: collapse;
         font-variant-numeric: tabular-nums;
     }
@@ -504,7 +501,6 @@
     }
 </style>
 
-<!-- Modal de confirmação de exclusão -->
 <div class="modal-overlay" id="modalExcluir">
     <div class="modal-box">
         <div class="modal-icon">
@@ -532,8 +528,6 @@
 </div>
 
 <div class="p-page">
-
-    <!-- Cabeçalho -->
     <div class="p-header">
         <div class="p-header-title">
             <div class="p-header-eyebrow">
@@ -552,6 +546,7 @@
                 {{ total_participacoes }} participação{{ total_participacoes|pluralize:",ões" }} cadastrada{{ total_participacoes|pluralize }}
             </p>
         </div>
+
         <div class="p-header-actions">
             <a href="{% url 'admin_dashboard:espetaculos_list' %}" class="btn btn-back">
                 ← Voltar para espetáculos
@@ -559,7 +554,6 @@
         </div>
     </div>
 
-    <!-- Cards de totais -->
     <div class="p-totais">
         <div class="p-total-card card-palco">
             <span class="p-total-label">Taxa de palco</span>
@@ -578,7 +572,6 @@
         </div>
     </div>
 
-    <!-- Adicionar aluna -->
     <div class="p-section">
         <div class="p-section-head">
             <div class="p-section-head-text">
@@ -614,7 +607,6 @@
         </div>
     </div>
 
-    <!-- Tabela de participações -->
     <div class="p-section">
         <div class="p-section-head">
             <div class="p-section-head-text">
@@ -622,7 +614,7 @@
                 <p>Lista de todas as alunas vinculadas a este espetáculo.</p>
             </div>
             {% if participacoes %}
-                <span class="badge badge-count">{{ total_participacoes }}</span>
+            <span class="badge badge-count">{{ total_participacoes }}</span>
             {% endif %}
         </div>
 
@@ -632,7 +624,6 @@
                 <thead>
                     <tr>
                         <th>Aluna</th>
-                        <th>Responsável</th>
                         <th>Vai dançar?</th>
                         <th>Taxa de palco</th>
                         <th>Figurino</th>
@@ -646,13 +637,6 @@
                         <tr>
                             <td>
                                 <strong style="color: var(--p-purple-3);">{{ participacao.aluna.nome }}</strong>
-                            </td>
-                            <td style="color: var(--p-muted);">
-                                {% if participacao.aluna.responsavel %}
-                                    {{ participacao.aluna.responsavel.first_name }} {{ participacao.aluna.responsavel.last_name }}
-                                {% else %}
-                                    <span style="color: var(--p-faint);">—</span>
-                                {% endif %}
                             </td>
                             <td>
                                 {% if participacao.vai_dancar %}
@@ -719,7 +703,6 @@
         </div>
         {% endif %}
     </div>
-
 </div>
 
 <script>
