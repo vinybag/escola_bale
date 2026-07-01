@@ -253,7 +253,7 @@
     }
 
     .cobranca-actions-col {
-        min-width: 170px;
+        min-width: 220px;
     }
 
     .btn-primary-purple {
@@ -352,6 +352,7 @@
         font-size: 0.85rem;
         color: #666;
         line-height: 1.4;
+        margin-bottom: 0.65rem;
     }
 
     @media (max-width: 1280px) {
@@ -776,6 +777,24 @@
                                                     <div class="parcelas-vazio">
                                                         Nenhuma parcela gerada para esta cobrança.
                                                     </div>
+
+                                                    <form method="post"
+                                                          action="{% url 'admin_dashboard:cobranca_espetaculo_marcar_pago' cobranca.pk %}"
+                                                          onsubmit="return confirm('Marcar esta cobrança como paga?');">
+                                                        {% csrf_token %}
+                                                        <button type="submit" class="btn-success-green">
+                                                            Marcar como pago
+                                                        </button>
+                                                    </form>
+
+                                                    <form method="post"
+                                                          action="{% url 'admin_dashboard:cobranca_espetaculo_marcar_pago_dinheiro' cobranca.pk %}"
+                                                          onsubmit="return confirm('Marcar esta cobrança como paga em dinheiro?');">
+                                                        {% csrf_token %}
+                                                        <button type="submit" class="btn-cash-green">
+                                                            Pago em dinheiro
+                                                        </button>
+                                                    </form>
                                                 {% endif %}
                                             </div>
                                         </td>

@@ -3140,3 +3140,139 @@ def marcar_parcela_pago_dinheiro(request, pk):
             messages.warning(request, 'Esta parcela já está paga.')
 
     return redirect('admin_dashboard:participacao_cobrancas', pk=participacao_pk)
+
+@login_required
+def cobranca_espetaculo_marcar_pago(request, pk):
+    if not request.user.is_staff:
+        return redirect('home')
+
+    if request.method != 'POST':
+        messages.error(request, 'Método inválido.')
+        return redirect('admin_dashboard:espetaculos_list')
+
+    try:
+        from django.shortcuts import get_object_or_404
+        from django.db import transaction
+        from espetaculo.models import CobrancaEspetaculo, ParcelaCobrancaEspetaculo
+
+        cobranca = get_object_or_404(
+            CobrancaEspetaculo.objects.select_related(
+                'participacao',
+                'participacao__aluna',
+                'participacao__espetaculo',
+            ).prefetch_related('parcelas'),
+            pk=pk
+        )
+
+        if cobranca.parcelas.filter(status='pago').exists():
+            messages.info(request, 'Essa cobrança já possui parcela paga.')
+            return redirect(
+                'admin_dashboard:participacao_cobrancas',
+                pk=cobranca.participacao.pk
+            )
+
+        with transaction.atomic():
+            parcela = cobranca.parcelas.exclude(status='pago').order_by('numero_parcela').first()
+
+            if not parcela:
+                parcela = ParcelaCobrancaEspetaculo.objects.create(
+                    cobranca=cobranca,
+                    numero_parcela=1,
+                    total_parcelas=1,
+                    valor=cobranca.valor_total,
+                    vencimento=cobranca.vencimento_primeira_parcela,
+                    status='pendente',
+                    billing_type=cobranca.billing_type or 'MANUAL',
+                )
+
+            parcela.marcar_como_pago()
+
+            if hasattr(cobranca, 'atualizar_status'):
+                cobranca.atualizar_status()
+            else:
+                cobranca.status = 'pago'
+                cobranca.save(update_fields=['status'])
+
+        messages.success(request, 'Cobrança marcada como paga com sucesso.')
+        return redirect(
+            'admin_dashboard:participacao_cobrancas',
+            pk=cobranca.participacao.pk
+        )
+
+    except Exception as e:
+        messages.error(request, f'Erro ao marcar cobrança como paga: {e}')
+        return redirect('admin_dashboard:espetaculos_list')
+
+
+@login_required
+def cobranca_espetaculo_marcar_pago_dinheiro(request, pk):
+    if not request.user.is_staff:
+        return redirect('home')
+
+    if request.method != 'POST':
+        messages.error(request, 'Método inválido.')
+        return redirect('admin_dashboard:espetaculos_list')
+
+    try:
+        from django.shortcuts import get_object_or_404
+        from django.db import transaction
+        from espetaculo.models import CobrancaEspetaculo, ParcelaCobrancaEspetaculo
+
+        cobranca = get_object_or_404(
+            CobrancaEspetaculo.objects.select_related(
+                'participacao',
+                'participacao__aluna',
+                'participacao__espetaculo',
+            ).prefetch_related('parcelas'),
+            pk=pk
+        )
+
+        if cobranca.parcelas.filter(status='pago').exists():
+            messages.info(request, 'Essa cobrança já possui parcela paga.')
+            return redirect(
+                'admin_dashboard:participacao_cobrancas',
+                pk=cobranca.participacao.pk
+            )
+
+        with transaction.atomic():
+            parcela = cobranca.parcelas.exclude(status='pago').order_by('numero_parcela').first()
+
+            if not parcela:
+                parcela = ParcelaCobrancaEspetaculo.objects.create(
+                    cobranca=cobranca,
+                    numero_parcela=1,
+                    total_parcelas=1,
+                    valor=cobranca.valor_total,
+                    vencimento=cobranca.vencimento_primeira_parcela,
+                    status='pendente',
+                    billing_type='DINHEIRO',
+                )
+            else:
+                if hasattr(parcela, 'billing_type'):
+                    parcela.billing_type = 'DINHEIRO'
+                    parcela.save(update_fields=['billing_type'])
+
+            parcela.marcar_como_pago()
+
+            if hasattr(cobranca, 'billing_type') and not cobranca.billing_type:
+                cobranca.billing_type = 'DINHEIRO'
+                campos_update = ['billing_type']
+                if hasattr(cobranca, 'status'):
+                    pass
+                cobranca.save(update_fields=campos_update)
+
+            if hasattr(cobranca, 'atualizar_status'):
+                cobranca.atualizar_status()
+            else:
+                cobranca.status = 'pago'
+                cobranca.save(update_fields=['status'])
+
+        messages.success(request, 'Cobrança marcada como paga em dinheiro com sucesso.')
+        return redirect(
+            'admin_dashboard:participacao_cobrancas',
+            pk=cobranca.participacao.pk
+        )
+
+    except Exception as e:
+        messages.error(request, f'Erro ao marcar cobrança como paga em dinheiro: {e}')
+        return redirect('admin_dashboard:espetaculos_list')
