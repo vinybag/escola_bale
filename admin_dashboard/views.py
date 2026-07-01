@@ -2522,37 +2522,32 @@ def espetaculo_participacoes(request, pk):
             if not cobranca:
                 return None
 
-            total_pago = getattr(cobranca, 'total_pago', None)
-            total_pendente = getattr(cobranca, 'total_pendente', None)
-            valor_total = getattr(cobranca, 'valor_total', Decimal('0.00')) or Decimal('0.00')
+            total_pago = cobranca.total_pago()
+            total_pendente = cobranca.total_pendente()
+            valor_total_efetivo = cobranca.valor_total_efetivo()
 
-            if total_pago is not None:
-                total_pago = total_pago or Decimal('0.00')
-                if valor_total > 0 and total_pago >= valor_total:
+            if valor_total_efetivo > Decimal('0.00') and total_pago >= valor_total_efetivo:
+                return 'pago'
+
+            if total_pago > Decimal('0.00') and total_pendente > Decimal('0.00'):
+                return 'parcial'
+
+            if total_pago > Decimal('0.00'):
+                return 'parcial'
+
+            if cobranca.parcelas.exists():
+                parcelas_total = cobranca.parcelas.count()
+                parcelas_pagas = cobranca.parcelas.filter(status='pago').count()
+
+                if parcelas_total > 0 and parcelas_pagas == parcelas_total:
                     return 'pago'
-                if total_pago > 0:
+                if parcelas_pagas > 0:
                     return 'parcial'
 
-            if total_pendente is not None:
-                total_pendente = total_pendente or Decimal('0.00')
-                if total_pendente <= 0 and valor_total > 0:
-                    return 'pago'
-
-            parcelas = list(cobranca.parcelas.all())
-
-            if not parcelas:
-                status_cobranca = getattr(cobranca, 'status', None)
-                return status_cobranca if status_cobranca else 'pendente'
-
-            parcelas_pagas_qtd = sum(1 for parcela in parcelas if parcela.status == 'pago')
-
-            if parcelas_pagas_qtd == len(parcelas):
-                return 'pago'
-            if parcelas_pagas_qtd > 0:
-                return 'parcial'
             return 'pendente'
 
         status_por_participacao = {}
+
         for p in participacoes:
             cobrancas_p = list(p.cobrancas.all())
 
