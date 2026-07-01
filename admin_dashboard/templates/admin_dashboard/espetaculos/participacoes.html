@@ -5,380 +5,403 @@
 
 {% block content %}
 <style>
-    .partic-header {
+    :root {
+        --p-bg:           #f8f6fb;
+        --p-surface:      #ffffff;
+        --p-surface-2:    #faf8fc;
+        --p-border:       rgba(107, 45, 143, 0.12);
+        --p-border-light: rgba(107, 45, 143, 0.07);
+
+        --p-purple-1:     #6b2d8f;
+        --p-purple-2:     #7e3aa5;
+        --p-purple-3:     #4a235f;
+        --p-purple-hl:    #ede7f5;
+        --p-purple-bg:    #f4eefa;
+
+        --p-text:         #2f2438;
+        --p-muted:        #7a7280;
+        --p-faint:        #b0a8b8;
+
+        --p-green-text:   #1d6b36;
+        --p-green-bg:     #e6f7eb;
+        --p-blue-text:    #1a4f78;
+        --p-blue-bg:      #e8f4fb;
+        --p-red-text:     #b71c1c;
+        --p-red-bg:       #fdecea;
+        --p-orange-text:  #a06000;
+        --p-orange-bg:    #fff8e6;
+
+        --p-radius-card:  14px;
+        --p-radius-sm:    8px;
+        --p-radius-badge: 999px;
+
+        --p-shadow-card:  0 2px 8px rgba(107, 45, 143, 0.07), 0 0 0 1px rgba(107, 45, 143, 0.07);
+        --p-shadow-hover: 0 4px 16px rgba(107, 45, 143, 0.10), 0 0 0 1px rgba(107, 45, 143, 0.10);
+        --p-transition:   0.18s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .p-page {
+        max-width: 1120px;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .p-header {
         display: flex;
         justify-content: space-between;
-        align-items: center;
+        align-items: flex-start;
         gap: 1rem;
         flex-wrap: wrap;
-        margin-bottom: 2rem;
     }
 
-    .partic-header-actions {
+    .p-header-title {
         display: flex;
-        gap: 0.75rem;
-        flex-wrap: wrap;
+        flex-direction: column;
+        gap: 0.2rem;
     }
 
-    .partic-shell {
-        max-width: 1100px;
+    .p-header-eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--p-purple-1);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin-bottom: 0.1rem;
     }
 
-    .partic-main {
-        background: white;
-        border: 1px solid #ebe3f1;
-        border-radius: 18px;
-        box-shadow: 0 8px 24px rgba(107, 45, 143, 0.08);
-        overflow: visible;
+    .p-header-eyebrow svg {
+        width: 14px;
+        height: 14px;
     }
 
-    .partic-top {
-        padding: 1.5rem 2rem;
-        background: linear-gradient(135deg, #ffffff 0%, #f5eff9 100%);
-        border-bottom: 1px solid #ece3f2;
-        border-radius: 18px 18px 0 0;
-        overflow: hidden;
+    .p-header h1 {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--p-purple-3);
+        letter-spacing: -0.02em;
+        line-height: 1.2;
     }
 
-    .partic-body {
-        padding: 2rem;
-        display: grid;
-        gap: 1.5rem;
-        background: #fcfbfd;
-    }
-
-    .partic-section {
-        background: white;
-        border: 1px solid #ece3f2;
-        border-radius: 16px;
-        padding: 1.5rem;
-        overflow: visible;
-    }
-
-    .partic-section-title {
-        margin: 0 0 0.35rem 0;
-        color: #4a235f;
-        font-size: 1rem;
-        font-weight: 700;
-    }
-
-    .partic-section-subtitle {
-        margin: 0 0 1.25rem 0;
-        color: #7b7580;
+    .p-header-sub {
+        margin: 0;
         font-size: 0.92rem;
+        color: var(--p-muted);
     }
 
-    .partic-totais-grid {
+    .p-header-actions {
+        display: flex;
+        gap: 0.6rem;
+        align-items: center;
+        flex-wrap: wrap;
+        flex-shrink: 0;
+    }
+
+    .p-totais {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
         gap: 1rem;
     }
 
-    .partic-total-card {
-        border-radius: 14px;
-        padding: 1.25rem 1.35rem;
-        border: 1px solid #ece3f2;
+    .p-total-card {
+        background: var(--p-surface);
+        border-radius: var(--p-radius-card);
+        padding: 1.25rem 1.4rem;
+        box-shadow: var(--p-shadow-card);
         display: flex;
         flex-direction: column;
-        gap: 0.4rem;
+        gap: 0.35rem;
+        position: relative;
+        overflow: hidden;
     }
 
-    .partic-total-card.card-palco {
-        background: linear-gradient(135deg, #f0e8fa 0%, #e9dff6 100%);
-        border-color: #d9cce8;
+    .p-total-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 3px;
+        border-radius: var(--p-radius-card) var(--p-radius-card) 0 0;
     }
 
-    .partic-total-card.card-figurino {
-        background: linear-gradient(135deg, #e8f4fb 0%, #d9ecf8 100%);
-        border-color: #c8dff0;
-    }
+    .p-total-card.card-palco::before    { background: linear-gradient(90deg, #6b2d8f, #a060c0); }
+    .p-total-card.card-figurino::before { background: linear-gradient(90deg, #1a6fa3, #4ca8e0); }
+    .p-total-card.card-geral::before    { background: linear-gradient(90deg, #2a7a36, #4faa60); }
 
-    .partic-total-card.card-geral {
-        background: linear-gradient(135deg, #edf7ee 0%, #dff0e0 100%);
-        border-color: #c8e0ca;
-    }
-
-    .partic-total-label {
-        font-size: 0.8rem;
+    .p-total-label {
+        font-size: 0.75rem;
         font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: #7a7280;
+        letter-spacing: 0.07em;
     }
 
-    .partic-total-card.card-palco .partic-total-label { color: #6b2d8f; }
-    .partic-total-card.card-figurino .partic-total-label { color: #1a6fa3; }
-    .partic-total-card.card-geral .partic-total-label { color: #2a7a36; }
+    .card-palco .p-total-label    { color: var(--p-purple-1); }
+    .card-figurino .p-total-label { color: #1a6fa3; }
+    .card-geral .p-total-label    { color: #2a7a36; }
 
-    .partic-total-valor {
-        font-size: 1.55rem;
+    .p-total-valor {
+        font-size: 1.6rem;
         font-weight: 800;
-        letter-spacing: -0.02em;
+        letter-spacing: -0.03em;
+        line-height: 1.1;
+        font-variant-numeric: tabular-nums;
     }
 
-    .partic-total-card.card-palco .partic-total-valor { color: #4a235f; }
-    .partic-total-card.card-figurino .partic-total-valor { color: #1a4f78; }
-    .partic-total-card.card-geral .partic-total-valor { color: #1c5425; }
+    .card-palco .p-total-valor    { color: var(--p-purple-3); }
+    .card-figurino .p-total-valor { color: #1a4f78; }
+    .card-geral .p-total-valor    { color: #1c5425; }
 
-    .partic-total-desc {
-        font-size: 0.85rem;
-        color: #9a8fa4;
+    .p-total-desc {
+        font-size: 0.82rem;
+        color: var(--p-faint);
+        margin-top: 0.1rem;
     }
 
-    .partic-add-grid {
+    .p-section {
+        background: var(--p-surface);
+        border-radius: var(--p-radius-card);
+        box-shadow: var(--p-shadow-card);
+        overflow: hidden;
+    }
+
+    .p-section-head {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--p-border-light);
+        background: var(--p-surface-2);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+
+    .p-section-head-text h2 {
+        margin: 0 0 0.15rem 0;
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: var(--p-purple-3);
+    }
+
+    .p-section-head-text p {
+        margin: 0;
+        font-size: 0.82rem;
+        color: var(--p-muted);
+    }
+
+    .p-section-body {
+        padding: 1.5rem;
+    }
+
+    .p-add-form {
         display: grid;
         grid-template-columns: 1fr auto;
         gap: 1rem;
         align-items: end;
     }
 
-    .partic-input,
-    .partic-select {
+    .p-field label {
+        display: block;
+        margin-bottom: 0.45rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--p-purple-3);
+    }
+
+    .p-select {
         width: 100%;
-        padding: 0.82rem 0.95rem;
-        border: 1px solid #d9cbe4;
-        border-radius: 10px;
-        font-size: 1rem;
+        padding: 0.72rem 0.9rem;
+        border: 1px solid rgba(107, 45, 143, 0.2);
+        border-radius: var(--p-radius-sm);
+        font-size: 0.95rem;
         background: #fff;
-        color: #2f2438;
+        color: var(--p-text);
+        transition: border-color var(--p-transition), box-shadow var(--p-transition);
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%237a7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        padding-right: 2.5rem;
     }
 
-    .partic-input:focus,
-    .partic-select:focus {
+    .p-select:focus {
         outline: none;
-        border-color: #b895cd;
-        box-shadow: 0 0 0 4px rgba(107, 45, 143, 0.10);
+        border-color: var(--p-purple-1);
+        box-shadow: 0 0 0 3px rgba(107, 45, 143, 0.12);
     }
 
-    .partic-table-wrapper {
+    .p-table-wrap {
         width: 100%;
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
-        border-radius: 10px;
     }
 
-    .partic-table {
+    .p-table {
         width: 100%;
-        min-width: 700px;
+        min-width: 720px;
         border-collapse: collapse;
+        font-variant-numeric: tabular-nums;
     }
 
-    .partic-table thead tr {
-        background: #faf7fc;
-        border-bottom: 1px solid #ece3f2;
+    .p-table thead tr {
+        border-bottom: 1px solid var(--p-border-light);
     }
 
-    .partic-table thead th {
-        padding: 0.85rem 1rem;
-        font-size: 0.82rem;
+    .p-table thead th {
+        padding: 0.8rem 1rem;
+        font-size: 0.75rem;
         font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.04em;
-        color: #7a7280;
+        letter-spacing: 0.06em;
+        color: var(--p-muted);
         text-align: left;
         white-space: nowrap;
+        background: var(--p-surface-2);
     }
 
-    .partic-table tbody tr {
-        border-bottom: 1px solid #f3eff8;
-        transition: background 0.15s;
+    .p-table tbody tr {
+        border-bottom: 1px solid var(--p-border-light);
+        transition: background var(--p-transition);
     }
 
-    .partic-table tbody tr:last-child {
-        border-bottom: none;
-    }
+    .p-table tbody tr:last-child { border-bottom: none; }
 
-    .partic-table tbody tr:hover {
-        background: #faf7fc;
-    }
+    .p-table tbody tr:hover { background: #fbf8fe; }
 
-    .partic-table td {
-        padding: 0.95rem 1rem;
-        font-size: 0.97rem;
-        color: #3a3045;
+    .p-table td {
+        padding: 0.9rem 1rem;
+        font-size: 0.9rem;
+        color: var(--p-text);
         vertical-align: middle;
         white-space: nowrap;
     }
 
-    .badge-sim {
+    .badge {
         display: inline-flex;
         align-items: center;
-        padding: 0.3rem 0.75rem;
-        border-radius: 999px;
-        background: #e6f7eb;
-        color: #1d6b36;
-        font-size: 0.82rem;
+        gap: 0.25rem;
+        padding: 0.25rem 0.65rem;
+        border-radius: var(--p-radius-badge);
+        font-size: 0.78rem;
         font-weight: 700;
+        white-space: nowrap;
     }
 
-    .badge-nao {
-        display: inline-flex;
-        align-items: center;
-        padding: 0.3rem 0.75rem;
-        border-radius: 999px;
-        background: #f3f0f8;
-        color: #7a7280;
-        font-size: 0.82rem;
-        font-weight: 700;
-    }
+    .badge-sim      { background: var(--p-green-bg);  color: var(--p-green-text); }
+    .badge-nao      { background: var(--p-purple-bg); color: var(--p-purple-1); }
+    .badge-pago     { background: var(--p-green-bg);  color: var(--p-green-text); }
+    .badge-parcial  { background: var(--p-orange-bg); color: var(--p-orange-text); }
+    .badge-pendente { background: var(--p-red-bg);    color: var(--p-red-text); }
+    .badge-sem      { background: #f3f0f8; color: var(--p-faint); }
+    .badge-count    { background: var(--p-purple-hl); color: var(--p-purple-1); }
 
-    .badge-count {
-        display: inline-flex;
-        align-items: center;
-        padding: 0.3rem 0.75rem;
-        border-radius: 999px;
-        background: #efe7f5;
-        color: #6b2d8f;
-        font-size: 0.82rem;
-        font-weight: 700;
-    }
-
-    .badge-pago {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.3rem;
-        padding: 0.28rem 0.7rem;
-        border-radius: 999px;
-        background: #e6f7eb;
-        color: #1d6b36;
-        font-size: 0.8rem;
-        font-weight: 700;
-    }
-
-    .badge-parcial {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.3rem;
-        padding: 0.28rem 0.7rem;
-        border-radius: 999px;
-        background: #fff8e6;
-        color: #a06000;
-        font-size: 0.8rem;
-        font-weight: 700;
-    }
-
-    .badge-pendente {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.3rem;
-        padding: 0.28rem 0.7rem;
-        border-radius: 999px;
-        background: #fdecea;
-        color: #b71c1c;
-        font-size: 0.8rem;
-        font-weight: 700;
-    }
-
-    .badge-sem {
-        display: inline-flex;
-        align-items: center;
-        padding: 0.28rem 0.7rem;
-        border-radius: 999px;
-        background: #f3f0f8;
-        color: #b0a8b8;
-        font-size: 0.8rem;
-        font-weight: 600;
-    }
-
-    .partic-empty {
+    .p-empty {
         text-align: center;
-        padding: 3rem 1rem;
+        padding: 3.5rem 1rem;
     }
 
-    .partic-empty h5 {
-        color: #4a235f;
-        margin: 0 0 0.5rem;
+    .p-empty-icon {
+        width: 48px;
+        height: 48px;
+        margin: 0 auto 1rem;
+        background: var(--p-purple-bg);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--p-purple-1);
     }
 
-    .partic-empty p {
-        color: #9a8fa4;
+    .p-empty h3 {
+        margin: 0 0 0.4rem;
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--p-purple-3);
+    }
+
+    .p-empty p {
         margin: 0;
-        font-size: 0.95rem;
+        font-size: 0.88rem;
+        color: var(--p-muted);
     }
 
-    .btn-partic-primary {
+    .btn {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        padding: 0.82rem 1.35rem;
-        background: linear-gradient(135deg, #6b2d8f 0%, #7e3aa5 100%);
-        color: white;
+        gap: 0.4rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background var(--p-transition), box-shadow var(--p-transition), transform var(--p-transition);
+        text-decoration: none;
+        white-space: nowrap;
         border: none;
-        border-radius: 10px;
-        font-weight: 700;
-        font-size: 0.95rem;
-        cursor: pointer;
-        white-space: nowrap;
-        box-shadow: 0 6px 14px rgba(107, 45, 143, 0.18);
-        text-decoration: none;
-        transition: box-shadow 0.18s, transform 0.18s;
+        font-family: inherit;
     }
 
-    .btn-partic-primary:hover {
+    .btn-primary {
+        padding: 0.72rem 1.3rem;
+        background: var(--p-purple-1);
+        color: #fff;
+        border-radius: var(--p-radius-sm);
+        font-size: 0.9rem;
+        box-shadow: 0 2px 8px rgba(107, 45, 143, 0.25);
+    }
+
+    .btn-primary:hover {
+        background: var(--p-purple-3);
         transform: translateY(-1px);
-        box-shadow: 0 8px 18px rgba(107, 45, 143, 0.22);
-        color: white;
+        box-shadow: 0 4px 12px rgba(107, 45, 143, 0.30);
+        color: #fff;
     }
 
-    .btn-partic-sm {
-        display: inline-flex;
-        align-items: center;
-        padding: 0.45rem 0.9rem;
-        background: #efe7f5;
-        color: #6b2d8f;
-        border: 1px solid #d9cbe4;
-        border-radius: 8px;
-        font-weight: 700;
-        font-size: 0.85rem;
-        text-decoration: none;
-        transition: background 0.15s;
-        white-space: nowrap;
+    .btn-ghost {
+        padding: 0.4rem 0.85rem;
+        background: var(--p-purple-hl);
+        color: var(--p-purple-1);
+        border-radius: var(--p-radius-sm);
+        font-size: 0.82rem;
+        border: 1px solid rgba(107, 45, 143, 0.15);
     }
 
-    .btn-partic-sm:hover {
-        background: #e4d7f0;
-        color: #4a235f;
+    .btn-ghost:hover {
+        background: #e2d6f0;
+        color: var(--p-purple-3);
     }
 
-    .btn-partic-danger {
-        display: inline-flex;
-        align-items: center;
-        padding: 0.45rem 0.9rem;
-        background: #fdecea;
-        color: #b71c1c;
-        border: 1px solid #f5c6c6;
-        border-radius: 8px;
-        font-weight: 700;
-        font-size: 0.85rem;
-        cursor: pointer;
-        white-space: nowrap;
-        transition: background 0.15s;
+    .btn-danger {
+        padding: 0.4rem 0.85rem;
+        background: var(--p-red-bg);
+        color: var(--p-red-text);
+        border-radius: var(--p-radius-sm);
+        font-size: 0.82rem;
+        border: 1px solid rgba(183, 28, 28, 0.15);
     }
 
-    .btn-partic-danger:hover {
+    .btn-danger:hover {
         background: #fbd5d5;
         color: #7f1212;
     }
 
-    .btn-partic-back {
-        padding: 0.78rem 1.25rem;
-        background: #f3f3f3;
-        color: #444;
-        text-decoration: none;
-        border: 1px solid #ddd;
-        border-radius: 10px;
+    .btn-back {
+        padding: 0.62rem 1.1rem;
+        background: #fff;
+        color: var(--p-muted);
+        border-radius: var(--p-radius-sm);
+        font-size: 0.88rem;
         font-weight: 600;
-        display: inline-block;
+        border: 1px solid var(--p-border);
     }
 
-    .btn-partic-back:hover {
-        background: #ececec;
-        color: #222;
+    .btn-back:hover {
+        background: var(--p-surface-2);
+        color: var(--p-text);
     }
 
-    .acoes-cell {
+    .p-acoes {
         display: flex;
-        gap: 0.5rem;
+        gap: 0.4rem;
         align-items: center;
     }
 
@@ -390,32 +413,45 @@
         z-index: 1000;
         align-items: center;
         justify-content: center;
+        backdrop-filter: blur(2px);
     }
 
-    .modal-overlay.ativo {
-        display: flex;
-    }
+    .modal-overlay.ativo { display: flex; }
 
     .modal-box {
-        background: white;
+        background: #fff;
         border-radius: 18px;
         padding: 2rem;
-        max-width: 420px;
+        max-width: 400px;
         width: 90%;
-        box-shadow: 0 12px 40px rgba(0,0,0,0.18);
+        box-shadow: 0 16px 48px rgba(0,0,0,0.18);
         text-align: center;
     }
 
+    .modal-icon {
+        width: 52px;
+        height: 52px;
+        background: var(--p-red-bg);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        color: var(--p-red-text);
+    }
+
     .modal-box h3 {
-        margin: 0 0 0.75rem;
-        color: #2f2438;
+        margin: 0 0 0.6rem;
+        color: var(--p-text);
+        font-size: 1.05rem;
+        font-weight: 800;
     }
 
     .modal-box p {
-        color: #7a7280;
+        color: var(--p-muted);
         margin: 0 0 1.5rem;
         line-height: 1.6;
-        font-size: 0.97rem;
+        font-size: 0.92rem;
     }
 
     .modal-actions {
@@ -425,79 +461,60 @@
     }
 
     .btn-modal-cancel {
-        padding: 0.7rem 1.4rem;
+        padding: 0.65rem 1.3rem;
         background: #f3f0f8;
-        color: #4a235f;
-        border: 1px solid #d9cbe4;
+        color: var(--p-purple-3);
+        border: 1px solid rgba(107, 45, 143, 0.15);
         border-radius: 8px;
         font-weight: 600;
         cursor: pointer;
-        font-size: 0.95rem;
+        font-size: 0.92rem;
+        font-family: inherit;
+        transition: background var(--p-transition);
     }
 
+    .btn-modal-cancel:hover { background: #e8e0f4; }
+
     .btn-modal-confirm {
-        padding: 0.7rem 1.4rem;
-        background: #b71c1c;
-        color: white;
+        padding: 0.65rem 1.3rem;
+        background: var(--p-red-text);
+        color: #fff;
         border: none;
         border-radius: 8px;
         font-weight: 700;
         cursor: pointer;
-        font-size: 0.95rem;
+        font-size: 0.92rem;
+        font-family: inherit;
+        transition: background var(--p-transition);
     }
 
+    .btn-modal-confirm:hover { background: #7f1212; }
+
     @media (max-width: 900px) {
-        .partic-totais-grid {
-            grid-template-columns: 1fr 1fr;
-        }
+        .p-totais { grid-template-columns: 1fr 1fr; }
     }
 
     @media (max-width: 640px) {
-        .partic-header {
-            align-items: stretch;
-        }
-
-        .partic-header > div,
-        .partic-header-actions {
-            width: 100%;
-        }
-
-        .partic-header-actions a {
-            width: 100%;
-            text-align: center;
-        }
-
-        .partic-shell {
-            max-width: 100%;
-        }
-
-        .partic-top,
-        .partic-body,
-        .partic-section {
-            padding: 1.2rem;
-        }
-
-        .partic-totais-grid {
-            grid-template-columns: 1fr;
-        }
-
-        .partic-add-grid {
-            grid-template-columns: 1fr;
-        }
-
-        .partic-add-grid button {
-            width: 100%;
-        }
-
-        .partic-table-wrapper {
-            border-radius: 8px;
-        }
+        .p-header { align-items: stretch; }
+        .p-header-actions { width: 100%; }
+        .p-totais { grid-template-columns: 1fr; }
+        .p-add-form { grid-template-columns: 1fr; }
+        .p-add-form .btn-primary { width: 100%; }
+        .p-section-body { padding: 1.1rem; }
     }
 </style>
 
 <!-- Modal de confirmação de exclusão -->
 <div class="modal-overlay" id="modalExcluir">
     <div class="modal-box">
+        <div class="modal-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                <path d="M10 11v6M14 11v6"/>
+                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+            </svg>
+        </div>
         <h3>Remover participação?</h3>
         <p>
             Tem certeza que deseja remover a participação de
@@ -506,7 +523,7 @@
         </p>
         <div class="modal-actions">
             <button class="btn-modal-cancel" onclick="fecharModal()">Cancelar</button>
-            <form id="formExcluir" method="post" action="">
+            <form id="formExcluir" method="post" action="" style="display:contents;">
                 {% csrf_token %}
                 <button type="submit" class="btn-modal-confirm">Sim, remover</button>
             </form>
@@ -514,190 +531,195 @@
     </div>
 </div>
 
-<div class="partic-header">
-    <div>
-        <h2 style="margin: 0 0 0.25rem 0; color: #4a235f;">Participações do espetáculo</h2>
-        <p style="margin: 0 0 0.2rem; color: #6f6f78; font-weight: 600; font-size: 1rem;">
-            {{ espetaculo.titulo }}{% if espetaculo.subtitulo %} — {{ espetaculo.subtitulo }}{% endif %}
-        </p>
-        <p style="margin: 0; color: #9a8fa4; font-size: 0.92rem;">
-            {{ total_participacoes }} participação{{ total_participacoes|pluralize:",ões" }} cadastrada{{ total_participacoes|pluralize }}
-        </p>
+<div class="p-page">
+
+    <!-- Cabeçalho -->
+    <div class="p-header">
+        <div class="p-header-title">
+            <div class="p-header-eyebrow">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+                Participações
+            </div>
+            <h1>
+                {{ espetaculo.titulo }}{% if espetaculo.subtitulo %} <span style="color:var(--p-muted);font-weight:500;">— {{ espetaculo.subtitulo }}</span>{% endif %}
+            </h1>
+            <p class="p-header-sub">
+                {{ total_participacoes }} participação{{ total_participacoes|pluralize:",ões" }} cadastrada{{ total_participacoes|pluralize }}
+            </p>
+        </div>
+        <div class="p-header-actions">
+            <a href="{% url 'admin_dashboard:espetaculos_list' %}" class="btn btn-back">
+                ← Voltar para espetáculos
+            </a>
+        </div>
     </div>
 
-    <div class="partic-header-actions">
-        <a href="{% url 'admin_dashboard:espetaculos_list' %}" class="btn-partic-back">
-            Voltar para espetáculos
-        </a>
+    <!-- Cards de totais -->
+    <div class="p-totais">
+        <div class="p-total-card card-palco">
+            <span class="p-total-label">Taxa de palco</span>
+            <span class="p-total-valor">R$ {{ total_recebido_taxa_palco|floatformat:2 }}</span>
+            <span class="p-total-desc">Cobranças pagas de taxa de palco</span>
+        </div>
+        <div class="p-total-card card-figurino">
+            <span class="p-total-label">Figurino</span>
+            <span class="p-total-valor">R$ {{ total_recebido_figurino|floatformat:2 }}</span>
+            <span class="p-total-desc">Cobranças pagas de figurino</span>
+        </div>
+        <div class="p-total-card card-geral">
+            <span class="p-total-label">Total geral</span>
+            <span class="p-total-valor">R$ {{ total_recebido_geral|floatformat:2 }}</span>
+            <span class="p-total-desc">Soma de todos os pagamentos</span>
+        </div>
     </div>
-</div>
 
-<div class="partic-shell">
-    <div class="partic-main">
-        <div class="partic-top">
-            <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
-                <div>
-                    <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1.15rem;">Gestão de participações</h3>
-                    <p style="margin: 0; color: #7a7280; font-size: 0.95rem;">
-                        Gerencie as alunas, cobranças e veja os totais recebidos por categoria.
-                    </p>
-                </div>
-                <div style="padding: 0.55rem 0.9rem; border-radius: 999px; background: #efe7f5; color: #6b2d8f; font-size: 0.85rem; font-weight: 600;">
-                    BKN Tech
-                </div>
+    <!-- Adicionar aluna -->
+    <div class="p-section">
+        <div class="p-section-head">
+            <div class="p-section-head-text">
+                <h2>Adicionar aluna</h2>
+                <p>Selecione uma aluna disponível e confirme a participação.</p>
             </div>
         </div>
-
-        <div class="partic-body">
-
-            <!-- Cards de totais recebidos -->
-            <section class="partic-section">
-                <h3 class="partic-section-title">Totais recebidos</h3>
-                <p class="partic-section-subtitle">Valores já confirmados como pagos para este espetáculo.</p>
-
-                <div class="partic-totais-grid">
-                    <div class="partic-total-card card-palco">
-                        <span class="partic-total-label">Taxa de palco</span>
-                        <span class="partic-total-valor">R$ {{ total_recebido_taxa_palco|floatformat:2 }}</span>
-                        <span class="partic-total-desc">Cobranças pagas de taxa de palco</span>
+        <div class="p-section-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="p-add-form">
+                    <div class="p-field">
+                        <label for="aluna_id">Aluna</label>
+                        <select name="aluna_id" id="aluna_id" class="p-select" required>
+                            <option value="">Selecione uma aluna...</option>
+                            {% for aluna in alunas_disponiveis %}
+                                <option value="{{ aluna.id }}">{{ aluna.nome }}</option>
+                            {% endfor %}
+                        </select>
                     </div>
-
-                    <div class="partic-total-card card-figurino">
-                        <span class="partic-total-label">Figurino</span>
-                        <span class="partic-total-valor">R$ {{ total_recebido_figurino|floatformat:2 }}</span>
-                        <span class="partic-total-desc">Cobranças pagas de figurino</span>
-                    </div>
-
-                    <div class="partic-total-card card-geral">
-                        <span class="partic-total-label">Total geral</span>
-                        <span class="partic-total-valor">R$ {{ total_recebido_geral|floatformat:2 }}</span>
-                        <span class="partic-total-desc">Soma de todos os pagamentos</span>
+                    <div class="p-field">
+                        <label style="color: transparent; user-select: none;">.</label>
+                        <button type="submit" class="btn btn-primary">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="12" y1="5" x2="12" y2="19"/>
+                                <line x1="5" y1="12" x2="19" y2="12"/>
+                            </svg>
+                            Adicionar participação
+                        </button>
                     </div>
                 </div>
-            </section>
-
-            <!-- Adicionar aluna -->
-            <section class="partic-section">
-                <h3 class="partic-section-title">Adicionar aluna ao espetáculo</h3>
-                <p class="partic-section-subtitle">Selecione uma aluna disponível e confirme a participação.</p>
-
-                <form method="post">
-                    {% csrf_token %}
-                    <div class="partic-add-grid">
-                        <div>
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Aluna</label>
-                            <select name="aluna_id" id="aluna_id" class="partic-select" required>
-                                <option value="">Selecione uma aluna...</option>
-                                {% for aluna in alunas_disponiveis %}
-                                    <option value="{{ aluna.id }}">{{ aluna.nome }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div>
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: transparent;">Ação</label>
-                            <button type="submit" class="btn-partic-primary" style="width: 100%;">
-                                Adicionar participação
-                            </button>
-                        </div>
-                    </div>
-                </form>
-            </section>
-
-            <!-- Tabela de participações -->
-            <section class="partic-section">
-                <h3 class="partic-section-title">Participações cadastradas</h3>
-                <p class="partic-section-subtitle">Lista de todas as alunas vinculadas a este espetáculo.</p>
-
-                {% if participacoes %}
-                    <div class="partic-table-wrapper">
-                        <table class="partic-table">
-                            <thead>
-                                <tr>
-                                    <th>Aluna</th>
-                                    <th>Responsável</th>
-                                    <th>Vai dançar?</th>
-                                    <th>Taxa de palco</th>
-                                    <th>Figurino</th>
-                                    <th>Cobranças</th>
-                                    <th>Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for participacao in participacoes %}
-                                    {% with status=status_por_participacao|get_item:participacao.pk %}
-                                    <tr>
-                                        <td>
-                                            <strong style="color: #4a235f;">{{ participacao.aluna.nome }}</strong>
-                                        </td>
-                                        <td>
-                                            {% if participacao.aluna.responsavel %}
-                                                {{ participacao.aluna.responsavel.first_name }} {{ participacao.aluna.responsavel.last_name }}
-                                            {% else %}
-                                                <span style="color: #b0a8b8;">—</span>
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            {% if participacao.vai_dancar %}
-                                                <span class="badge-sim">Sim</span>
-                                            {% else %}
-                                                <span class="badge-nao">Não</span>
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            {% if status.taxa_palco_status == 'pago' %}
-                                                <span class="badge-pago">✓ Pago</span>
-                                            {% elif status.taxa_palco_status == 'parcial' %}
-                                                <span class="badge-parcial">◑ Parcial</span>
-                                            {% elif status.taxa_palco_status == 'pendente' %}
-                                                <span class="badge-pendente">✗ Pendente</span>
-                                            {% else %}
-                                                <span class="badge-sem">Sem cobrança</span>
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            {% if status.figurino_status == 'pago' %}
-                                                <span class="badge-pago">✓ Pago</span>
-                                            {% elif status.figurino_status == 'parcial' %}
-                                                <span class="badge-parcial">◑ Parcial</span>
-                                            {% elif status.figurino_status == 'pendente' %}
-                                                <span class="badge-pendente">✗ Pendente</span>
-                                            {% else %}
-                                                <span class="badge-sem">Sem cobrança</span>
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            <span class="badge-count">{{ participacao.cobrancas.count }}</span>
-                                        </td>
-                                        <td>
-                                            <div class="acoes-cell">
-                                                <a href="{% url 'admin_dashboard:participacao_cobrancas' participacao.pk %}"
-                                                   class="btn-partic-sm">
-                                                    Cobranças
-                                                </a>
-                                                <button
-                                                    type="button"
-                                                    class="btn-partic-danger"
-                                                    onclick="abrirModal('{{ participacao.aluna.nome|escapejs }}', '{% url 'admin_dashboard:excluir_participacao' participacao.pk %}')">
-                                                    Excluir
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    {% endwith %}
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                {% else %}
-                    <div class="partic-empty">
-                        <h5>Nenhuma participação cadastrada</h5>
-                        <p>Ainda não há alunas vinculadas a este espetáculo.</p>
-                    </div>
-                {% endif %}
-            </section>
-
+            </form>
         </div>
     </div>
+
+    <!-- Tabela de participações -->
+    <div class="p-section">
+        <div class="p-section-head">
+            <div class="p-section-head-text">
+                <h2>Participações cadastradas</h2>
+                <p>Lista de todas as alunas vinculadas a este espetáculo.</p>
+            </div>
+            {% if participacoes %}
+                <span class="badge badge-count">{{ total_participacoes }}</span>
+            {% endif %}
+        </div>
+
+        {% if participacoes %}
+        <div class="p-table-wrap">
+            <table class="p-table">
+                <thead>
+                    <tr>
+                        <th>Aluna</th>
+                        <th>Responsável</th>
+                        <th>Vai dançar?</th>
+                        <th>Taxa de palco</th>
+                        <th>Figurino</th>
+                        <th>Cobranças</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for participacao in participacoes %}
+                        {% with status=status_por_participacao|get_item:participacao.pk %}
+                        <tr>
+                            <td>
+                                <strong style="color: var(--p-purple-3);">{{ participacao.aluna.nome }}</strong>
+                            </td>
+                            <td style="color: var(--p-muted);">
+                                {% if participacao.aluna.responsavel %}
+                                    {{ participacao.aluna.responsavel.first_name }} {{ participacao.aluna.responsavel.last_name }}
+                                {% else %}
+                                    <span style="color: var(--p-faint);">—</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if participacao.vai_dancar %}
+                                    <span class="badge badge-sim">✓ Sim</span>
+                                {% else %}
+                                    <span class="badge badge-nao">Não</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if status.taxa_palco_status == 'pago' %}
+                                    <span class="badge badge-pago">✓ Pago</span>
+                                {% elif status.taxa_palco_status == 'parcial' %}
+                                    <span class="badge badge-parcial">◑ Parcial</span>
+                                {% elif status.taxa_palco_status == 'pendente' %}
+                                    <span class="badge badge-pendente">✗ Pendente</span>
+                                {% else %}
+                                    <span class="badge badge-sem">Sem cobrança</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if status.figurino_status == 'pago' %}
+                                    <span class="badge badge-pago">✓ Pago</span>
+                                {% elif status.figurino_status == 'parcial' %}
+                                    <span class="badge badge-parcial">◑ Parcial</span>
+                                {% elif status.figurino_status == 'pendente' %}
+                                    <span class="badge badge-pendente">✗ Pendente</span>
+                                {% else %}
+                                    <span class="badge badge-sem">Sem cobrança</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge badge-count">{{ participacao.cobrancas.count }}</span>
+                            </td>
+                            <td>
+                                <div class="p-acoes">
+                                    <a href="{% url 'admin_dashboard:participacao_cobrancas' participacao.pk %}" class="btn btn-ghost">
+                                        Cobranças
+                                    </a>
+                                    <button
+                                        type="button"
+                                        class="btn btn-danger"
+                                        onclick="abrirModal('{{ participacao.aluna.nome|escapejs }}', '{% url 'admin_dashboard:excluir_participacao' participacao.pk %}')">
+                                        Excluir
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endwith %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-empty">
+            <div class="p-empty-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <line x1="23" y1="11" x2="17" y2="11"/>
+                </svg>
+            </div>
+            <h3>Nenhuma participação cadastrada</h3>
+            <p>Ainda não há alunas vinculadas a este espetáculo.<br>Adicione a primeira acima.</p>
+        </div>
+        {% endif %}
+    </div>
+
 </div>
 
 <script>
@@ -713,6 +735,10 @@
 
     document.getElementById('modalExcluir').addEventListener('click', function(e) {
         if (e.target === this) fecharModal();
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') fecharModal();
     });
 </script>
 {% endblock %}
