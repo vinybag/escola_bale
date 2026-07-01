@@ -609,55 +609,50 @@ def aluna_definir_senha(request, pk):
 
 @login_required
 def mensalidades_list(request):
-    """Lista de mensalidades com filtros"""
-    
     if not request.user.is_staff:
         return redirect('home')
-    
+
     try:
         from pagamentos.models import Mensalidade
         from django.db.models import Q
-        
-        # Query base
-        mensalidades = Mensalidade.objects.select_related('aluna', 'aluna__responsavel').all()
-        
-        # Busca
+
+        mensalidades_qs = Mensalidade.objects.select_related('aluna', 'aluna__responsavel').all()
+
         busca = request.GET.get('busca', '')
         if busca:
-            mensalidades = mensalidades.filter(
+            mensalidades_qs = mensalidades_qs.filter(
                 Q(aluna__nome__icontains=busca) |
                 Q(aluna__responsavel__first_name__icontains=busca) |
                 Q(aluna__responsavel__last_name__icontains=busca)
             )
-        
-        # Filtro por status
-        status = request.GET.get('status', '')
-        if status:
-            mensalidades = mensalidades.filter(status=status)
-        
-        # Filtro por mes
+
         mes = request.GET.get('mes', '')
         if mes:
-            mensalidades = mensalidades.filter(mes_referencia__month=mes)
-        
-        # Ordenacao
-        mensalidades = mensalidades.order_by('-mes_referencia', 'aluna__nome')
-        
+            mensalidades_qs = mensalidades_qs.filter(mes_referencia__month=mes)
+
+        mensalidades_qs = mensalidades_qs.order_by('-mes_referencia', 'aluna__nome')
+
+        mensalidades = list(mensalidades_qs)
+
+        status = request.GET.get('status', '')
+        if status:
+            mensalidades = [m for m in mensalidades if m.status_atual == status]
+
     except Exception as e:
         print(f"Erro ao buscar mensalidades: {e}")
         mensalidades = []
         busca = ''
         status = ''
         mes = ''
-    
+
     context = {
         'mensalidades': mensalidades,
         'busca': busca,
         'status_filtro': status,
         'mes_filtro': mes,
-        'total_mensalidades': mensalidades.count() if mensalidades else 0,
+        'total_mensalidades': len(mensalidades),
     }
-    
+
     return render(request, 'admin_dashboard/mensalidades/list.html', context)
 
 

@@ -91,7 +91,7 @@ def pagar(request, mensalidade_id):
         responsavel=request.user
     )
 
-    if mensalidade.status == 'pago':
+    if mensalidade.status_atual == 'pago':
         return redirect('mensalidades')
 
     context = {
@@ -102,9 +102,11 @@ def pagar(request, mensalidade_id):
 
 @login_required
 def pagar_pix(request, mensalidade_id):
+    from decimal import Decimal
+
     mensalidade = get_object_or_404(Mensalidade, id=mensalidade_id, responsavel=request.user)
 
-    if mensalidade.status == 'pago':
+    if mensalidade.status_atual == 'pago':
         return redirect('mensalidades')
 
     try:
@@ -122,6 +124,7 @@ def pagar_pix(request, mensalidade_id):
             'cpfCnpj': cpf_cliente,
         }
 
+        valor_cobranca = mensalidade.valor_atualizado
         descricao = f"Mensalidade {mensalidade.aluna.nome} - {mensalidade.mes_referencia.strftime('%m/%Y')}"
         external_reference = f"mensalidade:{mensalidade.id}"
         payment_id_existente = mensalidade.asaas_payment_id
@@ -132,24 +135,33 @@ def pagar_pix(request, mensalidade_id):
 
             if cobranca_existente:
                 status_existente = cobranca_existente.get('status')
+                valor_existente = Decimal(str(cobranca_existente.get('value', '0.00'))).quantize(Decimal('0.01'))
+                valor_atual = Decimal(str(valor_cobranca)).quantize(Decimal('0.01'))
 
                 if status_existente == 'RECEIVED':
                     marcar_mensalidade_como_paga(mensalidade, 'pix', payment_id_existente)
                     return redirect(f'/pagamentos/sucesso/?mensalidade_id={mensalidade.id}')
 
                 if status_existente in ['PENDING', 'OVERDUE']:
-                    qrcode_data = asaas.obter_qrcode_pix(payment_id_existente)
-                    pix_data = extrair_pix_data(qrcode_data)
-                    context = montar_pix_contexto(
-                        mensalidade=mensalidade,
-                        payment_id=payment_id_existente,
-                        pix_data=pix_data,
-                        valor=cobranca_existente.get('value', mensalidade.valor),
+                    if valor_existente == valor_atual:
+                        qrcode_data = asaas.obter_qrcode_pix(payment_id_existente)
+                        pix_data = extrair_pix_data(qrcode_data)
+                        context = montar_pix_contexto(
+                            mensalidade=mensalidade,
+                            payment_id=payment_id_existente,
+                            pix_data=pix_data,
+                            valor=valor_existente,
+                        )
+                        return render(request, 'pagamentos/pix.html', context)
+
+                    print(
+                        f"[PIX] Valor desatualizado na cobrança existente. "
+                        f"Asaas={valor_existente} | Sistema={valor_atual}. "
+                        f"Nova cobrança será criada."
                     )
-                    return render(request, 'pagamentos/pix.html', context)
 
         resultado = asaas.criar_cobranca_pix(
-            valor=mensalidade.valor,
+            valor=valor_cobranca,
             descricao=descricao,
             customer_data=customer_data,
             external_reference=external_reference,
@@ -173,7 +185,7 @@ def pagar_pix(request, mensalidade_id):
             mensalidade.asaas_payment_id = resultado['id']
             if 'customer' in resultado:
                 mensalidade.asaas_customer_id = resultado['customer']
-            mensalidade.save()
+            mensalidade.save(update_fields=['asaas_payment_id', 'asaas_customer_id'] if 'customer' in resultado else ['asaas_payment_id'])
 
             if resultado.get('status') == 'RECEIVED':
                 marcar_mensalidade_como_paga(mensalidade, 'pix', resultado['id'])
@@ -185,7 +197,7 @@ def pagar_pix(request, mensalidade_id):
                 mensalidade=mensalidade,
                 payment_id=resultado['id'],
                 pix_data=pix_data,
-                valor=resultado.get('value'),
+                valor=resultado.get('value', valor_cobranca),
             )
             return render(request, 'pagamentos/pix.html', context)
 
