@@ -29,13 +29,15 @@
         border: 1px solid #ebe3f1;
         border-radius: 18px;
         box-shadow: 0 8px 24px rgba(107, 45, 143, 0.08);
-        overflow: hidden;
+        overflow: visible;
     }
 
     .partic-top {
         padding: 1.5rem 2rem;
         background: linear-gradient(135deg, #ffffff 0%, #f5eff9 100%);
         border-bottom: 1px solid #ece3f2;
+        border-radius: 18px 18px 0 0;
+        overflow: hidden;
     }
 
     .partic-body {
@@ -50,6 +52,7 @@
         border: 1px solid #ece3f2;
         border-radius: 16px;
         padding: 1.5rem;
+        overflow: visible;
     }
 
     .partic-section-title {
@@ -147,7 +150,6 @@
         box-shadow: 0 0 0 4px rgba(107, 45, 143, 0.10);
     }
 
-    /* Tabela responsiva com scroll */
     .partic-table-wrapper {
         width: 100%;
         overflow-x: auto;
@@ -157,7 +159,7 @@
 
     .partic-table {
         width: 100%;
-        min-width: 700px; /* força scroll antes de quebrar */
+        min-width: 700px;
         border-collapse: collapse;
     }
 
@@ -198,7 +200,6 @@
         white-space: nowrap;
     }
 
-    /* Badges */
     .badge-sim {
         display: inline-flex;
         align-items: center;
@@ -295,7 +296,6 @@
         font-size: 0.95rem;
     }
 
-    /* Botões */
     .btn-partic-primary {
         display: inline-flex;
         align-items: center;
@@ -382,7 +382,6 @@
         align-items: center;
     }
 
-    /* Modal de confirmação */
     .modal-overlay {
         display: none;
         position: fixed;
@@ -490,7 +489,6 @@
             width: 100%;
         }
 
-        /* No mobile, mantém a tabela com scroll — NÃO quebra em cards */
         .partic-table-wrapper {
             border-radius: 8px;
         }
