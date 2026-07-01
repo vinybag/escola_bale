@@ -2448,6 +2448,9 @@ def espetaculo_participacoes(request, pk):
         return redirect('home')
 
     try:
+        from decimal import Decimal
+        from django.db.models import Sum, Prefetch
+        from django.shortcuts import get_object_or_404
         from espetaculo.models import (
             Espetaculo,
             ParticipacaoEspetaculo,
@@ -2484,7 +2487,12 @@ def espetaculo_participacoes(request, pk):
             ParticipacaoEspetaculo.objects
             .select_related('aluna', 'aluna__responsavel')
             .filter(espetaculo=espetaculo)
-            .prefetch_related('cobrancas')
+            .prefetch_related(
+                Prefetch(
+                    'cobrancas',
+                    queryset=CobrancaEspetaculo.objects.prefetch_related('parcelas').order_by('-criado_em')
+                )
+            )
             .order_by('aluna__nome')
         )
 
@@ -2510,15 +2518,50 @@ def espetaculo_participacoes(request, pk):
 
         total_recebido_geral = total_recebido_taxa_palco + total_recebido_figurino
 
-        # Monta dict de status de figurino e taxa de palco por participação
+        def resolver_status_cobranca(cobranca):
+            if not cobranca:
+                return None
+
+            total_pago = getattr(cobranca, 'total_pago', None)
+            total_pendente = getattr(cobranca, 'total_pendente', None)
+            valor_total = getattr(cobranca, 'valor_total', Decimal('0.00')) or Decimal('0.00')
+
+            if total_pago is not None:
+                total_pago = total_pago or Decimal('0.00')
+                if valor_total > 0 and total_pago >= valor_total:
+                    return 'pago'
+                if total_pago > 0:
+                    return 'parcial'
+
+            if total_pendente is not None:
+                total_pendente = total_pendente or Decimal('0.00')
+                if total_pendente <= 0 and valor_total > 0:
+                    return 'pago'
+
+            parcelas = list(cobranca.parcelas.all())
+
+            if not parcelas:
+                status_cobranca = getattr(cobranca, 'status', None)
+                return status_cobranca if status_cobranca else 'pendente'
+
+            parcelas_pagas_qtd = sum(1 for parcela in parcelas if parcela.status == 'pago')
+
+            if parcelas_pagas_qtd == len(parcelas):
+                return 'pago'
+            if parcelas_pagas_qtd > 0:
+                return 'parcial'
+            return 'pendente'
+
         status_por_participacao = {}
         for p in participacoes:
-            cobrancas_p = p.cobrancas.all()
-            taxa = cobrancas_p.filter(tipo='taxa_palco').first()
-            figurino = cobrancas_p.filter(tipo='figurino').first()
+            cobrancas_p = list(p.cobrancas.all())
+
+            taxa = next((c for c in cobrancas_p if c.tipo == 'taxa_palco'), None)
+            figurino = next((c for c in cobrancas_p if c.tipo == 'figurino'), None)
+
             status_por_participacao[p.pk] = {
-                'taxa_palco_status': taxa.status if taxa else None,
-                'figurino_status': figurino.status if figurino else None,
+                'taxa_palco_status': resolver_status_cobranca(taxa),
+                'figurino_status': resolver_status_cobranca(figurino),
             }
 
         context = {
