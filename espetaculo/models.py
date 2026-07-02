@@ -205,6 +205,12 @@ class ParticipacaoEspetaculo(models.Model):
         return f'{self.aluna.nome} - {self.espetaculo.titulo}'
 
 
+from decimal import Decimal, ROUND_HALF_UP
+from django.core.exceptions import ValidationError
+from django.db import models
+from django.utils import timezone
+
+
 class CobrancaEspetaculo(models.Model):
     TIPO_CHOICES = (
         ('taxa_palco', 'Taxa de palco'),
@@ -299,6 +305,12 @@ class CobrancaEspetaculo(models.Model):
                 raise ValidationError({
                     'valor_figurino_parcelado': 'O valor parcelado do figurino deve ser maior que zero.'
                 })
+
+    def _parcelas_prefetch(self):
+        cache = getattr(self, '_prefetched_objects_cache', {})
+        if 'parcelas' in cache:
+            return list(cache['parcelas'])
+        return None
 
     @property
     def pode_pagar_a_vista(self):
@@ -444,12 +456,30 @@ class CobrancaEspetaculo(models.Model):
         return opcoes
 
     def total_pago(self):
+        parcelas_cache = self._parcelas_prefetch()
+        if parcelas_cache is not None:
+            total = sum(
+                (p.valor or Decimal('0.00') for p in parcelas_cache if p.status == 'pago'),
+                Decimal('0.00')
+            )
+            return total
+
         total = self.parcelas.filter(status='pago').aggregate(
             total=models.Sum('valor')
         )['total']
         return total or Decimal('0.00')
 
     def valor_total_efetivo(self):
+        parcelas_cache = self._parcelas_prefetch()
+        if parcelas_cache is not None:
+            if parcelas_cache:
+                total = sum(
+                    (p.valor or Decimal('0.00') for p in parcelas_cache),
+                    Decimal('0.00')
+                )
+                return total
+            return self.valor_total
+
         if self.parcelas.exists():
             total = self.parcelas.aggregate(
                 total=models.Sum('valor')
@@ -463,6 +493,26 @@ class CobrancaEspetaculo(models.Model):
         return pendente if pendente > Decimal('0.00') else Decimal('0.00')
 
     def atualizar_status(self):
+        parcelas_cache = self._parcelas_prefetch()
+
+        if parcelas_cache is not None:
+            parcelas = parcelas_cache
+            if parcelas:
+                total = len(parcelas)
+                pagas = sum(1 for p in parcelas if p.status == 'pago')
+
+                if pagas == 0:
+                    self.status = 'pendente'
+                elif pagas == total:
+                    self.status = 'pago'
+                else:
+                    self.status = 'parcial'
+            else:
+                self.status = 'pendente'
+
+            self.save(update_fields=['status'])
+            return
+
         parcelas = self.parcelas.all()
 
         if parcelas.exists():
