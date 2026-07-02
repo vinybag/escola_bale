@@ -45,13 +45,34 @@
                         {% endwith %}
                     </td>
                     <td style="padding: 1rem; text-align: right; white-space: nowrap;">
-                        <a href="{% url 'admin_dashboard:professor_editar' professor.id %}" 
-                           style="color: #2c3e50; text-decoration: none; margin-right: 1rem;">Editar</a>
-                        <form method="post" action="{% url 'admin_dashboard:professor_excluir' professor.id %}" 
+                        {% if professor.aluna_vinculada %}
+                            <span style="color: #27ae60; font-size: 0.85rem; font-weight: 600; margin-right: 1rem;">
+                                Já é aluna
+                            </span>
+                        {% else %}
+                            <form method="post"
+                                  action="{% url 'admin_dashboard:professor_transformar_em_aluna' professor.id %}"
+                                  style="display: inline-block; margin-right: 1rem;"
+                                  onsubmit="return confirm('Deseja cadastrar {{ professor.first_name }} também como aluna usando o mesmo login?');">
+                                {% csrf_token %}
+                                <button type="submit"
+                                        style="background: none; border: none; color: #6b2d8f; cursor: pointer; font-weight: 600;">
+                                    Tornar aluna
+                                </button>
+                            </form>
+                        {% endif %}
+
+                        <a href="{% url 'admin_dashboard:professor_editar' professor.id %}"
+                           style="color: #2c3e50; text-decoration: none; margin-right: 1rem;">
+                            Editar
+                        </a>
+
+                        <form method="post"
+                              action="{% url 'admin_dashboard:professor_excluir' professor.id %}"
                               style="display: inline-block;"
                               onsubmit="return confirm('Tem certeza que deseja excluir o professor {{ professor.first_name }}?');">
                             {% csrf_token %}
-                            <button type="submit" 
+                            <button type="submit"
                                     style="background: none; border: none; color: #e74c3c; cursor: pointer;">
                                 Excluir
                             </button>

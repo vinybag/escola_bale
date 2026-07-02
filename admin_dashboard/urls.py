@@ -69,6 +69,7 @@ urlpatterns = [
     path('professores/', views.professores_list, name='professores_list'),
     path('professores/criar/', views.professor_criar, name='professor_criar'),
     path('professores/<int:pk>/editar/', views.professor_editar, name='professor_editar'),
+    path('professores/<int:pk>/transformar-em-aluna/',views.professor_transformar_em_aluna,name='professor_transformar_em_aluna'),
     path('professores/<int:pk>/excluir/', views.professor_excluir, name='professor_excluir'),
 
     # Professor

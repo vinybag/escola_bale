@@ -2200,17 +2200,21 @@ def professor_criar(request):
 @login_required
 def professores_list(request):
     """Lista de professores"""
-    
+
     if not request.user.is_staff:
         return redirect('home')
-    
+
     from django.contrib.auth.models import User
     from django.db.models import Count
-    
-    professores = User.objects.filter(groups__name='Professores').annotate(
-        total_turmas=Count('turmas_ministradas')
-    ).order_by('first_name')
-    
+
+    professores = (
+        User.objects
+        .filter(groups__name='Professores')
+        .select_related('aluna_vinculada')
+        .annotate(total_turmas=Count('turmas_ministradas'))
+        .order_by('first_name')
+    )
+
     return render(request, 'admin_dashboard/professores/list.html', {'professores': professores})
 
 @login_required
@@ -2288,6 +2292,64 @@ def professor_excluir(request, pk):
     return redirect('admin_dashboard:professores_list')
 
 # ==================== VIEWS PARA PROFESSORES ====================
+
+@login_required
+def professor_transformar_em_aluna(request, pk):
+    """Cadastra um professor também como aluna, usando o mesmo login."""
+
+    if not request.user.is_staff:
+        return redirect('home')
+
+    if request.method != 'POST':
+        return redirect('admin_dashboard:professores_list')
+
+    from django.contrib.auth.models import User
+    from django.contrib import messages
+    from django.shortcuts import get_object_or_404
+    from usuarios.models import Aluna, Perfil
+
+    professor = get_object_or_404(User, pk=pk, groups__name='Professores')
+
+    if hasattr(professor, 'aluna_vinculada') and professor.aluna_vinculada:
+        messages.warning(
+            request,
+            f'{professor.get_full_name() or professor.username} já está cadastrada como aluna.'
+        )
+        return redirect('admin_dashboard:professores_list')
+
+    nome_aluna = (
+        professor.get_full_name().strip()
+        or professor.first_name.strip()
+        or professor.username
+    )
+
+    genero = None
+    data_nascimento = None
+
+    if hasattr(professor, 'perfil'):
+        genero = professor.perfil.genero
+        data_nascimento = professor.perfil.data_nascimento
+
+    Aluna.objects.create(
+        responsavel=None,
+        usuario=professor,
+        tipo_aluna='adulto',
+        nome=nome_aluna,
+        genero=genero,
+        data_nascimento=data_nascimento,
+        ativa=True,
+        observacoes='Cadastro criado automaticamente a partir do perfil de professora.'
+    )
+
+    if hasattr(professor, 'perfil'):
+        professor.perfil.is_tambem_aluno = True
+        professor.perfil.save(update_fields=['is_tambem_aluno'])
+
+    messages.success(
+        request,
+        f'{nome_aluna} foi cadastrada como aluna com sucesso, usando o mesmo login.'
+    )
+    return redirect('admin_dashboard:professores_list')
 
 @login_required
 def professor_dashboard(request):
