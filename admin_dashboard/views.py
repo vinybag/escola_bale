@@ -2444,7 +2444,8 @@ def espetaculo_participacoes(request, pk):
 
     try:
         from decimal import Decimal
-        from django.db.models import Sum, Prefetch
+        from collections import defaultdict
+        from django.db.models import Sum
         from django.shortcuts import get_object_or_404
         from espetaculo.models import (
             Espetaculo,
@@ -2478,40 +2479,40 @@ def espetaculo_participacoes(request, pk):
 
             return redirect('admin_dashboard:espetaculo_participacoes', pk=pk)
 
-        cobrancas_queryset = (
-            CobrancaEspetaculo.objects
-            .prefetch_related('parcelas')
-            .order_by('-criado_em')
-        )
-
-        participacoes = (
+        participacoes = list(
             ParticipacaoEspetaculo.objects
             .select_related('aluna', 'aluna__responsavel')
             .filter(espetaculo=espetaculo)
-            .prefetch_related(
-                Prefetch(
-                    'cobrancas',
-                    queryset=cobrancas_queryset,
-                    to_attr='cobrancas_prefetch'
-                )
-            )
             .order_by('aluna__nome')
         )
+
+        participacao_ids = [p.pk for p in participacoes]
+
+        cobrancas = list(
+            CobrancaEspetaculo.objects
+            .filter(participacao_id__in=participacao_ids)
+            .prefetch_related('parcelas')
+            .order_by('participacao_id', '-criado_em')
+        )
+
+        cobrancas_por_participacao = defaultdict(list)
+        for cobranca in cobrancas:
+            cobrancas_por_participacao[cobranca.participacao_id].append(cobranca)
 
         alunas_disponiveis = (
             Aluna.objects
             .filter(ativa=True)
             .exclude(participacoes_espetaculo__espetaculo=espetaculo)
+            .only('id', 'nome')
             .order_by('nome')
         )
 
-        parcelas_pagas_qs = ParcelaCobrancaEspetaculo.objects.filter(
-            cobranca__participacao__espetaculo=espetaculo,
-            status='pago'
-        )
-
         totais_por_tipo = (
-            parcelas_pagas_qs
+            ParcelaCobrancaEspetaculo.objects
+            .filter(
+                cobranca__participacao__espetaculo=espetaculo,
+                status='pago'
+            )
             .values('cobranca__tipo')
             .annotate(total=Sum('valor'))
         )
@@ -2531,45 +2532,36 @@ def espetaculo_participacoes(request, pk):
             if not cobranca:
                 return None
 
-            total_pago = cobranca.total_pago()
-            valor_total_efetivo = cobranca.valor_total_efetivo()
-            total_pendente = cobranca.total_pendente()
+            parcelas = list(cobranca.parcelas.all())
+            if not parcelas:
+                return 'pendente'
 
-            if valor_total_efetivo > Decimal('0.00') and total_pago >= valor_total_efetivo:
+            total_pago = sum(
+                (parcela.valor or Decimal('0.00') for parcela in parcelas if parcela.status == 'pago'),
+                Decimal('0.00')
+            )
+            total_efetivo = sum(
+                (parcela.valor or Decimal('0.00') for parcela in parcelas),
+                Decimal('0.00')
+            )
+
+            if total_efetivo <= Decimal('0.00'):
+                total_efetivo = cobranca.valor_total or Decimal('0.00')
+
+            if total_pago >= total_efetivo and total_efetivo > Decimal('0.00'):
                 return 'pago'
-
-            if total_pago > Decimal('0.00') and total_pendente > Decimal('0.00'):
-                return 'parcial'
 
             if total_pago > Decimal('0.00'):
                 return 'parcial'
 
-            parcelas_cache = cobranca._parcelas_prefetch()
-            if parcelas_cache is not None:
-                parcelas_total = len(parcelas_cache)
-                parcelas_pagas = sum(1 for p in parcelas_cache if p.status == 'pago')
-
-                if parcelas_total > 0 and parcelas_pagas == parcelas_total:
-                    return 'pago'
-                if parcelas_pagas > 0:
-                    return 'parcial'
-            else:
-                if cobranca.parcelas.exists():
-                    parcelas_total = cobranca.parcelas.count()
-                    parcelas_pagas = cobranca.parcelas.filter(status='pago').count()
-
-                    if parcelas_total > 0 and parcelas_pagas == parcelas_total:
-                        return 'pago'
-                    if parcelas_pagas > 0:
-                        return 'parcial'
-
             return 'pendente'
 
-        participacoes_lista = list(participacoes)
         status_por_participacao = {}
+        quantidade_cobrancas_por_participacao = {}
 
-        for participacao in participacoes_lista:
-            cobrancas_participacao = getattr(participacao, 'cobrancas_prefetch', [])
+        for participacao in participacoes:
+            cobrancas_participacao = cobrancas_por_participacao.get(participacao.pk, [])
+            quantidade_cobrancas_por_participacao[participacao.pk] = len(cobrancas_participacao)
 
             taxa = next((c for c in cobrancas_participacao if c.tipo == 'taxa_palco'), None)
             figurino = next((c for c in cobrancas_participacao if c.tipo == 'figurino'), None)
@@ -2581,13 +2573,14 @@ def espetaculo_participacoes(request, pk):
 
         context = {
             'espetaculo': espetaculo,
-            'participacoes': participacoes_lista,
-            'total_participacoes': len(participacoes_lista),
+            'participacoes': participacoes,
+            'total_participacoes': len(participacoes),
             'alunas_disponiveis': alunas_disponiveis,
             'total_recebido_taxa_palco': total_recebido_taxa_palco,
             'total_recebido_figurino': total_recebido_figurino,
             'total_recebido_geral': total_recebido_geral,
             'status_por_participacao': status_por_participacao,
+            'quantidade_cobrancas_por_participacao': quantidade_cobrancas_por_participacao,
         }
 
         return render(request, 'admin_dashboard/espetaculos/participacoes.html', context)
