@@ -303,7 +303,11 @@ class CobrancaEspetaculo(models.Model):
     @property
     def pode_pagar_a_vista(self):
         hoje = timezone.now().date()
-        return hoje.month == 6
+
+        if hoje.month <= 10:
+            return True
+
+        return False
 
     @property
     def max_parcelas_permitidas_hoje(self):

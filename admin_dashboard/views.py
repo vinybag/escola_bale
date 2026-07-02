@@ -2812,6 +2812,7 @@ def cobranca_espetaculo_escolher_parcelas(request, pk):
         from decimal import Decimal
         from django.db import transaction
         from django.shortcuts import get_object_or_404
+        from django.utils import timezone
         from espetaculo.models import CobrancaEspetaculo, ParcelaCobrancaEspetaculo
         from pagamentos.services.asaas import (
             AsaasError,
@@ -2872,6 +2873,12 @@ def cobranca_espetaculo_escolher_parcelas(request, pk):
         valor_final = cobranca.valor_com_desconto(num_parcelas)
         percentual_desconto = cobranca.percentual_desconto_para(num_parcelas)
 
+        hoje = timezone.localdate()
+        due_date = cobranca.vencimento_primeira_parcela
+
+        if due_date < hoje:
+            due_date = hoje
+
         customer = get_or_create_customer(responsavel)
 
         if not customer or not customer.get('id'):
@@ -2898,7 +2905,7 @@ def cobranca_espetaculo_escolher_parcelas(request, pk):
                 customer_id=customer['id'],
                 total_value=valor_final,
                 installment_count=num_parcelas,
-                due_date=cobranca.vencimento_primeira_parcela,
+                due_date=due_date,
                 description=descricao_base,
                 external_reference=f'cobranca_espetaculo:{cobranca.pk}',
                 billing_type=billing_type,
@@ -2944,6 +2951,12 @@ def cobranca_espetaculo_escolher_parcelas(request, pk):
 
                 cobranca.atualizar_status()
 
+            if cobranca.vencimento_primeira_parcela < hoje:
+                messages.warning(
+                    request,
+                    f'A data original de vencimento já havia passado. A primeira parcela foi ajustada para {due_date.strftime("%d/%m/%Y")}.'
+                )
+
             if cobranca.tipo == 'figurino':
                 messages.success(
                     request,
@@ -2964,7 +2977,7 @@ def cobranca_espetaculo_escolher_parcelas(request, pk):
             retorno = create_payment(
                 customer_id=customer['id'],
                 value=valor_final,
-                due_date=cobranca.vencimento_primeira_parcela,
+                due_date=due_date,
                 description=descricao_base,
                 external_reference=f'cobranca_espetaculo:{cobranca.pk}',
                 billing_type=billing_type,
@@ -2982,7 +2995,7 @@ def cobranca_espetaculo_escolher_parcelas(request, pk):
                     defaults={
                         'total_parcelas': 1,
                         'valor': retorno.get('value') or valor_final,
-                        'vencimento': retorno.get('dueDate') or cobranca.vencimento_primeira_parcela,
+                        'vencimento': retorno.get('dueDate') or due_date,
                         'asaas_payment_id': retorno.get('id'),
                         'asaas_invoice_url': retorno.get('invoiceUrl'),
                         'asaas_bank_slip_url': retorno.get('bankSlipUrl'),
@@ -2995,6 +3008,12 @@ def cobranca_espetaculo_escolher_parcelas(request, pk):
                 )
 
                 cobranca.atualizar_status()
+
+            if cobranca.vencimento_primeira_parcela < hoje:
+                messages.warning(
+                    request,
+                    f'A data original de vencimento já havia passado. O vencimento foi ajustado para {due_date.strftime("%d/%m/%Y")}.'
+                )
 
             if cobranca.tipo == 'figurino':
                 messages.success(
