@@ -12,11 +12,13 @@
                 <div class="card mensalidade-card">
                     <div class="mensalidade-header">
                         <h3>{{ mensalidade.aluna.nome }}</h3>
-                        <span class="status-badge status-{{ mensalidade.status }}">
-                            {% if mensalidade.status == 'pago' %}
+                        <span class="status-badge status-{{ mensalidade.status_atual }}">
+                            {% if mensalidade.status_atual == 'pago' %}
                                 ✅ Pago
-                            {% elif mensalidade.status == 'atrasado' %}
+                            {% elif mensalidade.status_atual == 'atrasado' %}
                                 🔴 Atrasado
+                            {% elif mensalidade.status_atual == 'cancelado' %}
+                                ⚪ Cancelado
                             {% else %}
                                 ⏳ Pendente
                             {% endif %}
@@ -25,15 +27,22 @@
                     
                     <div class="mensalidade-info">
                         <p><strong>Mês de referência:</strong> {{ mensalidade.mes_referencia|date:"m/Y" }}</p>
-                        <p><strong>Valor:</strong> R$ {{ mensalidade.valor }}</p>
+                        <p><strong>Valor:</strong> R$ {{ mensalidade.valor_atualizado }}</p>
                         <p><strong>Vencimento:</strong> {{ mensalidade.data_vencimento|date:"d/m/Y" }}</p>
+
+                        {% if mensalidade.esta_atrasada %}
+                            <p class="text-danger">
+                                <strong>Atraso:</strong> {{ mensalidade.dias_atraso }} dia(s) —
+                                acréscimo de R$ {{ mensalidade.acrescimo_atraso }}
+                            </p>
+                        {% endif %}
                         
                         {% if mensalidade.data_pagamento %}
                             <p><strong>Pago em:</strong> {{ mensalidade.data_pagamento|date:"d/m/Y" }}</p>
                         {% endif %}
                     </div>
                     
-                    {% if mensalidade.status == 'pendente' or mensalidade.status == 'atrasado' %}
+                    {% if mensalidade.status_atual == 'pendente' or mensalidade.status_atual == 'atrasado' %}
                         <a href="{% url 'pagar' mensalidade.id %}" class="btn btn-primary">Pagar Agora</a>
                     {% endif %}
                 </div>
