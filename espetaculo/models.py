@@ -85,6 +85,13 @@ class Espetaculo(models.Model):
     venda_data_inicio = models.DateField(blank=True, null=True)
     preco_ingresso = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
+    # Ingresso gratuito para alunas
+    permite_ingresso_gratuito_aluna = models.BooleanField(
+        default=False,
+        verbose_name='Ingresso gratuito para alunas',
+        help_text='Se marcado, alunas logadas poderão gerar ingresso sem pagamento.'
+    )
+
     # Controle
     ativo = models.BooleanField(default=True)
     criado_em = models.DateTimeField(auto_now_add=True)

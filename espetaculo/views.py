@@ -8,6 +8,8 @@ from django.utils import timezone
 
 from pagamentos.asaas_helper import AsaasAPI
 
+from usuarios.models import Aluna
+
 from .forms import InscricaoAudicaoForm
 from .models import Espetaculo, IngressoEvento, InscricaoAudicao, PedidoIngressoEvento
 
@@ -265,6 +267,40 @@ def comprar_ingresso(request, pk):
 
     if not evento.venda_aberta:
         return redirect('espetaculo:evento_detalhe_publico', pk=evento.pk)
+
+    aluna = None
+    if request.user.is_authenticated:
+        aluna = Aluna.objects.filter(user=request.user).first()
+
+    if evento.permite_ingresso_gratuito_aluna and aluna:
+        pedido_existente = PedidoIngressoEvento.objects.filter(
+            evento=evento,
+            email=request.user.email,
+            status='pago',
+            external_reference__startswith='ingresso_gratuito_aluna:',
+        ).first()
+
+        if pedido_existente:
+            return redirect('espetaculo:ingresso_sucesso', pedido_id=pedido_existente.id)
+
+        pedido = PedidoIngressoEvento.objects.create(
+            evento=evento,
+            nome_completo=aluna.nome,
+            email=request.user.email or '',
+            whatsapp=getattr(aluna, 'whatsapp', '') or '-',
+            cpf=getattr(aluna, 'cpf', '') or '',
+            quantidade=1,
+            valor_unitario=Decimal('0.00'),
+            valor_total=Decimal('0.00'),
+            status='pago',
+        )
+        pedido.data_pagamento = timezone.now()
+        pedido.external_reference = f'ingresso_gratuito_aluna:{pedido.id}'
+        pedido.save(update_fields=['data_pagamento', 'external_reference'])
+
+        gerar_ingressos_do_pedido(pedido)
+
+        return redirect('espetaculo:ingresso_sucesso', pedido_id=pedido.id)
 
     if request.method == 'POST':
         nome_completo = request.POST.get('nome_completo', '').strip()

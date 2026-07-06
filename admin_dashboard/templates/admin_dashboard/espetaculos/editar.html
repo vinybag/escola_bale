@@ -481,6 +481,21 @@
                     </div>
                 </section>
 
+                <!-- Ingresso Gratuito para Alunas -->
+                <section class="esp-create-section">
+                    <div style="margin-bottom: 1.25rem;">
+                        <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1rem; font-weight: 700;">Ingresso Gratuito</h3>
+                        <p style="margin: 0; color: #7b7580; font-size: 0.92rem;">Permita que alunas logadas gerem ingresso sem pagamento.</p>
+                    </div>
+
+                    <div class="esp-check-box" style="margin-bottom: 0;">
+                        <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer;">
+                            <input type="checkbox" name="permite_ingresso_gratuito_aluna" {% if espetaculo.permite_ingresso_gratuito_aluna %}checked{% endif %} style="accent-color: #6b2d8f; width: 18px; height: 18px;">
+                            <span style="font-weight: 600; color: #4a235f;">Permitir ingresso gratuito para alunas</span>
+                        </label>
+                    </div>
+                </section>
+
                 <!-- Visibilidade -->
                 <section class="esp-create-section">
                     <div style="margin-bottom: 1.25rem;">

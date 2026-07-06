@@ -1128,6 +1128,8 @@ def espetaculo_criar(request):
             venda_data_inicio = request.POST.get('venda_data_inicio')
             preco_ingresso = request.POST.get('preco_ingresso', '0')
 
+            permite_ingresso_gratuito_aluna = request.POST.get('permite_ingresso_gratuito_aluna') == 'on'
+
             ativo = request.POST.get('ativo') == 'on'
 
             imagem = request.FILES.get('imagem')
@@ -1163,6 +1165,7 @@ def espetaculo_criar(request):
                 venda_aberta=venda_aberta,
                 venda_data_inicio=venda_data_inicio if venda_data_inicio else None,
                 preco_ingresso=preco_ingresso,
+                permite_ingresso_gratuito_aluna=permite_ingresso_gratuito_aluna,
                 ativo=ativo
             )
 
@@ -1224,19 +1227,18 @@ def espetaculo_editar(request, pk):
             espetaculo.venda_data_inicio = venda_data_inicio if venda_data_inicio else None
             espetaculo.preco_ingresso = request.POST.get('preco_ingresso', '0')
 
-            espetaculo.ativo = request.POST.get('ativo') == 'on'
+            espetaculo.permite_ingresso_gratuito_aluna = request.POST.get('permite_ingresso_gratuito_aluna') == 'on'
 
-            print('FILES keys:', list(request.FILES.keys()))
-            print('Imagem recebida:', request.FILES.get('imagem'))
+            espetaculo.ativo = request.POST.get('ativo') == 'on'
 
             imagem = request.FILES.get('imagem')
             if imagem:
                 espetaculo.imagem = imagem
 
             imagem_ingresso = request.FILES.get('imagem_ingresso')
-            if imagem_ingresso:    
+            if imagem_ingresso:
                 espetaculo.imagem_ingresso = imagem_ingresso
-                
+
             arquivo_divulgacao = request.FILES.get('arquivo_divulgacao')
             if arquivo_divulgacao:
                 espetaculo.arquivo_divulgacao = arquivo_divulgacao
@@ -1249,14 +1251,7 @@ def espetaculo_editar(request, pk):
             if arquivo_edital:
                 espetaculo.arquivo_edital = arquivo_edital
 
-            print('imagem name antes save:', espetaculo.imagem.name)
-            print('MEDIA_ROOT:', settings.MEDIA_ROOT)
-
             espetaculo.save()
-
-            print('imagem name depois save:', espetaculo.imagem.name)
-            print('imagem path depois save:', getattr(espetaculo.imagem, 'path', 'sem path'))
-            print('imagem url depois save:', getattr(espetaculo.imagem, 'url', 'sem url'))
 
             messages.success(request, f'"{espetaculo.titulo}" atualizado com sucesso!')
             return redirect('admin_dashboard:espetaculos_list')
