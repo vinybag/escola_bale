@@ -270,7 +270,7 @@ def comprar_ingresso(request, pk):
 
     aluna = None
     if request.user.is_authenticated:
-        aluna = Aluna.objects.filter(user=request.user).first()
+        aluna = Aluna.objects.filter(usuario=request.user).first()
 
     if evento.permite_ingresso_gratuito_aluna and aluna:
         pedido_existente = PedidoIngressoEvento.objects.filter(
