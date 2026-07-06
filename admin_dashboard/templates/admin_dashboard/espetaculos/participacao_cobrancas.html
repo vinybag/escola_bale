@@ -336,6 +336,26 @@
         color: #145214;
     }
 
+    .btn-partial-orange {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.45rem 0.75rem;
+        background: #fff3e0;
+        color: #a05a00;
+        border: 1px solid #ffd59e;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .btn-partial-orange:hover {
+        background: #ffe0b2;
+        color: #7a4300;
+    }
+
     .empty-state {
         text-align: center;
         padding: 2rem 1rem;
@@ -353,6 +373,18 @@
         color: #666;
         line-height: 1.4;
         margin-bottom: 0.65rem;
+    }
+
+    .partial-form {
+        display: flex;
+        gap: 0.4rem;
+        flex-wrap: wrap;
+        margin-top: 0.35rem;
+    }
+
+    .partial-form .cobranca-input {
+        padding: 0.45rem 0.7rem;
+        font-size: 0.82rem;
     }
 
     @media (max-width: 1280px) {
@@ -431,6 +463,10 @@
         .cobranca-grid-4,
         .cobranca-grid-2 {
             grid-template-columns: 1fr !important;
+        }
+
+        .partial-form {
+            flex-direction: column;
         }
     }
 </style>
@@ -615,8 +651,8 @@
                                             {% if cobranca.tipo == 'figurino' %}
                                                 <div class="cobranca-mini-stack">
                                                     <div class="cobranca-mini-card">Base: R$ {{ cobranca.valor_total }}</div>
-                                                    <div class="cobranca-mini-card">À vista: R$ {{ cobranca.valor_figurino_avista|default:"0.00" }}</div>
-                                                    <div class="cobranca-mini-card">Parcelado: R$ {{ cobranca.valor_figurino_parcelado|default:"0.00" }}</div>
+                                                    <div class="cobranca-mini-card">À vista: R$ {{ cobranca.valor_figurino_avista|default_if_none:"0.00" }}</div>
+                                                    <div class="cobranca-mini-card">Parcelado: R$ {{ cobranca.valor_figurino_parcelado|default_if_none:"0.00" }}</div>
                                                 </div>
                                             {% else %}
                                                 <strong>R$ {{ cobranca.valor_total }}</strong>
@@ -714,14 +750,36 @@
                                                                         Status local:
                                                                         {% if parcela.status == 'pago' %}
                                                                             <strong style="color: #155724;">Pago</strong>
+                                                                        {% elif parcela.status == 'parcial' %}
+                                                                            <strong style="color: #a05a00;">Parcial</strong>
                                                                         {% else %}
                                                                             <strong style="color: #856404;">Pendente</strong>
                                                                         {% endif %}
                                                                     </span>
 
+                                                                    <span style="color: #666;">
+                                                                        Pago até agora: R$ {{ parcela.valor_pago }}
+                                                                    </span>
+
+                                                                    <span style="color: #666;">
+                                                                        Saldo pendente: R$ {{ parcela.saldo_pendente }}
+                                                                    </span>
+
                                                                     {% if parcela.vencimento %}
                                                                         <span style="color: #666;">
                                                                             Vencimento: {{ parcela.vencimento|date:"d/m/Y" }}
+                                                                        </span>
+                                                                    {% endif %}
+
+                                                                    {% if parcela.forma_pagamento_manual %}
+                                                                        <span style="color: #666;">
+                                                                            Forma manual: {{ parcela.forma_pagamento_manual }}
+                                                                        </span>
+                                                                    {% endif %}
+
+                                                                    {% if parcela.observacao_pagamento %}
+                                                                        <span style="color: #666; white-space: pre-line;">
+                                                                            Observação: {{ parcela.observacao_pagamento }}
                                                                         </span>
                                                                     {% endif %}
 
@@ -733,7 +791,7 @@
 
                                                                     {% if parcela.data_pagamento %}
                                                                         <span style="color: #666;">
-                                                                            Pago em: {{ parcela.data_pagamento|date:"d/m/Y H:i" }}
+                                                                            Último registro em: {{ parcela.data_pagamento|date:"d/m/Y H:i" }}
                                                                         </span>
                                                                     {% endif %}
 
@@ -768,6 +826,32 @@
                                                                                 </button>
                                                                             </form>
                                                                         </div>
+
+                                                                        <form method="post"
+                                                                              action="{% url 'admin_dashboard:parcela_cobranca_espetaculo_registrar_pagamento_parcial' parcela.pk %}"
+                                                                              class="partial-form"
+                                                                              onsubmit="return confirm('Registrar pagamento parcial nesta parcela?');">
+                                                                            {% csrf_token %}
+                                                                            <input type="number"
+                                                                                   name="valor_pago"
+                                                                                   step="0.01"
+                                                                                   min="0.01"
+                                                                                   max="{{ parcela.saldo_pendente }}"
+                                                                                   placeholder="Valor pago"
+                                                                                   class="cobranca-input"
+                                                                                   required
+                                                                                   style="max-width: 140px;">
+
+                                                                            <input type="text"
+                                                                                   name="observacao_pagamento"
+                                                                                   placeholder="Observação (opcional)"
+                                                                                   class="cobranca-input"
+                                                                                   style="max-width: 220px;">
+
+                                                                            <button type="submit" class="btn-partial-orange">
+                                                                                Registrar parcial
+                                                                            </button>
+                                                                        </form>
                                                                     {% endif %}
                                                                 </div>
                                                             </div>

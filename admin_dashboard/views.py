@@ -3261,7 +3261,9 @@ def marcar_parcela_pago_dinheiro(request, pk):
 
     if request.method == 'POST':
         if parcela.status != 'pago':
+            parcela.forma_pagamento_manual = 'DINHEIRO'
             parcela.marcar_como_pago()
+            parcela.save(update_fields=['forma_pagamento_manual'])
             messages.success(request, f'Parcela {parcela.numero_parcela}/{parcela.total_parcelas} marcada como paga em dinheiro.')
         else:
             messages.warning(request, 'Esta parcela já está paga.')
@@ -3402,4 +3404,58 @@ def cobranca_espetaculo_marcar_pago_dinheiro(request, pk):
 
     except Exception as e:
         messages.error(request, f'Erro ao marcar cobrança como paga em dinheiro: {e}')
+        return redirect('admin_dashboard:espetaculos_list')
+    
+@login_required
+def parcela_cobranca_espetaculo_registrar_pagamento_parcial(request, pk):
+    if not request.user.is_staff:
+        return redirect('home')
+
+    if request.method != 'POST':
+        messages.error(request, 'Método inválido.')
+        return redirect('admin_dashboard:espetaculos_list')
+
+    try:
+        from django.shortcuts import get_object_or_404
+        from django.db import transaction
+        from espetaculo.models import ParcelaCobrancaEspetaculo
+
+        parcela = get_object_or_404(
+            ParcelaCobrancaEspetaculo.objects.select_related(
+                'cobranca',
+                'cobranca__participacao',
+                'cobranca__participacao__aluna',
+                'cobranca__participacao__espetaculo',
+            ),
+            pk=pk
+        )
+
+        valor_pago = (request.POST.get('valor_pago') or '').replace(',', '.').strip()
+        observacao = (request.POST.get('observacao_pagamento') or '').strip()
+
+        with transaction.atomic():
+            parcela.registrar_pagamento(
+                valor=valor_pago,
+                forma_pagamento='DINHEIRO',
+                observacao=observacao,
+            )
+
+        if parcela.status == 'pago':
+            messages.success(
+                request,
+                f'Pagamento registrado e parcela {parcela.numero_parcela}/{parcela.total_parcelas} quitada com sucesso.'
+            )
+        else:
+            messages.success(
+                request,
+                f'Pagamento parcial registrado com sucesso na parcela {parcela.numero_parcela}/{parcela.total_parcelas}.'
+            )
+
+        return redirect(
+            'admin_dashboard:participacao_cobrancas',
+            pk=parcela.cobranca.participacao.pk
+        )
+
+    except Exception as e:
+        messages.error(request, f'Erro ao registrar pagamento parcial: {e}')
         return redirect('admin_dashboard:espetaculos_list')

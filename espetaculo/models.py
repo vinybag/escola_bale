@@ -466,13 +466,13 @@ class CobrancaEspetaculo(models.Model):
         parcelas_cache = self._parcelas_prefetch()
         if parcelas_cache is not None:
             total = sum(
-                (p.valor or Decimal('0.00') for p in parcelas_cache if p.status == 'pago'),
+                ((p.valor_pago or Decimal('0.00')) for p in parcelas_cache),
                 Decimal('0.00')
             )
             return total
 
-        total = self.parcelas.filter(status='pago').aggregate(
-            total=models.Sum('valor')
+        total = self.parcelas.aggregate(
+            total=models.Sum('valor_pago')
         )['total']
         return total or Decimal('0.00')
 
@@ -500,40 +500,15 @@ class CobrancaEspetaculo(models.Model):
         return pendente if pendente > Decimal('0.00') else Decimal('0.00')
 
     def atualizar_status(self):
-        parcelas_cache = self._parcelas_prefetch()
+        total_pago = self.total_pago()
+        total_efetivo = self.valor_total_efetivo()
 
-        if parcelas_cache is not None:
-            parcelas = parcelas_cache
-            if parcelas:
-                total = len(parcelas)
-                pagas = sum(1 for p in parcelas if p.status == 'pago')
-
-                if pagas == 0:
-                    self.status = 'pendente'
-                elif pagas == total:
-                    self.status = 'pago'
-                else:
-                    self.status = 'parcial'
-            else:
-                self.status = 'pendente'
-
-            self.save(update_fields=['status'])
-            return
-
-        parcelas = self.parcelas.all()
-
-        if parcelas.exists():
-            total = parcelas.count()
-            pagas = parcelas.filter(status='pago').count()
-
-            if pagas == 0:
-                self.status = 'pendente'
-            elif pagas == total:
-                self.status = 'pago'
-            else:
-                self.status = 'parcial'
-        else:
+        if total_pago <= Decimal('0.00'):
             self.status = 'pendente'
+        elif total_pago >= total_efetivo:
+            self.status = 'pago'
+        else:
+            self.status = 'parcial'
 
         self.save(update_fields=['status'])
 
@@ -541,6 +516,7 @@ class CobrancaEspetaculo(models.Model):
 class ParcelaCobrancaEspetaculo(models.Model):
     STATUS_CHOICES = (
         ('pendente', 'Pendente'),
+        ('parcial', 'Parcial'),
         ('pago', 'Pago'),
     )
 
@@ -552,11 +528,14 @@ class ParcelaCobrancaEspetaculo(models.Model):
     numero_parcela = models.PositiveIntegerField()
     total_parcelas = models.PositiveIntegerField(default=1)
     valor = models.DecimalField(max_digits=10, decimal_places=2)
+    valor_pago = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
     vencimento = models.DateField(blank=True, null=True)
     mes_liberacao = models.DateField(blank=True, null=True)
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pendente')
     data_pagamento = models.DateTimeField(blank=True, null=True)
+    observacao_pagamento = models.TextField(blank=True, null=True)
+    forma_pagamento_manual = models.CharField(max_length=30, blank=True, null=True)
 
     asaas_payment_id = models.CharField(max_length=100, blank=True, null=True)
     asaas_installment_id = models.CharField(max_length=100, blank=True, null=True)
@@ -585,10 +564,59 @@ class ParcelaCobrancaEspetaculo(models.Model):
         hoje = timezone.now().date()
         return hoje >= self.mes_liberacao
 
+    def saldo_pendente(self):
+        saldo = (self.valor or Decimal('0.00')) - (self.valor_pago or Decimal('0.00'))
+        return saldo if saldo > Decimal('0.00') else Decimal('0.00')
+
+    def atualizar_status_local(self, salvar=True):
+        valor = self.valor or Decimal('0.00')
+        valor_pago = self.valor_pago or Decimal('0.00')
+
+        if valor_pago <= Decimal('0.00'):
+            self.status = 'pendente'
+            self.data_pagamento = None
+        elif valor_pago < valor:
+            self.status = 'parcial'
+        else:
+            self.status = 'pago'
+            if not self.data_pagamento:
+                self.data_pagamento = timezone.now()
+
+            if self.valor_pago > valor:
+                self.valor_pago = valor
+
+        if salvar:
+            self.save(update_fields=['status', 'data_pagamento', 'valor_pago'])
+
+    def registrar_pagamento(self, valor, forma_pagamento=None, observacao=None):
+        valor = Decimal(str(valor or '0')).quantize(Decimal('0.01'))
+
+        if valor <= Decimal('0.00'):
+            raise ValidationError('O valor do pagamento deve ser maior que zero.')
+
+        novo_total = (self.valor_pago or Decimal('0.00')) + valor
+
+        if novo_total > (self.valor or Decimal('0.00')):
+            raise ValidationError('O valor informado ultrapassa o saldo pendente da parcela.')
+
+        self.valor_pago = novo_total
+
+        if forma_pagamento:
+            self.forma_pagamento_manual = forma_pagamento
+
+        if observacao:
+            texto_atual = (self.observacao_pagamento or '').strip()
+            complemento = observacao.strip()
+            self.observacao_pagamento = f'{texto_atual}\n{complemento}'.strip() if texto_atual else complemento
+
+        self.atualizar_status_local(salvar=True)
+        self.cobranca.atualizar_status()
+
     def marcar_como_pago(self):
+        self.valor_pago = self.valor or Decimal('0.00')
         self.status = 'pago'
         self.data_pagamento = timezone.now()
-        self.save(update_fields=['status', 'data_pagamento'])
+        self.save(update_fields=['valor_pago', 'status', 'data_pagamento'])
         self.cobranca.atualizar_status()
 
     def atualizar_status_asaas(self, novo_status):
@@ -598,6 +626,12 @@ class ParcelaCobrancaEspetaculo(models.Model):
         self.asaas_status = novo_status
 
         if novo_status in ['RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH']:
+            valor_integral = self.valor or Decimal('0.00')
+
+            if self.valor_pago != valor_integral:
+                self.valor_pago = valor_integral
+                campos_para_salvar.append('valor_pago')
+
             if self.status != 'pago':
                 self.status = 'pago'
                 campos_para_salvar.append('status')
