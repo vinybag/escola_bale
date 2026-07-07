@@ -2574,8 +2574,6 @@ def espetaculo_participacoes(request, pk):
         total_recebido_figurino = Decimal('0.00')
 
         def sincronizar_cobranca_com_asaas(cobranca):
-            houve_alteracao = False
-
             for parcela in cobranca.parcelas.all():
                 if not parcela.asaas_payment_id:
                     continue
@@ -2589,21 +2587,7 @@ def espetaculo_participacoes(request, pk):
                     continue
 
                 novo_status = payment_data.get('status')
-                status_anterior = parcela.asaas_status
-                valor_pago_anterior = parcela.valor_pago
-                status_local_anterior = parcela.status
-
                 parcela.atualizar_status_asaas(novo_status)
-
-                if (
-                    status_anterior != parcela.asaas_status
-                    or valor_pago_anterior != parcela.valor_pago
-                    or status_local_anterior != parcela.status
-                ):
-                    houve_alteracao = True
-
-            if houve_alteracao:
-                cobranca.refresh_from_db()
 
             cobranca.atualizar_status()
 

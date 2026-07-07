@@ -219,3 +219,8 @@ def create_installment_payment(
 
 def list_installment_payments(installment_id):
     return _request('GET', f'installments/{installment_id}/payments')
+
+def get_payment(payment_id):
+    if not payment_id:
+        raise AsaasError('Payment ID não informado.')
+    return _request('GET', f'payments/{payment_id}')
