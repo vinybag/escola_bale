@@ -2572,6 +2572,9 @@ def espetaculo_participacoes(request, pk):
         total_recebido_taxa_palco = Decimal('0.00')
         total_recebido_figurino = Decimal('0.00')
 
+        def valor_base_cobranca(cobranca):
+            return cobranca.valor_total or Decimal('0.00')
+
         def resumir_status(lista_cobrancas):
             if not lista_cobrancas:
                 return None
@@ -2581,15 +2584,15 @@ def espetaculo_participacoes(request, pk):
                 Decimal('0.00')
             )
 
-            total_efetivo = sum(
-                (c.valor_total_efetivo() or Decimal('0.00') for c in lista_cobrancas),
+            total_cobrado = sum(
+                (valor_base_cobranca(c) for c in lista_cobrancas),
                 Decimal('0.00')
             )
 
             if total_pago <= Decimal('0.00'):
                 return 'pendente'
 
-            if total_pago < total_efetivo:
+            if total_pago < total_cobrado:
                 return 'parcial'
 
             return 'pago'
