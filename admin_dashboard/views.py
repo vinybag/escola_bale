@@ -2544,6 +2544,7 @@ def espetaculo_participacoes(request, pk):
 
         cobrancas_qs = (
             CobrancaEspetaculo.objects
+            .filter(ativo=True)
             .prefetch_related(
                 Prefetch('parcelas', queryset=parcelas_qs)
             )
@@ -2555,7 +2556,7 @@ def espetaculo_participacoes(request, pk):
             .filter(espetaculo=espetaculo)
             .select_related('aluna', 'aluna__responsavel', 'espetaculo')
             .prefetch_related(
-                Prefetch('cobrancas', queryset=cobrancas_qs)
+                Prefetch('cobrancas', queryset=cobrancas_qs, to_attr='cobrancas_ativas_prefetch')
             )
             .order_by('aluna__nome')
         )
@@ -2576,45 +2577,47 @@ def espetaculo_participacoes(request, pk):
             if not lista_cobrancas:
                 return None
 
-            statuses = [c.status for c in lista_cobrancas]
+            total_pago = sum(
+                (c.total_pago() or Decimal('0.00') for c in lista_cobrancas),
+                Decimal('0.00')
+            )
 
-            if 'parcial' in statuses:
-                return 'parcial'
+            total_efetivo = sum(
+                (c.valor_total_efetivo() or Decimal('0.00') for c in lista_cobrancas),
+                Decimal('0.00')
+            )
 
-            if 'pendente' in statuses and 'pago' in statuses:
-                return 'parcial'
-
-            if all(status == 'pago' for status in statuses):
-                return 'pago'
-
-            if any(status == 'pendente' for status in statuses):
+            if total_pago <= Decimal('0.00'):
                 return 'pendente'
 
-            return None
+            if total_pago < total_efetivo:
+                return 'parcial'
+
+            return 'pago'
 
         for participacao in participacoes:
-            cobrancas = list(participacao.cobrancas.all())
+            cobrancas = list(getattr(participacao, 'cobrancas_ativas_prefetch', []))
 
             cobrancas_taxa_palco = [
                 c for c in cobrancas
-                if c.tipo == 'taxa_palco' and c.ativo
+                if c.tipo == 'taxa_palco'
             ]
 
             cobrancas_figurino = [
                 c for c in cobrancas
-                if c.tipo == 'figurino' and c.ativo
+                if c.tipo == 'figurino'
             ]
 
             status_taxa_palco = resumir_status(cobrancas_taxa_palco)
             status_figurino = resumir_status(cobrancas_figurino)
 
             total_recebido_taxa_palco += sum(
-                (c.total_pago() for c in cobrancas_taxa_palco),
+                (c.total_pago() or Decimal('0.00') for c in cobrancas_taxa_palco),
                 Decimal('0.00')
             )
 
             total_recebido_figurino += sum(
-                (c.total_pago() for c in cobrancas_figurino),
+                (c.total_pago() or Decimal('0.00') for c in cobrancas_figurino),
                 Decimal('0.00')
             )
 
@@ -2623,9 +2626,7 @@ def espetaculo_participacoes(request, pk):
                 'figurino_status': status_figurino,
             }
 
-            quantidade_cobrancas_por_participacao[participacao.pk] = len(
-                [c for c in cobrancas if c.ativo]
-            )
+            quantidade_cobrancas_por_participacao[participacao.pk] = len(cobrancas)
 
         total_recebido_geral = total_recebido_taxa_palco + total_recebido_figurino
 
@@ -2648,6 +2649,7 @@ def espetaculo_participacoes(request, pk):
         )
 
     except Exception as e:
+        from django.contrib import messages
         messages.error(request, f'Erro ao carregar participações: {e}')
         return redirect('admin_dashboard:espetaculos_list')
     
