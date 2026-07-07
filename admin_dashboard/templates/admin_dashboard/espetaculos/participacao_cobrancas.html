@@ -624,6 +624,17 @@
                                     </div>
 
                                     <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                        {% if cobranca.status != 'pago' %}
+                                            <form method="post"
+                                                  action="{% url 'admin_dashboard:cobranca_espetaculo_marcar_pago_dinheiro' cobranca.pk %}"
+                                                  onsubmit="return confirm('Quitar esta cobrança inteira em dinheiro? Isso marcará todas as parcelas desta cobrança como pagas.');">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn-cash-green">
+                                                    Quitar em dinheiro
+                                                </button>
+                                            </form>
+                                        {% endif %}
+
                                         <form method="post"
                                               action="{% url 'admin_dashboard:cobranca_espetaculo_excluir' cobranca.pk %}"
                                               onsubmit="return confirm('Tem certeza que deseja excluir esta cobrança? Essa ação também removerá as parcelas vinculadas.');">
@@ -774,7 +785,7 @@
 
                                                                 <form method="post"
                                                                       action="{% url 'admin_dashboard:marcar_parcela_pago_dinheiro' parcela.pk %}"
-                                                                      onsubmit="return confirm('Marcar parcela {{ parcela.numero_parcela }}/{{ parcela.total_parcelas }} como paga em dinheiro?');">
+                                                                      onsubmit="return confirm('Marcar apenas a parcela {{ parcela.numero_parcela }}/{{ parcela.total_parcelas }} como paga em dinheiro?');">
                                                                     {% csrf_token %}
                                                                     <button type="submit" class="btn-cash-green">
                                                                         Pago em dinheiro

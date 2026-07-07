@@ -2991,6 +2991,20 @@ def cobranca_espetaculo_escolher_parcelas(request, pk):
 
         billing_type = 'PIX'
 
+        parcelas_existentes = list(cobranca.parcelas.all())
+        if parcelas_existentes:
+            existe_pagamento = any(
+                (parcela.valor_pago or Decimal('0.00')) > Decimal('0.00')
+                or parcela.status in ('parcial', 'pago')
+                for parcela in parcelas_existentes
+            )
+            if existe_pagamento:
+                messages.error(
+                    request,
+                    'Esta cobrança já possui parcelas com pagamento registrado e não pode ser recriada.'
+                )
+                return redirect('cobrancas_espetaculos')
+
         if num_parcelas > 1:
             retorno = create_installment_payment(
                 customer_id=customer['id'],
@@ -3015,29 +3029,30 @@ def cobranca_espetaculo_escolher_parcelas(request, pk):
             )
 
             with transaction.atomic():
+                if parcelas_existentes:
+                    cobranca.parcelas.all().delete()
+
                 cobranca.asaas_customer_id = customer.get('id')
                 cobranca.billing_type = billing_type
                 cobranca.enviado_asaas = True
                 cobranca.save(update_fields=['asaas_customer_id', 'billing_type', 'enviado_asaas'])
 
                 for idx, item in enumerate(parcelas_asaas, start=1):
-                    ParcelaCobrancaEspetaculo.objects.update_or_create(
+                    ParcelaCobrancaEspetaculo.objects.create(
                         cobranca=cobranca,
                         numero_parcela=idx,
-                        defaults={
-                            'total_parcelas': len(parcelas_asaas),
-                            'valor': item.get('value') or 0,
-                            'vencimento': item.get('dueDate'),
-                            'asaas_payment_id': item.get('id'),
-                            'asaas_installment_id': installment_id,
-                            'asaas_invoice_url': item.get('invoiceUrl'),
-                            'asaas_bank_slip_url': item.get('bankSlipUrl'),
-                            'asaas_transaction_receipt_url': item.get('transactionReceiptUrl'),
-                            'asaas_nosso_numero': item.get('nossoNumero'),
-                            'asaas_status': item.get('status'),
-                            'billing_type': item.get('billingType') or billing_type,
-                            'status': 'pago' if item.get('status') == 'RECEIVED' else 'pendente',
-                        }
+                        total_parcelas=len(parcelas_asaas),
+                        valor=item.get('value') or 0,
+                        vencimento=item.get('dueDate'),
+                        asaas_payment_id=item.get('id'),
+                        asaas_installment_id=installment_id,
+                        asaas_invoice_url=item.get('invoiceUrl'),
+                        asaas_bank_slip_url=item.get('bankSlipUrl'),
+                        asaas_transaction_receipt_url=item.get('transactionReceiptUrl'),
+                        asaas_nosso_numero=item.get('nossoNumero'),
+                        asaas_status=item.get('status'),
+                        billing_type=item.get('billingType') or billing_type,
+                        status='pago' if item.get('status') == 'RECEIVED' else 'pendente',
                     )
 
                 cobranca.atualizar_status()
@@ -3075,27 +3090,28 @@ def cobranca_espetaculo_escolher_parcelas(request, pk):
             )
 
             with transaction.atomic():
+                if parcelas_existentes:
+                    cobranca.parcelas.all().delete()
+
                 cobranca.asaas_customer_id = customer.get('id')
                 cobranca.billing_type = billing_type
                 cobranca.enviado_asaas = True
                 cobranca.save(update_fields=['asaas_customer_id', 'billing_type', 'enviado_asaas'])
 
-                ParcelaCobrancaEspetaculo.objects.update_or_create(
+                ParcelaCobrancaEspetaculo.objects.create(
                     cobranca=cobranca,
                     numero_parcela=1,
-                    defaults={
-                        'total_parcelas': 1,
-                        'valor': retorno.get('value') or valor_final,
-                        'vencimento': retorno.get('dueDate') or due_date,
-                        'asaas_payment_id': retorno.get('id'),
-                        'asaas_invoice_url': retorno.get('invoiceUrl'),
-                        'asaas_bank_slip_url': retorno.get('bankSlipUrl'),
-                        'asaas_transaction_receipt_url': retorno.get('transactionReceiptUrl'),
-                        'asaas_nosso_numero': retorno.get('nossoNumero'),
-                        'asaas_status': retorno.get('status'),
-                        'billing_type': retorno.get('billingType') or billing_type,
-                        'status': 'pago' if retorno.get('status') == 'RECEIVED' else 'pendente',
-                    }
+                    total_parcelas=1,
+                    valor=retorno.get('value') or valor_final,
+                    vencimento=retorno.get('dueDate') or due_date,
+                    asaas_payment_id=retorno.get('id'),
+                    asaas_invoice_url=retorno.get('invoiceUrl'),
+                    asaas_bank_slip_url=retorno.get('bankSlipUrl'),
+                    asaas_transaction_receipt_url=retorno.get('transactionReceiptUrl'),
+                    asaas_nosso_numero=retorno.get('nossoNumero'),
+                    asaas_status=retorno.get('status'),
+                    billing_type=retorno.get('billingType') or billing_type,
+                    status='pago' if retorno.get('status') == 'RECEIVED' else 'pendente',
                 )
 
                 cobranca.atualizar_status()
@@ -3270,17 +3286,25 @@ def marcar_parcela_pago_dinheiro(request, pk):
     if not request.user.is_staff:
         return redirect('home')
 
+    from django.contrib import messages
+    from django.shortcuts import get_object_or_404, redirect
     from espetaculo.models import ParcelaCobrancaEspetaculo
 
-    parcela = get_object_or_404(ParcelaCobrancaEspetaculo, pk=pk)
+    parcela = get_object_or_404(
+        ParcelaCobrancaEspetaculo.objects.select_related('cobranca', 'cobranca__participacao'),
+        pk=pk
+    )
     participacao_pk = parcela.cobranca.participacao.pk
 
     if request.method == 'POST':
         if parcela.status != 'pago':
             parcela.forma_pagamento_manual = 'DINHEIRO'
-            parcela.marcar_como_pago()
             parcela.save(update_fields=['forma_pagamento_manual'])
-            messages.success(request, f'Parcela {parcela.numero_parcela}/{parcela.total_parcelas} marcada como paga em dinheiro.')
+            parcela.marcar_como_pago()
+            messages.success(
+                request,
+                f'Parcela {parcela.numero_parcela}/{parcela.total_parcelas} marcada como paga em dinheiro.'
+            )
         else:
             messages.warning(request, 'Esta parcela já está paga.')
 
@@ -3541,3 +3565,48 @@ def cobranca_espetaculo_registrar_pagamento_parcial(request, pk):
     except Exception as e:
         messages.error(request, f'Erro ao registrar pagamento parcial: {e}')
         return redirect('admin_dashboard:espetaculos_list')
+    
+@login_required
+def marcar_cobranca_pago_dinheiro(request, pk):
+    if not request.user.is_staff:
+        return redirect('home')
+
+    from django.contrib import messages
+    from django.db import transaction
+    from django.shortcuts import get_object_or_404, redirect
+    from django.utils import timezone
+    from espetaculo.models import CobrancaEspetaculo
+
+    cobranca = get_object_or_404(
+        CobrancaEspetaculo.objects.select_related('participacao').prefetch_related('parcelas'),
+        pk=pk
+    )
+    participacao_pk = cobranca.participacao.pk
+
+    if request.method == 'POST':
+        parcelas = list(cobranca.parcelas.all())
+
+        if not parcelas:
+            messages.error(request, 'Essa cobrança não possui parcelas geradas.')
+            return redirect('admin_dashboard:participacao_cobrancas', pk=participacao_pk)
+
+        with transaction.atomic():
+            for parcela in parcelas:
+                if parcela.status != 'pago':
+                    parcela.forma_pagamento_manual = 'DINHEIRO'
+                    parcela.valor_pago = parcela.valor
+                    parcela.status = 'pago'
+                    if not parcela.data_pagamento:
+                        parcela.data_pagamento = timezone.now()
+                    parcela.save(update_fields=[
+                        'forma_pagamento_manual',
+                        'valor_pago',
+                        'status',
+                        'data_pagamento',
+                    ])
+
+            cobranca.atualizar_status()
+
+        messages.success(request, 'Cobrança inteira marcada como paga em dinheiro.')
+
+    return redirect('admin_dashboard:participacao_cobrancas', pk=participacao_pk)
