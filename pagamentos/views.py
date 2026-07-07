@@ -267,18 +267,78 @@ def pagamento_cancelado(request):
 
 # ==================== WEBHOOK DO ASAAS ====================
 
-def localizar_parcela_espetaculo_por_payment_id(payment_id):
-    from espetaculo.models import ParcelaCobrancaEspetaculo
+def localizar_parcela_espetaculo_por_payment(payment_id, external_reference=None, customer_id=None, installment_id=None):
+    from espetaculo.models import CobrancaEspetaculo, ParcelaCobrancaEspetaculo
 
-    if not payment_id:
-        return None
+    if payment_id:
+        parcela = (
+            ParcelaCobrancaEspetaculo.objects
+            .select_related('cobranca', 'cobranca__participacao')
+            .filter(asaas_payment_id=payment_id)
+            .first()
+        )
+        if parcela:
+            print(f"[WEBHOOK] Parcela encontrada por payment_id: {parcela.id}")
+            return parcela
 
-    return (
-        ParcelaCobrancaEspetaculo.objects
-        .select_related('cobranca', 'cobranca__participacao')
-        .filter(asaas_payment_id=payment_id)
-        .first()
-    )
+    if installment_id:
+        parcela = (
+            ParcelaCobrancaEspetaculo.objects
+            .select_related('cobranca', 'cobranca__participacao')
+            .filter(asaas_installment_id=installment_id, asaas_payment_id=payment_id)
+            .first()
+        )
+        if parcela:
+            print(f"[WEBHOOK] Parcela encontrada por installment_id + payment_id: {parcela.id}")
+            return parcela
+
+    if external_reference and external_reference.startswith('cobranca_espetaculo:'):
+        try:
+            cobranca_id = external_reference.split(':', 1)[1]
+            cobranca = (
+                CobrancaEspetaculo.objects
+                .select_related('participacao')
+                .prefetch_related('parcelas')
+                .get(id=cobranca_id)
+            )
+
+            if customer_id and cobranca.asaas_customer_id != customer_id:
+                cobranca.asaas_customer_id = customer_id
+                cobranca.save(update_fields=['asaas_customer_id'])
+
+            parcela = cobranca.parcelas.filter(asaas_payment_id=payment_id).first()
+            if parcela:
+                print(f"[WEBHOOK] Parcela encontrada via cobrança + payment_id: {parcela.id}")
+                return parcela
+
+            if installment_id:
+                parcela = cobranca.parcelas.filter(
+                    asaas_installment_id=installment_id,
+                    asaas_payment_id=payment_id
+                ).first()
+                if parcela:
+                    print(f"[WEBHOOK] Parcela encontrada via cobrança + installment_id + payment_id: {parcela.id}")
+                    return parcela
+
+            if cobranca.parcelas.count() == 1:
+                parcela = cobranca.parcelas.first()
+                if parcela and payment_id and parcela.asaas_payment_id != payment_id:
+                    parcela.asaas_payment_id = payment_id
+                    parcela.save(update_fields=['asaas_payment_id'])
+                print(f"[WEBHOOK] Parcela única localizada via externalReference: {parcela.id}")
+                return parcela
+
+            print(
+                f"[WEBHOOK] Cobrança {cobranca.id} localizada, "
+                f"mas nenhuma parcela foi associada ao payment_id={payment_id}, installment_id={installment_id}"
+            )
+
+        except CobrancaEspetaculo.DoesNotExist:
+            print(f"[WEBHOOK] Cobrança não encontrada para externalReference {external_reference}")
+        except Exception as e:
+            print(f"[WEBHOOK] Erro ao localizar parcela de espetáculo: {e}")
+
+    return None
 
 @csrf_exempt
 def webhook_asaas(request):
@@ -329,7 +389,14 @@ def webhook_asaas(request):
                     print(f"[WEBHOOK] Mensalidade {mensalidade.id} atualizada para PAGO")
                     return HttpResponse(status=200)
 
-                parcela = localizar_parcela_espetaculo_por_payment_id(payment_id)
+                installment_id = payment.get('installment')
+
+                parcela = localizar_parcela_espetaculo_por_payment(
+                    payment_id=payment_id,
+                    external_reference=external_reference,
+                    customer_id=customer_id,
+                    installment_id=installment_id,
+                )
 
                 if parcela:
                     parcela.atualizar_status_asaas(payment_status)
