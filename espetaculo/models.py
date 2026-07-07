@@ -625,10 +625,11 @@ class ParcelaCobrancaEspetaculo(models.Model):
         campos_para_salvar = ['asaas_status']
         self.asaas_status = novo_status
 
-        if novo_status in ['RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH']:
-            valor_integral = self.valor or Decimal('0.00')
+        valor_integral = self.valor or Decimal('0.00')
+        valor_pago_atual = self.valor_pago or Decimal('0.00')
 
-            if self.valor_pago != valor_integral:
+        if novo_status in ['RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH', 'PAID']:
+            if valor_pago_atual != valor_integral:
                 self.valor_pago = valor_integral
                 campos_para_salvar.append('valor_pago')
 
@@ -640,9 +641,22 @@ class ParcelaCobrancaEspetaculo(models.Model):
                 self.data_pagamento = timezone.now()
                 campos_para_salvar.append('data_pagamento')
 
-        self.save(update_fields=campos_para_salvar)
-        self.cobranca.atualizar_status()
+        elif valor_pago_atual > Decimal('0.00'):
+            if self.status != 'parcial':
+                self.status = 'parcial'
+                campos_para_salvar.append('status')
 
+        else:
+            if self.status != 'pendente':
+                self.status = 'pendente'
+                campos_para_salvar.append('status')
+
+            if self.data_pagamento is not None:
+                self.data_pagamento = None
+                campos_para_salvar.append('data_pagamento')
+
+        self.save(update_fields=list(dict.fromkeys(campos_para_salvar)))
+        self.cobranca.atualizar_status()
 
 import uuid
 

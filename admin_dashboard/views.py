@@ -2512,6 +2512,7 @@ def espetaculo_participacoes(request, pk):
             CobrancaEspetaculo,
             ParcelaCobrancaEspetaculo,
         )
+        from pagamentos.services.asaas import get_payment
 
         espetaculo = get_object_or_404(Espetaculo, pk=pk)
 
@@ -2572,8 +2573,39 @@ def espetaculo_participacoes(request, pk):
         total_recebido_taxa_palco = Decimal('0.00')
         total_recebido_figurino = Decimal('0.00')
 
-        def valor_base_cobranca(cobranca):
-            return cobranca.valor_total or Decimal('0.00')
+        def sincronizar_cobranca_com_asaas(cobranca):
+            houve_alteracao = False
+
+            for parcela in cobranca.parcelas.all():
+                if not parcela.asaas_payment_id:
+                    continue
+
+                try:
+                    payment_data = get_payment(parcela.asaas_payment_id)
+                except Exception:
+                    continue
+
+                if not payment_data:
+                    continue
+
+                novo_status = payment_data.get('status')
+                status_anterior = parcela.asaas_status
+                valor_pago_anterior = parcela.valor_pago
+                status_local_anterior = parcela.status
+
+                parcela.atualizar_status_asaas(novo_status)
+
+                if (
+                    status_anterior != parcela.asaas_status
+                    or valor_pago_anterior != parcela.valor_pago
+                    or status_local_anterior != parcela.status
+                ):
+                    houve_alteracao = True
+
+            if houve_alteracao:
+                cobranca.refresh_from_db()
+
+            cobranca.atualizar_status()
 
         def resumir_status(lista_cobrancas):
             if not lista_cobrancas:
@@ -2585,7 +2617,7 @@ def espetaculo_participacoes(request, pk):
             )
 
             total_cobrado = sum(
-                (valor_base_cobranca(c) for c in lista_cobrancas),
+                (c.valor_total_efetivo() or Decimal('0.00') for c in lista_cobrancas),
                 Decimal('0.00')
             )
 
@@ -2599,6 +2631,9 @@ def espetaculo_participacoes(request, pk):
 
         for participacao in participacoes:
             cobrancas = list(participacao.cobrancas.all())
+
+            for cobranca in cobrancas:
+                sincronizar_cobranca_com_asaas(cobranca)
 
             cobrancas_taxa_palco = [c for c in cobrancas if c.tipo == 'taxa_palco']
             cobrancas_figurino = [c for c in cobrancas if c.tipo == 'figurino']
@@ -2621,6 +2656,7 @@ def espetaculo_participacoes(request, pk):
                 'figurino_status': resumir_status(cobrancas_figurino),
                 'taxa_palco_pago': pago_taxa_palco,
                 'figurino_pago': pago_figurino,
+                'total_pago': pago_taxa_palco + pago_figurino,
             }
 
             quantidade_cobrancas_por_participacao[participacao.pk] = len(cobrancas)
