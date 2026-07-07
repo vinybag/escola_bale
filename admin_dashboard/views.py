@@ -2501,19 +2501,17 @@ def espetaculo_participacoes(request, pk):
 
     try:
         from decimal import Decimal
-        from django.apps import apps
         from django.contrib import messages
         from django.db.models import Prefetch
         from django.shortcuts import get_object_or_404, redirect, render
 
+        from usuarios.models import Aluna
         from espetaculo.models import (
             Espetaculo,
             ParticipacaoEspetaculo,
             CobrancaEspetaculo,
             ParcelaCobrancaEspetaculo,
         )
-
-        Aluna = apps.get_model('aluna', 'Aluna')
 
         espetaculo = get_object_or_404(Espetaculo, pk=pk)
 
