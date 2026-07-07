@@ -267,18 +267,70 @@ def pagamento_cancelado(request):
 
 # ==================== WEBHOOK DO ASAAS ====================
 
-def localizar_parcela_espetaculo_por_payment_id(payment_id):
-    from espetaculo.models import ParcelaCobrancaEspetaculo
+def localizar_parcela_espetaculo_por_payment(payment_id, external_reference=None, customer_id=None):
+    from espetaculo.models import CobrancaEspetaculo, ParcelaCobrancaEspetaculo
 
-    if not payment_id:
-        return None
+    if payment_id:
+        parcela = (
+            ParcelaCobrancaEspetaculo.objects
+            .select_related('cobranca', 'cobranca__participacao')
+            .filter(asaas_payment_id=payment_id)
+            .first()
+        )
+        if parcela:
+            print(f"[WEBHOOK] Parcela de espetáculo encontrada por asaas_payment_id: {parcela.id}")
+            return parcela
 
-    return (
-        ParcelaCobrancaEspetaculo.objects
-        .select_related('cobranca', 'cobranca__participacao')
-        .filter(asaas_payment_id=payment_id)
-        .first()
-    )
+    if external_reference and external_reference.startswith('cobranca_espetaculo:'):
+        try:
+            cobranca_id = external_reference.split(':', 1)[1]
+
+            cobranca = (
+                CobrancaEspetaculo.objects
+                .select_related('participacao')
+                .prefetch_related('parcelas')
+                .get(id=cobranca_id)
+            )
+
+            parcela = cobranca.parcelas.filter(asaas_payment_id=payment_id).first()
+            if parcela:
+                print(f"[WEBHOOK] Parcela de espetáculo localizada na cobrança {cobranca.id} pelo payment_id.")
+                return parcela
+
+            parcelas = list(cobranca.parcelas.all())
+
+            if len(parcelas) == 1:
+                parcela = parcelas[0]
+                update_fields = []
+
+                if payment_id and parcela.asaas_payment_id != payment_id:
+                    parcela.asaas_payment_id = payment_id
+                    update_fields.append('asaas_payment_id')
+
+                if customer_id and getattr(cobranca, 'asaas_customer_id', None) != customer_id:
+                    cobranca.asaas_customer_id = customer_id
+                    cobranca.save(update_fields=['asaas_customer_id'])
+
+                if update_fields:
+                    parcela.save(update_fields=update_fields)
+
+                print(f"[WEBHOOK] Parcela única da cobrança {cobranca.id} localizada por externalReference.")
+                return parcela
+
+            print(
+                f"[WEBHOOK] Cobrança {cobranca.id} localizada por externalReference, "
+                f"mas nenhuma parcela pôde ser reconciliada com payment_id {payment_id}."
+            )
+            return None
+
+        except CobrancaEspetaculo.DoesNotExist:
+            print(f"[WEBHOOK] Nenhuma cobrança de espetáculo encontrada para externalReference {external_reference}")
+            return None
+        except Exception as e:
+            print(f"[WEBHOOK] Erro ao localizar parcela de espetáculo por externalReference: {e}")
+            return None
+
+    return None
 
 @csrf_exempt
 def webhook_asaas(request):
@@ -329,7 +381,11 @@ def webhook_asaas(request):
                     print(f"[WEBHOOK] Mensalidade {mensalidade.id} atualizada para PAGO")
                     return HttpResponse(status=200)
 
-                parcela = localizar_parcela_espetaculo_por_payment_id(payment_id)
+                parcela = localizar_parcela_espetaculo_por_payment(
+    payment_id=payment_id,
+    external_reference=external_reference,
+    customer_id=customer_id,
+)
 
                 if parcela:
                     parcela.atualizar_status_asaas(payment_status)
