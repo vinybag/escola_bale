@@ -21,7 +21,7 @@
 
     .cobranca-shell {
         width: 100%;
-        max-width: 1100px;
+        max-width: 1180px;
         margin: 0 auto;
         min-width: 0;
     }
@@ -30,8 +30,7 @@
     .cobranca-top,
     .cobranca-body,
     .cobranca-section,
-    .cobranca-header,
-    .cobranca-header > div {
+    .cobranca-card {
         min-width: 0;
     }
 
@@ -82,12 +81,6 @@
         grid-template-columns: 1fr;
         gap: 1rem;
         margin-bottom: 1rem;
-    }
-
-    .cobranca-grid-4 > div,
-    .cobranca-grid-2 > div,
-    .cobranca-grid-1 > div {
-        min-width: 0;
     }
 
     .cobranca-input,
@@ -175,7 +168,7 @@
     .status-pill {
         display: inline-flex;
         align-items: center;
-        padding: 0.32rem 0.75rem;
+        padding: 0.34rem 0.8rem;
         border-radius: 999px;
         font-size: 0.82rem;
         font-weight: 700;
@@ -202,58 +195,9 @@
         color: #b71c1c;
     }
 
-    .cobranca-table {
-        width: 100%;
-        border-collapse: collapse;
-        table-layout: fixed;
-    }
-
-    .cobranca-table thead tr {
-        background: #faf7fc;
-    }
-
-    .cobranca-table th {
-        padding: 0.85rem 0.9rem;
-        border-bottom: 1px solid #ece3f2;
-        text-align: left;
-        font-size: 0.8rem;
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-        color: #7a7280;
-        white-space: nowrap;
-    }
-
-    .cobranca-table td {
-        padding: 0.9rem;
-        border-bottom: 1px solid #f1ebf6;
-        vertical-align: top;
-        color: #3f3548;
-        font-size: 0.94rem;
-        min-width: 0;
-        word-break: break-word;
-    }
-
-    .cobranca-table tbody tr:hover {
-        background: #fcf9fe;
-    }
-
-    .cobranca-mini-card {
-        padding: 0.7rem;
-        background: #faf7fc;
-        border: 1px solid #ece3f2;
-        border-radius: 10px;
-        font-size: 0.85rem;
-    }
-
-    .cobranca-mini-stack {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-        min-width: 0;
-    }
-
-    .cobranca-actions-col {
-        min-width: 220px;
+    .status-partial {
+        background: #fff3e0;
+        color: #a05a00;
     }
 
     .btn-primary-purple {
@@ -269,10 +213,6 @@
         font-weight: 700;
         text-decoration: none;
         box-shadow: 0 8px 18px rgba(107, 45, 143, 0.18);
-    }
-
-    .btn-primary-purple:hover {
-        color: white;
     }
 
     .btn-secondary-gray {
@@ -292,13 +232,12 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        padding: 0.7rem 1rem;
+        padding: 0.72rem 1rem;
         background: #dc3545;
         color: white;
         border: none;
         border-radius: 8px;
         cursor: pointer;
-        white-space: nowrap;
         font-weight: 600;
     }
 
@@ -306,13 +245,13 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        padding: 0.45rem 0.75rem;
+        padding: 0.55rem 0.9rem;
         background: #28a745;
         color: white;
         border: none;
-        border-radius: 6px;
+        border-radius: 8px;
         cursor: pointer;
-        font-size: 0.8rem;
+        font-size: 0.85rem;
         font-weight: 600;
     }
 
@@ -320,40 +259,28 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        padding: 0.45rem 0.75rem;
+        padding: 0.55rem 0.9rem;
         background: #e8f5e9;
         color: #1b5e20;
         border: 1px solid #c8e6c9;
-        border-radius: 6px;
+        border-radius: 8px;
         cursor: pointer;
-        font-size: 0.8rem;
+        font-size: 0.85rem;
         font-weight: 600;
-        white-space: nowrap;
-    }
-
-    .btn-cash-green:hover {
-        background: #c8e6c9;
-        color: #145214;
     }
 
     .btn-partial-orange {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        padding: 0.45rem 0.75rem;
+        padding: 0.55rem 0.9rem;
         background: #fff3e0;
         color: #a05a00;
         border: 1px solid #ffd59e;
-        border-radius: 6px;
+        border-radius: 8px;
         cursor: pointer;
-        font-size: 0.8rem;
+        font-size: 0.85rem;
         font-weight: 600;
-        white-space: nowrap;
-    }
-
-    .btn-partial-orange:hover {
-        background: #ffe0b2;
-        color: #7a4300;
     }
 
     .empty-state {
@@ -362,76 +289,115 @@
         color: #7b7580;
     }
 
-    .parcelas-box {
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
+    .cobranca-cards {
+        display: grid;
+        gap: 1rem;
     }
 
-    .parcelas-vazio {
-        font-size: 0.85rem;
-        color: #666;
-        line-height: 1.4;
-        margin-bottom: 0.65rem;
+    .cobranca-card {
+        border: 1px solid #ece3f2;
+        border-radius: 16px;
+        background: #fff;
+        overflow: hidden;
+    }
+
+    .cobranca-card-top {
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid #f0e8f5;
+        background: linear-gradient(180deg, #fff 0%, #faf7fc 100%);
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+        align-items: flex-start;
+    }
+
+    .cobranca-card-body {
+        padding: 1.25rem;
+        display: grid;
+        gap: 1rem;
+    }
+
+    .cobranca-summary-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 0.85rem;
+    }
+
+    .cobranca-summary-item {
+        background: #faf7fc;
+        border: 1px solid #ece3f2;
+        border-radius: 12px;
+        padding: 0.9rem;
+        min-width: 0;
+    }
+
+    .cobranca-summary-label {
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #7a7280;
+        margin-bottom: 0.35rem;
+        font-weight: 700;
+    }
+
+    .cobranca-summary-value {
+        color: #3f3548;
+        font-size: 0.96rem;
+        line-height: 1.45;
+        word-break: break-word;
+    }
+
+    .cobranca-actions-row {
+        display: flex;
+        gap: 0.65rem;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .parcelas-box {
+        display: grid;
+        gap: 0.8rem;
+    }
+
+    .parcela-card {
+        background: #fcfbfd;
+        border: 1px solid #ece3f2;
+        border-radius: 12px;
+        padding: 1rem;
+    }
+
+    .parcela-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 0.75rem;
+        margin-top: 0.75rem;
+    }
+
+    .parcela-info {
+        font-size: 0.88rem;
+        color: #5b5064;
+        line-height: 1.45;
     }
 
     .partial-form {
-        display: flex;
-        gap: 0.4rem;
-        flex-wrap: wrap;
-        margin-top: 0.35rem;
+        display: grid;
+        grid-template-columns: 140px minmax(180px, 1fr) auto;
+        gap: 0.5rem;
+        margin-top: 0.75rem;
+        align-items: center;
     }
 
     .partial-form .cobranca-input {
-        padding: 0.45rem 0.7rem;
-        font-size: 0.82rem;
+        padding: 0.62rem 0.75rem;
+        font-size: 0.9rem;
     }
 
-    @media (max-width: 1280px) {
+    @media (max-width: 1100px) {
+        .cobranca-summary-grid,
+        .parcela-grid,
         .cobranca-grid-4 {
             grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-    }
-
-    @media (max-width: 768px) {
-        .cobranca-table thead {
-            display: none;
-        }
-
-        .cobranca-table,
-        .cobranca-table tbody,
-        .cobranca-table tr,
-        .cobranca-table td {
-            display: block;
-            width: 100%;
-        }
-
-        .cobranca-table tr {
-            background: white;
-            border: 1px solid #ece3f2;
-            border-radius: 14px;
-            margin-bottom: 1rem;
-            padding: 0.25rem 0;
-        }
-
-        .cobranca-table td {
-            border-bottom: 1px solid #f1ebf6;
-            padding: 0.75rem 0.9rem;
-        }
-
-        .cobranca-table td:last-child {
-            border-bottom: none;
-        }
-
-        .cobranca-table td::before {
-            content: attr(data-label);
-            display: block;
-            margin-bottom: 0.3rem;
-            font-size: 0.78rem;
-            font-weight: 700;
-            color: #7a7280;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
         }
     }
 
@@ -456,17 +422,30 @@
 
         .cobranca-top,
         .cobranca-body,
-        .cobranca-section {
-            padding: 1.2rem;
+        .cobranca-section,
+        .cobranca-card-body,
+        .cobranca-card-top {
+            padding: 1.1rem;
         }
 
         .cobranca-grid-4,
-        .cobranca-grid-2 {
+        .cobranca-grid-2,
+        .cobranca-summary-grid,
+        .parcela-grid,
+        .partial-form {
             grid-template-columns: 1fr !important;
         }
 
-        .partial-form {
+        .cobranca-actions-row {
             flex-direction: column;
+            align-items: stretch;
+        }
+
+        .cobranca-actions-row form,
+        .cobranca-actions-row a,
+        .cobranca-actions-row button,
+        .partial-form button {
+            width: 100%;
         }
     }
 </style>
@@ -496,7 +475,7 @@
                 <div>
                     <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1.15rem;">Gestão de cobranças</h3>
                     <p style="margin: 0; color: #7a7280; font-size: 0.95rem;">
-                        Crie cobranças, acompanhe parcelas e visualize o status de envio ao Asaas.
+                        Crie cobranças, acompanhe parcelas e registre pagamentos manuais com mais clareza.
                     </p>
                 </div>
                 <div style="padding: 0.55rem 0.9rem; border-radius: 999px; background: #efe7f5; color: #6b2d8f; font-size: 0.85rem; font-weight: 600;">
@@ -620,272 +599,271 @@
                 </div>
 
                 {% if cobrancas %}
-                    <div style="overflow-x: auto;">
-                        <table class="cobranca-table">
-                            <thead>
-                                <tr>
-                                    <th>Tipo</th>
-                                    <th>Descrição</th>
-                                    <th>Valor</th>
-                                    <th>Parcelamento</th>
-                                    <th>Desconto especial</th>
-                                    <th>Vencimento</th>
-                                    <th>Status</th>
-                                    <th>Parcelas</th>
-                                    <th>Asaas</th>
-                                    <th class="cobranca-actions-col">Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for cobranca in cobrancas %}
-                                    <tr>
-                                        <td data-label="Tipo">
-                                            <strong style="color: #4a235f;">{{ cobranca.get_tipo_display }}</strong>
-                                        </td>
+                    <div class="cobranca-cards">
+                        {% for cobranca in cobrancas %}
+                            <article class="cobranca-card">
+                                <div class="cobranca-card-top">
+                                    <div>
+                                        <div style="display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; margin-bottom: 0.45rem;">
+                                            <h4 style="margin: 0; color: #4a235f; font-size: 1.05rem;">
+                                                {{ cobranca.get_tipo_display }}
+                                            </h4>
 
-                                        <td data-label="Descrição">
+                                            {% if cobranca.status == 'pago' %}
+                                                <span class="status-pill status-success">Pago</span>
+                                            {% elif cobranca.status == 'parcial' %}
+                                                <span class="status-pill status-partial">Parcial</span>
+                                            {% else %}
+                                                <span class="status-pill status-warning">Pendente</span>
+                                            {% endif %}
+                                        </div>
+
+                                        <p style="margin: 0; color: #6e6576;">
                                             {{ cobranca.descricao }}
-                                        </td>
+                                        </p>
+                                    </div>
 
-                                        <td data-label="Valor">
-                                            {% if cobranca.tipo == 'figurino' %}
-                                                <div class="cobranca-mini-stack">
-                                                    <div class="cobranca-mini-card">Base: R$ {{ cobranca.valor_total }}</div>
-                                                    <div class="cobranca-mini-card">À vista: R$ {{ cobranca.valor_figurino_avista|default_if_none:"0.00" }}</div>
-                                                    <div class="cobranca-mini-card">Parcelado: R$ {{ cobranca.valor_figurino_parcelado|default_if_none:"0.00" }}</div>
-                                                </div>
-                                            {% else %}
-                                                <strong>R$ {{ cobranca.valor_total }}</strong>
-                                            {% endif %}
-                                        </td>
+                                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                        <form method="post"
+                                              action="{% url 'admin_dashboard:cobranca_espetaculo_excluir' cobranca.pk %}"
+                                              onsubmit="return confirm('Tem certeza que deseja excluir esta cobrança? Essa ação também removerá as parcelas vinculadas.');">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn-danger-red">
+                                                Excluir cobrança
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
 
-                                        <td data-label="Parcelamento">
-                                            {% if cobranca.permitir_parcelamento %}
-                                                <span class="status-pill status-neutral">Sim (até {{ cobranca.max_parcelas }}x)</span>
-                                            {% else %}
-                                                <span class="status-pill status-warning">Não</span>
-                                            {% endif %}
-                                        </td>
-
-                                        <td data-label="Desconto especial">
-                                            {% if cobranca.tipo == 'figurino' %}
-                                                —
-                                            {% else %}
-                                                {% if cobranca.desconto_irmaos %}
-                                                    <span class="status-pill status-success">Sim</span>
+                                <div class="cobranca-card-body">
+                                    <div class="cobranca-summary-grid">
+                                        <div class="cobranca-summary-item">
+                                            <div class="cobranca-summary-label">Valor total</div>
+                                            <div class="cobranca-summary-value">
+                                                {% if cobranca.tipo == 'figurino' %}
+                                                    Base: R$ {{ cobranca.valor_total }}<br>
+                                                    À vista: R$ {{ cobranca.valor_figurino_avista|default_if_none:"0.00" }}<br>
+                                                    Parcelado: R$ {{ cobranca.valor_figurino_parcelado|default_if_none:"0.00" }}
                                                 {% else %}
-                                                    <span class="status-pill status-warning">Não</span>
+                                                    R$ {{ cobranca.valor_total }}
                                                 {% endif %}
-                                            {% endif %}
-                                        </td>
-
-                                        <td data-label="Vencimento">
-                                            {% if cobranca.vencimento_primeira_parcela %}
-                                                {{ cobranca.vencimento_primeira_parcela|date:"d/m/Y" }}
-                                            {% else %}
-                                                —
-                                            {% endif %}
-                                        </td>
-
-                                        <td data-label="Status">
-                                            <div class="cobranca-mini-stack">
-                                                <strong style="color: #4a235f;">{{ cobranca.get_status_display }}</strong>
-                                                <span style="font-size: 0.82rem; color: #666;">Pago: R$ {{ cobranca.total_pago }}</span>
-                                                <span style="font-size: 0.82rem; color: #666;">Pendente: R$ {{ cobranca.total_pendente }}</span>
                                             </div>
-                                        </td>
+                                        </div>
 
-                                        <td data-label="Parcelas">
-                                            <span class="status-pill status-neutral">{{ cobranca.parcelas.count }}</span>
-                                        </td>
+                                        <div class="cobranca-summary-item">
+                                            <div class="cobranca-summary-label">Financeiro</div>
+                                            <div class="cobranca-summary-value">
+                                                Pago: R$ {{ cobranca.total_pago }}<br>
+                                                Pendente: R$ {{ cobranca.total_pendente }}
+                                            </div>
+                                        </div>
 
-                                        <td data-label="Asaas">
-                                            <div class="cobranca-mini-stack">
-                                                {% if cobranca.enviado_asaas %}
-                                                    <span class="status-pill status-success">Enviado</span>
+                                        <div class="cobranca-summary-item">
+                                            <div class="cobranca-summary-label">Parcelamento</div>
+                                            <div class="cobranca-summary-value">
+                                                {% if cobranca.permitir_parcelamento %}
+                                                    Sim, até {{ cobranca.max_parcelas }}x
                                                 {% else %}
-                                                    <span class="status-pill status-warning">Não enviado</span>
+                                                    Não permitido
                                                 {% endif %}
+                                            </div>
+                                        </div>
 
-                                                {% if cobranca.billing_type %}
-                                                    <span style="font-size: 0.85rem; color: #666;">
-                                                        Tipo: {{ cobranca.billing_type }}
-                                                    </span>
+                                        <div class="cobranca-summary-item">
+                                            <div class="cobranca-summary-label">Vencimento / Asaas</div>
+                                            <div class="cobranca-summary-value">
+                                                {% if cobranca.vencimento_primeira_parcela %}
+                                                    {{ cobranca.vencimento_primeira_parcela|date:"d/m/Y" }}<br>
+                                                {% else %}
+                                                    Sem vencimento<br>
                                                 {% endif %}
 
                                                 {% if cobranca.enviado_asaas %}
-                                                    <span style="font-size: 0.85rem; color: #666; line-height: 1.4;">
-                                                        Cobrança integrada ao Asaas.
-                                                    </span>
+                                                    Enviado ao Asaas
                                                 {% else %}
-                                                    <span style="font-size: 0.85rem; color: #666; line-height: 1.4;">
-                                                        Cobrança não enviada ao Asaas.
-                                                    </span>
+                                                    Não enviado ao Asaas
                                                 {% endif %}
                                             </div>
-                                        </td>
+                                        </div>
+                                    </div>
 
-                                        <td data-label="Ações">
-                                            <div class="cobranca-mini-stack">
+                                    {% if cobranca.parcelas.all %}
+                                        <div>
+                                            <h5 style="margin: 0 0 0.75rem 0; color: #4a235f; font-size: 0.98rem;">
+                                                Parcelas
+                                            </h5>
+
+                                            <div class="parcelas-box">
+                                                {% for parcela in cobranca.parcelas.all %}
+                                                    <div class="parcela-card">
+                                                        <div style="display: flex; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; align-items: center;">
+                                                            <div>
+                                                                <strong style="color: #4a235f;">
+                                                                    Parcela {{ parcela.numero_parcela }}/{{ parcela.total_parcelas }}
+                                                                </strong>
+                                                            </div>
+
+                                                            <div>
+                                                                {% if parcela.status == 'pago' %}
+                                                                    <span class="status-pill status-success">Pago</span>
+                                                                {% elif parcela.status == 'parcial' %}
+                                                                    <span class="status-pill status-partial">Parcial</span>
+                                                                {% else %}
+                                                                    <span class="status-pill status-warning">Pendente</span>
+                                                                {% endif %}
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="parcela-grid">
+                                                            <div class="parcela-info">
+                                                                <strong>Valor:</strong> R$ {{ parcela.valor }}
+                                                            </div>
+                                                            <div class="parcela-info">
+                                                                <strong>Pago:</strong> R$ {{ parcela.valor_pago }}
+                                                            </div>
+                                                            <div class="parcela-info">
+                                                                <strong>Saldo:</strong> R$ {{ parcela.saldo_pendente }}
+                                                            </div>
+                                                            <div class="parcela-info">
+                                                                <strong>Vencimento:</strong>
+                                                                {% if parcela.vencimento %}{{ parcela.vencimento|date:"d/m/Y" }}{% else %}—{% endif %}
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="parcela-grid">
+                                                            <div class="parcela-info">
+                                                                <strong>Forma manual:</strong>
+                                                                {{ parcela.forma_pagamento_manual|default:"—" }}
+                                                            </div>
+                                                            <div class="parcela-info">
+                                                                <strong>Asaas:</strong>
+                                                                {{ parcela.asaas_status|default:"—" }}
+                                                            </div>
+                                                            <div class="parcela-info">
+                                                                <strong>Último registro:</strong>
+                                                                {% if parcela.data_pagamento %}{{ parcela.data_pagamento|date:"d/m/Y H:i" }}{% else %}—{% endif %}
+                                                            </div>
+                                                            <div class="parcela-info">
+                                                                {% if parcela.asaas_invoice_url %}
+                                                                    <a href="{{ parcela.asaas_invoice_url }}" target="_blank" rel="noopener noreferrer">Fatura</a>
+                                                                {% endif %}
+                                                                {% if parcela.asaas_bank_slip_url %}
+                                                                    {% if parcela.asaas_invoice_url %} | {% endif %}
+                                                                    <a href="{{ parcela.asaas_bank_slip_url }}" target="_blank" rel="noopener noreferrer">Boleto</a>
+                                                                {% endif %}
+                                                            </div>
+                                                        </div>
+
+                                                        {% if parcela.observacao_pagamento %}
+                                                            <div class="parcela-info" style="margin-top: 0.75rem; background: #fff; border: 1px solid #eee4f5; border-radius: 10px; padding: 0.75rem; white-space: pre-line;">
+                                                                <strong>Observação:</strong><br>
+                                                                {{ parcela.observacao_pagamento }}
+                                                            </div>
+                                                        {% endif %}
+
+                                                        {% if parcela.status != 'pago' %}
+                                                            <div class="cobranca-actions-row" style="margin-top: 0.85rem;">
+                                                                <form method="post"
+                                                                      action="{% url 'admin_dashboard:parcela_cobranca_espetaculo_marcar_pago' parcela.pk %}"
+                                                                      onsubmit="return confirm('Confirmar marcação desta parcela como paga?');">
+                                                                    {% csrf_token %}
+                                                                    <button type="submit" class="btn-success-green">
+                                                                        Marcar como pago
+                                                                    </button>
+                                                                </form>
+
+                                                                <form method="post"
+                                                                      action="{% url 'admin_dashboard:marcar_parcela_pago_dinheiro' parcela.pk %}"
+                                                                      onsubmit="return confirm('Marcar parcela {{ parcela.numero_parcela }}/{{ parcela.total_parcelas }} como paga em dinheiro?');">
+                                                                    {% csrf_token %}
+                                                                    <button type="submit" class="btn-cash-green">
+                                                                        Pago em dinheiro
+                                                                    </button>
+                                                                </form>
+                                                            </div>
+
+                                                            <form method="post"
+                                                                  action="{% url 'admin_dashboard:parcela_cobranca_espetaculo_registrar_pagamento_parcial' parcela.pk %}"
+                                                                  class="partial-form"
+                                                                  onsubmit="return confirm('Registrar pagamento parcial nesta parcela?');">
+                                                                {% csrf_token %}
+                                                                <input type="number"
+                                                                       name="valor_pago"
+                                                                       step="0.01"
+                                                                       min="0.01"
+                                                                       max="{{ parcela.saldo_pendente }}"
+                                                                       placeholder="Valor pago"
+                                                                       class="cobranca-input"
+                                                                       required>
+
+                                                                <input type="text"
+                                                                       name="observacao_pagamento"
+                                                                       placeholder="Observação (opcional)"
+                                                                       class="cobranca-input">
+
+                                                                <button type="submit" class="btn-partial-orange">
+                                                                    Registrar parcial
+                                                                </button>
+                                                            </form>
+                                                        {% endif %}
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    {% else %}
+                                        <div style="border: 1px dashed #dbcce8; border-radius: 14px; padding: 1rem; background: #fcf9fe;">
+                                            <div style="margin-bottom: 0.85rem; color: #6c6374;">
+                                                Essa cobrança ainda não possui parcelas geradas. Você ainda pode registrar pagamento manual total ou parcial agora.
+                                            </div>
+
+                                            <div class="cobranca-actions-row">
                                                 <form method="post"
-                                                      action="{% url 'admin_dashboard:cobranca_espetaculo_excluir' cobranca.pk %}"
-                                                      onsubmit="return confirm('Tem certeza que deseja excluir esta cobrança? Essa ação também removerá as parcelas vinculadas.');"
-                                                      style="display: inline;">
+                                                      action="{% url 'admin_dashboard:cobranca_espetaculo_marcar_pago' cobranca.pk %}"
+                                                      onsubmit="return confirm('Marcar esta cobrança como paga?');">
                                                     {% csrf_token %}
-                                                    <button type="submit" class="btn-danger-red">
-                                                        Excluir cobrança
+                                                    <button type="submit" class="btn-success-green">
+                                                        Marcar como pago
                                                     </button>
                                                 </form>
 
-                                                {% if cobranca.parcelas.all %}
-                                                    <div class="parcelas-box">
-                                                        {% for parcela in cobranca.parcelas.all %}
-                                                            <div class="cobranca-mini-card">
-                                                                <div class="cobranca-mini-stack">
-                                                                    <span>
-                                                                        <strong>Parcela {{ parcela.numero_parcela }}/{{ parcela.total_parcelas }}</strong> — R$ {{ parcela.valor }}
-                                                                    </span>
-
-                                                                    <span style="color: #666;">
-                                                                        Status local:
-                                                                        {% if parcela.status == 'pago' %}
-                                                                            <strong style="color: #155724;">Pago</strong>
-                                                                        {% elif parcela.status == 'parcial' %}
-                                                                            <strong style="color: #a05a00;">Parcial</strong>
-                                                                        {% else %}
-                                                                            <strong style="color: #856404;">Pendente</strong>
-                                                                        {% endif %}
-                                                                    </span>
-
-                                                                    <span style="color: #666;">
-                                                                        Pago até agora: R$ {{ parcela.valor_pago }}
-                                                                    </span>
-
-                                                                    <span style="color: #666;">
-                                                                        Saldo pendente: R$ {{ parcela.saldo_pendente }}
-                                                                    </span>
-
-                                                                    {% if parcela.vencimento %}
-                                                                        <span style="color: #666;">
-                                                                            Vencimento: {{ parcela.vencimento|date:"d/m/Y" }}
-                                                                        </span>
-                                                                    {% endif %}
-
-                                                                    {% if parcela.forma_pagamento_manual %}
-                                                                        <span style="color: #666;">
-                                                                            Forma manual: {{ parcela.forma_pagamento_manual }}
-                                                                        </span>
-                                                                    {% endif %}
-
-                                                                    {% if parcela.observacao_pagamento %}
-                                                                        <span style="color: #666; white-space: pre-line;">
-                                                                            Observação: {{ parcela.observacao_pagamento }}
-                                                                        </span>
-                                                                    {% endif %}
-
-                                                                    {% if parcela.asaas_status %}
-                                                                        <span style="color: #666;">
-                                                                            Status Asaas: {{ parcela.asaas_status }}
-                                                                        </span>
-                                                                    {% endif %}
-
-                                                                    {% if parcela.data_pagamento %}
-                                                                        <span style="color: #666;">
-                                                                            Último registro em: {{ parcela.data_pagamento|date:"d/m/Y H:i" }}
-                                                                        </span>
-                                                                    {% endif %}
-
-                                                                    <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
-                                                                        {% if parcela.asaas_invoice_url %}
-                                                                            <a href="{{ parcela.asaas_invoice_url }}" target="_blank" rel="noopener noreferrer">Fatura</a>
-                                                                        {% endif %}
-
-                                                                        {% if parcela.asaas_bank_slip_url %}
-                                                                            {% if parcela.asaas_invoice_url %} | {% endif %}
-                                                                            <a href="{{ parcela.asaas_bank_slip_url }}" target="_blank" rel="noopener noreferrer">Boleto</a>
-                                                                        {% endif %}
-                                                                    </div>
-
-                                                                    {% if parcela.status != 'pago' %}
-                                                                        <div style="display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.35rem;">
-                                                                            <form method="post"
-                                                                                  action="{% url 'admin_dashboard:parcela_cobranca_espetaculo_marcar_pago' parcela.pk %}"
-                                                                                  onsubmit="return confirm('Confirmar marcação desta parcela como paga?');">
-                                                                                {% csrf_token %}
-                                                                                <button type="submit" class="btn-success-green">
-                                                                                    Marcar como pago
-                                                                                </button>
-                                                                            </form>
-
-                                                                            <form method="post"
-                                                                                  action="{% url 'admin_dashboard:marcar_parcela_pago_dinheiro' parcela.pk %}"
-                                                                                  onsubmit="return confirm('Marcar parcela {{ parcela.numero_parcela }}/{{ parcela.total_parcelas }} como paga em dinheiro?');">
-                                                                                {% csrf_token %}
-                                                                                <button type="submit" class="btn-cash-green">
-                                                                                    Pago em dinheiro
-                                                                                </button>
-                                                                            </form>
-                                                                        </div>
-
-                                                                        <form method="post"
-                                                                              action="{% url 'admin_dashboard:parcela_cobranca_espetaculo_registrar_pagamento_parcial' parcela.pk %}"
-                                                                              class="partial-form"
-                                                                              onsubmit="return confirm('Registrar pagamento parcial nesta parcela?');">
-                                                                            {% csrf_token %}
-                                                                            <input type="number"
-                                                                                   name="valor_pago"
-                                                                                   step="0.01"
-                                                                                   min="0.01"
-                                                                                   max="{{ parcela.saldo_pendente }}"
-                                                                                   placeholder="Valor pago"
-                                                                                   class="cobranca-input"
-                                                                                   required
-                                                                                   style="max-width: 140px;">
-
-                                                                            <input type="text"
-                                                                                   name="observacao_pagamento"
-                                                                                   placeholder="Observação (opcional)"
-                                                                                   class="cobranca-input"
-                                                                                   style="max-width: 220px;">
-
-                                                                            <button type="submit" class="btn-partial-orange">
-                                                                                Registrar parcial
-                                                                            </button>
-                                                                        </form>
-                                                                    {% endif %}
-                                                                </div>
-                                                            </div>
-                                                        {% endfor %}
-                                                    </div>
-                                                {% else %}
-                                                    <div class="parcelas-vazio">
-                                                        Nenhuma parcela gerada para esta cobrança.
-                                                    </div>
-
-                                                    <form method="post"
-                                                          action="{% url 'admin_dashboard:cobranca_espetaculo_marcar_pago' cobranca.pk %}"
-                                                          onsubmit="return confirm('Marcar esta cobrança como paga?');">
-                                                        {% csrf_token %}
-                                                        <button type="submit" class="btn-success-green">
-                                                            Marcar como pago
-                                                        </button>
-                                                    </form>
-
-                                                    <form method="post"
-                                                          action="{% url 'admin_dashboard:cobranca_espetaculo_marcar_pago_dinheiro' cobranca.pk %}"
-                                                          onsubmit="return confirm('Marcar esta cobrança como paga em dinheiro?');">
-                                                        {% csrf_token %}
-                                                        <button type="submit" class="btn-cash-green">
-                                                            Pago em dinheiro
-                                                        </button>
-                                                    </form>
-                                                {% endif %}
+                                                <form method="post"
+                                                      action="{% url 'admin_dashboard:cobranca_espetaculo_marcar_pago_dinheiro' cobranca.pk %}"
+                                                      onsubmit="return confirm('Marcar esta cobrança como paga em dinheiro?');">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn-cash-green">
+                                                        Pago em dinheiro
+                                                    </button>
+                                                </form>
                                             </div>
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+
+                                            <form method="post"
+                                                  action="{% url 'admin_dashboard:cobranca_espetaculo_registrar_pagamento_parcial' cobranca.pk %}"
+                                                  class="partial-form"
+                                                  onsubmit="return confirm('Registrar pagamento parcial nesta cobrança?');">
+                                                {% csrf_token %}
+                                                <input type="number"
+                                                       name="valor_pago"
+                                                       step="0.01"
+                                                       min="0.01"
+                                                       max="{{ cobranca.total_pendente }}"
+                                                       placeholder="Valor pago"
+                                                       class="cobranca-input"
+                                                       required>
+
+                                                <input type="text"
+                                                       name="observacao_pagamento"
+                                                       placeholder="Observação (opcional)"
+                                                       class="cobranca-input">
+
+                                                <button type="submit" class="btn-partial-orange">
+                                                    Registrar parcial
+                                                </button>
+                                            </form>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </article>
+                        {% endfor %}
                     </div>
                 {% else %}
                     <div class="empty-state">

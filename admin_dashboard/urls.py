@@ -50,6 +50,7 @@ urlpatterns = [
     path('espetaculos/cobrancas/<int:pk>/marcar-pago-dinheiro/',views.cobranca_espetaculo_marcar_pago_dinheiro,name='cobranca_espetaculo_marcar_pago_dinheiro'),
     path('espetaculos/cobrancas/parcela/<int:pk>/pagar-dinheiro/', views.marcar_parcela_pago_dinheiro, name='marcar_parcela_pago_dinheiro'),
     path('parcelas-cobranca-espetaculo/<int:pk>/registrar-pagamento-parcial/',views.parcela_cobranca_espetaculo_registrar_pagamento_parcial,name='parcela_cobranca_espetaculo_registrar_pagamento_parcial'),
+    path('cobrancas-espetaculo/<int:pk>/registrar-pagamento-parcial/',views.cobranca_espetaculo_registrar_pagamento_parcial,name='cobranca_espetaculo_registrar_pagamento_parcial'),
     path('espetaculos/cobrancas/<int:pk>/excluir/',views.cobranca_espetaculo_excluir,name='cobranca_espetaculo_excluir'),
     path('inscricoes-audicao/', views.inscricoes_audicao_list, name='inscricoes_audicao'),
     path('inscricoes-audicao/<int:pk>/excluir/', views.inscricao_audicao_excluir, name='inscricao_audicao_excluir'),

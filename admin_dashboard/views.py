@@ -2666,10 +2666,17 @@ def participacao_cobrancas(request, pk):
 
     try:
         from decimal import Decimal, InvalidOperation
+        from django.contrib import messages
         from django.core.exceptions import ValidationError
-        from django.shortcuts import get_object_or_404
+        from django.db.models import Prefetch
+        from django.shortcuts import get_object_or_404, render, redirect
         from django.utils.dateparse import parse_date
-        from espetaculo.models import ParticipacaoEspetaculo, CobrancaEspetaculo
+
+        from espetaculo.models import (
+            ParticipacaoEspetaculo,
+            CobrancaEspetaculo,
+            ParcelaCobrancaEspetaculo,
+        )
 
         participacao = get_object_or_404(
             ParticipacaoEspetaculo.objects.select_related(
@@ -2681,7 +2688,7 @@ def participacao_cobrancas(request, pk):
         )
 
         if request.method == 'POST':
-            tipo = request.POST.get('tipo')
+            tipo = (request.POST.get('tipo') or '').strip()
             descricao = (request.POST.get('descricao') or '').strip()
             valor_total = (request.POST.get('valor_total') or '').strip()
             permitir_parcelamento = request.POST.get('permitir_parcelamento') == 'on'
@@ -2716,15 +2723,16 @@ def participacao_cobrancas(request, pk):
                     messages.error(request, 'Valor à vista do figurino inválido.')
                     return redirect('admin_dashboard:participacao_cobrancas', pk=pk)
 
-                if permitir_parcelamento and valor_figurino_parcelado:
+                if permitir_parcelamento:
+                    if not valor_figurino_parcelado:
+                        messages.error(request, 'Informe o valor parcelado do figurino.')
+                        return redirect('admin_dashboard:participacao_cobrancas', pk=pk)
+
                     try:
                         valor_figurino_parcelado_decimal = Decimal(valor_figurino_parcelado.replace(',', '.'))
                     except (InvalidOperation, AttributeError):
                         messages.error(request, 'Valor parcelado do figurino inválido.')
                         return redirect('admin_dashboard:participacao_cobrancas', pk=pk)
-                elif permitir_parcelamento and not valor_figurino_parcelado:
-                    messages.error(request, 'Informe o valor parcelado do figurino.')
-                    return redirect('admin_dashboard:participacao_cobrancas', pk=pk)
 
             try:
                 max_parcelas = int(max_parcelas)
@@ -2763,8 +2771,8 @@ def participacao_cobrancas(request, pk):
                 cobranca.save()
             except ValidationError as e:
                 if hasattr(e, 'message_dict'):
-                    for mensagens in e.message_dict.values():
-                        for mensagem in mensagens:
+                    for mensagens_validacao in e.message_dict.values():
+                        for mensagem in mensagens_validacao:
                             messages.error(request, mensagem)
                 else:
                     messages.error(request, 'Erro de validação ao criar cobrança.')
@@ -2773,11 +2781,15 @@ def participacao_cobrancas(request, pk):
             messages.success(request, 'Cobrança criada com sucesso.')
             return redirect('admin_dashboard:participacao_cobrancas', pk=pk)
 
+        parcelas_qs = ParcelaCobrancaEspetaculo.objects.order_by('numero_parcela', 'id')
+
         cobrancas = (
             CobrancaEspetaculo.objects
             .filter(participacao=participacao)
-            .prefetch_related('parcelas')
-            .order_by('-criado_em')
+            .prefetch_related(
+                Prefetch('parcelas', queryset=parcelas_qs)
+            )
+            .order_by('-criado_em', '-id')
         )
 
         context = {
@@ -3454,6 +3466,72 @@ def parcela_cobranca_espetaculo_registrar_pagamento_parcial(request, pk):
         return redirect(
             'admin_dashboard:participacao_cobrancas',
             pk=parcela.cobranca.participacao.pk
+        )
+
+    except Exception as e:
+        messages.error(request, f'Erro ao registrar pagamento parcial: {e}')
+        return redirect('admin_dashboard:espetaculos_list')
+    
+@login_required
+def cobranca_espetaculo_registrar_pagamento_parcial(request, pk):
+    if not request.user.is_staff:
+        return redirect('home')
+
+    if request.method != 'POST':
+        messages.error(request, 'Método inválido.')
+        return redirect('admin_dashboard:espetaculos_list')
+
+    try:
+        from decimal import Decimal
+        from django.shortcuts import get_object_or_404
+        from django.db import transaction
+        from espetaculo.models import CobrancaEspetaculo, ParcelaCobrancaEspetaculo
+
+        cobranca = get_object_or_404(
+            CobrancaEspetaculo.objects.select_related(
+                'participacao',
+                'participacao__aluna',
+                'participacao__espetaculo',
+            ).prefetch_related('parcelas'),
+            pk=pk
+        )
+
+        valor_pago = (request.POST.get('valor_pago') or '').replace(',', '.').strip()
+        observacao = (request.POST.get('observacao_pagamento') or '').strip()
+
+        with transaction.atomic():
+            parcela = cobranca.parcelas.order_by('numero_parcela').first()
+
+            if not parcela:
+                parcela = ParcelaCobrancaEspetaculo.objects.create(
+                    cobranca=cobranca,
+                    numero_parcela=1,
+                    total_parcelas=1,
+                    valor=cobranca.valor_total_efetivo(),
+                    vencimento=cobranca.vencimento_primeira_parcela,
+                    status='pendente',
+                    billing_type='DINHEIRO',
+                    forma_pagamento_manual='DINHEIRO',
+                )
+
+            parcela.registrar_pagamento(
+                valor=valor_pago,
+                forma_pagamento='DINHEIRO',
+                observacao=observacao,
+            )
+
+            if hasattr(cobranca, 'billing_type') and not cobranca.billing_type:
+                cobranca.billing_type = 'DINHEIRO'
+                cobranca.save(update_fields=['billing_type'])
+
+        if parcela.status == 'pago':
+            messages.success(request, 'Pagamento registrado e cobrança quitada com sucesso.')
+        else:
+            messages.success(request, 'Pagamento parcial registrado com sucesso.')
+
+        return redirect(
+            'admin_dashboard:participacao_cobrancas',
+            pk=cobranca.participacao.pk
         )
 
     except Exception as e:
