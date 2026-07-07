@@ -2541,9 +2541,14 @@ def espetaculo_participacoes(request, pk):
             return redirect('admin_dashboard:espetaculo_participacoes', pk=pk)
 
         parcelas_qs = ParcelaCobrancaEspetaculo.objects.order_by('numero_parcela', 'id')
-        cobrancas_qs = CobrancaEspetaculo.objects.prefetch_related(
-            Prefetch('parcelas', queryset=parcelas_qs)
-        ).order_by('-criado_em', '-id')
+
+        cobrancas_qs = (
+            CobrancaEspetaculo.objects
+            .prefetch_related(
+                Prefetch('parcelas', queryset=parcelas_qs)
+            )
+            .order_by('-criado_em', '-id')
+        )
 
         participacoes = (
             ParticipacaoEspetaculo.objects
@@ -2572,12 +2577,12 @@ def espetaculo_participacoes(request, pk):
                 return None
 
             total_pago = sum(
-                (c.total_pago() for c in lista_cobrancas),
+                (c.total_pago() or Decimal('0.00') for c in lista_cobrancas),
                 Decimal('0.00')
             )
 
             total_efetivo = sum(
-                (c.valor_total_efetivo() for c in lista_cobrancas),
+                (c.valor_total_efetivo() or Decimal('0.00') for c in lista_cobrancas),
                 Decimal('0.00')
             )
 
@@ -2592,29 +2597,30 @@ def espetaculo_participacoes(request, pk):
         for participacao in participacoes:
             cobrancas = list(participacao.cobrancas.all())
 
-            cobrancas_ativas = [c for c in cobrancas if c.ativo]
-            cobrancas_taxa_palco = [c for c in cobrancas_ativas if c.tipo == 'taxa_palco']
-            cobrancas_figurino = [c for c in cobrancas_ativas if c.tipo == 'figurino']
+            cobrancas_taxa_palco = [c for c in cobrancas if c.tipo == 'taxa_palco']
+            cobrancas_figurino = [c for c in cobrancas if c.tipo == 'figurino']
 
-            status_taxa_palco = resumir_status(cobrancas_taxa_palco)
-            status_figurino = resumir_status(cobrancas_figurino)
-
-            total_recebido_taxa_palco += sum(
-                (c.total_pago() for c in cobrancas_taxa_palco),
+            pago_taxa_palco = sum(
+                (c.total_pago() or Decimal('0.00') for c in cobrancas_taxa_palco),
                 Decimal('0.00')
             )
 
-            total_recebido_figurino += sum(
-                (c.total_pago() for c in cobrancas_figurino),
+            pago_figurino = sum(
+                (c.total_pago() or Decimal('0.00') for c in cobrancas_figurino),
                 Decimal('0.00')
             )
+
+            total_recebido_taxa_palco += pago_taxa_palco
+            total_recebido_figurino += pago_figurino
 
             status_por_participacao[participacao.pk] = {
-                'taxa_palco_status': status_taxa_palco,
-                'figurino_status': status_figurino,
+                'taxa_palco_status': resumir_status(cobrancas_taxa_palco),
+                'figurino_status': resumir_status(cobrancas_figurino),
+                'taxa_palco_pago': pago_taxa_palco,
+                'figurino_pago': pago_figurino,
             }
 
-            quantidade_cobrancas_por_participacao[participacao.pk] = len(cobrancas_ativas)
+            quantidade_cobrancas_por_participacao[participacao.pk] = len(cobrancas)
 
         total_recebido_geral = total_recebido_taxa_palco + total_recebido_figurino
 
