@@ -579,11 +579,9 @@ class ParcelaCobrancaEspetaculo(models.Model):
             self.status = 'parcial'
         else:
             self.status = 'pago'
+            self.valor_pago = valor
             if not self.data_pagamento:
                 self.data_pagamento = timezone.now()
-
-            if self.valor_pago > valor:
-                self.valor_pago = valor
 
         if salvar:
             self.save(update_fields=['status', 'data_pagamento', 'valor_pago'])
@@ -628,7 +626,9 @@ class ParcelaCobrancaEspetaculo(models.Model):
         valor_integral = self.valor or Decimal('0.00')
         valor_pago_atual = self.valor_pago or Decimal('0.00')
 
-        if novo_status in ['RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH', 'PAID']:
+        status_pago_asaas = {'RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH', 'PAID'}
+
+        if novo_status in status_pago_asaas:
             if valor_pago_atual != valor_integral:
                 self.valor_pago = valor_integral
                 campos_para_salvar.append('valor_pago')
@@ -642,9 +642,17 @@ class ParcelaCobrancaEspetaculo(models.Model):
                 campos_para_salvar.append('data_pagamento')
 
         elif valor_pago_atual > Decimal('0.00'):
-            if self.status != 'parcial':
-                self.status = 'parcial'
-                campos_para_salvar.append('status')
+            if valor_pago_atual >= valor_integral:
+                if self.status != 'pago':
+                    self.status = 'pago'
+                    campos_para_salvar.append('status')
+                if not self.data_pagamento:
+                    self.data_pagamento = timezone.now()
+                    campos_para_salvar.append('data_pagamento')
+            else:
+                if self.status != 'parcial':
+                    self.status = 'parcial'
+                    campos_para_salvar.append('status')
 
         else:
             if self.status != 'pendente':
