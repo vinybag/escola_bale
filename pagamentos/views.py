@@ -285,11 +285,15 @@ def localizar_parcela_espetaculo_por_payment(payment_id, external_reference=None
         parcela = (
             ParcelaCobrancaEspetaculo.objects
             .select_related('cobranca', 'cobranca__participacao')
-            .filter(asaas_installment_id=installment_id, asaas_payment_id=payment_id)
+            .filter(asaas_installment_id=installment_id)
+            .order_by('numero_parcela', 'id')
             .first()
         )
         if parcela:
-            print(f"[WEBHOOK] Parcela encontrada por installment_id + payment_id: {parcela.id}")
+            if payment_id and parcela.asaas_payment_id != payment_id:
+                parcela.asaas_payment_id = payment_id
+                parcela.save(update_fields=['asaas_payment_id'])
+            print(f"[WEBHOOK] Parcela encontrada por installment_id: {parcela.id}")
             return parcela
 
     if external_reference and external_reference.startswith('cobranca_espetaculo:'):
@@ -312,12 +316,12 @@ def localizar_parcela_espetaculo_por_payment(payment_id, external_reference=None
                 return parcela
 
             if installment_id:
-                parcela = cobranca.parcelas.filter(
-                    asaas_installment_id=installment_id,
-                    asaas_payment_id=payment_id
-                ).first()
+                parcela = cobranca.parcelas.filter(asaas_installment_id=installment_id).order_by('numero_parcela', 'id').first()
                 if parcela:
-                    print(f"[WEBHOOK] Parcela encontrada via cobrança + installment_id + payment_id: {parcela.id}")
+                    if payment_id and parcela.asaas_payment_id != payment_id:
+                        parcela.asaas_payment_id = payment_id
+                        parcela.save(update_fields=['asaas_payment_id'])
+                    print(f"[WEBHOOK] Parcela encontrada via cobrança + installment_id: {parcela.id}")
                     return parcela
 
             if cobranca.parcelas.count() == 1:

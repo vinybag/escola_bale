@@ -2512,7 +2512,6 @@ def espetaculo_participacoes(request, pk):
             CobrancaEspetaculo,
             ParcelaCobrancaEspetaculo,
         )
-        from pagamentos.services.asaas import get_payment
 
         espetaculo = get_object_or_404(Espetaculo, pk=pk)
 
@@ -2573,24 +2572,6 @@ def espetaculo_participacoes(request, pk):
         total_recebido_taxa_palco = Decimal('0.00')
         total_recebido_figurino = Decimal('0.00')
 
-        def sincronizar_cobranca_com_asaas(cobranca):
-            for parcela in cobranca.parcelas.all():
-                if not parcela.asaas_payment_id:
-                    continue
-
-                try:
-                    payment_data = get_payment(parcela.asaas_payment_id)
-                except Exception:
-                    continue
-
-                if not payment_data:
-                    continue
-
-                novo_status = payment_data.get('status')
-                parcela.atualizar_status_asaas(novo_status)
-
-            cobranca.atualizar_status()
-
         def resumir_status(lista_cobrancas):
             if not lista_cobrancas:
                 return None
@@ -2615,9 +2596,6 @@ def espetaculo_participacoes(request, pk):
 
         for participacao in participacoes:
             cobrancas = list(participacao.cobrancas.all())
-
-            for cobranca in cobrancas:
-                sincronizar_cobranca_com_asaas(cobranca)
 
             cobrancas_taxa_palco = [c for c in cobrancas if c.tipo == 'taxa_palco']
             cobrancas_figurino = [c for c in cobrancas if c.tipo == 'figurino']
@@ -3058,7 +3036,7 @@ def cobranca_espetaculo_escolher_parcelas(request, pk):
                 cobranca.save(update_fields=['asaas_customer_id', 'billing_type', 'enviado_asaas'])
 
                 for idx, item in enumerate(parcelas_asaas, start=1):
-                    ParcelaCobrancaEspetaculo.objects.create(
+                    parcela = ParcelaCobrancaEspetaculo.objects.create(
                         cobranca=cobranca,
                         numero_parcela=idx,
                         total_parcelas=len(parcelas_asaas),
@@ -3072,8 +3050,8 @@ def cobranca_espetaculo_escolher_parcelas(request, pk):
                         asaas_nosso_numero=item.get('nossoNumero'),
                         asaas_status=item.get('status'),
                         billing_type=item.get('billingType') or billing_type,
-                        status='pago' if item.get('status') == 'RECEIVED' else 'pendente',
                     )
+                    parcela.atualizar_status_asaas(item.get('status'))
 
                 cobranca.atualizar_status()
 
@@ -3118,7 +3096,7 @@ def cobranca_espetaculo_escolher_parcelas(request, pk):
                 cobranca.enviado_asaas = True
                 cobranca.save(update_fields=['asaas_customer_id', 'billing_type', 'enviado_asaas'])
 
-                ParcelaCobrancaEspetaculo.objects.create(
+                parcela = ParcelaCobrancaEspetaculo.objects.create(
                     cobranca=cobranca,
                     numero_parcela=1,
                     total_parcelas=1,
@@ -3131,8 +3109,8 @@ def cobranca_espetaculo_escolher_parcelas(request, pk):
                     asaas_nosso_numero=retorno.get('nossoNumero'),
                     asaas_status=retorno.get('status'),
                     billing_type=retorno.get('billingType') or billing_type,
-                    status='pago' if retorno.get('status') == 'RECEIVED' else 'pendente',
                 )
+                parcela.atualizar_status_asaas(retorno.get('status'))
 
                 cobranca.atualizar_status()
 
