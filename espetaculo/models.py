@@ -247,6 +247,12 @@ class CobrancaEspetaculo(models.Model):
         help_text='Aplicar desconto especial para irmãos/irmãs'
     )
 
+    sem_desconto = models.BooleanField(
+        default=False,
+        verbose_name='Sem desconto (à vista e parcelado)',
+        help_text='Se marcado, ignora os descontos automáticos e usa o valor exato lançado, tanto à vista quanto parcelado.'
+    )
+
     valor_figurino_avista = models.DecimalField(
         max_digits=10,
         decimal_places=2,
@@ -377,6 +383,9 @@ class CobrancaEspetaculo(models.Model):
     def percentual_desconto_para(self, parcelas):
         parcelas = int(parcelas)
 
+        if self.sem_desconto:
+            return Decimal('0.00')
+
         if self.tipo == 'figurino':
             return Decimal('0.00')
 
@@ -389,6 +398,12 @@ class CobrancaEspetaculo(models.Model):
 
     def valor_com_desconto(self, parcelas):
         parcelas = int(parcelas)
+
+        if self.sem_desconto:
+            return Decimal(str(self.valor_total)).quantize(
+                Decimal('0.01'),
+                rounding=ROUND_HALF_UP,
+            )
 
         if self.tipo == 'figurino':
             if parcelas == 1:
@@ -430,7 +445,9 @@ class CobrancaEspetaculo(models.Model):
                 label = 'À vista'
                 texto_valor = f'R$ {valor_final}'
 
-                if self.tipo == 'taxa_palco':
+                if self.sem_desconto:
+                    observacao = 'Sem desconto (valor integral)'
+                elif self.tipo == 'taxa_palco':
                     if self.desconto_irmaos:
                         observacao = '12% de desconto para irmãs(ãos)'
                     else:
@@ -443,7 +460,9 @@ class CobrancaEspetaculo(models.Model):
                 label = f'{parcelas}x'
                 texto_valor = f'R$ {valor_parcela} por parcela'
 
-                if self.tipo == 'figurino':
+                if self.sem_desconto:
+                    observacao = 'Sem desconto (valor integral)'
+                elif self.tipo == 'figurino':
                     observacao = 'Valor parcelado definido no cadastro'
                 elif self.tipo == 'taxa_palco' and self.desconto_irmaos:
                     observacao = '10% de desconto para irmãs(ãos)'

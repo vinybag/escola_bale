@@ -569,6 +569,11 @@
                             <input type="checkbox" name="desconto_irmaos" id="desconto_irmaos">
                             Aplicar desconto de irmãs(ãos)
                         </label>
+
+                        <label id="campo_sem_desconto_wrapper">
+                            <input type="checkbox" name="sem_desconto" id="sem_desconto">
+                            Sem desconto (à vista e parcelado)
+                        </label>
                     </div>
 
                     <div class="cobranca-muted-box" style="margin-bottom: 1.5rem;">
@@ -576,6 +581,7 @@
                             <p><strong>Regras atuais:</strong></p>
                             <p>Taxa de palco: 5% à vista; 12% à vista para irmãs(ãos); 10% parcelado para irmãs(ãos).</p>
                             <p>Figurino: usa valores fixos cadastrados, um à vista e outro parcelado.</p>
+                            <p>Sem desconto: usa o valor total lançado integralmente, tanto à vista quanto parcelado, ignorando as regras acima.</p>
                             <p>A escolha entre à vista ou parcelado é feita pela própria responsável na área dela.</p>
                         </div>
                     </div>
@@ -608,6 +614,10 @@
                                             <h4 style="margin: 0; color: #4a235f; font-size: 1.05rem;">
                                                 {{ cobranca.get_tipo_display }}
                                             </h4>
+
+                                            {% if cobranca.sem_desconto %}
+                                                <span class="status-pill status-neutral">Sem desconto</span>
+                                            {% endif %}
 
                                             {% if cobranca.status == 'pago' %}
                                                 <span class="status-pill status-success">Pago</span>
@@ -676,6 +686,9 @@
                                                     Sim, até {{ cobranca.max_parcelas }}x
                                                 {% else %}
                                                     Não permitido
+                                                {% endif %}
+                                                {% if cobranca.sem_desconto %}
+                                                    <br>Sem desconto aplicado
                                                 {% endif %}
                                             </div>
                                         </div>
@@ -893,6 +906,7 @@
         const maxParcelas = document.getElementById('max_parcelas');
         const descontoIrmaos = document.getElementById('desconto_irmaos');
         const descontoIrmaosWrapper = document.getElementById('campo_desconto_irmaos_wrapper');
+        const semDesconto = document.getElementById('sem_desconto');
         const camposFigurino = document.getElementById('campos_figurino');
         const valorFigurinoAvista = document.getElementById('valor_figurino_avista');
         const valorFigurinoParcelado = document.getElementById('valor_figurino_parcelado');
@@ -907,6 +921,7 @@
 
             if (ehFigurino) {
                 descontoIrmaos.checked = false;
+                descontoIrmaos.disabled = true;
                 valorFigurinoAvista.required = true;
                 valorFigurinoParcelado.required = parcelamentoMarcado;
             } else {
@@ -914,6 +929,9 @@
                 valorFigurinoParcelado.required = false;
                 valorFigurinoAvista.value = '';
                 valorFigurinoParcelado.value = '';
+                if (!semDesconto.checked) {
+                    descontoIrmaos.disabled = false;
+                }
             }
 
             if (!parcelamentoMarcado) {
@@ -927,10 +945,32 @@
             }
         }
 
+        function atualizarConflitoDesconto() {
+            if (semDesconto.checked) {
+                descontoIrmaos.checked = false;
+                descontoIrmaos.disabled = true;
+            } else if (tipo.value !== 'figurino') {
+                descontoIrmaos.disabled = false;
+            }
+        }
+
+        function atualizarConflitoIrmaos() {
+            if (descontoIrmaos.checked) {
+                semDesconto.checked = false;
+                semDesconto.disabled = true;
+            } else {
+                semDesconto.disabled = false;
+            }
+        }
+
         tipo.addEventListener('change', atualizarFormulario);
         permitirParcelamento.addEventListener('change', atualizarFormulario);
+        semDesconto.addEventListener('change', atualizarConflitoDesconto);
+        descontoIrmaos.addEventListener('change', atualizarConflitoIrmaos);
 
         atualizarFormulario();
+        atualizarConflitoDesconto();
+        atualizarConflitoIrmaos();
     });
 </script>
 {% endblock %}

@@ -2695,6 +2695,7 @@ def participacao_cobrancas(request, pk):
             valor_total = (request.POST.get('valor_total') or '').strip()
             permitir_parcelamento = request.POST.get('permitir_parcelamento') == 'on'
             desconto_irmaos = request.POST.get('desconto_irmaos') == 'on'
+            sem_desconto = request.POST.get('sem_desconto') == 'on'
             max_parcelas = request.POST.get('max_parcelas') or 1
             vencimento_primeira_parcela = request.POST.get('vencimento_primeira_parcela')
 
@@ -2764,6 +2765,7 @@ def participacao_cobrancas(request, pk):
                 max_parcelas=max_parcelas,
                 vencimento_primeira_parcela=data_vencimento,
                 desconto_irmaos=desconto_irmaos,
+                sem_desconto=sem_desconto,
                 valor_figurino_avista=valor_figurino_avista_decimal,
                 valor_figurino_parcelado=valor_figurino_parcelado_decimal,
             )
