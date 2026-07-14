@@ -78,6 +78,7 @@ urlpatterns = [
     path('professor/dashboard/', views.professor_dashboard, name='professor_dashboard'),
     path('professor/turma/<int:pk>/', views.professor_turma_detalhes, name='professor_turma_detalhes'),
     path('professor/avisos/', views.professor_avisos, name='professor_avisos'),
+    path('professor/agendamentos/', views.professor_agendamentos, name='professor_agendamentos'),
 
     #Ficha
     path('ficha-audicao/<int:pk>/', views.ficha_audicao, name='ficha_audicao'),

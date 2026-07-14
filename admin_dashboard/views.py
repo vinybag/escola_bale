@@ -2407,6 +2407,80 @@ def professor_avisos(request):
     return render(request, 'admin_dashboard/professor/avisos.html', {'avisos': avisos})
 
 @login_required
+def professor_agendamentos(request):
+    """Lista os agendamentos das turmas do professor logado, com os mesmos filtros do admin"""
+
+    if not request.user.groups.filter(name='Professores').exists():
+        return redirect('home')
+
+    from usuarios.models import Turma
+    from agenda.models import Agendamento
+    from django.utils import timezone
+    import datetime
+
+    turmas_professor = Turma.objects.filter(professor_responsavel=request.user, ativa=True)
+
+    agendamentos = (
+        Agendamento.objects
+        .filter(aula__in=turmas_professor)
+        .select_related('aula')
+        .order_by('data', 'horario')
+    )
+
+    hoje = timezone.localdate()
+
+    tipo = request.GET.get('tipo', 'proximos')
+    mes = request.GET.get('mes', '')
+    semana = request.GET.get('semana', '')
+
+    if tipo == 'antigos':
+        agendamentos = agendamentos.filter(data__lt=hoje).order_by('-data', '-horario')
+    else:
+        tipo = 'proximos'
+        agendamentos = agendamentos.filter(data__gte=hoje)
+
+    if mes:
+        try:
+            ano_str, mes_str = mes.split('-')
+            agendamentos = agendamentos.filter(data__year=int(ano_str), data__month=int(mes_str))
+        except (ValueError, AttributeError):
+            pass
+
+    if semana:
+        try:
+            ano_str, semana_str = semana.split('-W')
+            ano_semana = int(ano_str)
+            num_semana = int(semana_str)
+            inicio_semana = datetime.date.fromisocalendar(ano_semana, num_semana, 1)
+            fim_semana = datetime.date.fromisocalendar(ano_semana, num_semana, 7)
+            agendamentos = agendamentos.filter(data__gte=inicio_semana, data__lte=fim_semana)
+        except (ValueError, AttributeError):
+            pass
+
+    total_geral = Agendamento.objects.filter(aula__in=turmas_professor).count()
+    total_proximos = Agendamento.objects.filter(aula__in=turmas_professor, data__gte=hoje).count()
+    total_antigos = Agendamento.objects.filter(aula__in=turmas_professor, data__lt=hoje).count()
+
+    meses_disponiveis = (
+        Agendamento.objects
+        .filter(aula__in=turmas_professor)
+        .dates('data', 'month', order='DESC')
+    )
+
+    context = {
+        'agendamentos': agendamentos,
+        'total_geral': total_geral,
+        'total_proximos': total_proximos,
+        'total_antigos': total_antigos,
+        'meses_disponiveis': meses_disponiveis,
+        'tipo': tipo,
+        'mes': mes,
+        'semana': semana,
+        'hoje': hoje,
+    }
+    return render(request, 'admin_dashboard/professor/agendamentos.html', context)
+
+@login_required
 def ficha_audicao(request, pk):
     """Página de ficha de avaliação para audição"""
     if not request.user.is_staff:
