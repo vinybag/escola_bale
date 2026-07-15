@@ -2,6 +2,65 @@
 
 {% block title %}Agendamentos - Minhas Turmas{% endblock %}
 
+{% block extra_css %}
+<style>
+    @media (max-width: 768px) {
+        .table-container table thead {
+            display: none;
+        }
+
+        .table-container table,
+        .table-container table tbody,
+        .table-container table tr,
+        .table-container table td {
+            display: block;
+            width: 100%;
+        }
+
+        .table-container table {
+            min-width: 0 !important;
+        }
+
+        .table-container table tr {
+            background: white;
+            border: 1px solid #ece3f2;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            padding: 0.75rem 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        .table-container table td {
+            padding: 0.5rem 0 !important;
+            text-align: left !important;
+            border-top: none !important;
+            white-space: normal !important;
+        }
+
+        .table-container table td::before {
+            content: attr(data-label);
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #6b2d8f;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            margin-bottom: 0.2rem;
+        }
+
+        .table-container table td:empty {
+            display: none;
+        }
+    }
+
+    @media (max-width: 600px) {
+        form[method="get"] {
+            grid-template-columns: 1fr !important;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; gap: 1rem; flex-wrap: wrap;">
     <div>
@@ -12,7 +71,7 @@
     </div>
 </div>
 
-<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 2rem;">
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
     <div style="background: linear-gradient(135deg, #ffffff 0%, #f3eef6 100%); padding: 1.5rem; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-top: 3px solid #6b2d8f;">
         <div style="font-size: 0.9rem; color: #777; margin-bottom: 0.5rem;">Total geral</div>
         <div style="font-size: 2rem; font-weight: bold; color: #4a235f;">{{ total_geral }}</div>
@@ -30,7 +89,7 @@
 </div>
 
 <div style="background: white; padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border: 1px solid #ece3f2;">
-    <form method="get" style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 1rem; align-items: end;">
+    <form method="get" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; align-items: end;">
         <div>
             <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #4a235f;">Tipo</label>
             <select name="tipo" style="width: 100%; padding: 0.75rem; border: 1px solid #d8c7e3; border-radius: 6px; font-size: 1rem; background: #fff;">
@@ -59,13 +118,13 @@
                    style="width: 100%; padding: 0.75rem; border: 1px solid #d8c7e3; border-radius: 6px; font-size: 1rem; background: #fff;">
         </div>
 
-        <div style="display: flex; gap: 0.5rem;">
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
             <button type="submit"
-                    style="padding: 0.75rem 1.5rem; background: #6b2d8f; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                    style="flex: 1; min-width: 100px; padding: 0.75rem 1.5rem; background: #6b2d8f; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
                 Filtrar
             </button>
             <a href="{% url 'admin_dashboard:professor_agendamentos' %}"
-               style="padding: 0.75rem 1.5rem; background: #f3f3f3; color: #444; border: 1px solid #ddd; border-radius: 6px; text-decoration: none;">
+               style="flex: 1; min-width: 100px; text-align: center; padding: 0.75rem 1.5rem; background: #f3f3f3; color: #444; border: 1px solid #ddd; border-radius: 6px; text-decoration: none;">
                 Limpar
             </a>
         </div>
@@ -89,16 +148,16 @@
             <tbody>
                 {% for agendamento in agendamentos %}
                 <tr style="border-top: 1px solid #eee7f3;">
-                    <td style="padding: 1rem;">
+                    <td data-label="Aluna(o)" style="padding: 1rem;">
                         <strong style="color: #35203f;">{{ agendamento.nome_aluna }}</strong>
                     </td>
-                    <td style="padding: 1rem; color: #555;">
+                    <td data-label="Turma" style="padding: 1rem; color: #555;">
                         {{ agendamento.aula.nome|default:"—" }}
                     </td>
-                    <td style="padding: 1rem; color: #555;">
+                    <td data-label="Responsável" style="padding: 1rem; color: #555;">
                         {{ agendamento.nome_responsavel }}
                     </td>
-                    <td style="padding: 1rem;">
+                    <td data-label="Whatsapp" style="padding: 1rem;">
                         <a href="https://wa.me/55{{ agendamento.telefone|cut:' '|cut:'('|cut:')'|cut:'-'|cut:'+' }}"
                            target="_blank"
                            rel="noopener noreferrer"
@@ -106,14 +165,14 @@
                             {{ agendamento.telefone }}
                         </a>
                     </td>
-                    <td style="padding: 1rem; text-align: center; color: #555;">
+                    <td data-label="Idade" style="padding: 1rem; text-align: center; color: #555;">
                         {{ agendamento.idade_aluna }} anos
                     </td>
-                    <td style="padding: 1rem; text-align: center;">
+                    <td data-label="Data e Horário" style="padding: 1rem; text-align: center;">
                         <strong style="color: #35203f;">{{ agendamento.data|date:"d/m/Y" }}</strong><br>
                         <span style="color: #777;">às {{ agendamento.horario|time:"H:i" }}</span>
                     </td>
-                    <td style="padding: 1rem; text-align: center;">
+                    <td data-label="Status" style="padding: 1rem; text-align: center;">
                         {% if agendamento.data >= hoje %}
                             <span style="background: #efe7f5; color: #6b2d8f; padding: 0.35rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">
                                 Próximo
