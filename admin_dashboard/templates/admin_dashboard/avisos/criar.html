@@ -2,60 +2,151 @@
 
 {% block title %}Novo Aviso{% endblock %}
 
+{% block extra_css %}
+<style>
+    .aviso-form-card {
+        background: white;
+        padding: 2rem;
+        border-radius: 14px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        border: 1px solid #ece3f2;
+        max-width: 800px;
+    }
+
+    .aviso-form-grid {
+        display: grid;
+        gap: 1.5rem;
+    }
+
+    .aviso-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: #4a235f;
+    }
+
+    .aviso-input,
+    .aviso-select,
+    .aviso-textarea {
+        width: 100%;
+        padding: 0.85rem 0.9rem;
+        border: 1px solid #d8c7e3;
+        border-radius: 8px;
+        font-size: 1rem;
+        background: #fff;
+        color: #333;
+        transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    .aviso-input:focus,
+    .aviso-select:focus,
+    .aviso-textarea:focus {
+        outline: none;
+        border-color: #6b2d8f;
+        box-shadow: 0 0 0 3px rgba(107, 45, 143, 0.12);
+    }
+
+    .aviso-textarea {
+        font-family: inherit;
+        resize: vertical;
+        min-height: 140px;
+    }
+
+    .aviso-required {
+        color: #dc3545;
+    }
+
+    .aviso-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-cancelar {
+        display: inline-block;
+        padding: 0.75rem 1.5rem;
+        background: #f6f1f8;
+        color: #4a235f;
+        border: 1px solid #e5d8ee;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        text-align: center;
+        transition: all 0.3s;
+    }
+
+    .btn-cancelar:hover {
+        background: #eee4f4;
+    }
+
+    @media (max-width: 768px) {
+        .aviso-form-card {
+            padding: 1.25rem;
+        }
+
+        .aviso-actions {
+            flex-direction: column;
+        }
+
+        .aviso-actions .btn,
+        .btn-cancelar {
+            width: 100%;
+            text-align: center;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="page-header">
-    <h2>Novo Aviso</h2>
-    <p>Criar aviso para os pais</p>
+    <h2 style="color: #4a235f; margin-bottom: 0.35rem;">Novo Aviso</h2>
+    <p style="color: #6c757d; margin: 0;">Criar aviso para os pais</p>
 </div>
 
-<div style="background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); max-width: 800px;">
+<div class="aviso-form-card">
     <form method="post">
         {% csrf_token %}
         
-        <div style="display: grid; gap: 1.5rem;">
+        <div class="aviso-form-grid">
             
-            <!-- Título -->
             <div>
-                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
-                    Titulo <span style="color: red;">*</span>
+                <label class="aviso-label">
+                    Título <span class="aviso-required">*</span>
                 </label>
-                <input type="text" 
-                       name="titulo" 
+                <input type="text"
+                       name="titulo"
                        required
-                       placeholder="Ex: Apresentacao de Fim de Ano"
-                       style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                       placeholder="Ex: Apresentação de Fim de Ano"
+                       class="aviso-input">
             </div>
             
-            <!-- Descrição -->
             <div>
-                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
-                    Descricao <span style="color: red;">*</span>
+                <label class="aviso-label">
+                    Descrição <span class="aviso-required">*</span>
                 </label>
-                <textarea name="descricao" 
+                <textarea name="descricao"
                           rows="6"
                           required
-                          placeholder="Detalhe as informacoes importantes do aviso..."
-                          style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem; font-family: inherit; resize: vertical;"></textarea>
+                          placeholder="Detalhe as informações importantes do aviso..."
+                          class="aviso-textarea"></textarea>
             </div>
             
-            <!-- Data do Evento -->
             <div>
-                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
-                    Data do Evento <span style="color: red;">*</span>
+                <label class="aviso-label">
+                    Data do Evento <span class="aviso-required">*</span>
                 </label>
-                <input type="date" 
-                       name="data_evento" 
+                <input type="date"
+                       name="data_evento"
                        required
-                       style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                       class="aviso-input">
             </div>
             
-            <!-- Tipo -->
             <div>
-                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                <label class="aviso-label">
                     Tipo
                 </label>
-                <select name="tipo" 
-                        style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                <select name="tipo" class="aviso-select">
                     <option value="geral">Geral</option>
                     <option value="evento">Evento</option>
                     <option value="aula">Aula</option>
@@ -63,13 +154,11 @@
                 </select>
             </div>
             
-            <!-- Botões -->
-            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+            <div class="aviso-actions">
                 <button type="submit" class="btn btn-primary">
                     Criar Aviso
                 </button>
-                <a href="{% url 'admin_dashboard:avisos_list' %}" 
-                   style="padding: 0.75rem 1.5rem; background: #f5f5f5; color: #333; border-radius: 5px; text-decoration: none; font-weight: 500;">
+                <a href="{% url 'admin_dashboard:avisos_list' %}" class="btn-cancelar">
                     Cancelar
                 </a>
             </div>

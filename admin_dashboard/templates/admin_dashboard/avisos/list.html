@@ -2,23 +2,256 @@
 
 {% block title %}Avisos{% endblock %}
 
+{% block extra_css %}
+<style>
+    .avisos-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+    }
+
+    .avisos-filtros {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        border: 1px solid #ece3f2;
+    }
+
+    .avisos-filtros form {
+        display: grid;
+        grid-template-columns: minmax(220px, 1fr) auto;
+        gap: 1rem;
+        align-items: end;
+    }
+
+    .avisos-lista {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .aviso-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 14px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        border: 1px solid #ece3f2;
+    }
+
+    .aviso-card.importante {
+        border-top: 4px solid #dc3545;
+    }
+
+    .aviso-card.evento {
+        border-top: 4px solid #b07a84;
+    }
+
+    .aviso-card.aula {
+        border-top: 4px solid #6b2d8f;
+    }
+
+    .aviso-card.geral {
+        border-top: 4px solid #7a5c8f;
+    }
+
+    .aviso-topo {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .aviso-titulo-area {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .aviso-titulo-linha {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        margin-bottom: 0.5rem;
+    }
+
+    .aviso-titulo {
+        margin: 0;
+        color: #4a235f;
+        font-size: 1.2rem;
+        line-height: 1.25;
+    }
+
+    .aviso-badge {
+        color: white;
+        padding: 0.3rem 0.8rem;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        white-space: nowrap;
+    }
+
+    .aviso-badge.importante {
+        background: #dc3545;
+    }
+
+    .aviso-badge.evento {
+        background: #b07a84;
+    }
+
+    .aviso-badge.aula {
+        background: #6b2d8f;
+    }
+
+    .aviso-badge.geral {
+        background: #7a5c8f;
+    }
+
+    .aviso-meta {
+        color: #777;
+        font-size: 0.9rem;
+        margin: 0;
+    }
+
+    .aviso-acoes {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+
+    .btn-secundario {
+        display: inline-block;
+        padding: 0.65rem 1rem;
+        background: #f6f1f8;
+        color: #4a235f;
+        border: 1px solid #e5d8ee;
+        border-radius: 8px;
+        text-decoration: none;
+        font-size: 0.875rem;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+
+    .btn-secundario:hover {
+        background: #eee4f4;
+    }
+
+    .btn-excluir {
+        padding: 0.65rem 1rem;
+        background: #fff1f3;
+        color: #b42318;
+        border: 1px solid #f3c7cf;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.875rem;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+
+    .btn-excluir:hover {
+        background: #fde8ec;
+    }
+
+    .aviso-descricao {
+        color: #444;
+        line-height: 1.65;
+        margin: 0;
+        white-space: pre-line;
+    }
+
+    .aviso-rodape {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid #eee7f3;
+        color: #8a8a8a;
+        font-size: 0.8rem;
+    }
+
+    .aviso-vazio {
+        background: white;
+        padding: 2.5rem 1.5rem;
+        border-radius: 14px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        text-align: center;
+        color: #8a8a8a;
+        border: 1px solid #ece3f2;
+    }
+
+    @media (max-width: 768px) {
+        .avisos-filtros form {
+            grid-template-columns: 1fr;
+        }
+
+        .aviso-topo {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .aviso-acoes {
+            justify-content: stretch;
+        }
+
+        .aviso-acoes a,
+        .aviso-acoes form,
+        .aviso-acoes button {
+            width: 100%;
+        }
+
+        .aviso-acoes form {
+            display: block;
+        }
+
+        .btn-secundario,
+        .btn-excluir {
+            width: 100%;
+            text-align: center;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .avisos-header {
+            align-items: stretch;
+        }
+
+        .avisos-header .btn {
+            width: 100%;
+            text-align: center;
+        }
+
+        .aviso-card {
+            padding: 1rem;
+        }
+
+        .aviso-titulo {
+            font-size: 1.05rem;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
+<div class="page-header avisos-header">
     <div>
-        <h2>Avisos e Calendario</h2>
-        <p>{{ total_avisos }} aviso{{ total_avisos|pluralize }}</p>
+        <h2 style="color: #4a235f; margin-bottom: 0.35rem;">Avisos e Calendário</h2>
+        <p style="color: #6c757d; margin: 0;">
+            {{ total_avisos }} aviso{{ total_avisos|pluralize }}
+        </p>
     </div>
     <a href="{% url 'admin_dashboard:aviso_criar' %}" class="btn btn-primary">+ Novo Aviso</a>
 </div>
 
-<!-- Filtros -->
-<div style="background: white; padding: 1.5rem; border-radius: 10px; margin-bottom: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
-    <form method="get" style="display: flex; gap: 1rem; align-items: end;">
-        
-        <!-- Filtro Tipo -->
-        <div style="flex: 1;">
-            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Tipo</label>
-            <select name="tipo" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+<div class="avisos-filtros">
+    <form method="get">
+        <div>
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #4a235f;">Tipo</label>
+            <select name="tipo" style="width: 100%; padding: 0.75rem; border: 1px solid #d8c7e3; border-radius: 8px; font-size: 1rem; background: #fff;">
                 <option value="">Todos</option>
                 <option value="geral" {% if tipo_filtro == 'geral' %}selected{% endif %}>Geral</option>
                 <option value="evento" {% if tipo_filtro == 'evento' %}selected{% endif %}>Evento</option>
@@ -26,54 +259,53 @@
                 <option value="importante" {% if tipo_filtro == 'importante' %}selected{% endif %}>Importante</option>
             </select>
         </div>
-        
-        <div style="display: flex; gap: 0.5rem;">
-            <button type="submit" class="btn btn-primary">Filtrar</button>
-            <a href="{% url 'admin_dashboard:avisos_list' %}" style="padding: 0.75rem 1.5rem; background: #f5f5f5; color: #333; border-radius: 5px; text-decoration: none;">Limpar</a>
+
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <button type="submit" class="btn btn-primary" style="flex: 1; min-width: 110px;">Filtrar</button>
+            <a href="{% url 'admin_dashboard:avisos_list' %}" style="flex: 1; min-width: 110px; padding: 0.75rem 1.5rem; background: #f6f1f8; color: #4a235f; border: 1px solid #e5d8ee; border-radius: 8px; text-decoration: none; text-align: center; font-weight: 600;">
+                Limpar
+            </a>
         </div>
     </form>
 </div>
 
-<!-- Lista de Avisos -->
-<div style="display: grid; gap: 1.5rem;">
+<div class="avisos-lista">
     {% for aviso in avisos %}
-    <div style="background: white; padding: 1.5rem; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-left: 4px solid {% if aviso.tipo == 'importante' %}#dc3545{% elif aviso.tipo == 'evento' %}#b07a84{% elif aviso.tipo == 'aula' %}#2c3e50{% else %}#6c757d{% endif %};">
-        
-        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
-            <div style="flex: 1;">
-                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
-                    <h3 style="margin: 0; color: #2c3e50; font-size: 1.25rem;">{{ aviso.titulo }}</h3>
-                    <span style="background: {% if aviso.tipo == 'importante' %}#dc3545{% elif aviso.tipo == 'evento' %}#b07a84{% elif aviso.tipo == 'aula' %}#2c3e50{% else %}#6c757d{% endif %}; color: white; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; text-transform: uppercase;">
+    <div class="aviso-card {{ aviso.tipo }}">
+        <div class="aviso-topo">
+            <div class="aviso-titulo-area">
+                <div class="aviso-titulo-linha">
+                    <h3 class="aviso-titulo">{{ aviso.titulo }}</h3>
+                    <span class="aviso-badge {{ aviso.tipo }}">
                         {{ aviso.get_tipo_display }}
                     </span>
                 </div>
-                <p style="color: #666; font-size: 0.875rem; margin: 0;">
+                <p class="aviso-meta">
                     Data: {{ aviso.data_evento|date:"d/m/Y" }}
                 </p>
             </div>
-            
-            <div style="display: flex; gap: 0.5rem;">
-                <a href="{% url 'admin_dashboard:aviso_editar' aviso.pk %}" 
-                   style="padding: 0.5rem 1rem; background: #f5f5f5; color: #333; border-radius: 5px; text-decoration: none; font-size: 0.875rem;">
+
+            <div class="aviso-acoes">
+                <a href="{% url 'admin_dashboard:aviso_editar' aviso.pk %}" class="btn-secundario">
                     Editar
                 </a>
                 <form method="post" action="{% url 'admin_dashboard:aviso_excluir' aviso.pk %}" style="display: inline;" onsubmit="return confirm('Tem certeza que deseja excluir este aviso?');">
                     {% csrf_token %}
-                    <button type="submit" style="padding: 0.5rem 1rem; background: #dc3545; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 0.875rem;">
+                    <button type="submit" class="btn-excluir">
                         Excluir
                     </button>
                 </form>
             </div>
         </div>
-        
-        <p style="color: #333; line-height: 1.6; margin: 0;">{{ aviso.descricao }}</p>
-        
-        <p style="color: #999; font-size: 0.75rem; margin-top: 1rem; margin-bottom: 0;">
+
+        <p class="aviso-descricao">{{ aviso.descricao }}</p>
+
+        <div class="aviso-rodape">
             Publicado em {{ aviso.data_publicacao|date:"d/m/Y H:i" }}
-        </p>
+        </div>
     </div>
     {% empty %}
-    <div style="background: white; padding: 3rem; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); text-align: center; color: #999;">
+    <div class="aviso-vazio">
         Nenhum aviso encontrado.
     </div>
     {% endfor %}
