@@ -4,24 +4,242 @@
 
 {% block content %}
 <div class="page-header">
-    <h2>Avisos</h2>
-    <p>{{ avisos.count }} aviso{{ avisos.count|pluralize:"s" }}</p>
+    <h2 style="color: #4a235f; margin-bottom: 0.35rem;">Avisos e Calendário</h2>
+    <p style="color: #6c757d; margin: 0;">{{ avisos.count }} aviso{{ avisos.count|pluralize:"s" }}</p>
 </div>
 
-<div style="display: grid; gap: 1rem;">
-    {% for aviso in avisos %}
-    <div style="background: white; border-radius: 10px; padding: 1rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
-        <h3 style="color: #b07a84;">{{ aviso.titulo }}</h3>
-        <p style="color: #666;">{{ aviso.descricao }}</p>
-        <div style="display: flex; justify-content: space-between; margin-top: 0.5rem;">
-            <small style="color: #888;">Data: {{ aviso.data_evento|date:"d/m/Y" }}</small>
-            <small style="color: #888;">Publicado: {{ aviso.data_publicacao|date:"d/m/Y H:i" }}</small>
+<style>
+    .filtros-avisos-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        margin-bottom: 1.5rem;
+        border: 1px solid #ece3f2;
+    }
+
+    .filtros-avisos-form {
+        display: grid;
+        grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto;
+        gap: 1rem;
+        align-items: end;
+    }
+
+    .filtro-campo {
+        min-width: 0;
+    }
+
+    .filtro-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: #4a235f;
+    }
+
+    .filtro-input,
+    .filtro-select {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #d8c7e3;
+        border-radius: 8px;
+        font-size: 1rem;
+        box-sizing: border-box;
+        background: #fff;
+    }
+
+    .filtro-acoes {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-limpar-filtro {
+        display: inline-block;
+        padding: 0.75rem 1.5rem;
+        background: #f6f1f8;
+        color: #4a235f;
+        border: 1px solid #e5d8ee;
+        border-radius: 8px;
+        text-decoration: none;
+        text-align: center;
+        white-space: nowrap;
+        font-weight: 600;
+    }
+
+    .avisos-lista {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .aviso-card-professor {
+        background: white;
+        border-radius: 12px;
+        padding: 1rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        border: 1px solid #ece3f2;
+    }
+
+    .aviso-topo {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-bottom: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .aviso-topo h3 {
+        color: #b07a84;
+        margin: 0;
+        font-size: 1.1rem;
+    }
+
+    .tipo-badge-professor {
+        display: inline-block;
+        padding: 0.3rem 0.8rem;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        font-weight: 700;
+        color: white;
+        white-space: nowrap;
+    }
+
+    .tipo-badge-professor.geral {
+        background: #7a5c8f;
+    }
+
+    .tipo-badge-professor.evento {
+        background: #b07a84;
+    }
+
+    .tipo-badge-professor.aula {
+        background: #6b2d8f;
+    }
+
+    .tipo-badge-professor.importante {
+        background: #dc3545;
+    }
+
+    .aviso-descricao {
+        color: #666;
+        margin: 0 0 0.75rem 0;
+        line-height: 1.6;
+        white-space: pre-line;
+    }
+
+    .aviso-meta {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-top: 0.75rem;
+    }
+
+    .aviso-meta small {
+        color: #888;
+    }
+
+    .aviso-vazio {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        text-align: center;
+        color: #999;
+        border: 1px solid #ece3f2;
+    }
+
+    @media (max-width: 768px) {
+        .filtros-avisos-form {
+            grid-template-columns: 1fr;
+        }
+
+        .filtro-acoes {
+            flex-direction: column;
+        }
+
+        .filtro-acoes .btn,
+        .btn-limpar-filtro {
+            width: 100%;
+        }
+
+        .aviso-topo {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .aviso-meta {
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .filtros-avisos-card,
+        .aviso-card-professor,
+        .aviso-vazio {
+            padding: 0.9rem;
+        }
+
+        .aviso-topo h3 {
+            font-size: 1rem;
+        }
+    }
+</style>
+
+<div class="filtros-avisos-card">
+    <form method="get" class="filtros-avisos-form">
+        <div class="filtro-campo">
+            <label class="filtro-label">Buscar</label>
+            <input type="text"
+                   name="busca"
+                   value="{{ busca }}"
+                   placeholder="Buscar por qualquer palavra..."
+                   class="filtro-input">
         </div>
+
+        <div class="filtro-campo">
+            <label class="filtro-label">Tipo de eventos</label>
+            <select name="tipo_data" class="filtro-select">
+                <option value="proximos" {% if tipo_data == 'proximos' or not tipo_data %}selected{% endif %}>
+                    Próximos eventos
+                </option>
+                <option value="passados" {% if tipo_data == 'passados' %}selected{% endif %}>
+                    Eventos passados
+                </option>
+            </select>
+        </div>
+
+        <div class="filtro-acoes">
+            <button type="submit" class="btn btn-primary">Filtrar</button>
+            <a href="{{ request.path }}" class="btn-limpar-filtro">Limpar</a>
+        </div>
+    </form>
+</div>
+
+{% if avisos %}
+    <div class="avisos-lista">
+        {% for aviso in avisos %}
+        <div class="aviso-card-professor">
+            <div class="aviso-topo">
+                <h3>{{ aviso.titulo }}</h3>
+                <span class="tipo-badge-professor {{ aviso.tipo }}">
+                    {{ aviso.get_tipo_display }}
+                </span>
+            </div>
+
+            <p class="aviso-descricao">{{ aviso.descricao }}</p>
+
+            <div class="aviso-meta">
+                <small>Data: {{ aviso.data_evento|date:"d/m/Y" }}</small>
+                <small>Publicado: {{ aviso.data_publicacao|date:"d/m/Y H:i" }}</small>
+            </div>
+        </div>
+        {% endfor %}
     </div>
-    {% empty %}
-    <div style="background: white; border-radius: 10px; padding: 2rem; text-align: center; color: #999;">
+{% else %}
+    <div class="aviso-vazio">
         Nenhum aviso disponível.
     </div>
-    {% endfor %}
-</div>
+{% endif %}
 {% endblock %}

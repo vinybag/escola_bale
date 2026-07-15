@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from datetime import datetime
 from decimal import Decimal
+from django.utils import timezone
 from django.db.models import Sum
 from django.db import models
 from django.db.models import Case, When, Value, IntegerField
@@ -2113,15 +2114,42 @@ def professor_turma_detalhes(request, pk):
 @login_required
 def professor_avisos(request):
     """Lista de avisos para professor"""
-    
+
     if not request.user.groups.filter(name='Professores').exists():
         return redirect('home')
-    
+
     from calendario_avisos.models import Aviso
-    
-    avisos = Aviso.objects.filter(ativo=True).order_by('-data_publicacao')
-    
-    return render(request, 'admin_dashboard/professor/avisos.html', {'avisos': avisos})
+
+    hoje = timezone.localdate()
+    busca = request.GET.get('busca', '').strip()
+    tipo_data = request.GET.get('tipo_data', 'proximos')
+
+    avisos = Aviso.objects.filter(ativo=True)
+
+    if busca:
+        avisos = avisos.filter(
+            Q(titulo__icontains=busca) |
+            Q(descricao__icontains=busca)
+        )
+
+    if tipo_data == 'passados':
+        avisos = avisos.filter(
+            data_evento__lt=hoje
+        ).order_by('-data_evento', '-data_publicacao')
+    else:
+        avisos = avisos.filter(
+            data_evento__gte=hoje
+        ).order_by('data_evento', '-data_publicacao')
+
+    return render(
+        request,
+        'admin_dashboard/professor/avisos.html',
+        {
+            'avisos': avisos,
+            'busca': busca,
+            'tipo_data': tipo_data,
+        }
+    )
 
 @login_required
 def professor_criar(request):
@@ -2392,19 +2420,6 @@ def professor_turma_detalhes(request, pk):
         'total_alunas': alunas.count(),
     }
     return render(request, 'admin_dashboard/professor/turma_detalhes.html', context)
-
-@login_required
-def professor_avisos(request):
-    """Lista de avisos para professor"""
-    
-    if not request.user.groups.filter(name='Professores').exists():
-        return redirect('home')
-    
-    from calendario_avisos.models import Aviso
-    
-    avisos = Aviso.objects.filter(ativo=True).order_by('-data_publicacao')
-    
-    return render(request, 'admin_dashboard/professor/avisos.html', {'avisos': avisos})
 
 @login_required
 def professor_agendamentos(request):
