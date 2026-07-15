@@ -5,7 +5,45 @@
 {% block content %}
 <div class="container dashboard">
     <h1>Avisos e Calendário</h1>
-    
+
+    <div class="card" style="margin-bottom: 1.5rem;">
+        <form method="get" style="display: flex; gap: 1rem; align-items: end; flex-wrap: wrap;">
+            <div style="flex: 2; min-width: 240px;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">
+                    Buscar
+                </label>
+                <input type="text"
+                       name="busca"
+                       value="{{ request.GET.busca }}"
+                       placeholder="Buscar por qualquer palavra..."
+                       style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem;">
+            </div>
+
+            <div style="flex: 1; min-width: 180px;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">
+                    Tipo de eventos
+                </label>
+                <select name="tipo_data"
+                        style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem;">
+                    <option value="proximos" {% if request.GET.tipo_data == 'proximos' or not request.GET.tipo_data %}selected{% endif %}>
+                        Próximos eventos
+                    </option>
+                    <option value="passados" {% if request.GET.tipo_data == 'passados' %}selected{% endif %}>
+                        Eventos passados
+                    </option>
+                </select>
+            </div>
+
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                <button type="submit" class="btn btn-primary">Filtrar</button>
+                <a href="{% url 'avisos' %}"
+                   style="padding: 0.75rem 1.5rem; background: #f5f5f5; color: #333; border-radius: 8px; text-decoration: none;">
+                    Limpar
+                </a>
+            </div>
+        </form>
+    </div>
+
     {% if avisos %}
         <div class="avisos-list">
             {% for aviso in avisos %}
@@ -33,7 +71,7 @@
         </div>
     {% else %}
         <div class="card">
-            <p>Nenhum aviso no momento.</p>
+            <p>Nenhum aviso encontrado.</p>
         </div>
     {% endif %}
 </div>
