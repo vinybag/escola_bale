@@ -360,6 +360,9 @@
                 <a href="{% url 'admin_dashboard:professor_dashboard' %}" class="{% if request.resolver_match.url_name == 'professor_dashboard' %}active{% endif %}">
                     Dashboard
                 </a>
+                <a href="{% url 'admin_dashboard:professor_agendamentos' %}" class="{% if 'agendamentos' in request.path %}active{% endif %}">
+                    Agendamentos
+                </a>
                 <a href="/pagamentos/mensalidades/" class="{% if '/pagamentos/mensalidades/' in request.path %}active{% endif %}">
                     Mensalidades
                 </a>
