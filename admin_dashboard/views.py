@@ -817,38 +817,58 @@ def mensalidade_criar(request):
 @login_required
 def avisos_list(request):
     """Lista de avisos"""
-    
+
     if not request.user.is_staff:
         return redirect('home')
-    
+
     try:
         from calendario_avisos.models import Aviso
-        
-        # Query base - ordena por data_publicacao (campo correto!)
-        avisos = Aviso.objects.all().order_by('-data_publicacao', '-data_evento')
-        
-        # Debug - mostra quantos avisos existem
-        print(f"Total de avisos no banco: {avisos.count()}")
-        
-        # Filtro por tipo
-        tipo = request.GET.get('tipo', '')
+
+        hoje = timezone.localdate()
+        busca = request.GET.get('busca', '').strip()
+        tipo = request.GET.get('tipo', '').strip()
+        tipo_data = request.GET.get('tipo_data', 'proximos')
+
+        avisos = Aviso.objects.all()
+
+        if busca:
+            avisos = avisos.filter(
+                Q(titulo__icontains=busca) |
+                Q(descricao__icontains=busca)
+            )
+
         if tipo:
             avisos = avisos.filter(tipo=tipo)
-            print(f"Avisos apos filtro por tipo '{tipo}': {avisos.count()}")
-        
+
+        if tipo_data == 'passados':
+            avisos = avisos.filter(
+                data_evento__lt=hoje
+            ).order_by('-data_evento', '-data_publicacao')
+        else:
+            avisos = avisos.filter(
+                data_evento__gte=hoje
+            ).order_by('data_evento', '-data_publicacao')
+
+        total_avisos = avisos.count()
+
     except Exception as e:
         print(f"Erro ao buscar avisos: {e}")
         import traceback
         traceback.print_exc()
         avisos = []
+        busca = ''
         tipo = ''
-    
+        tipo_data = 'proximos'
+        total_avisos = 0
+
     context = {
         'avisos': avisos,
+        'busca': busca,
         'tipo_filtro': tipo,
-        'total_avisos': avisos.count() if avisos else 0,
+        'tipo_data': tipo_data,
+        'total_avisos': total_avisos,
     }
-    
+
     return render(request, 'admin_dashboard/avisos/list.html', context)
 
 

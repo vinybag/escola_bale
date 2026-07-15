@@ -24,9 +24,50 @@
 
     .avisos-filtros form {
         display: grid;
-        grid-template-columns: minmax(220px, 1fr) auto;
+        grid-template-columns: minmax(220px, 2fr) minmax(180px, 1fr) minmax(200px, 1fr) auto;
         gap: 1rem;
         align-items: end;
+    }
+
+    .filtro-campo {
+        min-width: 0;
+    }
+
+    .filtro-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: #4a235f;
+    }
+
+    .filtro-input,
+    .filtro-select {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #d8c7e3;
+        border-radius: 8px;
+        font-size: 1rem;
+        background: #fff;
+        box-sizing: border-box;
+    }
+
+    .filtro-acoes {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-limpar-filtro {
+        flex: 1;
+        min-width: 110px;
+        padding: 0.75rem 1.5rem;
+        background: #f6f1f8;
+        color: #4a235f;
+        border: 1px solid #e5d8ee;
+        border-radius: 8px;
+        text-decoration: none;
+        text-align: center;
+        font-weight: 600;
     }
 
     .avisos-lista {
@@ -184,9 +225,29 @@
         border: 1px solid #ece3f2;
     }
 
+    @media (max-width: 992px) {
+        .avisos-filtros form {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .filtro-acoes {
+            grid-column: 1 / -1;
+        }
+    }
+
     @media (max-width: 768px) {
         .avisos-filtros form {
             grid-template-columns: 1fr;
+        }
+
+        .filtro-acoes {
+            grid-column: auto;
+            flex-direction: column;
+        }
+
+        .filtro-acoes .btn,
+        .btn-limpar-filtro {
+            width: 100%;
         }
 
         .aviso-topo {
@@ -249,9 +310,18 @@
 
 <div class="avisos-filtros">
     <form method="get">
-        <div>
-            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #4a235f;">Tipo</label>
-            <select name="tipo" style="width: 100%; padding: 0.75rem; border: 1px solid #d8c7e3; border-radius: 8px; font-size: 1rem; background: #fff;">
+        <div class="filtro-campo">
+            <label class="filtro-label">Buscar</label>
+            <input type="text"
+                   name="busca"
+                   value="{{ busca }}"
+                   placeholder="Buscar por qualquer palavra..."
+                   class="filtro-input">
+        </div>
+
+        <div class="filtro-campo">
+            <label class="filtro-label">Tipo</label>
+            <select name="tipo" class="filtro-select">
                 <option value="">Todos</option>
                 <option value="geral" {% if tipo_filtro == 'geral' %}selected{% endif %}>Geral</option>
                 <option value="evento" {% if tipo_filtro == 'evento' %}selected{% endif %}>Evento</option>
@@ -260,9 +330,21 @@
             </select>
         </div>
 
-        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        <div class="filtro-campo">
+            <label class="filtro-label">Tipo de eventos</label>
+            <select name="tipo_data" class="filtro-select">
+                <option value="proximos" {% if tipo_data == 'proximos' or not tipo_data %}selected{% endif %}>
+                    Próximos eventos
+                </option>
+                <option value="passados" {% if tipo_data == 'passados' %}selected{% endif %}>
+                    Eventos passados
+                </option>
+            </select>
+        </div>
+
+        <div class="filtro-acoes">
             <button type="submit" class="btn btn-primary" style="flex: 1; min-width: 110px;">Filtrar</button>
-            <a href="{% url 'admin_dashboard:avisos_list' %}" style="flex: 1; min-width: 110px; padding: 0.75rem 1.5rem; background: #f6f1f8; color: #4a235f; border: 1px solid #e5d8ee; border-radius: 8px; text-decoration: none; text-align: center; font-weight: 600;">
+            <a href="{% url 'admin_dashboard:avisos_list' %}" class="btn-limpar-filtro">
                 Limpar
             </a>
         </div>
