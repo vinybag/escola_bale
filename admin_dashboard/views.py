@@ -616,10 +616,16 @@ def mensalidades_list(request):
     try:
         from pagamentos.models import Mensalidade
         from django.db.models import Q
+        from django.utils import timezone
 
-        mensalidades_qs = Mensalidade.objects.select_related('aluna', 'aluna__responsavel').all()
+        hoje = timezone.localdate()
 
-        busca = request.GET.get('busca', '')
+        mensalidades_qs = Mensalidade.objects.select_related(
+            'aluna',
+            'aluna__responsavel'
+        ).all()
+
+        busca = request.GET.get('busca', '').strip()
         if busca:
             mensalidades_qs = mensalidades_qs.filter(
                 Q(aluna__nome__icontains=busca) |
@@ -627,15 +633,24 @@ def mensalidades_list(request):
                 Q(aluna__responsavel__last_name__icontains=busca)
             )
 
-        mes = request.GET.get('mes', '')
+        mes = request.GET.get('mes', '').strip()
+
         if mes:
-            mensalidades_qs = mensalidades_qs.filter(mes_referencia__month=mes)
+            mensalidades_qs = mensalidades_qs.filter(
+                mes_referencia__month=mes
+            )
+        else:
+            mensalidades_qs = mensalidades_qs.filter(
+                mes_referencia__month=hoje.month,
+                mes_referencia__year=hoje.year
+            )
+            mes = str(hoje.month)
 
         mensalidades_qs = mensalidades_qs.order_by('-mes_referencia', 'aluna__nome')
 
         mensalidades = list(mensalidades_qs)
 
-        status = request.GET.get('status', '')
+        status = request.GET.get('status', '').strip()
         if status:
             mensalidades = [m for m in mensalidades if m.status_atual == status]
 
