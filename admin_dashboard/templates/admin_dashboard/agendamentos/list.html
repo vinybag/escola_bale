@@ -2,6 +2,22 @@
 
 {% block title %}Agendamentos - Aula Experimental{% endblock %}
 
+{% block extra_css %}
+<style>
+    @media (max-width: 600px) {
+        form[method="get"] {
+            grid-template-columns: 1fr !important;
+        }
+    }
+
+    .agendamentos-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 1rem;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; gap: 1rem; flex-wrap: wrap;">
     <div>
@@ -13,7 +29,7 @@
 </div>
 
 <!-- Cards de resumo -->
-<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 2rem;">
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
     <div style="background: linear-gradient(135deg, #ffffff 0%, #f3eef6 100%); padding: 1.5rem; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-top: 3px solid #6b2d8f;">
         <div style="font-size: 0.9rem; color: #777; margin-bottom: 0.5rem;">Total geral</div>
         <div style="font-size: 2rem; font-weight: bold; color: #4a235f;">{{ total_geral }}</div>
@@ -32,7 +48,7 @@
 
 <!-- Filtros -->
 <div style="background: white; padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border: 1px solid #ece3f2;">
-    <form method="get" style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 1rem; align-items: end;">
+    <form method="get" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; align-items: end;">
         <div>
             <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #4a235f;">Tipo</label>
             <select name="tipo" style="width: 100%; padding: 0.75rem; border: 1px solid #d8c7e3; border-radius: 6px; font-size: 1rem; background: #fff;">
@@ -61,99 +77,103 @@
                    style="width: 100%; padding: 0.75rem; border: 1px solid #d8c7e3; border-radius: 6px; font-size: 1rem; background: #fff;">
         </div>
 
-        <div style="display: flex; gap: 0.5rem;">
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
             <button type="submit"
-                    style="padding: 0.75rem 1.5rem; background: #6b2d8f; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                    style="flex: 1; min-width: 100px; padding: 0.75rem 1.5rem; background: #6b2d8f; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
                 Filtrar
             </button>
             <a href="{% url 'admin_dashboard:agendamentos_list' %}"
-               style="padding: 0.75rem 1.5rem; background: #f3f3f3; color: #444; border: 1px solid #ddd; border-radius: 6px; text-decoration: none;">
+               style="flex: 1; min-width: 100px; text-align: center; padding: 0.75rem 1.5rem; background: #f3f3f3; color: #444; border: 1px solid #ddd; border-radius: 6px; text-decoration: none;">
                 Limpar
             </a>
         </div>
     </form>
 </div>
 
-<!-- Tabela -->
-<div style="background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border: 1px solid #ece3f2;">
-    <div class="table-container">
-        <table style="width: 100%; border-collapse: collapse;">
-            <thead style="background: linear-gradient(135deg, #faf7fc 0%, #f1ebf6 100%);">
-                <tr>
-                    <th style="padding: 1rem; text-align: left; color: #4a235f;">Aluna(o)</th>
-                    <th style="padding: 1rem; text-align: left; color: #4a235f;">Responsável</th>
-                    <th style="padding: 1rem; text-align: left; color: #4a235f;">Whatsapp</th>
-                    <th style="padding: 1rem; text-align: center; color: #4a235f;">Idade</th>
-                    <th style="padding: 1rem; text-align: center; color: #4a235f;">Data e Horário</th>
-                    <th style="padding: 1rem; text-align: center; color: #4a235f;">Status</th>
-                    <th style="padding: 1rem; text-align: center; color: #4a235f;">Criado em</th>
-                    <th style="padding: 1rem; text-align: right; color: #4a235f;">Ações</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for agendamento in agendamentos %}
-                <tr style="border-top: 1px solid #eee7f3;">
-                    <td style="padding: 1rem;">
-                        <strong style="color: #35203f;">{{ agendamento.nome_aluna }}</strong>
-                    </td>
-                    <td style="padding: 1rem; color: #555;">
-                        {{ agendamento.nome_responsavel }}
-                    </td>
-                    <td style="padding: 1rem;">
-                        <a href="https://wa.me/55{{ agendamento.telefone|cut:' '|cut:'('|cut:')'|cut:'-'|cut:'+' }}"
-                           target="_blank"
-                           rel="noopener noreferrer"
-                           style="color: #6b2d8f; text-decoration: none; font-weight: 500;">
-                            {{ agendamento.telefone }}
-                        </a>
-                    </td>
-                    <td style="padding: 1rem; text-align: center; color: #555;">
-                        {{ agendamento.idade_aluna }} anos
-                    </td>
-                    <td style="padding: 1rem; text-align: center;">
-                        <strong style="color: #35203f;">{{ agendamento.data|date:"d/m/Y" }}</strong><br>
-                        <span style="color: #777;">às {{ agendamento.horario|time:"H:i" }}</span>
-                    </td>
-                    <td style="padding: 1rem; text-align: center;">
-                        {% if agendamento.data >= hoje %}
-                            <span style="background: #efe7f5; color: #6b2d8f; padding: 0.35rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">
-                                Próximo
-                            </span>
-                        {% else %}
-                            <span style="background: #f3edf7; color: #7a5c8f; padding: 0.35rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">
-                                Antigo
-                            </span>
-                        {% endif %}
-                    </td>
-                    <td style="padding: 1rem; text-align: center; color: #666;">
-                        {{ agendamento.criado_em|date:"d/m/Y H:i" }}
-                    </td>
-                    <td style="padding: 1rem; text-align: right;">
-                        <a href="{% url 'admin_dashboard:agendamento_detalhes' agendamento.pk %}"
-                           style="color: #6b2d8f; text-decoration: none; margin-right: 1rem; font-weight: 600;">
-                            Ver
-                        </a>
-                        <form method="post"
-                              action="{% url 'admin_dashboard:agendamento_excluir' agendamento.pk %}"
-                              style="display: inline-block;"
-                              onsubmit="return confirm('Tem certeza que deseja excluir o agendamento de {{ agendamento.nome_aluna }}?');">
-                            {% csrf_token %}
-                            <button type="submit"
-                                    style="background: none; border: none; color: #8a6a9f; cursor: pointer; font-weight: 600;">
-                                Excluir
-                            </button>
-                        </form>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr style="border-top: 1px solid #eee7f3;">
-                    <td colspan="8" style="padding: 3rem; text-align: center; color: #8a8a8a;">
-                        Nenhum agendamento encontrado.
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+<!-- Cards de agendamentos -->
+<div class="agendamentos-cards">
+    {% for agendamento in agendamentos %}
+        <div style="background: white; border-radius: 14px; padding: 1.25rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border: 1px solid #ece3f2;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.75rem; margin-bottom: 0.85rem;">
+                <strong style="color: #35203f; font-size: 1.05rem;">{{ agendamento.nome_aluna }}</strong>
+                {% if agendamento.data >= hoje %}
+                    <span style="background: #efe7f5; color: #6b2d8f; padding: 0.3rem 0.7rem; border-radius: 20px; font-size: 0.78rem; font-weight: 600; white-space: nowrap;">
+                        Próximo
+                    </span>
+                {% else %}
+                    <span style="background: #f3edf7; color: #7a5c8f; padding: 0.3rem 0.7rem; border-radius: 20px; font-size: 0.78rem; font-weight: 600; white-space: nowrap;">
+                        Antigo
+                    </span>
+                {% endif %}
+            </div>
+
+            <div style="display: grid; gap: 0.6rem; margin-bottom: 1rem;">
+                <div>
+                    <div style="font-size: 0.72rem; font-weight: 700; color: #6b2d8f; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 0.15rem;">
+                        Responsável
+                    </div>
+                    <div style="color: #444;">{{ agendamento.nome_responsavel }}</div>
+                </div>
+
+                <div>
+                    <div style="font-size: 0.72rem; font-weight: 700; color: #6b2d8f; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 0.15rem;">
+                        Whatsapp
+                    </div>
+                    <a href="https://wa.me/55{{ agendamento.telefone|cut:' '|cut:'('|cut:')'|cut:'-'|cut:'+' }}"
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       style="color: #6b2d8f; text-decoration: none; font-weight: 500;">
+                        {{ agendamento.telefone }}
+                    </a>
+                </div>
+
+                <div style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
+                    <div>
+                        <div style="font-size: 0.72rem; font-weight: 700; color: #6b2d8f; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 0.15rem;">
+                            Idade
+                        </div>
+                        <div style="color: #444;">{{ agendamento.idade_aluna }} anos</div>
+                    </div>
+
+                    <div>
+                        <div style="font-size: 0.72rem; font-weight: 700; color: #6b2d8f; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 0.15rem;">
+                            Data e horário
+                        </div>
+                        <div style="color: #444;">
+                            {{ agendamento.data|date:"d/m/Y" }} às {{ agendamento.horario|time:"H:i" }}
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div style="font-size: 0.72rem; font-weight: 700; color: #6b2d8f; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 0.15rem;">
+                        Criado em
+                    </div>
+                    <div style="color: #444;">{{ agendamento.criado_em|date:"d/m/Y H:i" }}</div>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; align-items: center; gap: 1rem; border-top: 1px solid #eee7f3; padding-top: 0.85rem;">
+                <a href="{% url 'admin_dashboard:agendamento_detalhes' agendamento.pk %}"
+                   style="color: #6b2d8f; text-decoration: none; font-weight: 600;">
+                    Ver
+                </a>
+                <form method="post"
+                      action="{% url 'admin_dashboard:agendamento_excluir' agendamento.pk %}"
+                      style="display: inline-block;"
+                      onsubmit="return confirm('Tem certeza que deseja excluir o agendamento de {{ agendamento.nome_aluna }}?');">
+                    {% csrf_token %}
+                    <button type="submit"
+                            style="background: none; border: none; color: #8a6a9f; cursor: pointer; font-weight: 600; padding: 0;">
+                        Excluir
+                    </button>
+                </form>
+            </div>
+        </div>
+    {% empty %}
+        <div style="background: white; border-radius: 14px; padding: 2rem; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border: 1px solid #ece3f2; grid-column: 1 / -1;">
+            <p style="margin: 0; color: #8a8a8a;">Nenhum agendamento encontrado.</p>
+        </div>
+    {% endfor %}
 </div>
 {% endblock %}
