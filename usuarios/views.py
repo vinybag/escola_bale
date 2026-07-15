@@ -230,7 +230,7 @@ def redirecionar_dashboard(request):
 
 @login_required
 def cobrancas_espetaculos(request):
-    """Cobranças de espetáculos do responsável logado"""
+    from django.db.models import Q, Prefetch
     from espetaculo.models import CobrancaEspetaculo, ParcelaCobrancaEspetaculo
 
     cobrancas = (
@@ -238,6 +238,8 @@ def cobrancas_espetaculos(request):
         .select_related(
             'participacao',
             'participacao__aluna',
+            'participacao__aluna__responsavel',
+            'participacao__aluna__usuario',
             'participacao__espetaculo',
         )
         .prefetch_related(
@@ -247,9 +249,14 @@ def cobrancas_espetaculos(request):
             )
         )
         .filter(
-            participacao__aluna__responsavel=request.user,
+            Q(participacao__aluna__responsavel=request.user) |
+            Q(
+                participacao__aluna__tipo_aluna='adulto',
+                participacao__aluna__usuario=request.user
+            ),
             ativo=True,
         )
+        .distinct()
         .order_by('-criado_em')
     )
 
