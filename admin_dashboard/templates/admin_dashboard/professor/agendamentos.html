@@ -4,56 +4,19 @@
 
 {% block extra_css %}
 <style>
-    @media (max-width: 768px) {
-        .table-container table thead {
-            display: none;
-        }
-
-        .table-container table,
-        .table-container table tbody,
-        .table-container table tr,
-        .table-container table td {
-            display: block;
-            width: 100%;
-        }
-
-        .table-container table {
-            min-width: 0 !important;
-        }
-
-        .table-container table tr {
-            background: white;
-            border: 1px solid #ece3f2;
-            border-radius: 12px;
-            margin-bottom: 1rem;
-            padding: 0.75rem 1rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-        }
-
-        .table-container table td {
-            padding: 0.5rem 0 !important;
-            text-align: left !important;
-            border-top: none !important;
-            white-space: normal !important;
-        }
-
-        .table-container table td::before {
-            content: attr(data-label);
-            display: block;
-            font-size: 0.75rem;
-            font-weight: 700;
-            color: #6b2d8f;
-            text-transform: uppercase;
-            letter-spacing: 0.03em;
-            margin-bottom: 0.2rem;
-        }
-
-        .table-container table td:empty {
-            display: none;
-        }
+    .agendamentos-cards {
+        display: none;
     }
 
-    @media (max-width: 600px) {
+    @media (max-width: 768px) {
+        .agendamentos-tabela-desktop {
+            display: none;
+        }
+
+        .agendamentos-cards {
+            display: block;
+        }
+
         form[method="get"] {
             grid-template-columns: 1fr !important;
         }
@@ -131,7 +94,8 @@
     </form>
 </div>
 
-<div style="background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border: 1px solid #ece3f2;">
+<!-- Tabela: visível apenas no desktop -->
+<div class="agendamentos-tabela-desktop" style="background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border: 1px solid #ece3f2;">
     <div class="table-container">
         <table style="width: 100%; border-collapse: collapse;">
             <thead style="background: linear-gradient(135deg, #faf7fc 0%, #f1ebf6 100%);">
@@ -148,16 +112,16 @@
             <tbody>
                 {% for agendamento in agendamentos %}
                 <tr style="border-top: 1px solid #eee7f3;">
-                    <td data-label="Aluna(o)" style="padding: 1rem;">
+                    <td style="padding: 1rem;">
                         <strong style="color: #35203f;">{{ agendamento.nome_aluna }}</strong>
                     </td>
-                    <td data-label="Turma" style="padding: 1rem; color: #555;">
+                    <td style="padding: 1rem; color: #555;">
                         {{ agendamento.aula.nome|default:"—" }}
                     </td>
-                    <td data-label="Responsável" style="padding: 1rem; color: #555;">
+                    <td style="padding: 1rem; color: #555;">
                         {{ agendamento.nome_responsavel }}
                     </td>
-                    <td data-label="Whatsapp" style="padding: 1rem;">
+                    <td style="padding: 1rem;">
                         <a href="https://wa.me/55{{ agendamento.telefone|cut:' '|cut:'('|cut:')'|cut:'-'|cut:'+' }}"
                            target="_blank"
                            rel="noopener noreferrer"
@@ -165,14 +129,14 @@
                             {{ agendamento.telefone }}
                         </a>
                     </td>
-                    <td data-label="Idade" style="padding: 1rem; text-align: center; color: #555;">
+                    <td style="padding: 1rem; text-align: center; color: #555;">
                         {{ agendamento.idade_aluna }} anos
                     </td>
-                    <td data-label="Data e Horário" style="padding: 1rem; text-align: center;">
+                    <td style="padding: 1rem; text-align: center;">
                         <strong style="color: #35203f;">{{ agendamento.data|date:"d/m/Y" }}</strong><br>
                         <span style="color: #777;">às {{ agendamento.horario|time:"H:i" }}</span>
                     </td>
-                    <td data-label="Status" style="padding: 1rem; text-align: center;">
+                    <td style="padding: 1rem; text-align: center;">
                         {% if agendamento.data >= hoje %}
                             <span style="background: #efe7f5; color: #6b2d8f; padding: 0.35rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">
                                 Próximo
@@ -194,5 +158,75 @@
             </tbody>
         </table>
     </div>
+</div>
+
+<!-- Cards: visível apenas no mobile -->
+<div class="agendamentos-cards">
+    {% for agendamento in agendamentos %}
+        <div style="background: white; border-radius: 14px; padding: 1.25rem; margin-bottom: 1rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border: 1px solid #ece3f2;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.75rem; margin-bottom: 0.85rem;">
+                <strong style="color: #35203f; font-size: 1.05rem;">{{ agendamento.nome_aluna }}</strong>
+                {% if agendamento.data >= hoje %}
+                    <span style="background: #efe7f5; color: #6b2d8f; padding: 0.3rem 0.7rem; border-radius: 20px; font-size: 0.78rem; font-weight: 600; white-space: nowrap;">
+                        Próximo
+                    </span>
+                {% else %}
+                    <span style="background: #f3edf7; color: #7a5c8f; padding: 0.3rem 0.7rem; border-radius: 20px; font-size: 0.78rem; font-weight: 600; white-space: nowrap;">
+                        Antigo
+                    </span>
+                {% endif %}
+            </div>
+
+            <div style="display: grid; gap: 0.6rem;">
+                <div>
+                    <div style="font-size: 0.72rem; font-weight: 700; color: #6b2d8f; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 0.15rem;">
+                        Turma
+                    </div>
+                    <div style="color: #444;">{{ agendamento.aula.nome|default:"—" }}</div>
+                </div>
+
+                <div>
+                    <div style="font-size: 0.72rem; font-weight: 700; color: #6b2d8f; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 0.15rem;">
+                        Responsável
+                    </div>
+                    <div style="color: #444;">{{ agendamento.nome_responsavel }}</div>
+                </div>
+
+                <div>
+                    <div style="font-size: 0.72rem; font-weight: 700; color: #6b2d8f; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 0.15rem;">
+                        Whatsapp
+                    </div>
+                    <a href="https://wa.me/55{{ agendamento.telefone|cut:' '|cut:'('|cut:')'|cut:'-'|cut:'+' }}"
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       style="color: #6b2d8f; text-decoration: none; font-weight: 500;">
+                        {{ agendamento.telefone }}
+                    </a>
+                </div>
+
+                <div style="display: flex; gap: 1.5rem;">
+                    <div>
+                        <div style="font-size: 0.72rem; font-weight: 700; color: #6b2d8f; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 0.15rem;">
+                            Idade
+                        </div>
+                        <div style="color: #444;">{{ agendamento.idade_aluna }} anos</div>
+                    </div>
+
+                    <div>
+                        <div style="font-size: 0.72rem; font-weight: 700; color: #6b2d8f; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 0.15rem;">
+                            Data e horário
+                        </div>
+                        <div style="color: #444;">
+                            {{ agendamento.data|date:"d/m/Y" }} às {{ agendamento.horario|time:"H:i" }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <div style="background: white; border-radius: 14px; padding: 2rem; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border: 1px solid #ece3f2;">
+            <p style="margin: 0; color: #8a8a8a;">Nenhum agendamento encontrado para suas turmas.</p>
+        </div>
+    {% endfor %}
 </div>
 {% endblock %}
