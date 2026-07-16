@@ -168,7 +168,7 @@ if not DEBUG:
 EMAIL_BACKEND = "anymail.backends.brevo.EmailBackend"
 
 ANYMAIL = {
-    "BREVO_API_KEY": config("BREVO_API_KEY"),
+    "BREVO_API_KEY": config("BREVO_API_KEY", default=""),
 }
 
 DEFAULT_FROM_EMAIL = config(
