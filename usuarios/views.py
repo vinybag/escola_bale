@@ -97,25 +97,43 @@ def alterar_senha(request):
     
     return render(request, 'usuarios/alterar_senha.html')
 
+from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth.models import User
+from django.core.mail import send_mail
+from django.shortcuts import render, redirect
+from django.urls import reverse
+import logging
+
+from .models import RecuperacaoSenha
+
+logger = logging.getLogger(__name__)
+
+
 def esqueci_senha(request):
     """Recuperacao de senha via email"""
-    
+
     if request.method == 'POST':
-        email = request.POST.get('email')
-        
+        email = (request.POST.get('email') or '').strip()
+
+        mensagem_padrao = 'Se o email existir, voce recebera as instrucoes.'
+
+        if not email:
+            messages.error(request, 'Informe um email valido.')
+            return redirect('esqueci_senha')
+
         try:
-            # Busca usuario pelo email
-            user = User.objects.get(email=email, is_staff=False)
-            
+            # Busca usuario sem diferenciar maiusculas/minusculas
+            user = User.objects.get(email__iexact=email, is_staff=False)
+
             # Cria token de recuperacao
             recuperacao = RecuperacaoSenha.criar_token(user)
-            
+
             # Gera link de recuperacao
             link = request.build_absolute_uri(
-                f'/conta/redefinir-senha/{recuperacao.token}/'
+                reverse('redefinir_senha', kwargs={'token': recuperacao.token})
             )
-            
-            # Envia email
+
             try:
                 send_mail(
                     subject='Recuperacao de Senha - BAILAH',
@@ -134,34 +152,24 @@ Atenciosamente,
 Equipe BAILAH
 ''',
                     from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[email],
+                    recipient_list=[user.email],
                     fail_silently=False,
                 )
-                
-                messages.success(
-                    request,
-                    'Email enviado! Verifique sua caixa de entrada.'
-                )
-                
-            except Exception as e:
-                print(f"Erro ao enviar email: {e}")
-                messages.error(
-                    request,
-                    'Erro ao enviar email. Contate o suporte.'
-                )
-            
+            except Exception:
+                logger.exception("Erro ao enviar email de recuperacao para %s", email)
+
+            # Sempre retorna a mesma mensagem, por seguranca
+            messages.success(request, mensagem_padrao)
+
         except User.DoesNotExist:
-            # Por seguranca, nao revela se email existe
-            messages.success(
-                request,
-                'Se o email existir, voce recebera as instrucoes.'
-            )
-        except Exception as e:
-            print(f"Erro: {e}")
+            messages.success(request, mensagem_padrao)
+
+        except Exception:
+            logger.exception("Erro ao processar recuperacao de senha para %s", email)
             messages.error(request, 'Erro ao processar solicitacao.')
-        
+
         return redirect('esqueci_senha')
-    
+
     return render(request, 'usuarios/esqueci_senha.html')
 
 def redefinir_senha(request, token):

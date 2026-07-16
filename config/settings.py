@@ -3,14 +3,21 @@ from decouple import config
 import os
 import dj_database_url
 
+
 BASE_DIR = Path(__file__).resolve().parent.parent
+
 
 # SECURITY
 SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-# ALLOWED_HOSTS corrigido - adicionando o domínio personalizado
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,web-production-4389a.up.railway.app,bailahcorpoecia.com,www.bailahcorpoecia.com').split(',')
+
+# ALLOWED_HOSTS
+ALLOWED_HOSTS = config(
+    'ALLOWED_HOSTS',
+    default='localhost,127.0.0.1,web-production-4389a.up.railway.app,bailahcorpoecia.com,www.bailahcorpoecia.com'
+).split(',')
+
 
 # Application definition
 INSTALLED_APPS = [
@@ -20,7 +27,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    
+
     # Apps do projeto
     'core',
     'usuarios',
@@ -28,8 +35,12 @@ INSTALLED_APPS = [
     'pagamentos',
     'calendario_avisos',
     'admin_dashboard',
-    'espetaculo',  
+    'espetaculo',
+
+    # Email
+    'anymail',
 ]
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -42,7 +53,9 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+
 ROOT_URLCONF = 'config.urls'
+
 
 TEMPLATES = [
     {
@@ -60,7 +73,9 @@ TEMPLATES = [
     },
 ]
 
+
 WSGI_APPLICATION = 'config.wsgi.application'
+
 
 # Database
 DATABASE_URL = config('DATABASE_URL', default=None)
@@ -78,7 +93,8 @@ else:
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
-    
+
+
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
@@ -87,11 +103,13 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
+
 # Internationalization
 LANGUAGE_CODE = 'pt-br'
 TIME_ZONE = 'America/Sao_Paulo'
 USE_I18N = True
 USE_TZ = True
+
 
 # Static files
 STATIC_URL = '/static/'
@@ -99,23 +117,28 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
+
 # Media files
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 
 # Login/Logout
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'redirecionar_dashboard'
 LOGOUT_REDIRECT_URL = 'home'
 
+
 # Google Calendar
 GOOGLE_CALENDAR_CREDENTIALS = BASE_DIR / 'config' / 'credentials' / 'google_calendar.json'
 GOOGLE_CALENDAR_ID = config('GOOGLE_CALENDAR_ID', default='')
+
 
 # Stripe
 STRIPE_PUBLIC_KEY = config('STRIPE_PUBLIC_KEY', default='')
 STRIPE_SECRET_KEY = config('STRIPE_SECRET_KEY', default='')
 STRIPE_WEBHOOK_SECRET = config('STRIPE_WEBHOOK_SECRET', default='')
+
 
 # Asaas
 ASAAS_API_KEY = config('ASAAS_API_KEY', default='')
@@ -123,8 +146,10 @@ ASAAS_SANDBOX = config('ASAAS_SANDBOX', default='True') == 'True'
 ASAAS_BASE_URL = 'https://api.asaas.com/v3'
 ASAAS_WEBHOOK_TOKEN = config('ASAAS_WEBHOOK_TOKEN', default='')
 
+
 # Default primary key
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
 
 # Security settings for production
 if not DEBUG:
@@ -136,14 +161,24 @@ if not DEBUG:
     SECURE_CONTENT_TYPE_NOSNIFF = True
     X_FRAME_OPTIONS = 'DENY'
 
-# Configuracao de Email (Gmail)
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
-EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
-EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
-EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
-DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='BAILAH <noreply@bailah.com>')
+
+# =========================
+# EMAIL - BREVO (API)
+# =========================
+EMAIL_BACKEND = "anymail.backends.brevo.EmailBackend"
+
+ANYMAIL = {
+    "BREVO_API_KEY": config("BREVO_API_KEY"),
+}
+
+DEFAULT_FROM_EMAIL = config(
+    'DEFAULT_FROM_EMAIL',
+    default='BAILAH <naoresponda@bailahcorpoecia.com>'
+)
+
+SERVER_EMAIL = DEFAULT_FROM_EMAIL
+EMAIL_SUBJECT_PREFIX = '[BAILAH] '
+
 
 # CSRF e Security settings
 CSRF_TRUSTED_ORIGINS = [
@@ -151,6 +186,7 @@ CSRF_TRUSTED_ORIGINS = [
     'https://www.bailahcorpoecia.com',
     'https://web-production-4389a.up.railway.app',
 ]
+
 
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
