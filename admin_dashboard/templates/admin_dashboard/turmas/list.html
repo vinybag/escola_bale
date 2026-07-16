@@ -268,12 +268,12 @@
         }
 
         .turma-card-grid {
-            grid-template-columns: 1fr;
-            gap: 0.75rem;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem 0.85rem;
         }
 
         .turma-card-item.full {
-            grid-column: auto;
+            grid-column: 1 / -1;
         }
 
         .turma-card-switch {
@@ -292,7 +292,15 @@
         }
     }
 
-    @media (max-width: 420px) {
+    @media (max-width: 380px) {
+        .turma-card-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .turma-card-item.full {
+            grid-column: auto;
+        }
+
         .turma-card-acoes {
             gap: 0.4rem;
         }
