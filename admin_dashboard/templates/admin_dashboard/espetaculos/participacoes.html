@@ -501,6 +501,572 @@
     }
 </style>
 
+{% extends 'admin_dashboard/base.html' %}
+{% load dict_extras %}
+
+{% block title %}Participações - {{ espetaculo.titulo }}{% endblock %}
+
+{% block content %}
+<style>
+    :root {
+        --p-bg:           #f8f6fb;
+        --p-surface:      #ffffff;
+        --p-surface-2:    #faf8fc;
+        --p-border:       rgba(107, 45, 143, 0.12);
+        --p-border-light: rgba(107, 45, 143, 0.07);
+
+        --p-purple-1:     #6b2d8f;
+        --p-purple-2:     #7e3aa5;
+        --p-purple-3:     #4a235f;
+        --p-purple-hl:    #ede7f5;
+        --p-purple-bg:    #f4eefa;
+
+        --p-text:         #2f2438;
+        --p-muted:        #7a7280;
+        --p-faint:        #b0a8b8;
+
+        --p-green-text:   #1d6b36;
+        --p-green-bg:     #e6f7eb;
+        --p-red-text:     #b71c1c;
+        --p-red-bg:       #fdecea;
+        --p-orange-text:  #a06000;
+        --p-orange-bg:    #fff8e6;
+
+        --p-radius-card:  14px;
+        --p-radius-sm:    8px;
+        --p-radius-badge: 999px;
+
+        --p-shadow-card:  0 2px 8px rgba(107, 45, 143, 0.07), 0 0 0 1px rgba(107, 45, 143, 0.07);
+        --p-transition:   0.18s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .p-page {
+        max-width: 1120px;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .p-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .p-header-title {
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+    }
+
+    .p-header-eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--p-purple-1);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin-bottom: 0.1rem;
+    }
+
+    .p-header-eyebrow svg {
+        width: 14px;
+        height: 14px;
+    }
+
+    .p-header h1 {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--p-purple-3);
+        letter-spacing: -0.02em;
+        line-height: 1.2;
+    }
+
+    .p-header-sub {
+        margin: 0;
+        font-size: 0.92rem;
+        color: var(--p-muted);
+    }
+
+    .p-header-actions {
+        display: flex;
+        gap: 0.6rem;
+        align-items: center;
+        flex-wrap: wrap;
+        flex-shrink: 0;
+    }
+
+    .p-totais {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+    }
+
+    .p-total-card {
+        background: var(--p-surface);
+        border-radius: var(--p-radius-card);
+        padding: 1.25rem 1.4rem;
+        box-shadow: var(--p-shadow-card);
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .p-total-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 3px;
+        border-radius: var(--p-radius-card) var(--p-radius-card) 0 0;
+    }
+
+    .p-total-card.card-palco::before    { background: linear-gradient(90deg, #6b2d8f, #a060c0); }
+    .p-total-card.card-figurino::before { background: linear-gradient(90deg, #1a6fa3, #4ca8e0); }
+    .p-total-card.card-geral::before    { background: linear-gradient(90deg, #2a7a36, #4faa60); }
+
+    .p-total-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+    }
+
+    .card-palco .p-total-label    { color: var(--p-purple-1); }
+    .card-figurino .p-total-label { color: #1a6fa3; }
+    .card-geral .p-total-label    { color: #2a7a36; }
+
+    .p-total-valor {
+        font-size: 1.6rem;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        line-height: 1.1;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .card-palco .p-total-valor    { color: var(--p-purple-3); }
+    .card-figurino .p-total-valor { color: #1a4f78; }
+    .card-geral .p-total-valor    { color: #1c5425; }
+
+    .p-total-desc {
+        font-size: 0.82rem;
+        color: var(--p-faint);
+        margin-top: 0.1rem;
+    }
+
+    .p-section {
+        background: var(--p-surface);
+        border-radius: var(--p-radius-card);
+        box-shadow: var(--p-shadow-card);
+        overflow: hidden;
+    }
+
+    .p-section-head {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--p-border-light);
+        background: var(--p-surface-2);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+
+    .p-section-head-text h2 {
+        margin: 0 0 0.15rem 0;
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: var(--p-purple-3);
+    }
+
+    .p-section-head-text p {
+        margin: 0;
+        font-size: 0.82rem;
+        color: var(--p-muted);
+    }
+
+    .p-section-body {
+        padding: 1.5rem;
+    }
+
+    .p-add-form {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 1rem;
+        align-items: end;
+    }
+
+    .p-field label {
+        display: block;
+        margin-bottom: 0.45rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--p-purple-3);
+    }
+
+    .p-select {
+        width: 100%;
+        padding: 0.72rem 0.9rem;
+        border: 1px solid rgba(107, 45, 143, 0.2);
+        border-radius: var(--p-radius-sm);
+        font-size: 0.95rem;
+        background: #fff;
+        color: var(--p-text);
+        transition: border-color var(--p-transition), box-shadow var(--p-transition);
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%237a7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        padding-right: 2.5rem;
+    }
+
+    .p-select:focus {
+        outline: none;
+        border-color: var(--p-purple-1);
+        box-shadow: 0 0 0 3px rgba(107, 45, 143, 0.12);
+    }
+
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.25rem 0.65rem;
+        border-radius: var(--p-radius-badge);
+        font-size: 0.78rem;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .badge-sim      { background: var(--p-green-bg);  color: var(--p-green-text); }
+    .badge-nao      { background: var(--p-purple-bg); color: var(--p-purple-1); }
+    .badge-pago     { background: var(--p-green-bg);  color: var(--p-green-text); }
+    .badge-parcial  { background: var(--p-orange-bg); color: var(--p-orange-text); }
+    .badge-pendente { background: var(--p-red-bg);    color: var(--p-red-text); }
+    .badge-sem      { background: #f3f0f8; color: var(--p-faint); }
+    .badge-count    { background: var(--p-purple-hl); color: var(--p-purple-1); }
+
+    .p-empty {
+        text-align: center;
+        padding: 3.5rem 1rem;
+    }
+
+    .p-empty-icon {
+        width: 48px;
+        height: 48px;
+        margin: 0 auto 1rem;
+        background: var(--p-purple-bg);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--p-purple-1);
+    }
+
+    .p-empty h3 {
+        margin: 0 0 0.4rem;
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--p-purple-3);
+    }
+
+    .p-empty p {
+        margin: 0;
+        font-size: 0.88rem;
+        color: var(--p-muted);
+    }
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background var(--p-transition), box-shadow var(--p-transition), transform var(--p-transition);
+        text-decoration: none;
+        white-space: nowrap;
+        border: none;
+        font-family: inherit;
+    }
+
+    .btn-primary {
+        padding: 0.72rem 1.3rem;
+        background: var(--p-purple-1);
+        color: #fff;
+        border-radius: var(--p-radius-sm);
+        font-size: 0.9rem;
+        box-shadow: 0 2px 8px rgba(107, 45, 143, 0.25);
+    }
+
+    .btn-primary:hover {
+        background: var(--p-purple-3);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(107, 45, 143, 0.30);
+        color: #fff;
+    }
+
+    .btn-ghost {
+        padding: 0.4rem 0.85rem;
+        background: var(--p-purple-hl);
+        color: var(--p-purple-1);
+        border-radius: var(--p-radius-sm);
+        font-size: 0.82rem;
+        border: 1px solid rgba(107, 45, 143, 0.15);
+    }
+
+    .btn-ghost:hover {
+        background: #e2d6f0;
+        color: var(--p-purple-3);
+    }
+
+    .btn-danger {
+        padding: 0.4rem 0.85rem;
+        background: var(--p-red-bg);
+        color: var(--p-red-text);
+        border-radius: var(--p-radius-sm);
+        font-size: 0.82rem;
+        border: 1px solid rgba(183, 28, 28, 0.15);
+    }
+
+    .btn-danger:hover {
+        background: #fbd5d5;
+        color: #7f1212;
+    }
+
+    .btn-back {
+        padding: 0.62rem 1.1rem;
+        background: #fff;
+        color: var(--p-muted);
+        border-radius: var(--p-radius-sm);
+        font-size: 0.88rem;
+        font-weight: 600;
+        border: 1px solid var(--p-border);
+    }
+
+    .btn-back:hover {
+        background: var(--p-surface-2);
+        color: var(--p-text);
+    }
+
+    .p-acoes {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        padding-top: 0.9rem;
+        border-top: 1px solid var(--p-border-light);
+    }
+
+    .p-acoes a,
+    .p-acoes button {
+        flex: 1 1 0;
+        min-width: 0;
+        width: 100%;
+        justify-content: center;
+    }
+
+    .p-participacoes-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 1rem;
+        padding: 1.5rem;
+    }
+
+    .p-participacao-card {
+        background: var(--p-surface);
+        border-radius: var(--p-radius-card);
+        box-shadow: var(--p-shadow-card);
+        border: 1px solid var(--p-border-light);
+        padding: 1.1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.95rem;
+    }
+
+    .p-participacao-topo {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+
+    .p-participacao-titulo {
+        min-width: 0;
+    }
+
+    .p-participacao-nome {
+        margin: 0 0 0.18rem 0;
+        font-size: 1.02rem;
+        line-height: 1.3;
+        color: var(--p-purple-3);
+        font-weight: 800;
+    }
+
+    .p-participacao-sub {
+        color: var(--p-muted);
+        font-size: 0.82rem;
+        line-height: 1.4;
+    }
+
+    .p-participacao-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.85rem 1rem;
+    }
+
+    .p-participacao-item.full {
+        grid-column: 1 / -1;
+    }
+
+    .p-card-label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: var(--p-purple-1);
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        margin-bottom: 0.18rem;
+    }
+
+    .p-card-valor {
+        color: var(--p-text);
+        line-height: 1.45;
+        font-size: 0.92rem;
+    }
+
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.45);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(2px);
+    }
+
+    .modal-overlay.ativo { display: flex; }
+
+    .modal-box {
+        background: #fff;
+        border-radius: 18px;
+        padding: 2rem;
+        max-width: 400px;
+        width: 90%;
+        box-shadow: 0 16px 48px rgba(0,0,0,0.18);
+        text-align: center;
+    }
+
+    .modal-icon {
+        width: 52px;
+        height: 52px;
+        background: var(--p-red-bg);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        color: var(--p-red-text);
+    }
+
+    .modal-box h3 {
+        margin: 0 0 0.6rem;
+        color: var(--p-text);
+        font-size: 1.05rem;
+        font-weight: 800;
+    }
+
+    .modal-box p {
+        color: var(--p-muted);
+        margin: 0 0 1.5rem;
+        line-height: 1.6;
+        font-size: 0.92rem;
+    }
+
+    .modal-actions {
+        display: flex;
+        gap: 0.75rem;
+        justify-content: center;
+    }
+
+    .btn-modal-cancel {
+        padding: 0.65rem 1.3rem;
+        background: #f3f0f8;
+        color: var(--p-purple-3);
+        border: 1px solid rgba(107, 45, 143, 0.15);
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 0.92rem;
+        font-family: inherit;
+        transition: background var(--p-transition);
+    }
+
+    .btn-modal-cancel:hover { background: #e8e0f4; }
+
+    .btn-modal-confirm {
+        padding: 0.65rem 1.3rem;
+        background: var(--p-red-text);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        font-weight: 700;
+        cursor: pointer;
+        font-size: 0.92rem;
+        font-family: inherit;
+        transition: background var(--p-transition);
+    }
+
+    .btn-modal-confirm:hover { background: #7f1212; }
+
+    @media (max-width: 900px) {
+        .p-totais { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 640px) {
+        .p-header { align-items: stretch; }
+        .p-header-actions { width: 100%; }
+        .p-totais { grid-template-columns: 1fr; }
+        .p-add-form { grid-template-columns: 1fr; }
+        .p-add-form .btn-primary { width: 100%; }
+        .p-section-body { padding: 1.1rem; }
+        .p-participacoes-cards {
+            grid-template-columns: 1fr;
+            padding: 1.1rem;
+        }
+        .p-participacao-card {
+            padding: 0.95rem;
+            gap: 0.85rem;
+        }
+        .p-participacao-topo {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .p-participacao-grid {
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem 0.85rem;
+        }
+        .p-participacao-item.full {
+            grid-column: 1 / -1;
+        }
+    }
+
+    @media (max-width: 380px) {
+        .p-participacao-grid {
+            grid-template-columns: 1fr;
+        }
+        .p-participacao-item.full {
+            grid-column: auto;
+        }
+        .p-acoes {
+            flex-direction: column;
+        }
+    }
+</style>
+
 <div class="modal-overlay" id="modalExcluir">
     <div class="modal-box">
         <div class="modal-icon">
@@ -619,33 +1185,27 @@
         </div>
 
         {% if participacoes %}
-        <div class="p-table-wrap">
-            <table class="p-table">
-                <thead>
-                    <tr>
-                        <th>Aluna</th>
-                        <th>Vai dançar?</th>
-                        <th>Taxa de palco</th>
-                        <th>Figurino</th>
-                        <th>Cobranças</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for participacao in participacoes %}
-                        {% with status=status_por_participacao|get_item:participacao.pk %}
-                        <tr>
-                            <td>
-                                <strong style="color: var(--p-purple-3);">{{ participacao.aluna.nome }}</strong>
-                            </td>
-                            <td>
-                                {% if participacao.vai_dancar %}
-                                    <span class="badge badge-sim">✓ Sim</span>
-                                {% else %}
-                                    <span class="badge badge-nao">Não</span>
-                                {% endif %}
-                            </td>
-                            <td>
+        <div class="p-participacoes-cards">
+            {% for participacao in participacoes %}
+                {% with status=status_por_participacao|get_item:participacao.pk %}
+                <div class="p-participacao-card">
+                    <div class="p-participacao-topo">
+                        <div class="p-participacao-titulo">
+                            <h3 class="p-participacao-nome">{{ participacao.aluna.nome }}</h3>
+                            <div class="p-participacao-sub">Participação vinculada ao espetáculo</div>
+                        </div>
+
+                        {% if participacao.vai_dancar %}
+                            <span class="badge badge-sim">✓ Vai dançar</span>
+                        {% else %}
+                            <span class="badge badge-nao">Não dança</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="p-participacao-grid">
+                        <div class="p-participacao-item">
+                            <div class="p-card-label">Taxa de palco</div>
+                            <div class="p-card-valor">
                                 {% if status.taxa_palco_status == 'pago' %}
                                     <span class="badge badge-pago">✓ Pago</span>
                                 {% elif status.taxa_palco_status == 'parcial' %}
@@ -655,8 +1215,12 @@
                                 {% else %}
                                     <span class="badge badge-sem">Sem cobrança</span>
                                 {% endif %}
-                            </td>
-                            <td>
+                            </div>
+                        </div>
+
+                        <div class="p-participacao-item">
+                            <div class="p-card-label">Figurino</div>
+                            <div class="p-card-valor">
                                 {% if status.figurino_status == 'pago' %}
                                     <span class="badge badge-pago">✓ Pago</span>
                                 {% elif status.figurino_status == 'parcial' %}
@@ -666,28 +1230,31 @@
                                 {% else %}
                                     <span class="badge badge-sem">Sem cobrança</span>
                                 {% endif %}
-                            </td>
-                            <td>
+                            </div>
+                        </div>
+
+                        <div class="p-participacao-item full">
+                            <div class="p-card-label">Cobranças</div>
+                            <div class="p-card-valor">
                                 <span class="badge badge-count">{{ quantidade_cobrancas_por_participacao|get_item:participacao.pk }}</span>
-                            </td>
-                            <td>
-                                <div class="p-acoes">
-                                    <a href="{% url 'admin_dashboard:participacao_cobrancas' participacao.pk %}" class="btn btn-ghost">
-                                        Cobranças
-                                    </a>
-                                    <button
-                                        type="button"
-                                        class="btn btn-danger"
-                                        onclick="abrirModal('{{ participacao.aluna.nome|escapejs }}', '{% url 'admin_dashboard:excluir_participacao' participacao.pk %}')">
-                                        Excluir
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        {% endwith %}
-                    {% endfor %}
-                </tbody>
-            </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-acoes">
+                        <a href="{% url 'admin_dashboard:participacao_cobrancas' participacao.pk %}" class="btn btn-ghost">
+                            Cobranças
+                        </a>
+                        <button
+                            type="button"
+                            class="btn btn-danger"
+                            onclick="abrirModal('{{ participacao.aluna.nome|escapejs }}', '{% url 'admin_dashboard:excluir_participacao' participacao.pk %}')">
+                            Excluir
+                        </button>
+                    </div>
+                </div>
+                {% endwith %}
+            {% endfor %}
         </div>
         {% else %}
         <div class="p-empty">
