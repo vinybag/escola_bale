@@ -29,34 +29,21 @@
         align-items: end;
     }
 
-    .alunas-table-card {
-        background: white;
-        border-radius: 18px;
-        overflow: hidden;
-        box-shadow: 0 10px 24px rgba(107, 45, 143, 0.08);
-        border: 1px solid #ebe3f1;
-    }
-
-    .alunas-table-wrap {
-        overflow-x: auto;
-    }
-
-    .alunas-table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-
     .alunas-cards {
-        display: none;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
         gap: 1rem;
     }
 
     .aluna-card {
         background: white;
         border-radius: 18px;
-        padding: 1.1rem;
+        padding: 1.25rem;
         box-shadow: 0 10px 24px rgba(107, 45, 143, 0.08);
         border: 1px solid #ebe3f1;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
     }
 
     .aluna-card-topo {
@@ -64,35 +51,39 @@
         justify-content: space-between;
         align-items: flex-start;
         gap: 0.75rem;
-        margin-bottom: 1rem;
+    }
+
+    .aluna-card-titulo {
+        min-width: 0;
     }
 
     .aluna-card-nome {
         margin: 0 0 0.25rem 0;
         color: #35203f;
-        font-size: 1.05rem;
+        font-size: 1.08rem;
         line-height: 1.3;
     }
 
-    .aluna-card-subtitulo {
+    .aluna-card-tipo {
         font-size: 0.78rem;
         font-weight: 600;
     }
 
-    .aluna-card-subtitulo.adulto {
+    .aluna-card-tipo.adulto {
         color: #6b2d8f;
     }
 
-    .aluna-card-subtitulo.infantil {
+    .aluna-card-tipo.infantil {
         color: #7b7580;
     }
 
     .aluna-card-status {
-        padding: 0.3rem 0.75rem;
+        padding: 0.32rem 0.8rem;
         border-radius: 999px;
         font-size: 0.78rem;
         font-weight: 600;
         white-space: nowrap;
+        flex-shrink: 0;
     }
 
     .aluna-card-status.ativa {
@@ -107,20 +98,24 @@
 
     .aluna-card-grid {
         display: grid;
-        gap: 0.85rem;
-        margin-bottom: 1rem;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem 1.25rem;
     }
 
-    .aluna-card-item-label {
+    .aluna-card-item.full {
+        grid-column: 1 / -1;
+    }
+
+    .aluna-card-label {
         font-size: 0.72rem;
         font-weight: 700;
         color: #6b2d8f;
         text-transform: uppercase;
         letter-spacing: 0.03em;
-        margin-bottom: 0.2rem;
+        margin-bottom: 0.22rem;
     }
 
-    .aluna-card-item-valor {
+    .aluna-card-valor {
         color: #444;
         line-height: 1.5;
         font-size: 0.95rem;
@@ -148,62 +143,66 @@
         gap: 0.35rem;
     }
 
-    .aluna-card-tag {
+    .aluna-tag {
         background: #e8d5f2;
         color: #6b2d8f;
         padding: 0.3rem 0.7rem;
         border-radius: 999px;
         font-size: 0.75rem;
         font-weight: 600;
+        display: inline-flex;
+        align-items: center;
     }
 
-    .aluna-card-tag.empty {
+    .aluna-tag.empty {
         background: #f5f5f5;
         color: #999;
     }
 
     .aluna-card-acoes {
         display: flex;
-        flex-wrap: wrap;
         gap: 0.5rem;
-        padding-top: 0.9rem;
+        flex-wrap: nowrap;
+        padding-top: 0.95rem;
         border-top: 1px solid #eee7f3;
     }
 
     .aluna-card-acoes a,
     .aluna-card-acoes form {
-        flex: 1 1 calc(50% - 0.25rem);
+        flex: 1 1 0;
         min-width: 0;
     }
 
     .aluna-card-acoes a,
     .aluna-card-acoes button {
         width: 100%;
+        min-height: 42px;
         display: flex;
         align-items: center;
         justify-content: center;
         text-align: center;
-        padding: 0.78rem 0.9rem;
+        padding: 0.78rem 0.85rem;
         border-radius: 10px;
-        font-size: 0.88rem;
+        font-size: 0.85rem;
         font-weight: 700;
         text-decoration: none;
         white-space: nowrap;
+        line-height: 1;
     }
 
-    .acao-primaria {
+    .acao-ver {
         background: #f3eafb;
         color: #6b2d8f;
         border: 1px solid #e5d7f1;
     }
 
-    .acao-secundaria {
+    .acao-editar {
         background: #faf7fc;
         color: #4a235f;
         border: 1px solid #ebe3f1;
     }
 
-    .acao-terciaria {
+    .acao-senha {
         background: #f8f5fb;
         color: #8a6a9f;
         border: 1px solid #ece4f2;
@@ -216,10 +215,10 @@
         cursor: pointer;
     }
 
-    .aluna-card-vazio {
+    .alunas-vazio {
         background: white;
         border-radius: 18px;
-        padding: 2.5rem 1.5rem;
+        padding: 3rem 1.5rem;
         text-align: center;
         color: #999;
         box-shadow: 0 10px 24px rgba(107, 45, 143, 0.08);
@@ -256,12 +255,48 @@
             text-align: center;
         }
 
-        .alunas-table-card {
-            display: none;
+        .alunas-cards {
+            grid-template-columns: 1fr;
         }
 
-        .alunas-cards {
-            display: grid;
+        .aluna-card {
+            padding: 1rem;
+        }
+
+        .aluna-card-topo {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .aluna-card-grid {
+            grid-template-columns: 1fr;
+            gap: 0.85rem;
+        }
+
+        .aluna-card-item.full {
+            grid-column: auto;
+        }
+
+        .aluna-card-acoes {
+            gap: 0.45rem;
+        }
+
+        .aluna-card-acoes a,
+        .aluna-card-acoes button {
+            font-size: 0.8rem;
+            padding: 0.72rem 0.5rem;
+        }
+    }
+
+    @media (max-width: 420px) {
+        .aluna-card-acoes {
+            gap: 0.35rem;
+        }
+
+        .aluna-card-acoes a,
+        .aluna-card-acoes button {
+            font-size: 0.74rem;
+            padding: 0.68rem 0.35rem;
         }
     }
 </style>
@@ -320,140 +355,16 @@
     </form>
 </div>
 
-<div class="alunas-table-card">
-    <div class="alunas-table-wrap">
-        <table class="alunas-table">
-            <thead style="background: linear-gradient(135deg, #faf7fc 0%, #f1ebf6 100%);">
-                <tr>
-                    <th style="padding: 1rem; text-align: left; font-size: 0.84rem; color: #6f627b; text-transform: uppercase; font-weight: 700;">Aluna</th>
-                    <th style="padding: 1rem; text-align: left; font-size: 0.84rem; color: #6f627b; text-transform: uppercase; font-weight: 700;">Responsavel</th>
-                    <th style="padding: 1rem; text-align: left; font-size: 0.84rem; color: #6f627b; text-transform: uppercase; font-weight: 700;">Turmas</th>
-                    <th style="padding: 1rem; text-align: left; font-size: 0.84rem; color: #6f627b; text-transform: uppercase; font-weight: 700;">Idade</th>
-                    <th style="padding: 1rem; text-align: left; font-size: 0.84rem; color: #6f627b; text-transform: uppercase; font-weight: 700;">Status</th>
-                    <th style="padding: 1rem; text-align: right; font-size: 0.84rem; color: #6f627b; text-transform: uppercase; font-weight: 700; white-space: nowrap;">Ações</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for aluna in alunas %}
-                <tr style="border-top: 1px solid #eee7f3;">
-                    <td style="padding: 1rem;">
-                        <div style="display: flex; flex-direction: column; gap: 0.25rem;">
-                            <strong style="color: #35203f;">{{ aluna.nome }}</strong>
-
-                            {% if aluna.tipo_aluna == 'adulto' %}
-                                <span style="font-size: 0.75rem; color: #6b2d8f; font-weight: 600;">Aluna adulta</span>
-                            {% else %}
-                                <span style="font-size: 0.75rem; color: #7b7580;">Aluna infantil</span>
-                            {% endif %}
-                        </div>
-                    </td>
-
-                    <td style="padding: 1rem; color: #666;">
-                        {% if aluna.tipo_aluna == 'adulto' %}
-                            {% if aluna.usuario %}
-                                <div style="display: flex; flex-direction: column; gap: 0.2rem;">
-                                    <span style="color: #35203f;">{{ aluna.usuario.get_full_name|default:aluna.usuario.username }}</span>
-                                    {% if aluna.usuario.email %}
-                                        <span style="font-size: 0.75rem; color: #999;">{{ aluna.usuario.email }}</span>
-                                    {% endif %}
-                                </div>
-                            {% else %}
-                                <span style="color: #999;">Sem usuário vinculado</span>
-                            {% endif %}
-                        {% else %}
-                            {% if aluna.responsavel %}
-                                <div style="display: flex; flex-direction: column; gap: 0.2rem;">
-                                    <span style="color: #35203f;">{{ aluna.responsavel.get_full_name|default:aluna.responsavel.username }}</span>
-                                    {% if aluna.responsavel.email %}
-                                        <span style="font-size: 0.75rem; color: #999;">{{ aluna.responsavel.email }}</span>
-                                    {% endif %}
-                                </div>
-                            {% else %}
-                                <span style="color: #999;">-</span>
-                            {% endif %}
-                        {% endif %}
-                    </td>
-
-                    <td style="padding: 1rem;">
-                        {% if aluna.turmas.all %}
-                            {% for turma in aluna.turmas.all %}
-                                <span style="background: #e8d5f2; color: #6b2d8f; padding: 0.28rem 0.7rem; border-radius: 999px; font-size: 0.75rem; display: inline-block; margin: 0.1rem; font-weight: 600;">
-                                    {{ turma.nome }}
-                                </span>
-                            {% endfor %}
-                        {% else %}
-                            <span style="background: #f5f5f5; color: #999; padding: 0.28rem 0.75rem; border-radius: 999px; font-size: 0.82rem;">
-                                Sem turma
-                            </span>
-                        {% endif %}
-                    </td>
-
-                    <td style="padding: 1rem; color: #666; white-space: nowrap;">
-                        {% if aluna.idade %}
-                            {{ aluna.idade }} anos
-                        {% else %}
-                            <span style="color: #999;">-</span>
-                        {% endif %}
-                    </td>
-
-                    <td style="padding: 1rem;">
-                        {% if aluna.ativa %}
-                            <span style="background: #efe7f5; color: #6b2d8f; padding: 0.28rem 0.75rem; border-radius: 999px; font-size: 0.82rem; display: inline-block; white-space: nowrap; font-weight: 600;">
-                                Ativa
-                            </span>
-                        {% else %}
-                            <span style="background: #f3edf7; color: #8a6a9f; padding: 0.28rem 0.75rem; border-radius: 999px; font-size: 0.82rem; display: inline-block; white-space: nowrap; font-weight: 600;">
-                                Inativa
-                            </span>
-                        {% endif %}
-                    </td>
-
-                    <td style="padding: 1rem; text-align: right; white-space: nowrap;">
-                        <a href="{% url 'admin_dashboard:aluna_detalhes' aluna.pk %}" style="color: #6b2d8f; text-decoration: none; margin-right: 1rem; font-weight: 600;">Ver</a>
-
-                        <a href="{% url 'admin_dashboard:aluna_editar' aluna.pk %}" style="color: #4a235f; text-decoration: none; margin-right: 1rem; font-weight: 600;">Editar</a>
-
-                        {% if aluna.tipo_aluna == 'adulto' and aluna.usuario %}
-                            <a href="{% url 'admin_dashboard:aluna_definir_senha' aluna.pk %}"
-                               style="color: #8a6a9f; text-decoration: none; margin-right: 1rem; font-weight: 600;">
-                                Senha
-                            </a>
-                        {% endif %}
-
-                        <form method="post"
-                              action="{% url 'admin_dashboard:aluna_excluir' aluna.pk %}"
-                              style="display: inline;"
-                              onsubmit="return confirm('Tem certeza que deseja excluir a aluna {{ aluna.nome }}?');">
-                            {% csrf_token %}
-                            <button type="submit"
-                                    style="background: none; border: none; color: #8a6a9f; cursor: pointer; text-decoration: underline; font-weight: 600;">
-                                Excluir
-                            </button>
-                        </form>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr style="border-top: 1px solid #eee7f3;">
-                    <td colspan="6" style="padding: 3rem; text-align: center; color: #999;">
-                        Nenhuma aluna encontrada.
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</div>
-
 <div class="alunas-cards">
     {% for aluna in alunas %}
     <div class="aluna-card">
         <div class="aluna-card-topo">
-            <div>
+            <div class="aluna-card-titulo">
                 <h3 class="aluna-card-nome">{{ aluna.nome }}</h3>
                 {% if aluna.tipo_aluna == 'adulto' %}
-                    <div class="aluna-card-subtitulo adulto">Aluna adulta</div>
+                    <div class="aluna-card-tipo adulto">Aluna adulta</div>
                 {% else %}
-                    <div class="aluna-card-subtitulo infantil">Aluna infantil</div>
+                    <div class="aluna-card-tipo infantil">Aluna infantil</div>
                 {% endif %}
             </div>
 
@@ -465,9 +376,9 @@
         </div>
 
         <div class="aluna-card-grid">
-            <div>
-                <div class="aluna-card-item-label">Responsável / Usuário</div>
-                <div class="aluna-card-item-valor">
+            <div class="aluna-card-item full">
+                <div class="aluna-card-label">Responsável / Usuário</div>
+                <div class="aluna-card-valor">
                     {% if aluna.tipo_aluna == 'adulto' %}
                         {% if aluna.usuario %}
                             <div class="aluna-card-user">
@@ -494,22 +405,22 @@
                 </div>
             </div>
 
-            <div>
-                <div class="aluna-card-item-label">Turmas</div>
-                <div class="aluna-card-item-valor">
+            <div class="aluna-card-item full">
+                <div class="aluna-card-label">Turmas</div>
+                <div class="aluna-card-valor">
                     <div class="aluna-card-turmas">
                         {% for turma in aluna.turmas.all %}
-                            <span class="aluna-card-tag">{{ turma.nome }}</span>
+                            <span class="aluna-tag">{{ turma.nome }}</span>
                         {% empty %}
-                            <span class="aluna-card-tag empty">Sem turma</span>
+                            <span class="aluna-tag empty">Sem turma</span>
                         {% endfor %}
                     </div>
                 </div>
             </div>
 
-            <div>
-                <div class="aluna-card-item-label">Idade</div>
-                <div class="aluna-card-item-valor">
+            <div class="aluna-card-item">
+                <div class="aluna-card-label">Idade</div>
+                <div class="aluna-card-valor">
                     {% if aluna.idade %}
                         {{ aluna.idade }} anos
                     {% else %}
@@ -517,14 +428,25 @@
                     {% endif %}
                 </div>
             </div>
+
+            <div class="aluna-card-item">
+                <div class="aluna-card-label">Status</div>
+                <div class="aluna-card-valor">
+                    {% if aluna.ativa %}
+                        Ativa
+                    {% else %}
+                        Inativa
+                    {% endif %}
+                </div>
+            </div>
         </div>
 
         <div class="aluna-card-acoes">
-            <a href="{% url 'admin_dashboard:aluna_detalhes' aluna.pk %}" class="acao-primaria">Ver</a>
-            <a href="{% url 'admin_dashboard:aluna_editar' aluna.pk %}" class="acao-secundaria">Editar</a>
+            <a href="{% url 'admin_dashboard:aluna_detalhes' aluna.pk %}" class="acao-ver">Ver</a>
+            <a href="{% url 'admin_dashboard:aluna_editar' aluna.pk %}" class="acao-editar">Editar</a>
 
             {% if aluna.tipo_aluna == 'adulto' and aluna.usuario %}
-                <a href="{% url 'admin_dashboard:aluna_definir_senha' aluna.pk %}" class="acao-terciaria">Senha</a>
+                <a href="{% url 'admin_dashboard:aluna_definir_senha' aluna.pk %}" class="acao-senha">Senha</a>
             {% endif %}
 
             <form method="post"
@@ -536,7 +458,7 @@
         </div>
     </div>
     {% empty %}
-    <div class="aluna-card-vazio">
+    <div class="alunas-vazio">
         Nenhuma aluna encontrada.
     </div>
     {% endfor %}
