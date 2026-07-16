@@ -4,7 +4,7 @@
 
 {% block content %}
 <style>
-    .turma-list-header {
+    .turmas-list-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -13,261 +13,281 @@
         margin-bottom: 2rem;
     }
 
-    .turma-list-shell,
-    .turma-filter-section,
-    .turma-table-section,
-    .turma-table-wrapper,
-    .turma-mobile-list {
-        width: 100%;
-        max-width: 100%;
-        min-width: 0;
-        box-sizing: border-box;
-    }
-
-    .turma-filter-section {
+    .turmas-filter-card {
         background: white;
-        border: 1px solid #ece3f2;
-        border-radius: 16px;
         padding: 1.5rem;
+        border-radius: 16px;
         margin-bottom: 1.5rem;
-        box-shadow: 0 2px 8px rgba(107, 45, 143, 0.06);
+        box-shadow: 0 8px 20px rgba(107, 45, 143, 0.06);
+        border: 1px solid #ebe3f1;
     }
 
-    .turma-filter-grid {
+    .turmas-filter-form {
         display: grid;
         grid-template-columns: 2fr 1fr auto;
         gap: 1rem;
         align-items: end;
     }
 
-    .turma-filter-grid > div {
-        min-width: 0;
-    }
-
-    .turma-input,
-    .turma-select {
-        width: 100%;
-        max-width: 100%;
-        min-width: 0;
-        box-sizing: border-box;
-        padding: 0.82rem 0.95rem;
-        border: 1px solid #d9cbe4;
-        border-radius: 10px;
-        font-size: 1rem;
-        background: #fff;
-        color: #2f2438;
-    }
-
-    .turma-input:focus,
-    .turma-select:focus {
-        outline: none;
-        border-color: #b895cd;
-        box-shadow: 0 0 0 4px rgba(107, 45, 143, 0.10);
-    }
-
-    .turma-table-section {
-        background: white;
-        border: 1px solid #ece3f2;
-        border-radius: 18px;
-        box-shadow: 0 8px 24px rgba(107, 45, 143, 0.08);
-        overflow: hidden;
-    }
-
-    .turma-table-top {
-        padding: 1.25rem 1.5rem;
-        background: linear-gradient(135deg, #ffffff 0%, #f5eff9 100%);
-        border-bottom: 1px solid #ece3f2;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 0.75rem;
-    }
-
-    .turma-table-wrapper {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-    }
-
-    .turma-list-table {
-        width: 100%;
-        border-collapse: collapse;
-        table-layout: auto;
-    }
-
-    .turma-list-table thead tr {
-        background: #faf7fc;
-    }
-
-    .turma-list-table th {
-        padding: 0.85rem 0.9rem;
-        border-bottom: 1px solid #ece3f2;
-        text-align: left;
-        font-size: 0.78rem;
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-        color: #7a7280;
-        white-space: nowrap;
-        font-weight: 700;
-    }
-
-    .turma-list-table th.center { text-align: center; }
-    .turma-list-table th.right { text-align: right; }
-
-    .turma-list-table td {
-        padding: 0.9rem;
-        border-bottom: 1px solid #f1ebf6;
-        vertical-align: middle;
-        color: #3f3548;
-        font-size: 0.94rem;
-    }
-
-    .turma-list-table td.center { text-align: center; }
-    .turma-list-table td.right { text-align: right; }
-
-    .turma-list-table tbody tr:hover {
-        background: #fcf9fe;
-    }
-
-    .status-pill {
-        display: inline-flex;
-        align-items: center;
-        padding: 0.32rem 0.75rem;
-        border-radius: 999px;
-        font-size: 0.82rem;
-        font-weight: 700;
-        width: fit-content;
-    }
-
-    .status-success { background: #dff3e4; color: #206a38; }
-    .status-danger  { background: #f8d7da; color: #721c24; }
-    .status-green   { background: #e8f5e9; color: #2e7d32; }
-
-    .turma-actions {
-        display: flex;
-        gap: 0.75rem;
-        justify-content: flex-end;
-        flex-wrap: wrap;
-    }
-
-    .turma-mobile-list {
-        display: none;
+    .turmas-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
         gap: 1rem;
-        padding: 1rem;
-        background: #fcfbfd;
     }
 
-    .turma-mobile-card {
+    .turma-card {
         background: white;
-        border: 1px solid #ece3f2;
-        border-radius: 16px;
-        padding: 1rem;
-        box-shadow: 0 2px 8px rgba(107, 45, 143, 0.06);
-    }
-
-    .turma-mobile-top {
+        border-radius: 18px;
+        padding: 1.25rem;
+        box-shadow: 0 10px 24px rgba(107, 45, 143, 0.08);
+        border: 1px solid #ebe3f1;
         display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: 0.75rem;
-        margin-bottom: 0.85rem;
+        flex-direction: column;
+        gap: 1rem;
     }
 
-    .turma-mobile-grid {
+    .turma-card-topo {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+
+    .turma-card-titulo {
+        min-width: 0;
+    }
+
+    .turma-card-nome {
+        margin: 0 0 0.3rem 0;
+        color: #35203f;
+        font-size: 1.08rem;
+        line-height: 1.3;
+    }
+
+    .turma-card-descricao {
+        color: #7a7280;
+        font-size: 0.84rem;
+        line-height: 1.45;
+    }
+
+    .turma-card-status {
+        padding: 0.32rem 0.8rem;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .turma-card-status.ativa {
+        background: #efe7f5;
+        color: #6b2d8f;
+    }
+
+    .turma-card-status.inativa {
+        background: #f3edf7;
+        color: #8a6a9f;
+    }
+
+    .turma-card-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 0.85rem;
-        margin-bottom: 1rem;
+        gap: 1rem 1.25rem;
     }
 
-    .turma-mobile-item {
-        min-width: 0;
+    .turma-card-item.full {
+        grid-column: 1 / -1;
     }
 
-    .turma-mobile-label {
-        display: block;
-        margin-bottom: 0.22rem;
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-        color: #7a7280;
+    .turma-card-label {
+        font-size: 0.72rem;
         font-weight: 700;
+        color: #6b2d8f;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        margin-bottom: 0.22rem;
     }
 
-    .turma-mobile-value {
-        color: #3f3548;
-        font-size: 0.92rem;
-        word-break: break-word;
+    .turma-card-valor {
+        color: #444;
+        line-height: 1.5;
+        font-size: 0.95rem;
     }
 
-    .turma-mobile-actions {
+    .turma-tag {
+        background: #e8d5f2;
+        color: #6b2d8f;
+        padding: 0.3rem 0.7rem;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .turma-tag.capacidade {
+        background: #edf6ee;
+        color: #2f7d32;
+    }
+
+    .turma-tag.empty {
+        background: #f5f5f5;
+        color: #999;
+    }
+
+    .turma-card-switch {
         display: flex;
-        gap: 0.75rem;
+        align-items: center;
+        gap: 0.65rem;
         flex-wrap: wrap;
     }
 
-    .empty-state {
+    .turma-card-switch form {
+        margin: 0;
+    }
+
+    .turma-card-switch input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+        accent-color: #6b2d8f;
+    }
+
+    .turma-card-acoes {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: nowrap;
+        padding-top: 0.95rem;
+        border-top: 1px solid #eee7f3;
+    }
+
+    .turma-card-acoes a,
+    .turma-card-acoes form {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+
+    .turma-card-acoes a,
+    .turma-card-acoes button {
+        width: 100%;
+        min-height: 42px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         text-align: center;
-        padding: 3rem 1rem;
-        color: #7b7580;
+        padding: 0.78rem 0.85rem;
+        border-radius: 10px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        text-decoration: none;
+        white-space: nowrap;
+        line-height: 1;
+        border: none;
+    }
+
+    .acao-ver {
+        background: #f3eafb;
+        color: #6b2d8f;
+        border: 1px solid #e5d7f1;
+    }
+
+    .acao-editar {
+        background: #faf7fc;
+        color: #4a235f;
+        border: 1px solid #ebe3f1;
+    }
+
+    .turmas-vazio {
+        background: white;
+        border-radius: 18px;
+        padding: 3rem 1.5rem;
+        text-align: center;
+        color: #999;
+        box-shadow: 0 10px 24px rgba(107, 45, 143, 0.08);
+        border: 1px solid #ebe3f1;
     }
 
     @media (max-width: 900px) {
-        .turma-filter-grid {
+        .turmas-filter-form {
             grid-template-columns: 1fr 1fr;
         }
 
-        .turma-filter-grid .filter-actions {
+        .turmas-filter-actions {
             grid-column: 1 / -1;
         }
     }
 
-    @media (max-width: 768px) {
-        .turma-table-wrapper {
-            display: none;
-        }
-
-        .turma-mobile-list {
-            display: grid;
-        }
-    }
-
     @media (max-width: 640px) {
-        .turma-list-header {
-            align-items: stretch;
+        .turmas-list-header > div,
+        .turmas-list-header > a {
+            width: 100%;
         }
 
-        .turma-list-header > div,
-        .turma-list-header > a {
+        .turmas-list-header > a {
+            text-align: center;
+        }
+
+        .turmas-filter-form {
+            grid-template-columns: 1fr;
+        }
+
+        .turmas-filter-actions {
+            flex-direction: column;
+        }
+
+        .turmas-filter-actions button,
+        .turmas-filter-actions a {
             width: 100%;
             text-align: center;
         }
 
-        .turma-filter-grid {
+        .turmas-cards {
             grid-template-columns: 1fr;
         }
 
-        .turma-filter-grid .filter-actions {
+        .turma-card {
+            padding: 1rem;
+        }
+
+        .turma-card-topo {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .turma-card-grid {
+            grid-template-columns: 1fr;
+            gap: 0.85rem;
+        }
+
+        .turma-card-item.full {
             grid-column: auto;
         }
 
-        .turma-table-top,
-        .turma-filter-section {
-            padding: 1.1rem;
+        .turma-card-acoes {
+            gap: 0.45rem;
         }
 
-        .turma-mobile-grid {
-            grid-template-columns: 1fr;
+        .turma-card-acoes a,
+        .turma-card-acoes button {
+            font-size: 0.8rem;
+            padding: 0.72rem 0.5rem;
+        }
+    }
+
+    @media (max-width: 420px) {
+        .turma-card-acoes {
+            gap: 0.35rem;
         }
 
-        .turma-mobile-actions a {
-            flex: 1 1 100%;
-            text-align: center;
+        .turma-card-acoes a,
+        .turma-card-acoes button {
+            font-size: 0.74rem;
+            padding: 0.68rem 0.35rem;
         }
     }
 </style>
 
-<div class="turma-list-header">
+<div class="turmas-list-header">
     <div>
         <h2 style="margin: 0 0 0.35rem 0; color: #4a235f;">Turmas</h2>
         <p style="margin: 0; color: #6f6f78;">
@@ -276,202 +296,125 @@
     </div>
 
     <a href="{% url 'admin_dashboard:turma_criar' %}"
-       style="display: inline-flex; align-items: center; justify-content: center; padding: 0.82rem 1.4rem; background: linear-gradient(135deg, #6b2d8f 0%, #7e3aa5 100%); color: white; border-radius: 10px; text-decoration: none; font-weight: 700; box-shadow: 0 8px 18px rgba(107,45,143,0.18);">
+       style="padding: 0.85rem 1.35rem; background: linear-gradient(135deg, #6b2d8f 0%, #7e3aa5 100%); color: white; text-decoration: none; border-radius: 10px; font-weight: 700; box-shadow: 0 8px 18px rgba(107, 45, 143, 0.18);">
         + Nova Turma
     </a>
 </div>
 
-<div class="turma-list-shell">
-
-    <div class="turma-filter-section">
-        <form method="get">
-            <div class="turma-filter-grid">
-                <div>
-                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Buscar</label>
-                    <input type="text"
-                           name="busca"
-                           value="{{ busca }}"
-                           placeholder="Nome da turma..."
-                           class="turma-input">
-                </div>
-
-                <div>
-                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Status</label>
-                    <select name="status" class="turma-select">
-                        <option value="">Todas</option>
-                        <option value="ativas" {% if status_filtro == 'ativas' %}selected{% endif %}>Ativas</option>
-                        <option value="inativas" {% if status_filtro == 'inativas' %}selected{% endif %}>Inativas</option>
-                    </select>
-                </div>
-
-                <div class="filter-actions" style="display: flex; gap: 0.75rem; align-items: flex-end; flex-wrap: wrap;">
-                    <button type="submit"
-                            style="padding: 0.82rem 1.25rem; background: linear-gradient(135deg, #6b2d8f 0%, #7e3aa5 100%); color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; white-space: nowrap;">
-                        Filtrar
-                    </button>
-                    <a href="{% url 'admin_dashboard:turmas_list' %}"
-                       style="padding: 0.82rem 1.1rem; background: #f3f3f3; color: #444; border: 1px solid #ddd; border-radius: 10px; text-decoration: none; font-weight: 600; white-space: nowrap;">
-                        Limpar
-                    </a>
-                </div>
-            </div>
-        </form>
-    </div>
-
-    <div class="turma-table-section">
-        <div class="turma-table-top">
-            <div>
-                <h3 style="margin: 0 0 0.2rem 0; color: #4a235f; font-size: 1rem; font-weight: 700;">
-                    Lista de Turmas
-                </h3>
-                <p style="margin: 0; color: #7a7280; font-size: 0.88rem;">
-                    {{ total_turmas }} turma{{ total_turmas|pluralize:"s" }} encontrada{{ total_turmas|pluralize:"s" }}
-                </p>
-            </div>
-
-            <div style="padding: 0.45rem 0.85rem; border-radius: 999px; background: #efe7f5; color: #6b2d8f; font-size: 0.82rem; font-weight: 600;">
-                BKN Tech
-            </div>
+<div class="turmas-filter-card">
+    <form method="get" class="turmas-filter-form">
+        <div>
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #4a235f;">Buscar</label>
+            <input type="text"
+                   name="busca"
+                   value="{{ busca }}"
+                   placeholder="Nome da turma..."
+                   style="width: 100%; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; background: #fff;">
         </div>
 
-        <div class="turma-table-wrapper">
-            <table class="turma-list-table">
-                <thead>
-                    <tr>
-                        <th>Turma</th>
-                        <th>Horário</th>
-                        <th>Professor(a)</th>
-                        <th class="center">Alunas</th>
-                        <th class="center">Status</th>
-                        <th class="center">Experimental</th>
-                        <th class="right">Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for turma in turmas %}
-                    <tr>
-                        <td>
-                            <strong style="color: #4a235f;">{{ turma.nome }}</strong>
-                            {% if turma.descricao %}
-                                <br>
-                                <small style="color: #7a7280; font-size: 0.78rem;">{{ turma.descricao|truncatechars:40 }}</small>
+        <div>
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #4a235f;">Status</label>
+            <select name="status"
+                    style="width: 100%; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; background: #fff;">
+                <option value="">Todas</option>
+                <option value="ativas" {% if status_filtro == 'ativas' %}selected{% endif %}>Ativas</option>
+                <option value="inativas" {% if status_filtro == 'inativas' %}selected{% endif %}>Inativas</option>
+            </select>
+        </div>
+
+        <div class="turmas-filter-actions" style="display: flex; gap: 0.5rem;">
+            <button type="submit"
+                    style="padding: 0.82rem 1.35rem; background: #6b2d8f; color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer;">
+                Filtrar
+            </button>
+            <a href="{% url 'admin_dashboard:turmas_list' %}"
+               style="padding: 0.82rem 1.35rem; background: #f3f3f3; color: #444; border: 1px solid #ddd; border-radius: 10px; text-decoration: none; font-weight: 600;">
+                Limpar
+            </a>
+        </div>
+    </form>
+</div>
+
+<div class="turmas-cards">
+    {% for turma in turmas %}
+    <div class="turma-card">
+        <div class="turma-card-topo">
+            <div class="turma-card-titulo">
+                <h3 class="turma-card-nome">{{ turma.nome }}</h3>
+                {% if turma.descricao %}
+                    <div class="turma-card-descricao">{{ turma.descricao|truncatechars:90 }}</div>
+                {% endif %}
+            </div>
+
+            {% if turma.ativa %}
+                <span class="turma-card-status ativa">Ativa</span>
+            {% else %}
+                <span class="turma-card-status inativa">Inativa</span>
+            {% endif %}
+        </div>
+
+        <div class="turma-card-grid">
+            <div class="turma-card-item">
+                <div class="turma-card-label">Horário</div>
+                <div class="turma-card-valor">{{ turma.horario|default:"—" }}</div>
+            </div>
+
+            <div class="turma-card-item">
+                <div class="turma-card-label">Professor(a)</div>
+                <div class="turma-card-valor">{{ turma.professor|default:"—" }}</div>
+            </div>
+
+            <div class="turma-card-item">
+                <div class="turma-card-label">Alunas</div>
+                <div class="turma-card-valor">
+                    <span class="turma-tag capacidade">{{ turma.total_alunas }} / {{ turma.capacidade_maxima }}</span>
+                </div>
+            </div>
+
+            <div class="turma-card-item">
+                <div class="turma-card-label">Status</div>
+                <div class="turma-card-valor">
+                    {% if turma.ativa %}
+                        Ativa
+                    {% else %}
+                        Inativa
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="turma-card-item full">
+                <div class="turma-card-label">Experimental</div>
+                <div class="turma-card-valor">
+                    <div class="turma-card-switch">
+                        <span>
+                            {% if turma.disponivel_experimental %}
+                                Disponível para experimental
+                            {% else %}
+                                Indisponível para experimental
                             {% endif %}
-                        </td>
+                        </span>
 
-                        <td>{{ turma.horario|default:"—" }}</td>
-                        <td>{{ turma.professor|default:"—" }}</td>
-
-                        <td class="center">
-                            <span class="status-pill status-green">
-                                {{ turma.total_alunas }} / {{ turma.capacidade_maxima }}
-                            </span>
-                        </td>
-
-                        <td class="center">
-                            <span class="status-pill {% if turma.ativa %}status-success{% else %}status-danger{% endif %}">
-                                {% if turma.ativa %}Ativa{% else %}Inativa{% endif %}
-                            </span>
-                        </td>
-
-                        <td class="center">
-                            <form method="post" action="{% url 'admin_dashboard:turma_toggle_experimental' turma.pk %}">
-                                {% csrf_token %}
-                                <input type="checkbox"
-                                       name="disponivel_experimental"
-                                       {% if turma.disponivel_experimental %}checked{% endif %}
-                                       onchange="this.form.submit()"
-                                       style="width: 18px; height: 18px; cursor: pointer; accent-color: #6b2d8f;">
-                            </form>
-                        </td>
-
-                        <td class="right">
-                            <div class="turma-actions">
-                                <a href="{% url 'admin_dashboard:turma_detalhes' turma.pk %}"
-                                   style="color: #6b2d8f; text-decoration: none; font-weight: 600; font-size: 0.9rem;">
-                                    Ver
-                                </a>
-                                <a href="{% url 'admin_dashboard:turma_editar' turma.pk %}"
-                                   style="color: #44384c; text-decoration: none; font-weight: 600; font-size: 0.9rem;">
-                                    Editar
-                                </a>
-                            </div>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="7">
-                            <div class="empty-state">Nenhuma turma encontrada.</div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-
-        <div class="turma-mobile-list">
-            {% for turma in turmas %}
-            <div class="turma-mobile-card">
-                <div class="turma-mobile-top">
-                    <div style="min-width: 0;">
-                        <strong style="display: block; color: #4a235f; font-size: 1rem;">{{ turma.nome }}</strong>
-                        {% if turma.descricao %}
-                            <small style="display: block; margin-top: 0.2rem; color: #7a7280;">
-                                {{ turma.descricao|truncatechars:50 }}
-                            </small>
-                        {% endif %}
+                        <form method="post" action="{% url 'admin_dashboard:turma_toggle_experimental' turma.pk %}">
+                            {% csrf_token %}
+                            <input type="checkbox"
+                                   name="disponivel_experimental"
+                                   {% if turma.disponivel_experimental %}checked{% endif %}
+                                   onchange="this.form.submit()">
+                        </form>
                     </div>
-
-                    <span class="status-pill {% if turma.ativa %}status-success{% else %}status-danger{% endif %}">
-                        {% if turma.ativa %}Ativa{% else %}Inativa{% endif %}
-                    </span>
-                </div>
-
-                <div class="turma-mobile-grid">
-                    <div class="turma-mobile-item">
-                        <span class="turma-mobile-label">Horário</span>
-                        <div class="turma-mobile-value">{{ turma.horario|default:"—" }}</div>
-                    </div>
-
-                    <div class="turma-mobile-item">
-                        <span class="turma-mobile-label">Professor(a)</span>
-                        <div class="turma-mobile-value">{{ turma.professor|default:"—" }}</div>
-                    </div>
-
-                    <div class="turma-mobile-item">
-                        <span class="turma-mobile-label">Alunas</span>
-                        <div class="turma-mobile-value">{{ turma.total_alunas }} / {{ turma.capacidade_maxima }}</div>
-                    </div>
-
-                    <div class="turma-mobile-item">
-                        <span class="turma-mobile-label">Experimental</span>
-                        <div class="turma-mobile-value">
-                            <form method="post" action="{% url 'admin_dashboard:turma_toggle_experimental' turma.pk %}">
-                                {% csrf_token %}
-                                <input type="checkbox"
-                                       name="disponivel_experimental"
-                                       {% if turma.disponivel_experimental %}checked{% endif %}
-                                       onchange="this.form.submit()"
-                                       style="width: 18px; height: 18px; cursor: pointer; accent-color: #6b2d8f;">
-                            </form>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="turma-mobile-actions">
-                    <a href="{% url 'admin_dashboard:turma_detalhes' turma.pk %}"
-                       style="padding: 0.72rem 1rem; background: #efe7f5; color: #6b2d8f; border-radius: 10px; text-decoration: none; font-weight: 700;">
-                        Ver
-                    </a>
-                    <a href="{% url 'admin_dashboard:turma_editar' turma.pk %}"
-                       style="padding: 0.72rem 1rem; background: #f3f3f3; color: #44384c; border: 1px solid #ddd; border-radius: 10px; text-decoration: none; font-weight: 600;">
-                        Editar
-                    </a>
                 </div>
             </div>
-            {% empty %}
-            <div class="empty-state">Nenhuma turma encontrada.</div>
-            {% endfor %}
+        </div>
+
+        <div class="turma-card-acoes">
+            <a href="{% url 'admin_dashboard:turma_detalhes' turma.pk %}" class="acao-ver">Ver</a>
+            <a href="{% url 'admin_dashboard:turma_editar' turma.pk %}" class="acao-editar">Editar</a>
         </div>
     </div>
+    {% empty %}
+    <div class="turmas-vazio">
+        Nenhuma turma encontrada.
+    </div>
+    {% endfor %}
 </div>
 {% endblock %}
