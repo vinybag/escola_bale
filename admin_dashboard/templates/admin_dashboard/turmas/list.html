@@ -31,19 +31,19 @@
 
     .turmas-cards {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
         gap: 1rem;
     }
 
     .turma-card {
         background: white;
-        border-radius: 18px;
-        padding: 1.25rem;
-        box-shadow: 0 10px 24px rgba(107, 45, 143, 0.08);
+        border-radius: 16px;
+        padding: 1.1rem;
+        box-shadow: 0 8px 20px rgba(107, 45, 143, 0.08);
         border: 1px solid #ebe3f1;
         display: flex;
         flex-direction: column;
-        gap: 1rem;
+        gap: 0.95rem;
     }
 
     .turma-card-topo {
@@ -58,23 +58,23 @@
     }
 
     .turma-card-nome {
-        margin: 0 0 0.3rem 0;
+        margin: 0 0 0.22rem 0;
         color: #35203f;
-        font-size: 1.08rem;
+        font-size: 1.02rem;
         line-height: 1.3;
     }
 
     .turma-card-descricao {
         color: #7a7280;
-        font-size: 0.84rem;
-        line-height: 1.45;
+        font-size: 0.82rem;
+        line-height: 1.4;
     }
 
     .turma-card-status {
-        padding: 0.32rem 0.8rem;
+        padding: 0.3rem 0.75rem;
         border-radius: 999px;
-        font-size: 0.78rem;
-        font-weight: 600;
+        font-size: 0.76rem;
+        font-weight: 700;
         white-space: nowrap;
         flex-shrink: 0;
     }
@@ -92,7 +92,7 @@
     .turma-card-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 1rem 1.25rem;
+        gap: 0.85rem 1rem;
     }
 
     .turma-card-item.full {
@@ -100,27 +100,27 @@
     }
 
     .turma-card-label {
-        font-size: 0.72rem;
+        font-size: 0.7rem;
         font-weight: 700;
         color: #6b2d8f;
         text-transform: uppercase;
         letter-spacing: 0.03em;
-        margin-bottom: 0.22rem;
+        margin-bottom: 0.18rem;
     }
 
     .turma-card-valor {
         color: #444;
-        line-height: 1.5;
-        font-size: 0.95rem;
+        line-height: 1.45;
+        font-size: 0.92rem;
     }
 
     .turma-tag {
         background: #e8d5f2;
         color: #6b2d8f;
-        padding: 0.3rem 0.7rem;
+        padding: 0.28rem 0.65rem;
         border-radius: 999px;
-        font-size: 0.75rem;
-        font-weight: 600;
+        font-size: 0.74rem;
+        font-weight: 700;
         display: inline-flex;
         align-items: center;
     }
@@ -130,20 +130,37 @@
         color: #2f7d32;
     }
 
-    .turma-tag.empty {
-        background: #f5f5f5;
-        color: #999;
-    }
-
     .turma-card-switch {
         display: flex;
         align-items: center;
-        gap: 0.65rem;
-        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 0.8rem;
+        padding: 0.72rem 0.85rem;
+        border-radius: 12px;
+        background: #faf7fc;
+        border: 1px solid #eee5f3;
+    }
+
+    .turma-card-switch-texto {
+        min-width: 0;
+    }
+
+    .turma-card-switch-texto strong {
+        display: block;
+        color: #4a235f;
+        font-size: 0.88rem;
+        margin-bottom: 0.12rem;
+    }
+
+    .turma-card-switch-texto span {
+        color: #7a7280;
+        font-size: 0.78rem;
+        line-height: 1.35;
     }
 
     .turma-card-switch form {
         margin: 0;
+        flex-shrink: 0;
     }
 
     .turma-card-switch input[type="checkbox"] {
@@ -157,32 +174,26 @@
         display: flex;
         gap: 0.5rem;
         flex-wrap: nowrap;
-        padding-top: 0.95rem;
+        padding-top: 0.9rem;
         border-top: 1px solid #eee7f3;
     }
 
-    .turma-card-acoes a,
-    .turma-card-acoes form {
+    .turma-card-acoes a {
         flex: 1 1 0;
         min-width: 0;
-    }
-
-    .turma-card-acoes a,
-    .turma-card-acoes button {
         width: 100%;
-        min-height: 42px;
+        min-height: 40px;
         display: flex;
         align-items: center;
         justify-content: center;
         text-align: center;
-        padding: 0.78rem 0.85rem;
+        padding: 0.75rem 0.8rem;
         border-radius: 10px;
-        font-size: 0.85rem;
+        font-size: 0.84rem;
         font-weight: 700;
         text-decoration: none;
         white-space: nowrap;
         line-height: 1;
-        border: none;
     }
 
     .acao-ver {
@@ -199,12 +210,13 @@
 
     .turmas-vazio {
         background: white;
-        border-radius: 18px;
-        padding: 3rem 1.5rem;
+        border-radius: 16px;
+        padding: 2.5rem 1.25rem;
         text-align: center;
         color: #999;
-        box-shadow: 0 10px 24px rgba(107, 45, 143, 0.08);
+        box-shadow: 0 8px 20px rgba(107, 45, 143, 0.08);
         border: 1px solid #ebe3f1;
+        grid-column: 1 / -1;
     }
 
     @media (max-width: 900px) {
@@ -246,7 +258,8 @@
         }
 
         .turma-card {
-            padding: 1rem;
+            padding: 0.95rem;
+            gap: 0.85rem;
         }
 
         .turma-card-topo {
@@ -256,31 +269,35 @@
 
         .turma-card-grid {
             grid-template-columns: 1fr;
-            gap: 0.85rem;
+            gap: 0.75rem;
         }
 
         .turma-card-item.full {
             grid-column: auto;
         }
 
-        .turma-card-acoes {
-            gap: 0.45rem;
+        .turma-card-switch {
+            padding: 0.68rem 0.75rem;
         }
 
-        .turma-card-acoes a,
-        .turma-card-acoes button {
+        .turma-card-acoes a {
             font-size: 0.8rem;
             padding: 0.72rem 0.5rem;
         }
     }
 
+    @media (max-width: 600px) {
+        .turmas-filter-form {
+            grid-template-columns: 1fr !important;
+        }
+    }
+
     @media (max-width: 420px) {
         .turma-card-acoes {
-            gap: 0.35rem;
+            gap: 0.4rem;
         }
 
-        .turma-card-acoes a,
-        .turma-card-acoes button {
+        .turma-card-acoes a {
             font-size: 0.74rem;
             padding: 0.68rem 0.35rem;
         }
@@ -360,7 +377,7 @@
             </div>
 
             <div class="turma-card-item">
-                <div class="turma-card-label">Professor(a)</div>
+                <div class="turma-card-label">Professora</div>
                 <div class="turma-card-valor">{{ turma.professor|default:"—" }}</div>
             </div>
 
@@ -386,13 +403,16 @@
                 <div class="turma-card-label">Experimental</div>
                 <div class="turma-card-valor">
                     <div class="turma-card-switch">
-                        <span>
-                            {% if turma.disponivel_experimental %}
-                                Disponível para experimental
-                            {% else %}
-                                Indisponível para experimental
-                            {% endif %}
-                        </span>
+                        <div class="turma-card-switch-texto">
+                            <strong>
+                                {% if turma.disponivel_experimental %}
+                                    Disponível
+                                {% else %}
+                                    Indisponível
+                                {% endif %}
+                            </strong>
+                            <span>Controla se a turma aparece para aula experimental.</span>
+                        </div>
 
                         <form method="post" action="{% url 'admin_dashboard:turma_toggle_experimental' turma.pk %}">
                             {% csrf_token %}
