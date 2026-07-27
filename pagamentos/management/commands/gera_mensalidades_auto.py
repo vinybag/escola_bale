@@ -33,10 +33,10 @@ class Command(BaseCommand):
         alunas = Aluna.objects.filter(
             ativa=True,
             gerar_mensalidade_automatica=True,
-        ).select_related("responsavel").order_by("nome")
+        ).select_related("responsavel", "usuario").order_by("nome")
 
         geradas = 0
-        puladas_sem_responsavel = 0
+        puladas_sem_pagador = 0
         puladas_sem_valor = 0
         puladas_mes_matricula = 0
         ja_existiam = 0
@@ -44,13 +44,15 @@ class Command(BaseCommand):
         ultimo_dia_mes = calendar.monthrange(mes_referencia.year, mes_referencia.month)[1]
 
         for aluna in alunas:
-            if not aluna.responsavel:
+            pagador = aluna.responsavel or aluna.usuario
+
+            if not pagador:
                 self.stdout.write(
                     self.style.WARNING(
-                        f"[PULADA] {aluna.nome}: sem responsável vinculado."
+                        f"[PULADA] {aluna.nome}: sem responsável e sem usuário próprio vinculado."
                     )
                 )
-                puladas_sem_responsavel += 1
+                puladas_sem_pagador += 1
                 continue
 
             if aluna.valor_mensalidade is None:
@@ -91,7 +93,7 @@ class Command(BaseCommand):
             try:
                 Mensalidade.objects.create(
                     aluna=aluna,
-                    responsavel=aluna.responsavel,
+                    responsavel=pagador,
                     mes_referencia=mes_referencia,
                     valor=aluna.valor_mensalidade,
                     data_vencimento=data_vencimento,
@@ -116,6 +118,6 @@ class Command(BaseCommand):
         self.stdout.write(f"- Mês de referência: {mes_referencia.strftime('%m/%Y')}")
         self.stdout.write(f"- Mensalidades geradas: {geradas}")
         self.stdout.write(f"- Já existiam: {ja_existiam}")
-        self.stdout.write(f"- Puladas sem responsável: {puladas_sem_responsavel}")
+        self.stdout.write(f"- Puladas sem pagador: {puladas_sem_pagador}")
         self.stdout.write(f"- Puladas sem valor: {puladas_sem_valor}")
         self.stdout.write(f"- Puladas por matrícula no mês de referência: {puladas_mes_matricula}")
