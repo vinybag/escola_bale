@@ -2955,6 +2955,7 @@ def cobranca_espetaculo_enviar_asaas(request, pk):
                 'participacao',
                 'participacao__aluna',
                 'participacao__aluna__responsavel',
+                'participacao__aluna__usuario',
                 'participacao__espetaculo',
             ).prefetch_related('parcelas'),
             pk=pk
@@ -2967,9 +2968,19 @@ def cobranca_espetaculo_enviar_asaas(request, pk):
                 pk=cobranca.participacao.pk
             )
 
-        responsavel = cobranca.participacao.aluna.responsavel
-        if not responsavel:
-            messages.error(request, 'A aluna não possui responsável vinculado.')
+        aluna = cobranca.participacao.aluna
+        responsavel = aluna.responsavel
+
+        # AJUSTE: aluna adulta sem responsável usa o próprio usuário como titular da cobrança
+        titular_cobranca = responsavel if responsavel else (
+            aluna.usuario if aluna.tipo_aluna == 'adulto' else None
+        )
+
+        if not titular_cobranca:
+            messages.error(
+                request,
+                'A aluna não possui responsável nem login próprio vinculado para gerar cobrança.'
+            )
             return redirect(
                 'admin_dashboard:participacao_cobrancas',
                 pk=cobranca.participacao.pk
@@ -2995,9 +3006,15 @@ def cobranca_espetaculo_enviar_asaas(request, pk):
                 pk=cobranca.participacao.pk
             )
 
+        # AJUSTE: mensagem ajustada para contemplar aluna adulta titular
+        if responsavel:
+            texto_titular = 'pela responsável'
+        else:
+            texto_titular = 'pela própria aluna'
+
         messages.info(
             request,
-            'A escolha de pagamento é feita pela responsável na área dela. '
+            f'A escolha de pagamento é feita {texto_titular} na área dela. '
             'A cobrança será enviada ao Asaas somente quando ela escolher à vista ou a quantidade de parcelas.'
         )
         return redirect(
@@ -3017,7 +3034,7 @@ from django.db import transaction
 
 @login_required
 def cobranca_espetaculo_escolher_parcelas(request, pk):
-    """Responsável escolhe quantidade de parcelas e cria cobranças Pix no Asaas."""
+    """Responsável (ou aluna adulta titular) escolhe quantidade de parcelas e cria cobranças Pix no Asaas."""
 
     if request.method != 'POST':
         messages.error(request, 'Método inválido.')
@@ -3042,13 +3059,21 @@ def cobranca_espetaculo_escolher_parcelas(request, pk):
                 'participacao',
                 'participacao__aluna',
                 'participacao__aluna__responsavel',
+                'participacao__aluna__usuario',
                 'participacao__espetaculo',
             ).prefetch_related('parcelas'),
             pk=pk
         )
 
-        responsavel = cobranca.participacao.aluna.responsavel
-        if not request.user.is_staff and request.user != responsavel:
+        aluna = cobranca.participacao.aluna
+        responsavel = aluna.responsavel
+
+        # AJUSTE 1: aluna adulta sem responsável usa o próprio usuário como titular da cobrança
+        titular_cobranca = responsavel if responsavel else (
+            aluna.usuario if aluna.tipo_aluna == 'adulto' else None
+        )
+
+        if not request.user.is_staff and request.user != titular_cobranca:
             messages.error(request, 'Acesso negado.')
             return redirect('home')
 
@@ -3056,8 +3081,12 @@ def cobranca_espetaculo_escolher_parcelas(request, pk):
             messages.warning(request, 'Essa cobrança já foi enviada ao Asaas.')
             return redirect('cobrancas_espetaculos')
 
-        if not responsavel:
-            messages.error(request, 'A aluna não possui responsável vinculado.')
+        # AJUSTE 2: mensagem e checagem agora consideram o titular (responsável OU aluna adulta)
+        if not titular_cobranca:
+            messages.error(
+                request,
+                'A aluna não possui responsável nem login próprio vinculado para gerar cobrança.'
+            )
             return redirect('cobrancas_espetaculos')
 
         if not cobranca.vencimento_primeira_parcela:
@@ -3094,7 +3123,8 @@ def cobranca_espetaculo_escolher_parcelas(request, pk):
         if due_date < hoje:
             due_date = hoje
 
-        customer = get_or_create_customer(responsavel)
+        # AJUSTE 3: cliente Asaas criado a partir do titular (responsável OU aluna adulta)
+        customer = get_or_create_customer(titular_cobranca)
 
         if not customer or not customer.get('id'):
             raise AsaasError('Não foi possível obter o cliente no Asaas.')
