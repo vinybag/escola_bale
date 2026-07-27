@@ -8,7 +8,7 @@
         <h2>Área dos Pais</h2>
         <p>Faça login para acessar o painel</p>
         
-        <form method="post">
+        <form method="post" id="form-login">
             {% csrf_token %}
             <div class="form-group">
                 <label for="username">Usuário ou Email:</label>
@@ -20,7 +20,7 @@
                 <input type="password" name="password" id="password" required>
             </div>
             
-            <button type="submit" class="btn btn-primary">Entrar</button>
+            <button type="submit" class="btn btn-primary" id="btn-login">Entrar</button>
             <!-- ADICIONA ESSAS LINHAS: -->
            <div style="text-align: center; margin-top: 1rem;">
            <a href="{% url 'esqueci_senha' %}" style="color: #b07a84; text-decoration: none; font-size: 0.875rem;">
@@ -34,4 +34,27 @@
         </p>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const formLogin = document.getElementById('form-login');
+    if (!formLogin) return;
+
+    let jaEnviado = false;
+
+    formLogin.addEventListener('submit', function (event) {
+        if (jaEnviado) {
+            event.preventDefault();
+            return;
+        }
+        jaEnviado = true;
+
+        const botao = document.getElementById('btn-login');
+        if (botao) {
+            botao.disabled = true;
+            botao.innerText = 'Entrando...';
+        }
+    });
+});
+</script>
 {% endblock %}
