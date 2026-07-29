@@ -2695,6 +2695,8 @@ def espetaculo_participacoes(request, pk):
 
         total_recebido_taxa_palco = Decimal('0.00')
         total_recebido_figurino = Decimal('0.00')
+        total_a_receber_taxa_palco = Decimal('0.00')
+        total_a_receber_figurino = Decimal('0.00')
 
         def resumir_status(lista_cobrancas):
             if not lista_cobrancas:
@@ -2728,14 +2730,24 @@ def espetaculo_participacoes(request, pk):
                 (c.total_pago() or Decimal('0.00') for c in cobrancas_taxa_palco),
                 Decimal('0.00')
             )
-
             pago_figurino = sum(
                 (c.total_pago() or Decimal('0.00') for c in cobrancas_figurino),
                 Decimal('0.00')
             )
 
+            pendente_taxa_palco = sum(
+                (c.total_pendente() or Decimal('0.00') for c in cobrancas_taxa_palco),
+                Decimal('0.00')
+            )
+            pendente_figurino = sum(
+                (c.total_pendente() or Decimal('0.00') for c in cobrancas_figurino),
+                Decimal('0.00')
+            )
+
             total_recebido_taxa_palco += pago_taxa_palco
             total_recebido_figurino += pago_figurino
+            total_a_receber_taxa_palco += pendente_taxa_palco
+            total_a_receber_figurino += pendente_figurino
 
             status_por_participacao[participacao.pk] = {
                 'taxa_palco_status': resumir_status(cobrancas_taxa_palco),
@@ -2748,6 +2760,7 @@ def espetaculo_participacoes(request, pk):
             quantidade_cobrancas_por_participacao[participacao.pk] = len(cobrancas)
 
         total_recebido_geral = total_recebido_taxa_palco + total_recebido_figurino
+        total_a_receber_geral = total_a_receber_taxa_palco + total_a_receber_figurino
 
         context = {
             'espetaculo': espetaculo,
@@ -2759,6 +2772,9 @@ def espetaculo_participacoes(request, pk):
             'total_recebido_taxa_palco': total_recebido_taxa_palco,
             'total_recebido_figurino': total_recebido_figurino,
             'total_recebido_geral': total_recebido_geral,
+            'total_a_receber_taxa_palco': total_a_receber_taxa_palco,
+            'total_a_receber_figurino': total_a_receber_figurino,
+            'total_a_receber_geral': total_a_receber_geral,
         }
 
         return render(

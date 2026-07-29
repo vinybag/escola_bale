@@ -618,22 +618,40 @@
     </div>
 
     <div class="p-totais">
-        <div class="p-total-card card-palco">
-            <span class="p-total-label">Taxa de palco</span>
-            <span class="p-total-valor">R$ {{ total_recebido_taxa_palco|floatformat:2 }}</span>
-            <span class="p-total-desc">Cobranças pagas de taxa de palco</span>
-        </div>
-        <div class="p-total-card card-figurino">
-            <span class="p-total-label">Figurino</span>
-            <span class="p-total-valor">R$ {{ total_recebido_figurino|floatformat:2 }}</span>
-            <span class="p-total-desc">Cobranças pagas de figurino</span>
-        </div>
-        <div class="p-total-card card-geral">
-            <span class="p-total-label">Total geral</span>
-            <span class="p-total-valor">R$ {{ total_recebido_geral|floatformat:2 }}</span>
-            <span class="p-total-desc">Soma de todos os pagamentos</span>
-        </div>
+    <div class="p-total-card card-palco">
+        <span class="p-total-label">Taxa de palco</span>
+        <span class="p-total-valor">R$ {{ total_recebido_taxa_palco|floatformat:2 }}</span>
+        <span class="p-total-desc">Cobranças pagas de taxa de palco</span>
     </div>
+    <div class="p-total-card card-figurino">
+        <span class="p-total-label">Figurino</span>
+        <span class="p-total-valor">R$ {{ total_recebido_figurino|floatformat:2 }}</span>
+        <span class="p-total-desc">Cobranças pagas de figurino</span>
+    </div>
+    <div class="p-total-card card-geral">
+        <span class="p-total-label">Total geral</span>
+        <span class="p-total-valor">R$ {{ total_recebido_geral|floatformat:2 }}</span>
+        <span class="p-total-desc">Soma de todos os pagamentos</span>
+    </div>
+</div>
+
+<div class="p-totais">
+    <div class="p-total-card card-palco">
+        <span class="p-total-label">Taxa de palco a receber</span>
+        <span class="p-total-valor">R$ {{ total_a_receber_taxa_palco|floatformat:2 }}</span>
+        <span class="p-total-desc">Pendente + parcial de taxa de palco</span>
+    </div>
+    <div class="p-total-card card-figurino">
+        <span class="p-total-label">Figurino a receber</span>
+        <span class="p-total-valor">R$ {{ total_a_receber_figurino|floatformat:2 }}</span>
+        <span class="p-total-desc">Pendente + parcial de figurino</span>
+    </div>
+    <div class="p-total-card card-geral">
+        <span class="p-total-label">Total a receber</span>
+        <span class="p-total-valor">R$ {{ total_a_receber_geral|floatformat:2 }}</span>
+        <span class="p-total-desc">Soma do que falta receber</span>
+    </div>
+</div>
 
     <div class="p-section">
         <div class="p-section-head">
