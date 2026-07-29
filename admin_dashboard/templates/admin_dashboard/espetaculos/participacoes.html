@@ -817,6 +817,17 @@
     </div>
 </div>
 
+<div class="p-section">
+    <div class="p-section-body" style="text-align:center;">
+        <a
+            href="{% url 'admin_dashboard:espetaculo_participantes_png' espetaculo.pk %}{% if turma_selecionada %}?turma={{ turma_selecionada }}{% endif %}"
+            class="btn btn-primary"
+        >
+            Gerar imagem com participantes
+        </a>
+    </div>
+</div>       
+
 <script>
     function abrirModal(nome, url) {
         document.getElementById('modalNomeAluna').textContent = nome;

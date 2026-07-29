@@ -2799,6 +2799,100 @@ def espetaculo_participacoes(request, pk):
         from django.contrib import messages
         messages.error(request, f'Erro ao carregar participações: {e}')
         return redirect('admin_dashboard:espetaculos_list')
+
+@login_required
+def espetaculo_participantes_png(request, pk):
+    if not request.user.is_staff:
+        return redirect('home')
+
+    from io import BytesIO
+    from PIL import Image, ImageDraw, ImageFont
+    from django.http import HttpResponse
+    from django.shortcuts import get_object_or_404
+    from django.db.models import Prefetch
+
+    from usuarios.models import Turma
+    from espetaculo.models import Espetaculo, ParticipacaoEspetaculo
+
+    espetaculo = get_object_or_404(Espetaculo, pk=pk)
+    turma_id = request.GET.get('turma')
+
+    participacoes = (
+        ParticipacaoEspetaculo.objects
+        .filter(espetaculo=espetaculo)
+        .select_related('aluna')
+        .prefetch_related('aluna__turmas')
+        .order_by('aluna__nome')
+    )
+
+    if turma_id:
+        participacoes = participacoes.filter(aluna__turmas__id=turma_id).distinct()
+
+    grupos = {}
+
+    for participacao in participacoes:
+        turmas_da_aluna = list(participacao.aluna.turmas.all())
+
+        if not turmas_da_aluna:
+            grupos.setdefault('Sem turma', []).append(participacao.aluna.nome)
+        else:
+            for turma in turmas_da_aluna:
+                grupos.setdefault(turma.nome, []).append(participacao.aluna.nome)
+
+    for nomes in grupos.values():
+        nomes.sort()
+
+    grupos_ordenados = dict(sorted(grupos.items(), key=lambda x: x[0]))
+
+    try:
+        fonte_titulo = ImageFont.truetype("DejaVuSans-Bold.ttf", 32)
+        fonte_turma = ImageFont.truetype("DejaVuSans-Bold.ttf", 24)
+        fonte_nome = ImageFont.truetype("DejaVuSans.ttf", 20)
+    except Exception:
+        fonte_titulo = ImageFont.load_default()
+        fonte_turma = ImageFont.load_default()
+        fonte_nome = ImageFont.load_default()
+
+    largura = 900
+    margem = 50
+    altura_linha_nome = 30
+    altura_titulo = 90
+    altura_espaco_turma = 55
+
+    altura_total = altura_titulo
+    for nomes in grupos_ordenados.values():
+        altura_total += altura_espaco_turma + (len(nomes) * altura_linha_nome) + 20
+
+    altura_total += margem
+
+    imagem = Image.new("RGB", (largura, altura_total), "white")
+    draw = ImageDraw.Draw(imagem)
+
+    y = 40
+    titulo = f"Participantes - {espetaculo.titulo}"
+    draw.text((margem, y), titulo, fill="#2f2438", font=fonte_titulo)
+    y += altura_titulo
+
+    for turma_nome, nomes in grupos_ordenados.items():
+        draw.rectangle([(margem, y), (largura - margem, y + 36)], fill="#ede7f5")
+        draw.text((margem + 12, y + 6), turma_nome, fill="#6b2d8f", font=fonte_turma)
+        y += altura_espaco_turma
+
+        for nome in nomes:
+            draw.text((margem + 20, y), f"• {nome}", fill="#2f2438", font=fonte_nome)
+            y += altura_linha_nome
+
+        y += 20
+
+    buffer = BytesIO()
+    imagem.save(buffer, format='PNG')
+    buffer.seek(0)
+
+    nome_arquivo = f"participantes-{espetaculo.titulo.lower().replace(' ', '-')}.png"
+
+    response = HttpResponse(buffer.getvalue(), content_type='image/png')
+    response['Content-Disposition'] = f'attachment; filename="{nome_arquivo}"'
+    return response
     
 from decimal import Decimal
 from django.contrib import messages
