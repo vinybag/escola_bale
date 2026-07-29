@@ -6,35 +6,35 @@
 {% block content %}
 <style>
     :root {
-        --p-bg:           #f8f6fb;
-        --p-surface:      #ffffff;
-        --p-surface-2:    #faf8fc;
-        --p-border:       rgba(107, 45, 143, 0.12);
+        --p-bg: #f8f6fb;
+        --p-surface: #ffffff;
+        --p-surface-2: #faf8fc;
+        --p-border: rgba(107, 45, 143, 0.12);
         --p-border-light: rgba(107, 45, 143, 0.07);
 
-        --p-purple-1:     #6b2d8f;
-        --p-purple-2:     #7e3aa5;
-        --p-purple-3:     #4a235f;
-        --p-purple-hl:    #ede7f5;
-        --p-purple-bg:    #f4eefa;
+        --p-purple-1: #6b2d8f;
+        --p-purple-2: #7e3aa5;
+        --p-purple-3: #4a235f;
+        --p-purple-hl: #ede7f5;
+        --p-purple-bg: #f4eefa;
 
-        --p-text:         #2f2438;
-        --p-muted:        #7a7280;
-        --p-faint:        #b0a8b8;
+        --p-text: #2f2438;
+        --p-muted: #7a7280;
+        --p-faint: #b0a8b8;
 
-        --p-green-text:   #1d6b36;
-        --p-green-bg:     #e6f7eb;
-        --p-red-text:     #b71c1c;
-        --p-red-bg:       #fdecea;
-        --p-orange-text:  #a06000;
-        --p-orange-bg:    #fff8e6;
+        --p-green-text: #1d6b36;
+        --p-green-bg: #e6f7eb;
+        --p-red-text: #b71c1c;
+        --p-red-bg: #fdecea;
+        --p-orange-text: #a06000;
+        --p-orange-bg: #fff8e6;
 
-        --p-radius-card:  14px;
-        --p-radius-sm:    8px;
+        --p-radius-card: 14px;
+        --p-radius-sm: 8px;
         --p-radius-badge: 999px;
 
-        --p-shadow-card:  0 2px 8px rgba(107, 45, 143, 0.07), 0 0 0 1px rgba(107, 45, 143, 0.07);
-        --p-transition:   0.18s cubic-bezier(0.16, 1, 0.3, 1);
+        --p-shadow-card: 0 2px 8px rgba(107, 45, 143, 0.07), 0 0 0 1px rgba(107, 45, 143, 0.07);
+        --p-transition: 0.18s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .p-page {
@@ -119,14 +119,24 @@
     .p-total-card::before {
         content: '';
         position: absolute;
-        top: 0; left: 0; right: 0;
+        top: 0;
+        left: 0;
+        right: 0;
         height: 3px;
         border-radius: var(--p-radius-card) var(--p-radius-card) 0 0;
     }
 
-    .p-total-card.card-palco::before    { background: linear-gradient(90deg, #6b2d8f, #a060c0); }
-    .p-total-card.card-figurino::before { background: linear-gradient(90deg, #1a6fa3, #4ca8e0); }
-    .p-total-card.card-geral::before    { background: linear-gradient(90deg, #2a7a36, #4faa60); }
+    .p-total-card.card-palco::before {
+        background: linear-gradient(90deg, #6b2d8f, #a060c0);
+    }
+
+    .p-total-card.card-figurino::before {
+        background: linear-gradient(90deg, #1a6fa3, #4ca8e0);
+    }
+
+    .p-total-card.card-geral::before {
+        background: linear-gradient(90deg, #2a7a36, #4faa60);
+    }
 
     .p-total-label {
         font-size: 0.75rem;
@@ -135,9 +145,17 @@
         letter-spacing: 0.07em;
     }
 
-    .card-palco .p-total-label    { color: var(--p-purple-1); }
-    .card-figurino .p-total-label { color: #1a6fa3; }
-    .card-geral .p-total-label    { color: #2a7a36; }
+    .card-palco .p-total-label {
+        color: var(--p-purple-1);
+    }
+
+    .card-figurino .p-total-label {
+        color: #1a6fa3;
+    }
+
+    .card-geral .p-total-label {
+        color: #2a7a36;
+    }
 
     .p-total-valor {
         font-size: 1.6rem;
@@ -147,9 +165,17 @@
         font-variant-numeric: tabular-nums;
     }
 
-    .card-palco .p-total-valor    { color: var(--p-purple-3); }
-    .card-figurino .p-total-valor { color: #1a4f78; }
-    .card-geral .p-total-valor    { color: #1c5425; }
+    .card-palco .p-total-valor {
+        color: var(--p-purple-3);
+    }
+
+    .card-figurino .p-total-valor {
+        color: #1a4f78;
+    }
+
+    .card-geral .p-total-valor {
+        color: #1c5425;
+    }
 
     .p-total-desc {
         font-size: 0.82rem;
@@ -239,13 +265,40 @@
         white-space: nowrap;
     }
 
-    .badge-sim      { background: var(--p-green-bg);  color: var(--p-green-text); }
-    .badge-nao      { background: var(--p-purple-bg); color: var(--p-purple-1); }
-    .badge-pago     { background: var(--p-green-bg);  color: var(--p-green-text); }
-    .badge-parcial  { background: var(--p-orange-bg); color: var(--p-orange-text); }
-    .badge-pendente { background: var(--p-red-bg);    color: var(--p-red-text); }
-    .badge-sem      { background: #f3f0f8; color: var(--p-faint); }
-    .badge-count    { background: var(--p-purple-hl); color: var(--p-purple-1); }
+    .badge-sim {
+        background: var(--p-green-bg);
+        color: var(--p-green-text);
+    }
+
+    .badge-nao {
+        background: var(--p-purple-bg);
+        color: var(--p-purple-1);
+    }
+
+    .badge-pago {
+        background: var(--p-green-bg);
+        color: var(--p-green-text);
+    }
+
+    .badge-parcial {
+        background: var(--p-orange-bg);
+        color: var(--p-orange-text);
+    }
+
+    .badge-pendente {
+        background: var(--p-red-bg);
+        color: var(--p-red-text);
+    }
+
+    .badge-sem {
+        background: #f3f0f8;
+        color: var(--p-faint);
+    }
+
+    .badge-count {
+        background: var(--p-purple-hl);
+        color: var(--p-purple-1);
+    }
 
     .p-empty {
         text-align: center;
@@ -438,14 +491,16 @@
         display: none;
         position: fixed;
         inset: 0;
-        background: rgba(0,0,0,0.45);
+        background: rgba(0, 0, 0, 0.45);
         z-index: 1000;
         align-items: center;
         justify-content: center;
         backdrop-filter: blur(2px);
     }
 
-    .modal-overlay.ativo { display: flex; }
+    .modal-overlay.ativo {
+        display: flex;
+    }
 
     .modal-box {
         background: #fff;
@@ -453,7 +508,7 @@
         padding: 2rem;
         max-width: 400px;
         width: 90%;
-        box-shadow: 0 16px 48px rgba(0,0,0,0.18);
+        box-shadow: 0 16px 48px rgba(0, 0, 0, 0.18);
         text-align: center;
     }
 
@@ -502,7 +557,9 @@
         transition: background var(--p-transition);
     }
 
-    .btn-modal-cancel:hover { background: #e8e0f4; }
+    .btn-modal-cancel:hover {
+        background: #e8e0f4;
+    }
 
     .btn-modal-confirm {
         padding: 0.65rem 1.3rem;
@@ -517,35 +574,61 @@
         transition: background var(--p-transition);
     }
 
-    .btn-modal-confirm:hover { background: #7f1212; }
+    .btn-modal-confirm:hover {
+        background: #7f1212;
+    }
 
     @media (max-width: 900px) {
-        .p-totais { grid-template-columns: 1fr 1fr; }
+        .p-totais {
+            grid-template-columns: 1fr 1fr;
+        }
     }
 
     @media (max-width: 640px) {
-        .p-header { align-items: stretch; }
-        .p-header-actions { width: 100%; }
-        .p-totais { grid-template-columns: 1fr; }
-        .p-add-form { grid-template-columns: 1fr; }
-        .p-add-form .btn-primary { width: 100%; }
-        .p-section-body { padding: 1.1rem; }
+        .p-header {
+            align-items: stretch;
+        }
+
+        .p-header-actions {
+            width: 100%;
+        }
+
+        .p-totais {
+            grid-template-columns: 1fr;
+        }
+
+        .p-add-form {
+            grid-template-columns: 1fr;
+        }
+
+        .p-add-form .btn-primary {
+            width: 100%;
+        }
+
+        .p-section-body {
+            padding: 1.1rem;
+        }
+
         .p-participacoes-cards {
             grid-template-columns: 1fr;
             padding: 1.1rem;
         }
+
         .p-participacao-card {
             padding: 0.95rem;
             gap: 0.85rem;
         }
+
         .p-participacao-topo {
             flex-direction: column;
             align-items: flex-start;
         }
+
         .p-participacao-grid {
             grid-template-columns: 1fr 1fr;
             gap: 0.75rem 0.85rem;
         }
+
         .p-participacao-item.full {
             grid-column: 1 / -1;
         }
@@ -555,9 +638,11 @@
         .p-participacao-grid {
             grid-template-columns: 1fr;
         }
+
         .p-participacao-item.full {
             grid-column: auto;
         }
+
         .p-acoes {
             flex-direction: column;
         }
@@ -568,10 +653,10 @@
     <div class="modal-box">
         <div class="modal-icon">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="3 6 5 6 21 6"/>
-                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                <path d="M10 11v6M14 11v6"/>
-                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                <polyline points="3 6 5 6 21 6" />
+                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                <path d="M10 11v6M14 11v6" />
+                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
             </svg>
         </div>
         <h3>Remover participação?</h3>
@@ -582,7 +667,7 @@
         </p>
         <div class="modal-actions">
             <button class="btn-modal-cancel" onclick="fecharModal()">Cancelar</button>
-            <form id="formExcluir" method="post" action="" style="display:contents;">
+            <form id="formExcluir" method="post" action="" style="display: contents;">
                 {% csrf_token %}
                 <button type="submit" class="btn-modal-confirm">Sim, remover</button>
             </form>
@@ -595,15 +680,17 @@
         <div class="p-header-title">
             <div class="p-header-eyebrow">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                    <circle cx="9" cy="7" r="4"/>
-                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
                 </svg>
                 Participações
             </div>
             <h1>
-                {{ espetaculo.titulo }}{% if espetaculo.subtitulo %} <span style="color:var(--p-muted);font-weight:500;">— {{ espetaculo.subtitulo }}</span>{% endif %}
+                {{ espetaculo.titulo }}{% if espetaculo.subtitulo %}
+                    <span style="color: var(--p-muted); font-weight: 500;">— {{ espetaculo.subtitulo }}</span>
+                {% endif %}
             </h1>
             <p class="p-header-sub">
                 {{ total_participacoes }} participação{{ total_participacoes|pluralize:",ões" }} cadastrada{{ total_participacoes|pluralize }}
@@ -618,70 +705,70 @@
     </div>
 
     <div class="p-section">
-    <div class="p-section-head">
-        <div class="p-section-head-text">
-            <h2>Filtrar por turma</h2>
-            <p>Selecione uma turma para visualizar apenas as participantes correspondentes.</p>
+        <div class="p-section-head">
+            <div class="p-section-head-text">
+                <h2>Filtrar por turma</h2>
+                <p>Selecione uma turma para visualizar apenas as participantes correspondentes.</p>
+            </div>
+        </div>
+        <div class="p-section-body">
+            <form method="get" class="p-add-form">
+                <div class="p-field">
+                    <label for="turma">Turma</label>
+                    <select name="turma" id="turma" class="p-select" onchange="this.form.submit()">
+                        <option value="">Todas as turmas</option>
+                        {% for turma in turmas %}
+                            <option value="{{ turma.id }}" {% if turma_selecionada == turma.id|stringformat:"s" %}selected{% endif %}>
+                                {{ turma.nome }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="p-field">
+                    <label style="color: transparent; user-select: none;">.</label>
+                    <a href="{% url 'admin_dashboard:espetaculo_participacoes' espetaculo.pk %}" class="btn btn-ghost">
+                        Limpar filtro
+                    </a>
+                </div>
+            </form>
         </div>
     </div>
-    <div class="p-section-body">
-        <form method="get" class="p-add-form">
-            <div class="p-field">
-                <label for="turma">Turma</label>
-                <select name="turma" id="turma" class="p-select" onchange="this.form.submit()">
-                    <option value="">Todas as turmas</option>
-                    {% for turma in turmas %}
-                        <option value="{{ turma.id }}" {% if turma_selecionada == turma.id|stringformat:"s" %}selected{% endif %}>
-                            {{ turma.nome }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="p-field">
-                <label style="color: transparent; user-select: none;">.</label>
-                <a href="{% url 'admin_dashboard:espetaculo_participacoes' espetaculo.pk %}" class="btn btn-ghost">
-                    Limpar filtro
-                </a>
-            </div>
-        </form>
-    </div>
-</div>
 
     <div class="p-totais">
-    <div class="p-total-card card-palco">
-        <span class="p-total-label">Taxa de palco</span>
-        <span class="p-total-valor">R$ {{ total_recebido_taxa_palco|floatformat:2 }}</span>
-        <span class="p-total-desc">Cobranças pagas de taxa de palco</span>
+        <div class="p-total-card card-palco">
+            <span class="p-total-label">Taxa de palco</span>
+            <span class="p-total-valor">R$ {{ total_recebido_taxa_palco|floatformat:2 }}</span>
+            <span class="p-total-desc">Cobranças pagas de taxa de palco</span>
+        </div>
+        <div class="p-total-card card-figurino">
+            <span class="p-total-label">Figurino</span>
+            <span class="p-total-valor">R$ {{ total_recebido_figurino|floatformat:2 }}</span>
+            <span class="p-total-desc">Cobranças pagas de figurino</span>
+        </div>
+        <div class="p-total-card card-geral">
+            <span class="p-total-label">Total geral</span>
+            <span class="p-total-valor">R$ {{ total_recebido_geral|floatformat:2 }}</span>
+            <span class="p-total-desc">Soma de todos os pagamentos</span>
+        </div>
     </div>
-    <div class="p-total-card card-figurino">
-        <span class="p-total-label">Figurino</span>
-        <span class="p-total-valor">R$ {{ total_recebido_figurino|floatformat:2 }}</span>
-        <span class="p-total-desc">Cobranças pagas de figurino</span>
-    </div>
-    <div class="p-total-card card-geral">
-        <span class="p-total-label">Total geral</span>
-        <span class="p-total-valor">R$ {{ total_recebido_geral|floatformat:2 }}</span>
-        <span class="p-total-desc">Soma de todos os pagamentos</span>
-    </div>
-</div>
 
-<div class="p-totais">
-    <div class="p-total-card card-palco">
-        <span class="p-total-label">Taxa de palco a receber</span>
-        <span class="p-total-valor">R$ {{ total_a_receber_taxa_palco|floatformat:2 }}</span>
-        <span class="p-total-desc">Pendente + parcial de taxa de palco</span>
+    <div class="p-totais">
+        <div class="p-total-card card-palco">
+            <span class="p-total-label">Taxa de palco a receber</span>
+            <span class="p-total-valor">R$ {{ total_a_receber_taxa_palco|floatformat:2 }}</span>
+            <span class="p-total-desc">Pendente + parcial de taxa de palco</span>
+        </div>
+        <div class="p-total-card card-figurino">
+            <span class="p-total-label">Figurino a receber</span>
+            <span class="p-total-valor">R$ {{ total_a_receber_figurino|floatformat:2 }}</span>
+            <span class="p-total-desc">Pendente + parcial de figurino</span>
+        </div>
+        <div class="p-total-card card-geral">
+            <span class="p-total-label">Total a receber</span>
+            <span class="p-total-valor">R$ {{ total_a_receber_geral|floatformat:2 }}</span>
+            <span class="p-total-desc">Soma do que falta receber</span>
+        </div>
     </div>
-    <div class="p-total-card card-figurino">
-        <span class="p-total-label">Figurino a receber</span>
-        <span class="p-total-valor">R$ {{ total_a_receber_figurino|floatformat:2 }}</span>
-        <span class="p-total-desc">Pendente + parcial de figurino</span>
-    </div>
-    <div class="p-total-card card-geral">
-        <span class="p-total-label">Total a receber</span>
-        <span class="p-total-valor">R$ {{ total_a_receber_geral|floatformat:2 }}</span>
-        <span class="p-total-desc">Soma do que falta receber</span>
-    </div>
-</div>
 
     <div class="p-section">
         <div class="p-section-head">
@@ -707,8 +794,8 @@
                         <label style="color: transparent; user-select: none;">.</label>
                         <button type="submit" class="btn btn-primary">
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <line x1="12" y1="5" x2="12" y2="19"/>
-                                <line x1="5" y1="12" x2="19" y2="12"/>
+                                <line x1="12" y1="5" x2="12" y2="19" />
+                                <line x1="5" y1="12" x2="19" y2="12" />
                             </svg>
                             Adicionar participação
                         </button>
@@ -725,108 +812,114 @@
                 <p>Lista de todas as alunas vinculadas a este espetáculo.</p>
             </div>
             {% if participacoes %}
-            <span class="badge badge-count">{{ total_participacoes }}</span>
+                <span class="badge badge-count">{{ total_participacoes }}</span>
             {% endif %}
         </div>
 
         {% if participacoes %}
-        <div class="p-participacoes-cards">
-            {% for participacao in participacoes %}
-                {% with status=status_por_participacao|get_item:participacao.pk %}
-                <div class="p-participacao-card">
-                    <div class="p-participacao-topo">
-                        <div class="p-participacao-titulo">
-                            <h3 class="p-participacao-nome">{{ participacao.aluna.nome }}</h3>
-                            <div class="p-participacao-sub">Participação vinculada ao espetáculo</div>
-                        </div>
+            <div class="p-participacoes-cards">
+                {% for participacao in participacoes %}
+                    {% with status=status_por_participacao|get_item:participacao.pk %}
+                        <div class="p-participacao-card">
+                            <div class="p-participacao-topo">
+                                <div class="p-participacao-titulo">
+                                    <h3 class="p-participacao-nome">{{ participacao.aluna.nome }}</h3>
+                                    <div class="p-participacao-sub">Participação vinculada ao espetáculo</div>
+                                </div>
 
-                        {% if participacao.vai_dancar %}
-                            <span class="badge badge-sim">✓ Vai dançar</span>
-                        {% else %}
-                            <span class="badge badge-nao">Não dança</span>
-                        {% endif %}
-                    </div>
-
-                    <div class="p-participacao-grid">
-                        <div class="p-participacao-item">
-                            <div class="p-card-label">Taxa de palco</div>
-                            <div class="p-card-valor">
-                                {% if status.taxa_palco_status == 'pago' %}
-                                    <span class="badge badge-pago">✓ Pago</span>
-                                {% elif status.taxa_palco_status == 'parcial' %}
-                                    <span class="badge badge-parcial">◑ Parcial</span>
-                                {% elif status.taxa_palco_status == 'pendente' %}
-                                    <span class="badge badge-pendente">✗ Pendente</span>
+                                {% if participacao.vai_dancar %}
+                                    <span class="badge badge-sim">✓ Vai dançar</span>
                                 {% else %}
-                                    <span class="badge badge-sem">Sem cobrança</span>
+                                    <span class="badge badge-nao">Não dança</span>
                                 {% endif %}
                             </div>
-                        </div>
 
-                        <div class="p-participacao-item">
-                            <div class="p-card-label">Figurino</div>
-                            <div class="p-card-valor">
-                                {% if status.figurino_status == 'pago' %}
-                                    <span class="badge badge-pago">✓ Pago</span>
-                                {% elif status.figurino_status == 'parcial' %}
-                                    <span class="badge badge-parcial">◑ Parcial</span>
-                                {% elif status.figurino_status == 'pendente' %}
-                                    <span class="badge badge-pendente">✗ Pendente</span>
-                                {% else %}
-                                    <span class="badge badge-sem">Sem cobrança</span>
-                                {% endif %}
+                            <div class="p-participacao-grid">
+                                <div class="p-participacao-item">
+                                    <div class="p-card-label">Taxa de palco</div>
+                                    <div class="p-card-valor">
+                                        {% if status.taxa_palco_status == 'pago' %}
+                                            <span class="badge badge-pago">✓ Pago</span>
+                                        {% elif status.taxa_palco_status == 'parcial' %}
+                                            <span class="badge badge-parcial">◑ Parcial</span>
+                                        {% elif status.taxa_palco_status == 'pendente' %}
+                                            <span class="badge badge-pendente">✗ Pendente</span>
+                                        {% else %}
+                                            <span class="badge badge-sem">Sem cobrança</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <div class="p-participacao-item">
+                                    <div class="p-card-label">Figurino</div>
+                                    <div class="p-card-valor">
+                                        {% if status.figurino_status == 'pago' %}
+                                            <span class="badge badge-pago">✓ Pago</span>
+                                        {% elif status.figurino_status == 'parcial' %}
+                                            <span class="badge badge-parcial">◑ Parcial</span>
+                                        {% elif status.figurino_status == 'pendente' %}
+                                            <span class="badge badge-pendente">✗ Pendente</span>
+                                        {% else %}
+                                            <span class="badge badge-sem">Sem cobrança</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <div class="p-participacao-item full">
+                                    <div class="p-card-label">Cobranças</div>
+                                    <div class="p-card-valor">
+                                        <span class="badge badge-count">{{ quantidade_cobrancas_por_participacao|get_item:participacao.pk }}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="p-acoes">
+                                <a href="{% url 'admin_dashboard:participacao_cobrancas' participacao.pk %}" class="btn btn-ghost">
+                                    Cobranças
+                                </a>
+                                <button
+                                    type="button"
+                                    class="btn btn-danger"
+                                    onclick="abrirModal('{{ participacao.aluna.nome|escapejs }}', '{% url 'admin_dashboard:excluir_participacao' participacao.pk %}')">
+                                    Excluir
+                                </button>
                             </div>
                         </div>
-
-                        <div class="p-participacao-item full">
-                            <div class="p-card-label">Cobranças</div>
-                            <div class="p-card-valor">
-                                <span class="badge badge-count">{{ quantidade_cobrancas_por_participacao|get_item:participacao.pk }}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="p-acoes">
-                        <a href="{% url 'admin_dashboard:participacao_cobrancas' participacao.pk %}" class="btn btn-ghost">
-                            Cobranças
-                        </a>
-                        <button
-                            type="button"
-                            class="btn btn-danger"
-                            onclick="abrirModal('{{ participacao.aluna.nome|escapejs }}', '{% url 'admin_dashboard:excluir_participacao' participacao.pk %}')">
-                            Excluir
-                        </button>
-                    </div>
-                </div>
-                {% endwith %}
-            {% endfor %}
-        </div>
-        {% else %}
-        <div class="p-empty">
-            <div class="p-empty-icon">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                    <circle cx="9" cy="7" r="4"/>
-                    <line x1="23" y1="11" x2="17" y2="11"/>
-                </svg>
+                    {% endwith %}
+                {% endfor %}
             </div>
-            <h3>Nenhuma participação cadastrada</h3>
-            <p>Ainda não há alunas vinculadas a este espetáculo.<br>Adicione a primeira acima.</p>
-        </div>
+        {% else %}
+            <div class="p-empty">
+                <div class="p-empty-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                        <circle cx="9" cy="7" r="4" />
+                        <line x1="23" y1="11" x2="17" y2="11" />
+                    </svg>
+                </div>
+                <h3>Nenhuma participação cadastrada</h3>
+                <p>Ainda não há alunas vinculadas a este espetáculo.<br>Adicione a primeira acima.</p>
+            </div>
         {% endif %}
     </div>
-</div>
 
-<div class="p-section">
-    <div class="p-section-body" style="text-align:center;">
-        <a
-            href="{% url 'admin_dashboard:espetaculo_participantes_png' espetaculo.pk %}{% if turma_selecionada %}?turma={{ turma_selecionada }}{% endif %}"
-            class="btn btn-primary"
-        >
-            Gerar imagem com participantes
-        </a>
+    <div class="p-section">
+        <div class="p-section-head">
+            <div class="p-section-head-text">
+                <h2>Exportar participantes</h2>
+                <p>Gere uma imagem simples com as turmas e os nomes das participantes exibidas no filtro atual.</p>
+            </div>
+        </div>
+        <div class="p-section-body">
+            <a
+                href="{% url 'admin_dashboard:espetaculo_participantes_png' espetaculo.pk %}{% if turma_selecionada %}?turma={{ turma_selecionada }}{% endif %}"
+                class="btn btn-primary"
+            >
+                Gerar imagem com participantes
+            </a>
+        </div>
     </div>
-</div>       
+</div>
 
 <script>
     function abrirModal(nome, url) {
@@ -839,11 +932,11 @@
         document.getElementById('modalExcluir').classList.remove('ativo');
     }
 
-    document.getElementById('modalExcluir').addEventListener('click', function(e) {
+    document.getElementById('modalExcluir').addEventListener('click', function (e) {
         if (e.target === this) fecharModal();
     });
 
-    document.addEventListener('keydown', function(e) {
+    document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') fecharModal();
     });
 </script>
