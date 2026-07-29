@@ -617,6 +617,36 @@
         </div>
     </div>
 
+    <div class="p-section">
+    <div class="p-section-head">
+        <div class="p-section-head-text">
+            <h2>Filtrar por turma</h2>
+            <p>Selecione uma turma para visualizar apenas as participantes correspondentes.</p>
+        </div>
+    </div>
+    <div class="p-section-body">
+        <form method="get" class="p-add-form">
+            <div class="p-field">
+                <label for="turma">Turma</label>
+                <select name="turma" id="turma" class="p-select" onchange="this.form.submit()">
+                    <option value="">Todas as turmas</option>
+                    {% for turma in turmas %}
+                        <option value="{{ turma.id }}" {% if turma_selecionada == turma.id|stringformat:"s" %}selected{% endif %}>
+                            {{ turma.nome }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="p-field">
+                <label style="color: transparent; user-select: none;">.</label>
+                <a href="{% url 'admin_dashboard:espetaculo_participacoes' espetaculo.pk %}" class="btn btn-ghost">
+                    Limpar filtro
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
     <div class="p-totais">
     <div class="p-total-card card-palco">
         <span class="p-total-label">Taxa de palco</span>

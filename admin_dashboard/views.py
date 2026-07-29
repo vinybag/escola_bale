@@ -2629,7 +2629,7 @@ def espetaculo_participacoes(request, pk):
         from django.db.models import Prefetch
         from django.shortcuts import get_object_or_404, redirect, render
 
-        from usuarios.models import Aluna
+        from usuarios.models import Aluna, Turma
         from espetaculo.models import (
             Espetaculo,
             ParticipacaoEspetaculo,
@@ -2664,6 +2664,8 @@ def espetaculo_participacoes(request, pk):
             messages.success(request, 'Participação adicionada com sucesso.')
             return redirect('admin_dashboard:espetaculo_participacoes', pk=pk)
 
+        turma_id = request.GET.get('turma')
+
         parcelas_qs = ParcelaCobrancaEspetaculo.objects.order_by('numero_parcela', 'id')
 
         cobrancas_qs = (
@@ -2679,16 +2681,22 @@ def espetaculo_participacoes(request, pk):
             .filter(espetaculo=espetaculo)
             .select_related('aluna', 'aluna__responsavel', 'espetaculo')
             .prefetch_related(
+                'aluna__turmas',
                 Prefetch('cobrancas', queryset=cobrancas_qs)
             )
             .order_by('aluna__nome')
         )
+
+        if turma_id:
+            participacoes = participacoes.filter(aluna__turmas__id=turma_id).distinct()
 
         alunas_disponiveis = (
             Aluna.objects
             .exclude(participacoes_espetaculo__espetaculo=espetaculo)
             .order_by('nome')
         )
+
+        turmas = Turma.objects.order_by('nome')
 
         status_por_participacao = {}
         quantidade_cobrancas_por_participacao = {}
@@ -2730,6 +2738,7 @@ def espetaculo_participacoes(request, pk):
                 (c.total_pago() or Decimal('0.00') for c in cobrancas_taxa_palco),
                 Decimal('0.00')
             )
+
             pago_figurino = sum(
                 (c.total_pago() or Decimal('0.00') for c in cobrancas_figurino),
                 Decimal('0.00')
@@ -2739,6 +2748,7 @@ def espetaculo_participacoes(request, pk):
                 (c.total_pendente() or Decimal('0.00') for c in cobrancas_taxa_palco),
                 Decimal('0.00')
             )
+
             pendente_figurino = sum(
                 (c.total_pendente() or Decimal('0.00') for c in cobrancas_figurino),
                 Decimal('0.00')
@@ -2766,6 +2776,8 @@ def espetaculo_participacoes(request, pk):
             'espetaculo': espetaculo,
             'participacoes': participacoes,
             'alunas_disponiveis': alunas_disponiveis,
+            'turmas': turmas,
+            'turma_selecionada': turma_id,
             'total_participacoes': participacoes.count(),
             'status_por_participacao': status_por_participacao,
             'quantidade_cobrancas_por_participacao': quantidade_cobrancas_por_participacao,
