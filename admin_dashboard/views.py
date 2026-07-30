@@ -2829,13 +2829,24 @@ def espetaculo_participantes_png(request, pk):
     if turma_id:
         participacoes = participacoes.filter(aluna__turmas__id=turma_id).distinct()
 
+    # Buscar a turma selecionada (se houver)
+    turma_selecionada_obj = None
+    if turma_id:
+        turma_selecionada_obj = Turma.objects.filter(id=turma_id).first()
+
     grupos = {}
     for participacao in participacoes:
-        turmas_da_aluna = list(participacao.aluna.turmas.all())
-        if not turmas_da_aluna:
+        if turma_id and turma_selecionada_obj:
+            # Se há filtro, usar apenas a turma selecionada como rótulo
+            turmas_para_agrupar = [turma_selecionada_obj]
+        else:
+            # Sem filtro, usar todas as turmas da aluna
+            turmas_para_agrupar = list(participacao.aluna.turmas.all())
+
+        if not turmas_para_agrupar:
             grupos.setdefault('Sem turma', []).append(participacao.aluna.nome)
         else:
-            for turma in turmas_da_aluna:
+            for turma in turmas_para_agrupar:
                 grupos.setdefault(turma.nome, []).append(participacao.aluna.nome)
 
     for nomes in grupos.values():
@@ -2915,7 +2926,12 @@ def espetaculo_participantes_png(request, pk):
     imagem_temp = Image.new("RGB", (10, 10))
     draw_temp = ImageDraw.Draw(imagem_temp)
 
-    titulo = f"Participantes - {espetaculo.titulo}"
+    # Se houver turma selecionada, mostra no título
+    if turma_selecionada_obj:
+        titulo = f"Participantes - {turma_selecionada_obj.nome}"
+    else:
+        titulo = f"Participantes - {espetaculo.titulo}"
+
     linhas_titulo = quebrar_texto(titulo, fonte_titulo, largura_maxima_titulo, draw_temp)
 
     altura_bloco_titulo = 40 * escala + (len(linhas_titulo) * altura_linha_titulo) + (30 * escala)
@@ -2958,7 +2974,10 @@ def espetaculo_participantes_png(request, pk):
     imagem.save(buffer, format='PNG', optimize=True)
     buffer.seek(0)
 
-    nome_arquivo = f"participantes-{espetaculo.titulo.lower().replace(' ', '-')}.png"
+    if turma_selecionada_obj:
+        nome_arquivo = f"participantes-{turma_selecionada_obj.nome.lower().replace(' ', '-')}.png"
+    else:
+        nome_arquivo = f"participantes-{espetaculo.titulo.lower().replace(' ', '-')}.png"
 
     response = HttpResponse(buffer.getvalue(), content_type='image/png')
     response['Content-Disposition'] = f'attachment; filename="{nome_arquivo}"'
