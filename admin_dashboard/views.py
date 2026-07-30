@@ -2805,11 +2805,12 @@ def espetaculo_participantes_png(request, pk):
     if not request.user.is_staff:
         return redirect('home')
 
+    import os
     from io import BytesIO
     from PIL import Image, ImageDraw, ImageFont
     from django.http import HttpResponse
     from django.shortcuts import get_object_or_404
-    from django.db.models import Prefetch
+    from django.conf import settings
 
     from usuarios.models import Turma
     from espetaculo.models import Espetaculo, ParticipacaoEspetaculo
@@ -2829,10 +2830,8 @@ def espetaculo_participantes_png(request, pk):
         participacoes = participacoes.filter(aluna__turmas__id=turma_id).distinct()
 
     grupos = {}
-
     for participacao in participacoes:
         turmas_da_aluna = list(participacao.aluna.turmas.all())
-
         if not turmas_da_aluna:
             grupos.setdefault('Sem turma', []).append(participacao.aluna.nome)
         else:
@@ -2844,53 +2843,79 @@ def espetaculo_participantes_png(request, pk):
 
     grupos_ordenados = dict(sorted(grupos.items(), key=lambda x: x[0]))
 
-    # Fontes — caminhos mais seguros para Linux/Railway
-    try:
-        fonte_titulo = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 36)
-        fonte_turma = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 28)
-        fonte_nome = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 24)
-    except Exception:
-        # Fallback se não achar a fonte
-        fonte_titulo = ImageFont.load_default()
-        fonte_turma = fonte_titulo
-        fonte_nome = ImageFont.load_default()
+    # Caminho da fonte variável embutida no projeto
+    fonte_path = os.path.join(
+        settings.BASE_DIR,
+        'agenda_bale',
+        'static',
+        'fonts',
+        'NotoSans-VariableFont_wdth,wght.ttf'
+    )
 
-    largura = 1100
-    margem = 60
-    altura_linha_nome = 36
-    altura_espaco_turma = 65
+    # Fator de supersampling — renderiza maior e reduz depois, para nitidez
+    escala = 2
 
-    altura_total = 120
+    def carregar_fonte(tamanho, negrito=False):
+        fonte = ImageFont.truetype(fonte_path, tamanho)
+        try:
+            if negrito:
+                fonte.set_variation_by_name('Bold')
+            else:
+                fonte.set_variation_by_name('Regular')
+        except Exception:
+            # Se a fonte não tiver instâncias nomeadas, tenta pelos eixos diretamente
+            try:
+                if negrito:
+                    fonte.set_variation_by_axes([100, 700])  # wdth=100, wght=700 (bold)
+                else:
+                    fonte.set_variation_by_axes([100, 400])  # wdth=100, wght=400 (regular)
+            except Exception:
+                pass
+        return fonte
+
+    fonte_titulo = carregar_fonte(36 * escala, negrito=True)
+    fonte_turma = carregar_fonte(26 * escala, negrito=True)
+    fonte_nome = carregar_fonte(22 * escala, negrito=False)
+
+    largura = 1000 * escala
+    margem = 60 * escala
+    altura_linha_nome = 34 * escala
+    altura_espaco_turma = 60 * escala
+
+    altura_total = 130 * escala
     for nomes in grupos_ordenados.values():
-        altura_total += altura_espaco_turma + (len(nomes) * altura_linha_nome) + 25
-
+        altura_total += altura_espaco_turma + (len(nomes) * altura_linha_nome) + (25 * escala)
     altura_total += margem
 
     imagem = Image.new("RGB", (largura, altura_total), "white")
     draw = ImageDraw.Draw(imagem)
 
-    y = 40
+    y = 40 * escala
     titulo = f"Participantes - {espetaculo.titulo}"
     draw.text((margem, y), titulo, fill="#2f2438", font=fonte_titulo)
-    y += 90
+    y += 90 * escala
 
     for turma_nome, nomes in grupos_ordenados.items():
-        # Fundo da turma
         draw.rectangle(
-            [(margem, y), (largura - margem, y + 42)],
+            [(margem, y), (largura - margem, y + 42 * escala)],
             fill="#ede7f5"
         )
-        draw.text((margem + 14, y + 8), turma_nome, fill="#6b2d8f", font=fonte_turma)
+        draw.text((margem + 14 * escala, y + 8 * escala), turma_nome, fill="#6b2d8f", font=fonte_turma)
         y += altura_espaco_turma
 
         for nome in nomes:
-            draw.text((margem + 24, y), f"• {nome}", fill="#2f2438", font=fonte_nome)
+            draw.text((margem + 24 * escala, y), f"• {nome}", fill="#2f2438", font=fonte_nome)
             y += altura_linha_nome
 
-        y += 25
+        y += 25 * escala
+
+    # Reduz para o tamanho final com suavização de alta qualidade
+    largura_final = largura // escala
+    altura_final = altura_total // escala
+    imagem = imagem.resize((largura_final, altura_final), Image.LANCZOS)
 
     buffer = BytesIO()
-    imagem.save(buffer, format='PNG')
+    imagem.save(buffer, format='PNG', optimize=True)
     buffer.seek(0)
 
     nome_arquivo = f"participantes-{espetaculo.titulo.lower().replace(' ', '-')}.png"
