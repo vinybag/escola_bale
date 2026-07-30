@@ -2843,19 +2843,28 @@ def espetaculo_participantes_png(request, pk):
 
     grupos_ordenados = dict(sorted(grupos.items(), key=lambda x: x[0]))
 
-    # Caminho da fonte variável embutida no projeto
+    # Caminho absoluto da fonte
     fonte_path = os.path.join(
         settings.BASE_DIR,
-        'agenda_bale',
         'static',
         'fonts',
         'NotoSans-VariableFont_wdth,wght.ttf'
     )
 
+    # Fallback caso a fonte não seja encontrada
+    try:
+        fonte_base = ImageFont.truetype(fonte_path, 20)
+        fonte_existe = True
+    except Exception:
+        fonte_existe = False
+        fonte_base = ImageFont.load_default()
+
     # Fator de supersampling — renderiza maior e reduz depois, para nitidez
-    escala = 2
+    escala = 2 if fonte_existe else 1
 
     def carregar_fonte(tamanho, negrito=False):
+        if not fonte_existe:
+            return fonte_base
         fonte = ImageFont.truetype(fonte_path, tamanho)
         try:
             if negrito:
@@ -2863,12 +2872,11 @@ def espetaculo_participantes_png(request, pk):
             else:
                 fonte.set_variation_by_name('Regular')
         except Exception:
-            # Se a fonte não tiver instâncias nomeadas, tenta pelos eixos diretamente
             try:
                 if negrito:
-                    fonte.set_variation_by_axes([100, 700])  # wdth=100, wght=700 (bold)
+                    fonte.set_variation_by_axes([100, 700])
                 else:
-                    fonte.set_variation_by_axes([100, 400])  # wdth=100, wght=400 (regular)
+                    fonte.set_variation_by_axes([100, 400])
             except Exception:
                 pass
         return fonte
@@ -2910,9 +2918,10 @@ def espetaculo_participantes_png(request, pk):
         y += 25 * escala
 
     # Reduz para o tamanho final com suavização de alta qualidade
-    largura_final = largura // escala
-    altura_final = altura_total // escala
-    imagem = imagem.resize((largura_final, altura_final), Image.LANCZOS)
+    if fonte_existe:
+        largura_final = largura // escala
+        altura_final = altura_total // escala
+        imagem = imagem.resize((largura_final, altura_final), Image.LANCZOS)
 
     buffer = BytesIO()
     imagem.save(buffer, format='PNG', optimize=True)
