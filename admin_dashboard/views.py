@@ -2851,20 +2851,17 @@ def espetaculo_participantes_png(request, pk):
         'NotoSans-VariableFont_wdth,wght.ttf'
     )
 
-    # Fallback caso a fonte não seja encontrada
     try:
-        fonte_base = ImageFont.truetype(fonte_path, 20)
+        ImageFont.truetype(fonte_path, 20)
         fonte_existe = True
     except Exception:
         fonte_existe = False
-        fonte_base = ImageFont.load_default()
 
-    # Fator de supersampling — renderiza maior e reduz depois, para nitidez
     escala = 2 if fonte_existe else 1
 
     def carregar_fonte(tamanho, negrito=False):
         if not fonte_existe:
-            return fonte_base
+            return ImageFont.load_default()
         fonte = ImageFont.truetype(fonte_path, tamanho)
         try:
             if negrito:
@@ -2881,6 +2878,27 @@ def espetaculo_participantes_png(request, pk):
                 pass
         return fonte
 
+    def quebrar_texto(texto, fonte, largura_maxima, draw):
+        palavras = texto.split(' ')
+        linhas = []
+        linha_atual = ''
+
+        for palavra in palavras:
+            linha_teste = f"{linha_atual} {palavra}".strip()
+            bbox = draw.textbbox((0, 0), linha_teste, font=fonte)
+            largura_linha = bbox[2] - bbox[0]
+
+            if largura_linha <= largura_maxima or not linha_atual:
+                linha_atual = linha_teste
+            else:
+                linhas.append(linha_atual)
+                linha_atual = palavra
+
+        if linha_atual:
+            linhas.append(linha_atual)
+
+        return linhas
+
     fonte_titulo = carregar_fonte(36 * escala, negrito=True)
     fonte_turma = carregar_fonte(26 * escala, negrito=True)
     fonte_nome = carregar_fonte(22 * escala, negrito=False)
@@ -2889,8 +2907,20 @@ def espetaculo_participantes_png(request, pk):
     margem = 60 * escala
     altura_linha_nome = 34 * escala
     altura_espaco_turma = 60 * escala
+    altura_linha_titulo = 46 * escala
 
-    altura_total = 130 * escala
+    largura_maxima_titulo = largura - (2 * margem)
+
+    # Imagem temporária apenas para medir o texto antes de saber a altura final
+    imagem_temp = Image.new("RGB", (10, 10))
+    draw_temp = ImageDraw.Draw(imagem_temp)
+
+    titulo = f"Participantes - {espetaculo.titulo}"
+    linhas_titulo = quebrar_texto(titulo, fonte_titulo, largura_maxima_titulo, draw_temp)
+
+    altura_bloco_titulo = 40 * escala + (len(linhas_titulo) * altura_linha_titulo) + (30 * escala)
+
+    altura_total = altura_bloco_titulo
     for nomes in grupos_ordenados.values():
         altura_total += altura_espaco_turma + (len(nomes) * altura_linha_nome) + (25 * escala)
     altura_total += margem
@@ -2899,9 +2929,11 @@ def espetaculo_participantes_png(request, pk):
     draw = ImageDraw.Draw(imagem)
 
     y = 40 * escala
-    titulo = f"Participantes - {espetaculo.titulo}"
-    draw.text((margem, y), titulo, fill="#2f2438", font=fonte_titulo)
-    y += 90 * escala
+    for linha in linhas_titulo:
+        draw.text((margem, y), linha, fill="#2f2438", font=fonte_titulo)
+        y += altura_linha_titulo
+
+    y += 30 * escala
 
     for turma_nome, nomes in grupos_ordenados.items():
         draw.rectangle(
@@ -2917,7 +2949,6 @@ def espetaculo_participantes_png(request, pk):
 
         y += 25 * escala
 
-    # Reduz para o tamanho final com suavização de alta qualidade
     if fonte_existe:
         largura_final = largura // escala
         altura_final = altura_total // escala
