@@ -1,4 +1,4 @@
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from datetime import datetime, date
 import json
 
@@ -7,7 +7,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.urls import reverse
 
-from .models import Agendamento
+from .models import Agendamento, ConfiguracaoAgendamento
 from .services import criar_evento_se_necessario, confirmar_pagamento_agendamento
 from usuarios.models import Turma, Aluna
 from pagamentos.asaas_helper import AsaasAPI
@@ -22,8 +22,6 @@ DIAS_SEMANA = {
     'Sábado': 5,
 }
 
-VALOR_AULA_EXPERIMENTAL = Decimal('25.00')
-
 
 def buscar_alunas_do_usuario(user):
     """Alunas vinculadas ao usuário logado (como aluna própria ou como responsável)."""
@@ -36,13 +34,42 @@ def buscar_alunas_do_usuario(user):
     return (aluna_propria | alunas_dependentes).distinct()
 
 
+def usuario_pode_agendar_como_responsavel(user):
+    """
+    True quando o próprio responsável logado também é aluno (Perfil.is_tambem_aluno)
+    e ainda não possui um registro Aluna próprio (para não duplicar opção no dropdown).
+    """
+    if not user.is_authenticated:
+        return False
+
+    perfil = getattr(user, 'perfil', None)
+    if not perfil or not perfil.is_tambem_aluno:
+        return False
+
+    if Aluna.objects.filter(usuario=user, ativa=True).exists():
+        return False
+
+    return True
+
+
+def calcular_idade(data_nascimento):
+    if not data_nascimento:
+        return 0
+    hoje = date.today()
+    idade = hoje.year - data_nascimento.year
+    if (hoje.month, hoje.day) < (data_nascimento.month, data_nascimento.day):
+        idade -= 1
+    return idade
+
+
 def agendar(request):
-    # Se está logado e já é aluna/responsável Bailah, vai para o fluxo gratuito
     if request.user.is_authenticated:
-        if buscar_alunas_do_usuario(request.user).exists():
+        tem_dependentes = buscar_alunas_do_usuario(request.user).exists()
+        pode_como_responsavel = usuario_pode_agendar_como_responsavel(request.user)
+
+        if tem_dependentes or pode_como_responsavel:
             return redirect('agendar_aluna')
 
-    from .models import ConfiguracaoAgendamento
     configuracao = ConfiguracaoAgendamento.obter()
 
     aulas = Turma.objects.filter(
@@ -64,10 +91,7 @@ def agendar(request):
             return render(
                 request,
                 'agenda/agendar.html',
-                {
-                    'aulas': aulas,
-                    'erro': 'Preencha todos os campos corretamente.'
-                }
+                {'aulas': aulas, 'erro': 'Preencha todos os campos corretamente.'}
             )
 
         data_escolhida = datetime.strptime(data_str, '%Y-%m-%d').date()
@@ -76,20 +100,14 @@ def agendar(request):
             return render(
                 request,
                 'agenda/agendar.html',
-                {
-                    'aulas': aulas,
-                    'erro': 'Não é possível agendar aulas em datas passadas.'
-                }
+                {'aulas': aulas, 'erro': 'Não é possível agendar aulas em datas passadas.'}
             )
 
         if data_escolhida.weekday() != DIAS_SEMANA[aula.dia_semana]:
             return render(
                 request,
                 'agenda/agendar.html',
-                {
-                    'aulas': aulas,
-                    'erro': 'A data escolhida não corresponde ao dia da aula.'
-                }
+                {'aulas': aulas, 'erro': 'A data escolhida não corresponde ao dia da aula.'}
             )
 
         dados_comuns = dict(
@@ -104,7 +122,6 @@ def agendar(request):
         )
 
         if configuracao.campanha_gratuita_ativa:
-            # Campanha ativa: agenda direto como gratuita, sem cobrança
             agendamento = Agendamento.objects.create(
                 **dados_comuns,
                 status_pagamento='gratuito',
@@ -114,11 +131,10 @@ def agendar(request):
             criar_evento_se_necessario(agendamento)
             return redirect('confirmacao', agendamento_id=agendamento.id)
 
-        # Campanha inativa: fluxo normal, com pagamento via PIX
         agendamento = Agendamento.objects.create(
             **dados_comuns,
             status_pagamento='pendente',
-            valor=VALOR_AULA_EXPERIMENTAL,
+            valor=configuracao.valor_aula_experimental,
             evento_calendario_criado=False,
         )
 
@@ -127,20 +143,31 @@ def agendar(request):
     return render(
         request,
         'agenda/agendar.html',
-        {
-            'aulas': aulas,
-            'hoje': date.today()
-        }
+        {'aulas': aulas, 'hoje': date.today()}
     )
 
 
 @login_required
 def agendar_aluna(request):
-    """Fluxo exclusivo para quem já tem login — sempre gratuito, sem digitar nome livre."""
+    """Fluxo exclusivo para quem já tem login — sempre gratuito."""
     alunas_vinculadas = buscar_alunas_do_usuario(request.user)
+    pode_como_responsavel = usuario_pode_agendar_como_responsavel(request.user)
 
-    if not alunas_vinculadas.exists():
+    if not alunas_vinculadas.exists() and not pode_como_responsavel:
         return redirect('agendar')
+
+    opcoes = [
+        {'value': str(aluna.id), 'label': aluna.nome}
+        for aluna in alunas_vinculadas
+    ]
+
+    nome_responsavel_logado = request.user.get_full_name() or request.user.username
+
+    if pode_como_responsavel:
+        opcoes.append({
+            'value': 'responsavel',
+            'label': f'{nome_responsavel_logado} (você)'
+        })
 
     aulas = Turma.objects.filter(
         ativa=True,
@@ -150,11 +177,9 @@ def agendar_aluna(request):
     perfil = getattr(request.user, 'perfil', None)
 
     if request.method == 'POST':
-        aluna_id = request.POST.get('aluna_id')
+        opcao_escolhida = request.POST.get('aluna_id')
         aula_id = request.POST.get('aula')
         data_str = request.POST.get('data')
-
-        aluna = alunas_vinculadas.filter(id=aluna_id).first()
 
         aula = Turma.objects.filter(
             id=aula_id,
@@ -162,15 +187,13 @@ def agendar_aluna(request):
             disponivel_experimental=True
         ).first()
 
-        if not aluna or not aula or not data_str:
+        valores_validos = {o['value'] for o in opcoes}
+
+        if opcao_escolhida not in valores_validos or not aula or not data_str:
             return render(
                 request,
                 'agenda/agendar_aluna.html',
-                {
-                    'aulas': aulas,
-                    'alunas_vinculadas': alunas_vinculadas,
-                    'erro': 'Preencha todos os campos corretamente.'
-                }
+                {'aulas': aulas, 'opcoes': opcoes, 'erro': 'Preencha todos os campos corretamente.'}
             )
 
         data_escolhida = datetime.strptime(data_str, '%Y-%m-%d').date()
@@ -179,36 +202,42 @@ def agendar_aluna(request):
             return render(
                 request,
                 'agenda/agendar_aluna.html',
-                {
-                    'aulas': aulas,
-                    'alunas_vinculadas': alunas_vinculadas,
-                    'erro': 'Não é possível agendar aulas em datas passadas.'
-                }
+                {'aulas': aulas, 'opcoes': opcoes, 'erro': 'Não é possível agendar aulas em datas passadas.'}
             )
 
         if data_escolhida.weekday() != DIAS_SEMANA[aula.dia_semana]:
             return render(
                 request,
                 'agenda/agendar_aluna.html',
-                {
-                    'aulas': aulas,
-                    'alunas_vinculadas': alunas_vinculadas,
-                    'erro': 'A data escolhida não corresponde ao dia da aula.'
-                }
+                {'aulas': aulas, 'opcoes': opcoes, 'erro': 'A data escolhida não corresponde ao dia da aula.'}
             )
 
-        nome_responsavel = request.user.get_full_name() or request.user.username
+        if opcao_escolhida == 'responsavel':
+            nome_aluna = nome_responsavel_logado
+            idade_aluna = calcular_idade(perfil.data_nascimento if perfil else None)
+            aluna_vinculada = None
+        else:
+            aluna = alunas_vinculadas.filter(id=opcao_escolhida).first()
+            if not aluna:
+                return render(
+                    request,
+                    'agenda/agendar_aluna.html',
+                    {'aulas': aulas, 'opcoes': opcoes, 'erro': 'Aluna inválida.'}
+                )
+            nome_aluna = aluna.nome
+            idade_aluna = aluna.idade or 0
+            aluna_vinculada = aluna
 
         agendamento = Agendamento.objects.create(
-            nome_responsavel=nome_responsavel,
-            nome_aluna=aluna.nome,
-            idade_aluna=aluna.idade or 0,
+            nome_responsavel=nome_responsavel_logado,
+            nome_aluna=nome_aluna,
+            idade_aluna=idade_aluna,
             email=request.user.email,
             telefone=perfil.telefone if perfil and perfil.telefone else '',
             data=data_escolhida,
             horario=aula.horario,
             aula=aula,
-            aluna_vinculada=aluna,
+            aluna_vinculada=aluna_vinculada,
             status_pagamento='gratuito',
             valor=Decimal('0.00'),
             evento_calendario_criado=False,
@@ -221,11 +250,7 @@ def agendar_aluna(request):
     return render(
         request,
         'agenda/agendar_aluna.html',
-        {
-            'aulas': aulas,
-            'alunas_vinculadas': alunas_vinculadas,
-            'hoje': date.today(),
-        }
+        {'aulas': aulas, 'opcoes': opcoes, 'hoje': date.today()}
     )
 
 
@@ -239,7 +264,6 @@ def agendamento_pagamento(request, agendamento_id):
     try:
         asaas = AsaasAPI()
 
-        # Fluxo público não tem CPF — usa o mesmo fallback já usado na mensalidade
         cpf_cliente = '24971563792'
 
         customer_data = {
@@ -359,8 +383,3 @@ def confirmacao(request, agendamento_id):
         'agenda/confirmacao.html',
         {'agendamento': agendamento}
     )
-
-
-
-
-

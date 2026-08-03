@@ -13,7 +13,7 @@
             Como você já possui cadastro na Bailah, sua aula experimental é gratuita.
         </p>
         <p style="color: #999; margin-bottom: 2rem; font-size: 0.9rem;">
-            Só é possível agendar para alunas já vinculadas à sua conta.
+            Escolha para quem é a aula: você mesma(o) ou uma aluna vinculada à sua conta.
         </p>
 
         {% if erro %}
@@ -29,19 +29,19 @@
 
                 <div>
                     <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">Aluna(o)</label>
-                    {% if alunas_vinculadas.count > 1 %}
+                    {% if opcoes|length > 1 %}
                         <select name="aluna_id" required
                                 style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
                             <option value="">Selecione...</option>
-                            {% for aluna in alunas_vinculadas %}
-                                <option value="{{ aluna.id }}">{{ aluna.nome }}</option>
+                            {% for opcao in opcoes %}
+                                <option value="{{ opcao.value }}">{{ opcao.label }}</option>
                             {% endfor %}
                         </select>
-                    {% else %}
-                        {% with aluna=alunas_vinculadas.first %}
-                            <input type="text" value="{{ aluna.nome }}" disabled
+                    {% elif opcoes|length == 1 %}
+                        {% with opcao=opcoes.0 %}
+                            <input type="text" value="{{ opcao.label }}" disabled
                                    style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem; background: #f5f5f5; color: #555;">
-                            <input type="hidden" name="aluna_id" value="{{ aluna.id }}">
+                            <input type="hidden" name="aluna_id" value="{{ opcao.value }}">
                         {% endwith %}
                     {% endif %}
                 </div>

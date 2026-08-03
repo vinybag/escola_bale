@@ -103,10 +103,15 @@ class Agendamento(models.Model):
         return f"{self.nome_aluna} - {self.data} às {self.horario}"
 
 class ConfiguracaoAgendamento(models.Model):
-    """Configuração única (singleton) que controla campanhas de aula gratuita."""
     campanha_gratuita_ativa = models.BooleanField(
         default=False,
         verbose_name='Campanha de aula experimental gratuita ativa'
+    )
+    valor_aula_experimental = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal('25.00'),
+        verbose_name='Valor da aula experimental'
     )
     atualizado_em = models.DateTimeField(auto_now=True)
 

@@ -1970,20 +1970,33 @@ def inscricao_audicao_excluir(request, pk):
 
 @login_required
 def agendamentos_list(request):
-    """Lista de agendamentos de aula experimental"""
     if not request.user.is_staff:
         return redirect('home')
 
     from django.urls import reverse
     from urllib.parse import urlencode
+    from decimal import Decimal, InvalidOperation
     from agenda.models import Agendamento, ConfiguracaoAgendamento
     from datetime import date
 
     configuracao = ConfiguracaoAgendamento.obter()
 
-    if request.method == 'POST' and request.POST.get('acao') == 'toggle_campanha_gratuita':
-        configuracao.campanha_gratuita_ativa = not configuracao.campanha_gratuita_ativa
-        configuracao.save(update_fields=['campanha_gratuita_ativa'])
+    if request.method == 'POST':
+        acao = request.POST.get('acao')
+
+        if acao == 'toggle_campanha_gratuita':
+            configuracao.campanha_gratuita_ativa = not configuracao.campanha_gratuita_ativa
+            configuracao.save(update_fields=['campanha_gratuita_ativa'])
+
+        elif acao == 'atualizar_valor':
+            valor_str = (request.POST.get('valor_aula_experimental') or '').replace(',', '.').strip()
+            try:
+                novo_valor = Decimal(valor_str)
+                if novo_valor >= 0:
+                    configuracao.valor_aula_experimental = novo_valor
+                    configuracao.save(update_fields=['valor_aula_experimental'])
+            except (InvalidOperation, TypeError):
+                pass
 
         query_params = {}
         if request.POST.get('tipo'):
@@ -1999,7 +2012,6 @@ def agendamentos_list(request):
         return redirect(url)
 
     hoje = date.today()
-
     tipo = request.GET.get('tipo', 'proximos')
     mes = request.GET.get('mes', '')
     semana = request.GET.get('semana', '')
@@ -2015,10 +2027,7 @@ def agendamentos_list(request):
     if mes:
         try:
             ano, mes_num = mes.split('-')
-            agendamentos = agendamentos.filter(
-                data__year=int(ano),
-                data__month=int(mes_num)
-            )
+            agendamentos = agendamentos.filter(data__year=int(ano), data__month=int(mes_num))
         except ValueError:
             pass
 
@@ -2027,19 +2036,13 @@ def agendamentos_list(request):
             ano_str, semana_str = semana.split('-W')
             ano = int(ano_str)
             num_semana = int(semana_str)
-
             inicio_semana = date.fromisocalendar(ano, num_semana, 1)
             fim_semana = date.fromisocalendar(ano, num_semana, 7)
-
-            agendamentos = agendamentos.filter(
-                data__gte=inicio_semana,
-                data__lte=fim_semana
-            )
+            agendamentos = agendamentos.filter(data__gte=inicio_semana, data__lte=fim_semana)
         except (ValueError, TypeError):
             pass
 
     agendamentos = agendamentos.order_by('data', 'horario')
-
     meses_disponiveis = Agendamento.objects.dates('data', 'month', order='DESC')
 
     total_geral = Agendamento.objects.count()
