@@ -28,6 +28,40 @@
     </div>
 </div>
 
+<!-- Toggle de campanha gratuita -->
+<div style="background: linear-gradient(135deg, #ffffff 0%, #f3eef6 100%); padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border: 1px solid #ece3f2;">
+    <form method="post" style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
+        {% csrf_token %}
+        <input type="hidden" name="acao" value="toggle_campanha_gratuita">
+        <input type="hidden" name="tipo" value="{{ tipo }}">
+        <input type="hidden" name="mes" value="{{ mes }}">
+        <input type="hidden" name="semana" value="{{ semana }}">
+
+        <div>
+            <div style="font-weight: 700; color: #4a235f; font-size: 1.05rem;">
+                Campanha de aula experimental gratuita
+            </div>
+            <div style="color: #6c757d; font-size: 0.85rem; margin-top: 0.25rem;">
+                {% if configuracao.campanha_gratuita_ativa %}
+                    Ativa — novos agendamentos não geram cobrança.
+                {% else %}
+                    Inativa — novos agendamentos vão para pagamento via PIX.
+                {% endif %}
+            </div>
+        </div>
+
+        <label style="position: relative; display: inline-block; width: 52px; height: 28px; cursor: pointer;">
+            <input type="checkbox"
+                   name="campanha_gratuita_ativa"
+                   {% if configuracao.campanha_gratuita_ativa %}checked{% endif %}
+                   onchange="this.form.submit()"
+                   style="opacity: 0; width: 0; height: 0;">
+            <span style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: {% if configuracao.campanha_gratuita_ativa %}#6b2d8f{% else %}#ccc{% endif %}; border-radius: 34px; transition: 0.3s;"></span>
+            <span style="position: absolute; height: 22px; width: 22px; left: {% if configuracao.campanha_gratuita_ativa %}27px{% else %}3px{% endif %}; top: 3px; background: white; border-radius: 50%; transition: 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></span>
+        </label>
+    </form>
+</div>
+
 <!-- Cards de resumo -->
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
     <div style="background: linear-gradient(135deg, #ffffff 0%, #f3eef6 100%); padding: 1.5rem; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-top: 3px solid #6b2d8f;">
@@ -149,6 +183,21 @@
                         <div style="color: #444;">
                             {{ agendamento.data|date:"d/m/Y" }} às {{ agendamento.horario|time:"H:i" }}
                         </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div style="font-size: 0.72rem; font-weight: 700; color: #6b2d8f; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 0.15rem;">
+                        Pagamento
+                    </div>
+                    <div style="color: #444;">
+                        {% if agendamento.status_pagamento == 'pago' %}
+                            <span style="color: #1d6b36; font-weight: 600;">Pago</span>
+                        {% elif agendamento.status_pagamento == 'gratuito' %}
+                            <span style="color: #6b2d8f; font-weight: 600;">Gratuito</span>
+                        {% else %}
+                            <span style="color: #b71c1c; font-weight: 600;">Pendente</span>
+                        {% endif %}
                     </div>
                 </div>
 

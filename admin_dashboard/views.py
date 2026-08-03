@@ -1973,24 +1973,45 @@ def agendamentos_list(request):
     """Lista de agendamentos de aula experimental"""
     if not request.user.is_staff:
         return redirect('home')
-    
-    from agenda.models import Agendamento
+
+    from django.urls import reverse
+    from urllib.parse import urlencode
+    from agenda.models import Agendamento, ConfiguracaoAgendamento
     from datetime import date
-    
+
+    configuracao = ConfiguracaoAgendamento.obter()
+
+    if request.method == 'POST' and request.POST.get('acao') == 'toggle_campanha_gratuita':
+        configuracao.campanha_gratuita_ativa = not configuracao.campanha_gratuita_ativa
+        configuracao.save(update_fields=['campanha_gratuita_ativa'])
+
+        query_params = {}
+        if request.POST.get('tipo'):
+            query_params['tipo'] = request.POST.get('tipo')
+        if request.POST.get('mes'):
+            query_params['mes'] = request.POST.get('mes')
+        if request.POST.get('semana'):
+            query_params['semana'] = request.POST.get('semana')
+
+        url = reverse('admin_dashboard:agendamentos_list')
+        if query_params:
+            url += '?' + urlencode(query_params)
+        return redirect(url)
+
     hoje = date.today()
-    
+
     tipo = request.GET.get('tipo', 'proximos')
     mes = request.GET.get('mes', '')
     semana = request.GET.get('semana', '')
-    
+
     agendamentos = Agendamento.objects.all()
-    
+
     if tipo == 'antigos':
         agendamentos = agendamentos.filter(data__lt=hoje)
     else:
         tipo = 'proximos'
         agendamentos = agendamentos.filter(data__gte=hoje)
-    
+
     if mes:
         try:
             ano, mes_num = mes.split('-')
@@ -2000,7 +2021,7 @@ def agendamentos_list(request):
             )
         except ValueError:
             pass
-    
+
     if semana:
         try:
             ano_str, semana_str = semana.split('-W')
@@ -2016,9 +2037,9 @@ def agendamentos_list(request):
             )
         except (ValueError, TypeError):
             pass
-    
+
     agendamentos = agendamentos.order_by('data', 'horario')
-    
+
     meses_disponiveis = Agendamento.objects.dates('data', 'month', order='DESC')
 
     total_geral = Agendamento.objects.count()
@@ -2035,8 +2056,9 @@ def agendamentos_list(request):
         'total_geral': total_geral,
         'total_proximos': total_proximos,
         'total_antigos': total_antigos,
+        'configuracao': configuracao,
     }
-    
+
     return render(request, 'admin_dashboard/agendamentos/list.html', context)
 
 @login_required
@@ -2044,9 +2066,18 @@ def agendamento_detalhes(request, pk):
     """Detalhes do agendamento"""
     if not request.user.is_staff:
         return redirect('home')
-    
+
+    from django.contrib import messages
     from agenda.models import Agendamento
+    from agenda.services import liberar_gratuita
+
     agendamento = get_object_or_404(Agendamento, pk=pk)
+
+    if request.method == 'POST' and request.POST.get('acao') == 'liberar_gratuita':
+        liberar_gratuita(agendamento)
+        messages.success(request, 'Aula liberada como gratuita e evento criado na agenda.')
+        return redirect('admin_dashboard:agendamento_detalhes', pk=agendamento.pk)
+
     return render(request, 'admin_dashboard/agendamentos/detalhes.html', {'agendamento': agendamento})
 
 @login_required

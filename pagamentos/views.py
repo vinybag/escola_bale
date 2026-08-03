@@ -267,6 +267,37 @@ def pagamento_cancelado(request):
 
 # ==================== WEBHOOK DO ASAAS ====================
 
+
+def localizar_agendamento_por_payment(payment_id, external_reference=None, customer_id=None):
+    from agenda.models import Agendamento
+
+    agendamento = Agendamento.objects.filter(asaas_payment_id=payment_id).first()
+    if agendamento:
+        print(f"[WEBHOOK] Agendamento encontrado por asaas_payment_id: {agendamento.id}")
+        return agendamento
+
+    if external_reference and external_reference.startswith('agendamento_experimental:'):
+        try:
+            agendamento_id = external_reference.split(':', 1)[1]
+            agendamento = Agendamento.objects.get(id=agendamento_id)
+            agendamento.asaas_payment_id = payment_id
+
+            update_fields = ['asaas_payment_id']
+            if customer_id:
+                agendamento.asaas_customer_id = customer_id
+                update_fields.append('asaas_customer_id')
+
+            agendamento.save(update_fields=update_fields)
+            print(f"[WEBHOOK] Agendamento localizado por externalReference: {agendamento.id}")
+            return agendamento
+
+        except Agendamento.DoesNotExist:
+            print(f"[WEBHOOK] Nenhum agendamento encontrado para externalReference {external_reference}")
+            return None
+
+    return None
+
+
 def localizar_parcela_espetaculo_por_payment(payment_id, external_reference=None, customer_id=None, installment_id=None):
     from espetaculo.models import CobrancaEspetaculo, ParcelaCobrancaEspetaculo
 
@@ -344,6 +375,7 @@ def localizar_parcela_espetaculo_por_payment(payment_id, external_reference=None
 
     return None
 
+
 @csrf_exempt
 def webhook_asaas(request):
     """Recebe notificações do Asaas quando um pagamento é atualizado"""
@@ -393,6 +425,18 @@ def webhook_asaas(request):
                     print(f"[WEBHOOK] Mensalidade {mensalidade.id} atualizada para PAGO")
                     return HttpResponse(status=200)
 
+                agendamento = localizar_agendamento_por_payment(
+                    payment_id=payment_id,
+                    external_reference=external_reference,
+                    customer_id=customer_id,
+                )
+
+                if agendamento:
+                    from agenda.services import confirmar_pagamento_agendamento
+                    confirmar_pagamento_agendamento(agendamento, payment_id)
+                    print(f"[WEBHOOK] Agendamento {agendamento.id} atualizado para PAGO")
+                    return HttpResponse(status=200)
+
                 installment_id = payment.get('installment')
 
                 parcela = localizar_parcela_espetaculo_por_payment(
@@ -418,7 +462,7 @@ def webhook_asaas(request):
                     print(f"[WEBHOOK] Pedido de ingresso {pedido.id} atualizado para PAGO")
                     return HttpResponse(status=200)
 
-                print(f"[WEBHOOK] Nenhuma mensalidade, parcela ou pedido localizada para payment_id {payment_id}")
+                print(f"[WEBHOOK] Nenhuma mensalidade, agendamento, parcela ou pedido localizado para payment_id {payment_id}")
                 return HttpResponse(status=200)
 
             print(f"[WEBHOOK] Evento ignorado: {evento}")
@@ -431,6 +475,7 @@ def webhook_asaas(request):
             return HttpResponse(status=500)
 
     return HttpResponse(status=405)
+
 
 def localizar_pedido_ingresso_evento_por_payment(payment_id, external_reference=None, customer_id=None):
     from espetaculo.models import PedidoIngressoEvento

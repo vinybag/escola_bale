@@ -9,20 +9,46 @@
 </div>
 
 <div style="background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); max-width: 600px; border: 1px solid #ece3f2;">
-    
+
+    <div style="margin-bottom: 1.25rem; padding-bottom: 0.85rem; border-bottom: 1px solid #eee7f3;">
+        <h3 style="color: #6b2d8f; margin-bottom: 0.75rem;">Status do Pagamento</h3>
+        {% if agendamento.status_pagamento == 'pago' %}
+            <span style="display: inline-flex; align-items: center; gap: 0.35rem; background: #e6f7eb; color: #1d6b36; padding: 0.35rem 0.85rem; border-radius: 999px; font-size: 0.85rem; font-weight: 700;">
+                Pago
+            </span>
+        {% elif agendamento.status_pagamento == 'gratuito' %}
+            <span style="display: inline-flex; align-items: center; gap: 0.35rem; background: #ede7f5; color: #6b2d8f; padding: 0.35rem 0.85rem; border-radius: 999px; font-size: 0.85rem; font-weight: 700;">
+                Gratuita
+            </span>
+        {% else %}
+            <span style="display: inline-flex; align-items: center; gap: 0.35rem; background: #fdecea; color: #b71c1c; padding: 0.35rem 0.85rem; border-radius: 999px; font-size: 0.85rem; font-weight: 700;">
+                Pagamento pendente
+            </span>
+        {% endif %}
+        <p style="color: #444; margin-top: 0.65rem;"><strong style="color: #35203f;">Valor:</strong> R$ {{ agendamento.valor|floatformat:2 }}</p>
+        {% if agendamento.evento_calendario_criado %}
+            <p style="color: #444; margin-top: 0.35rem; font-size: 0.85rem;">✓ Evento criado no Google Agenda</p>
+        {% else %}
+            <p style="color: #b71c1c; margin-top: 0.35rem; font-size: 0.85rem;">✗ Evento ainda não criado no Google Agenda</p>
+        {% endif %}
+    </div>
+
     <div style="margin-bottom: 1.25rem; padding-bottom: 0.85rem; border-bottom: 1px solid #eee7f3;">
         <h3 style="color: #6b2d8f; margin-bottom: 0.75rem;">Dados da Aluna(o)</h3>
         <p style="color: #444;"><strong style="color: #35203f;">Nome:</strong> {{ agendamento.nome_aluna }}</p>
         <p style="color: #444;"><strong style="color: #35203f;">Idade:</strong> {{ agendamento.idade_aluna }} anos</p>
+        {% if agendamento.aluna_vinculada %}
+            <p style="color: #444;"><strong style="color: #35203f;">Aluna vinculada:</strong> {{ agendamento.aluna_vinculada.nome }}</p>
+        {% endif %}
     </div>
-    
+
     <div style="margin-bottom: 1.25rem; padding-bottom: 0.85rem; border-bottom: 1px solid #eee7f3;">
         <h3 style="color: #6b2d8f; margin-bottom: 0.75rem;">Dados do Responsavel</h3>
         <p style="color: #444;"><strong style="color: #35203f;">Nome:</strong> {{ agendamento.nome_responsavel }}</p>
         <p style="color: #444;"><strong style="color: #35203f;">Telefone:</strong> {{ agendamento.telefone }}</p>
         <p style="color: #444;"><strong style="color: #35203f;">E-mail:</strong> {{ agendamento.email }}</p>
     </div>
-    
+
     <div style="margin-bottom: 1.25rem; padding-bottom: 0.85rem; border-bottom: 1px solid #eee7f3;">
         <h3 style="color: #6b2d8f; margin-bottom: 0.75rem;">Aula Agendada</h3>
         <p style="color: #444;"><strong style="color: #35203f;">Data:</strong> {{ agendamento.data|date:"d/m/Y" }}</p>
@@ -31,23 +57,37 @@
             <p style="color: #444;"><strong style="color: #35203f;">Aula:</strong> {{ agendamento.aula.nome }}</p>
         {% endif %}
     </div>
-    
+
     <div style="margin-bottom: 1rem;">
         <h3 style="color: #6b2d8f; margin-bottom: 0.75rem;">Informacoes do Sistema</h3>
         <p style="color: #444;"><strong style="color: #35203f;">Criado em:</strong> {{ agendamento.criado_em|date:"d/m/Y H:i" }}</p>
     </div>
-    
+
     <div style="display: flex; gap: 1rem; margin-top: 1.5rem; flex-wrap: wrap;">
-        <a href="{% url 'admin_dashboard:agendamentos_list' %}" 
+        <a href="{% url 'admin_dashboard:agendamentos_list' %}"
            style="padding: 0.75rem 1.5rem; background: #f3f3f3; color: #444; border: 1px solid #ddd; border-radius: 6px; text-decoration: none; font-weight: 500;">
             Voltar
         </a>
-        <form method="post" 
-              action="{% url 'admin_dashboard:agendamento_excluir' agendamento.pk %}" 
+
+        {% if agendamento.status_pagamento == 'pendente' %}
+        <form method="post"
+              style="display: inline-block;"
+              onsubmit="return confirm('Liberar a aula experimental de {{ agendamento.nome_aluna }} como gratuita?');">
+            {% csrf_token %}
+            <input type="hidden" name="acao" value="liberar_gratuita">
+            <button type="submit"
+                    style="padding: 0.75rem 1.5rem; background: #1d6b36; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                Liberar Gratuita
+            </button>
+        </form>
+        {% endif %}
+
+        <form method="post"
+              action="{% url 'admin_dashboard:agendamento_excluir' agendamento.pk %}"
               style="display: inline-block;"
               onsubmit="return confirm('Tem certeza que deseja excluir o agendamento de {{ agendamento.nome_aluna }}?');">
             {% csrf_token %}
-            <button type="submit" 
+            <button type="submit"
                     style="padding: 0.75rem 1.5rem; background: #6b2d8f; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
                 Excluir Agendamento
             </button>
