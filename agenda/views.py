@@ -36,14 +36,11 @@ def buscar_alunas_do_usuario(user):
 
 def usuario_pode_agendar_como_responsavel(user):
     """
-    True quando o próprio responsável logado também é aluno (Perfil.is_tambem_aluno)
-    e ainda não possui um registro Aluna próprio (para não duplicar opção no dropdown).
+    True quando o usuário logado (responsável) pode agendar a aula
+    experimental para si mesmo, desde que ainda não possua um
+    registro Aluna próprio (para não duplicar opção no dropdown).
     """
     if not user.is_authenticated:
-        return False
-
-    perfil = getattr(user, 'perfil', None)
-    if not perfil or not perfil.is_tambem_aluno:
         return False
 
     if Aluna.objects.filter(usuario=user, ativa=True).exists():
