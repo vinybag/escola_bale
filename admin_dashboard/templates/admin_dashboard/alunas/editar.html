@@ -135,8 +135,12 @@
 
 <div class="aluna-edit-header">
     <div>
-        <h2 style="margin: 0 0 0.35rem 0; color: #4a235f;">Editar Aluna</h2>
-        <p style="margin: 0; color: #6f6f78;">{{ aluna.nome }}</p>
+        <h2 style="margin: 0 0 0.35rem 0; color: #4a235f;">
+            Editar Aluna
+        </h2>
+        <p style="margin: 0; color: #6f6f78;">
+            {{ aluna.nome }}
+        </p>
     </div>
 
     <div class="aluna-edit-header-actions">
@@ -157,16 +161,20 @@
 <div class="aluna-edit-shell">
     <form method="post">
         {% csrf_token %}
-        
+
         <div class="aluna-edit-main">
             <div class="aluna-edit-top">
                 <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
                     <div>
-                        <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1.15rem;">Edição da aluna</h3>
+                        <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1.15rem;">
+                            Edição da aluna
+                        </h3>
+
                         <p style="margin: 0; color: #7a7280; font-size: 0.95rem;">
                             Atualize os dados cadastrais, vínculo e configurações financeiras.
                         </p>
                     </div>
+
                     <div style="padding: 0.55rem 0.9rem; border-radius: 999px; background: #efe7f5; color: #6b2d8f; font-size: 0.85rem; font-weight: 600;">
                         BKN Tech
                     </div>
@@ -179,48 +187,77 @@
                         <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1rem; font-weight: 700;">
                             Dados da Aluna
                         </h3>
-                        <p style="margin: 0; color: #7b7580; font-size: 0.92rem;">Informações principais da aluna e vínculo de acesso.</p>
+
+                        <p style="margin: 0; color: #7b7580; font-size: 0.92rem;">
+                            Informações principais da aluna e vínculo de acesso.
+                        </p>
                     </div>
-                    
+
                     <div class="aluna-grid-3">
                         <div>
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Nome completo</label>
-                            <input type="text"
-                                   id="nome"
-                                   name="nome"
-                                   value="{{ aluna.nome }}"
-                                   required
-                                   class="aluna-input">
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
+                                Nome completo
+                            </label>
+
+                            <input
+                                type="text"
+                                id="nome"
+                                name="nome"
+                                value="{{ aluna.nome }}"
+                                required
+                                class="aluna-input"
+                            >
                         </div>
-                        
+
                         <div>
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Genero</label>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
+                                Gênero
+                            </label>
+
                             <select name="genero" class="aluna-select">
                                 <option value="">Selecione...</option>
-                                <option value="F" {% if aluna.genero == 'F' %}selected{% endif %}>Feminino</option>
-                                <option value="M" {% if aluna.genero == 'M' %}selected{% endif %}>Masculino</option>
-                                <option value="O" {% if aluna.genero == 'O' %}selected{% endif %}>Outro</option>
+                                <option value="F" {% if aluna.genero == 'F' %}selected{% endif %}>
+                                    Feminino
+                                </option>
+                                <option value="M" {% if aluna.genero == 'M' %}selected{% endif %}>
+                                    Masculino
+                                </option>
+                                <option value="O" {% if aluna.genero == 'O' %}selected{% endif %}>
+                                    Outro
+                                </option>
                             </select>
                         </div>
-                        
+
                         <div>
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Data de nascimento</label>
-                            <input type="date"
-                                   id="data_nascimento"
-                                   name="data_nascimento"
-                                   value="{{ aluna.data_nascimento|date:'Y-m-d' }}"
-                                   class="aluna-input">
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
+                                Data de nascimento
+                            </label>
+
+                            <input
+                                type="date"
+                                id="data_nascimento"
+                                name="data_nascimento"
+                                value="{{ aluna.data_nascimento|date:'Y-m-d' }}"
+                                class="aluna-input"
+                            >
                         </div>
                     </div>
 
                     <div style="margin-bottom: 1rem; padding: 1rem; background: #faf7fc; border: 1px solid #ece3f2; border-radius: 12px;">
                         <div style="display: flex; flex-direction: column; gap: 0.45rem;">
                             <div>
-                                <strong style="color: #4a235f;">Tipo da aluna:</strong>
+                                <strong style="color: #4a235f;">
+                                    Tipo da aluna:
+                                </strong>
+
                                 {% if aluna.tipo_aluna == 'adulto' %}
-                                    <span style="color: #6b2d8f; font-weight: 600;">Adulta</span>
+                                    <span style="color: #6b2d8f; font-weight: 600;">
+                                        Adulta
+                                    </span>
                                 {% else %}
-                                    <span style="color: #6f627b; font-weight: 600;">Infantil</span>
+                                    <span style="color: #6f627b; font-weight: 600;">
+                                        Infantil
+                                    </span>
                                 {% endif %}
                             </div>
 
@@ -229,16 +266,18 @@
                                     <div style="color: #555;">
                                         <strong>Usuário vinculado:</strong>
                                         {{ aluna.usuario.get_full_name|default:aluna.usuario.username }}
+
                                         {% if aluna.usuario.email %}
                                             - {{ aluna.usuario.email }}
                                         {% endif %}
                                     </div>
+
                                     <div style="color: #6f6875; font-size: 0.92rem;">
-                                        A senha dessa aluna pode ser redefinida pelo botão "Definir senha".
+                                        A senha dessa aluna pode ser redefinida pelo botão “Definir senha”.
                                     </div>
                                 {% else %}
                                     <div style="color: #8a6a9f; font-size: 0.92rem;">
-                                        Esta aluna adulta ainda não possui um usuário vinculado, então o botão de senha não aparece.
+                                        Esta aluna adulta ainda não possui um usuário vinculado.
                                     </div>
                                 {% endif %}
                             {% else %}
@@ -248,92 +287,183 @@
                             {% endif %}
                         </div>
                     </div>
-                    
+
                     <div class="aluna-grid-2">
                         <div>
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Turmas</label>
-                            <select id="turmas" name="turmas" multiple
-                                    class="aluna-select"
-                                    style="min-height: 140px;">
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
+                                Turmas
+                            </label>
+
+                            <select
+                                id="turmas"
+                                name="turmas"
+                                multiple
+                                class="aluna-select"
+                                style="min-height: 140px;"
+                            >
                                 {% for turma in turmas %}
-                                    <option value="{{ turma.id }}" {% if turma in aluna.turmas.all %}selected{% endif %}>
+                                    <option
+                                        value="{{ turma.id }}"
+                                        {% if turma in aluna.turmas.all %}selected{% endif %}
+                                    >
                                         {{ turma.nome }} ({{ turma.total_alunas }}/{{ turma.capacidade_maxima }} vagas)
                                     </option>
                                 {% endfor %}
                             </select>
-                            <small style="display: block; margin-top: 0.45rem; color: #8a8390;">Segure Ctrl (ou Cmd no Mac) para selecionar multiplas turmas</small>
+
+                            <small style="display: block; margin-top: 0.45rem; color: #8a8390;">
+                                Segure Ctrl ou Cmd para selecionar múltiplas turmas.
+                            </small>
                         </div>
-                        
+
                         <div>
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Tipo da aluna</label>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
+                                Tipo da aluna
+                            </label>
+
                             <select id="tipo_aluna" name="tipo_aluna" class="aluna-select">
-                                <option value="infantil" {% if aluna.tipo_aluna == 'infantil' %}selected{% endif %}>Infantil</option>
-                                <option value="adulto" {% if aluna.tipo_aluna == 'adulto' %}selected{% endif %}>Adulto</option>
+                                <option value="infantil" {% if aluna.tipo_aluna == 'infantil' %}selected{% endif %}>
+                                    Infantil
+                                </option>
+
+                                <option value="adulto" {% if aluna.tipo_aluna == 'adulto' %}selected{% endif %}>
+                                    Adulto
+                                </option>
                             </select>
                         </div>
                     </div>
 
                     <div class="aluna-grid-2">
-                        <div id="responsavel_wrapper" {% if aluna.tipo_aluna == 'adulto' %}style="display:none;"{% endif %}>
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Responsavel</label>
+                        <div
+                            id="responsavel_wrapper"
+                            {% if aluna.tipo_aluna == 'adulto' %}style="display: none;"{% endif %}
+                        >
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
+                                Responsável
+                            </label>
+
                             <select id="responsavel" name="responsavel" class="aluna-select">
-                                <option value="">Sem responsavel</option>
+                                <option value="">Sem responsável</option>
+
                                 {% for resp in responsaveis %}
-                                    <option value="{{ resp.id }}" {% if aluna.responsavel and aluna.responsavel.id == resp.id %}selected{% endif %}>
+                                    <option
+                                        value="{{ resp.id }}"
+                                        {% if aluna.responsavel and aluna.responsavel.id == resp.id %}selected{% endif %}
+                                    >
                                         {{ resp.get_full_name|default:resp.username }} - {{ resp.email }}
                                     </option>
                                 {% endfor %}
                             </select>
                         </div>
 
-                        <div id="usuario_wrapper" {% if aluna.tipo_aluna != 'adulto' %}style="display:none;"{% endif %}>
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Usuário da aluna adulta</label>
+                        <div
+                            id="usuario_wrapper"
+                            {% if aluna.tipo_aluna != 'adulto' %}style="display: none;"{% endif %}
+                        >
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
+                                Usuário da aluna adulta
+                            </label>
+
                             <select id="usuario" name="usuario" class="aluna-select">
                                 <option value="">Selecione um usuário</option>
+
                                 {% for usuario in usuarios_adultas %}
-                                    <option value="{{ usuario.id }}" {% if aluna.usuario and aluna.usuario.id == usuario.id %}selected{% endif %}>
+                                    <option
+                                        value="{{ usuario.id }}"
+                                        {% if aluna.usuario and aluna.usuario.id == usuario.id %}selected{% endif %}
+                                    >
                                         {{ usuario.get_full_name|default:usuario.username }} - {{ usuario.email }}
                                     </option>
                                 {% endfor %}
                             </select>
-                            <small style="display: block; margin-top: 0.45rem; color: #8a8390;">Esse usuário será usado para login e redefinição de senha da aluna adulta.</small>
+
+                            <small style="display: block; margin-top: 0.45rem; color: #8a8390;">
+                                Esse usuário será usado para login e redefinição de senha.
+                            </small>
+
+                            <div style="margin-top: 1rem;">
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
+                                    Telefone da aluna — WhatsApp
+                                </label>
+
+                                <input
+                                    type="text"
+                                    id="telefone_aluna"
+                                    name="telefone_aluna"
+                                    value="{{ perfil_aluna.telefone|default:'' }}"
+                                    placeholder="(31) 99999-9999"
+                                    class="aluna-input"
+                                >
+
+                                <small style="display: block; margin-top: 0.45rem; color: #8a8390;">
+                                    Usado para o envio dos avisos de mensalidade via WhatsApp.
+                                </small>
+                            </div>
                         </div>
                     </div>
 
-                    <div id="cpf_wrapper" class="aluna-grid-2" style="display: {% if aluna.tipo_aluna == 'adulto' %}none{% else %}grid{% endif %};">
+                    <div
+                        id="cpf_wrapper"
+                        class="aluna-grid-2"
+                        style="display: {% if aluna.tipo_aluna == 'adulto' %}none{% else %}grid{% endif %};"
+                    >
                         <div>
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">CPF do responsável</label>
-                            <input type="text"
-                                   id="cpf"
-                                   name="cpf"
-                                   value="{{ perfil.cpf|default:'' }}"
-                                   placeholder="000.000.000-00"
-                                   class="aluna-input">
-                            <small style="display: block; margin-top: 0.45rem; color: #8a8390;">Esse CPF será salvo no perfil do responsável vinculado.</small>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
+                                CPF do responsável
+                            </label>
+
+                            <input
+                                type="text"
+                                id="cpf"
+                                name="cpf"
+                                value="{{ perfil.cpf|default:'' }}"
+                                placeholder="000.000.000-00"
+                                class="aluna-input"
+                            >
+
+                            <small style="display: block; margin-top: 0.45rem; color: #8a8390;">
+                                Esse CPF será salvo no perfil do responsável vinculado.
+                            </small>
                         </div>
 
                         <div style="display: flex; align-items: end;">
                             <div style="width: 100%;">
-                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: transparent;">Info</label>
+                                <label style="display: block; margin-bottom: 0.5rem; color: transparent;">
+                                    Informação
+                                </label>
+
                                 <div style="padding: 0.95rem 1rem; background: #faf7fc; border: 1px solid #ece3f2; border-radius: 12px; color: #6f6875; font-size: 0.95rem;">
-                                    Necessário para cobranças via Pix no Asaas.
+                                    Necessário para cobranças via PIX no Asaas.
                                 </div>
                             </div>
                         </div>
                     </div>
-                    
+
                     <div style="margin-bottom: 1rem;">
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Observacoes</label>
-                        <textarea id="observacoes"
-                                  name="observacoes"
-                                  rows="4"
-                                  class="aluna-textarea">{{ aluna.observacoes }}</textarea>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
+                            Observações
+                        </label>
+
+                        <textarea
+                            id="observacoes"
+                            name="observacoes"
+                            rows="4"
+                            class="aluna-textarea"
+                        >{{ aluna.observacoes }}</textarea>
                     </div>
-                    
+
                     <div style="padding: 0.95rem 1rem; background: #faf7fc; border: 1px solid #ece3f2; border-radius: 12px;">
                         <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer;">
-                            <input type="checkbox" name="ativa" {% if aluna.ativa %}checked{% endif %} style="accent-color: #6b2d8f;">
-                            <span style="font-weight: 600; color: #4a235f;">Aluna ativa</span>
+                            <input
+                                type="checkbox"
+                                name="ativa"
+                                {% if aluna.ativa %}checked{% endif %}
+                                style="accent-color: #6b2d8f;"
+                            >
+
+                            <span style="font-weight: 600; color: #4a235f;">
+                                Aluna ativa
+                            </span>
                         </label>
                     </div>
                 </section>
@@ -343,6 +473,7 @@
                         <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1rem; font-weight: 700;">
                             Configurações Financeiras
                         </h3>
+
                         <p style="margin: 0; color: #7b7580; font-size: 0.92rem;">
                             Ajuste a cobrança mensal padrão da aluna.
                         </p>
@@ -353,51 +484,75 @@
                             <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
                                 Valor da mensalidade
                             </label>
-                            <input type="number"
-                                   name="valor_mensalidade"
-                                   step="0.01"
-                                   min="0"
-                                   value="{{ aluna.valor_mensalidade|default_if_none:'' }}"
-                                   class="aluna-input">
+
+                            <input
+                                type="number"
+                                name="valor_mensalidade"
+                                step="0.01"
+                                min="0"
+                                value="{{ valor_mensalidade_str }}"
+                                class="aluna-input"
+                            >
+
+                            <small style="display: block; margin-top: 0.45rem; color: #8a8390;">
+                                Valor padrão usado na geração automática das mensalidades.
+                            </small>
                         </div>
 
                         <div>
                             <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
                                 Dia do vencimento
                             </label>
-                            <input type="number"
-                                   name="dia_vencimento"
-                                   min="1"
-                                   max="31"
-                                   value="{{ aluna.dia_vencimento|default:10 }}"
-                                   class="aluna-input">
+
+                            <input
+                                type="number"
+                                name="dia_vencimento"
+                                min="1"
+                                max="31"
+                                value="{{ aluna.dia_vencimento|default:10 }}"
+                                class="aluna-input"
+                            >
                         </div>
 
                         <div style="padding: 0.95rem 1rem; background: #faf7fc; border: 1px solid #ece3f2; border-radius: 12px;">
                             <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer;">
-                                <input type="checkbox" name="gerar_mensalidade_automatica" {% if aluna.gerar_mensalidade_automatica %}checked{% endif %} style="accent-color: #6b2d8f;">
-                                <span style="font-weight: 600; color: #4a235f;">Gerar mensalidade automaticamente</span>
+                                <input
+                                    type="checkbox"
+                                    name="gerar_mensalidade_automatica"
+                                    {% if aluna.gerar_mensalidade_automatica %}checked{% endif %}
+                                    style="accent-color: #6b2d8f;"
+                                >
+
+                                <span style="font-weight: 600; color: #4a235f;">
+                                    Gerar mensalidade automaticamente
+                                </span>
                             </label>
                         </div>
                     </div>
                 </section>
-                
+
                 <div class="aluna-edit-footer">
-                    <a href="{% url 'admin_dashboard:aluna_detalhes' aluna.pk %}"
-                       style="padding: 0.85rem 1.5rem; background: #f3f3f3; color: #444; border: 1px solid #ddd; border-radius: 10px; text-decoration: none; font-weight: 600;">
+                    <a
+                        href="{% url 'admin_dashboard:aluna_detalhes' aluna.pk %}"
+                        style="padding: 0.85rem 1.5rem; background: #f3f3f3; color: #444; border: 1px solid #ddd; border-radius: 10px; text-decoration: none; font-weight: 600;"
+                    >
                         Cancelar
                     </a>
 
                     {% if aluna.tipo_aluna == 'adulto' and aluna.usuario %}
-                        <a href="{% url 'admin_dashboard:aluna_definir_senha' aluna.pk %}"
-                           style="padding: 0.85rem 1.5rem; background: #efe7f5; color: #6b2d8f; border: 1px solid #dccce8; border-radius: 10px; text-decoration: none; font-weight: 700;">
+                        <a
+                            href="{% url 'admin_dashboard:aluna_definir_senha' aluna.pk %}"
+                            style="padding: 0.85rem 1.5rem; background: #efe7f5; color: #6b2d8f; border: 1px solid #dccce8; border-radius: 10px; text-decoration: none; font-weight: 700;"
+                        >
                             Definir senha
                         </a>
                     {% endif %}
 
-                    <button type="submit"
-                            style="background: linear-gradient(135deg, #6b2d8f 0%, #7e3aa5 100%); color: white; border: none; padding: 0.85rem 1.6rem; border-radius: 10px; cursor: pointer; font-weight: 700; box-shadow: 0 8px 18px rgba(107, 45, 143, 0.18);">
-                        Salvar Alteracoes
+                    <button
+                        type="submit"
+                        style="background: linear-gradient(135deg, #6b2d8f 0%, #7e3aa5 100%); color: white; border: none; padding: 0.85rem 1.6rem; border-radius: 10px; cursor: pointer; font-weight: 700; box-shadow: 0 8px 18px rgba(107, 45, 143, 0.18);"
+                    >
+                        Salvar alterações
                     </button>
                 </div>
             </div>

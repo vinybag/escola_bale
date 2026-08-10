@@ -213,6 +213,7 @@ def aluna_criar(request):
             responsavel_id = request.POST.get('responsavel', '').strip()
             usuario_id = request.POST.get('usuario', '').strip()
             cpf = request.POST.get('cpf', '').strip()
+            telefone_aluna = request.POST.get('telefone_aluna', '').strip()
 
             valor_mensalidade = request.POST.get('valor_mensalidade')
             dia_vencimento = request.POST.get('dia_vencimento') or 10
@@ -293,6 +294,8 @@ def aluna_criar(request):
                 )
                 if cpf:
                     perfil.cpf = cpf
+                if telefone_aluna:
+                    perfil.telefone = telefone_aluna
                 perfil.is_responsavel = False
                 perfil.save()
 
@@ -404,82 +407,161 @@ def aluna_detalhes(request, pk):
 
 @login_required
 def aluna_editar(request, pk):
-    """Editar aluna existente"""
+    """Editar aluna existente."""
 
     if not request.user.is_staff:
         return redirect('home')
 
-    try:
-        from usuarios.models import Aluna, Perfil
-        aluna = Aluna.objects.select_related('responsavel', 'usuario').get(pk=pk)
-    except Exception as e:
-        from django.contrib import messages
-        messages.error(request, f'Aluna nao encontrada: {e}')
-        return redirect('admin_dashboard:alunas_list')
+    from django.contrib import messages
+    from django.contrib.auth.models import User
+    from django.db.models import Q
+    from django.shortcuts import get_object_or_404, redirect, render
+    from decimal import Decimal, InvalidOperation
+
+    from usuarios.models import Aluna, Perfil, Turma
+
+    aluna = get_object_or_404(
+        Aluna.objects.select_related('responsavel', 'usuario'),
+        pk=pk
+    )
 
     if request.method == 'POST':
         try:
-            from decimal import Decimal, InvalidOperation
-            from django.contrib.auth.models import User
-            from usuarios.models import Turma, Perfil
-            from django.contrib import messages
-            from django.db.models import Q
-
-            aluna.nome = request.POST.get('nome')
+            aluna.nome = request.POST.get('nome', '').strip()
             aluna.genero = request.POST.get('genero') or None
             aluna.data_nascimento = request.POST.get('data_nascimento') or None
             aluna.ativa = request.POST.get('ativa') == 'on'
-            aluna.observacoes = request.POST.get('observacoes', '')
+            aluna.observacoes = request.POST.get('observacoes', '').strip()
             aluna.tipo_aluna = request.POST.get('tipo_aluna') or aluna.tipo_aluna
 
-            valor_mensalidade = request.POST.get('valor_mensalidade')
+            if not aluna.nome:
+                messages.error(request, 'O nome da aluna é obrigatório.')
+                return redirect(
+                    'admin_dashboard:aluna_editar',
+                    pk=pk
+                )
+
+            valor_mensalidade = request.POST.get('valor_mensalidade', '').strip()
             dia_vencimento = request.POST.get('dia_vencimento') or 10
-            gerar_mensalidade_automatica = request.POST.get('gerar_mensalidade_automatica') == 'on'
+            gerar_mensalidade_automatica = (
+                request.POST.get('gerar_mensalidade_automatica') == 'on'
+            )
 
             if valor_mensalidade:
                 try:
                     valor_mensalidade_decimal = Decimal(valor_mensalidade)
+
                     if valor_mensalidade_decimal < 0:
-                        messages.error(request, 'O valor da mensalidade nao pode ser negativo!')
-                        return redirect('admin_dashboard:aluna_editar', pk=pk)
+                        messages.error(
+                            request,
+                            'O valor da mensalidade não pode ser negativo.'
+                        )
+                        return redirect(
+                            'admin_dashboard:aluna_editar',
+                            pk=pk
+                        )
+
                     aluna.valor_mensalidade = valor_mensalidade_decimal
+
                 except (InvalidOperation, ValueError):
-                    messages.error(request, 'Informe um valor de mensalidade valido!')
-                    return redirect('admin_dashboard:aluna_editar', pk=pk)
+                    messages.error(
+                        request,
+                        'Informe um valor de mensalidade válido.'
+                    )
+                    return redirect(
+                        'admin_dashboard:aluna_editar',
+                        pk=pk
+                    )
             else:
                 aluna.valor_mensalidade = None
 
             try:
                 dia_vencimento = int(dia_vencimento)
+
                 if dia_vencimento < 1 or dia_vencimento > 31:
-                    messages.error(request, 'O dia de vencimento deve estar entre 1 e 31!')
-                    return redirect('admin_dashboard:aluna_editar', pk=pk)
+                    messages.error(
+                        request,
+                        'O dia de vencimento deve estar entre 1 e 31.'
+                    )
+                    return redirect(
+                        'admin_dashboard:aluna_editar',
+                        pk=pk
+                    )
+
                 aluna.dia_vencimento = dia_vencimento
+
             except (TypeError, ValueError):
-                messages.error(request, 'Informe um dia de vencimento valido!')
-                return redirect('admin_dashboard:aluna_editar', pk=pk)
+                messages.error(
+                    request,
+                    'Informe um dia de vencimento válido.'
+                )
+                return redirect(
+                    'admin_dashboard:aluna_editar',
+                    pk=pk
+                )
 
-            aluna.gerar_mensalidade_automatica = gerar_mensalidade_automatica
+            aluna.gerar_mensalidade_automatica = (
+                gerar_mensalidade_automatica
+            )
 
-            responsavel_id = request.POST.get('responsavel')
-            usuario_id = request.POST.get('usuario')
+            responsavel_id = request.POST.get('responsavel', '').strip()
+            usuario_id = request.POST.get('usuario', '').strip()
+            telefone_aluna = request.POST.get(
+                'telefone_aluna',
+                ''
+            ).strip()
+            cpf = request.POST.get('cpf', '').strip()
 
             if aluna.tipo_aluna == 'adulto':
                 aluna.responsavel = None
 
                 if usuario_id:
                     try:
-                        usuario = User.objects.get(id=usuario_id, is_staff=False)
+                        usuario = User.objects.get(
+                            id=usuario_id,
+                            is_staff=False
+                        )
                     except User.DoesNotExist:
-                        messages.error(request, 'Usuario selecionado nao foi encontrado.')
-                        return redirect('admin_dashboard:aluna_editar', pk=pk)
+                        messages.error(
+                            request,
+                            'Usuário selecionado não foi encontrado.'
+                        )
+                        return redirect(
+                            'admin_dashboard:aluna_editar',
+                            pk=pk
+                        )
 
-                    conflito = Aluna.objects.filter(usuario=usuario).exclude(pk=aluna.pk).exists()
+                    conflito = (
+                        Aluna.objects
+                        .filter(usuario=usuario)
+                        .exclude(pk=aluna.pk)
+                        .exists()
+                    )
+
                     if conflito:
-                        messages.error(request, 'Este usuario ja esta vinculado a outra aluna.')
-                        return redirect('admin_dashboard:aluna_editar', pk=pk)
+                        messages.error(
+                            request,
+                            'Este usuário já está vinculado a outra aluna.'
+                        )
+                        return redirect(
+                            'admin_dashboard:aluna_editar',
+                            pk=pk
+                        )
 
                     aluna.usuario = usuario
+
+                    perfil_aluna, _ = Perfil.objects.get_or_create(
+                        user=usuario,
+                        defaults={
+                            'telefone': '',
+                            'is_responsavel': False,
+                        }
+                    )
+
+                    perfil_aluna.telefone = telefone_aluna
+                    perfil_aluna.is_responsavel = False
+                    perfil_aluna.save()
+
                 else:
                     aluna.usuario = None
 
@@ -488,27 +570,44 @@ def aluna_editar(request, pk):
 
                 if responsavel_id:
                     try:
-                        aluna.responsavel = User.objects.get(id=responsavel_id, is_staff=False)
+                        aluna.responsavel = User.objects.get(
+                            id=responsavel_id,
+                            is_staff=False
+                        )
                     except User.DoesNotExist:
-                        messages.error(request, 'Responsavel selecionado nao foi encontrado.')
-                        return redirect('admin_dashboard:aluna_editar', pk=pk)
+                        messages.error(
+                            request,
+                            'Responsável selecionado não foi encontrado.'
+                        )
+                        return redirect(
+                            'admin_dashboard:aluna_editar',
+                            pk=pk
+                        )
                 else:
                     aluna.responsavel = None
 
-            cpf = request.POST.get('cpf', '').strip()
             if aluna.responsavel:
-                perfil, _ = Perfil.objects.get_or_create(
+                perfil_responsavel, _ = Perfil.objects.get_or_create(
                     user=aluna.responsavel,
-                    defaults={'telefone': '', 'is_responsavel': True}
+                    defaults={
+                        'telefone': '',
+                        'is_responsavel': True,
+                    }
                 )
-                perfil.cpf = cpf
-                perfil.save()
+
+                perfil_responsavel.cpf = cpf
+                perfil_responsavel.is_responsavel = True
+                perfil_responsavel.save()
 
             turmas_ids = request.POST.getlist('turmas')
             turmas_selecionadas = []
+
             for turma_id in turmas_ids:
                 try:
-                    turma = Turma.objects.get(id=turma_id)
+                    turma = Turma.objects.get(
+                        id=turma_id,
+                        ativa=True
+                    )
                     turmas_selecionadas.append(turma)
                 except Turma.DoesNotExist:
                     pass
@@ -516,52 +615,120 @@ def aluna_editar(request, pk):
             aluna.save()
             aluna.turmas.set(turmas_selecionadas)
 
-            messages.success(request, f'Aluna {aluna.nome} atualizada com sucesso!')
-            return redirect('admin_dashboard:aluna_detalhes', pk=aluna.pk)
+            messages.success(
+                request,
+                f'Aluna {aluna.nome} atualizada com sucesso!'
+            )
+
+            return redirect(
+                'admin_dashboard:aluna_detalhes',
+                pk=aluna.pk
+            )
 
         except Exception as e:
-            from django.contrib import messages
-            messages.error(request, f'Erro ao atualizar aluna: {e}')
-            return redirect('admin_dashboard:aluna_editar', pk=pk)
+            messages.error(
+                request,
+                f'Erro ao atualizar aluna: {e}'
+            )
+            print(f'Erro detalhado ao atualizar aluna: {e}')
+
+            import traceback
+            traceback.print_exc()
+
+            return redirect(
+                'admin_dashboard:aluna_editar',
+                pk=pk
+            )
 
     try:
-        from django.contrib.auth.models import User
-        from usuarios.models import Turma, Perfil
-        from django.db.models import Q
+        responsaveis = (
+            User.objects
+            .filter(
+                is_staff=False,
+                perfil__is_responsavel=True
+            )
+            .order_by('first_name', 'last_name', 'username')
+        )
 
-        responsaveis = User.objects.filter(is_staff=False).order_by('first_name', 'username')
-
-        usuarios_adultas = User.objects.filter(is_staff=False).exclude(
-            aluna_vinculada__isnull=False
+        usuarios_adultas = (
+            User.objects
+            .filter(is_staff=False)
+            .exclude(aluna_vinculada__isnull=False)
         )
 
         if aluna.usuario_id:
-            usuarios_adultas = User.objects.filter(
-                Q(is_staff=False) &
-                (Q(aluna_vinculada__isnull=True) | Q(id=aluna.usuario_id))
-            ).order_by('first_name', 'username')
+            usuarios_adultas = (
+                User.objects
+                .filter(
+                    Q(is_staff=False) &
+                    (
+                        Q(aluna_vinculada__isnull=True) |
+                        Q(id=aluna.usuario_id)
+                    )
+                )
+                .order_by('first_name', 'last_name', 'username')
+            )
         else:
-            usuarios_adultas = usuarios_adultas.order_by('first_name', 'username')
+            usuarios_adultas = usuarios_adultas.order_by(
+                'first_name',
+                'last_name',
+                'username'
+            )
 
-        turmas = Turma.objects.filter(ativa=True).order_by('nome')
-        perfil = Perfil.objects.filter(user=aluna.responsavel).first() if aluna.responsavel else None
+        turmas = (
+            Turma.objects
+            .filter(ativa=True)
+            .order_by('nome')
+        )
+
+        perfil_responsavel = None
+        if aluna.responsavel_id:
+            perfil_responsavel = (
+                Perfil.objects
+                .filter(user_id=aluna.responsavel_id)
+                .first()
+            )
+
+        perfil_aluna = None
+        if aluna.usuario_id:
+            perfil_aluna = (
+                Perfil.objects
+                .filter(user_id=aluna.usuario_id)
+                .first()
+            )
+
+        if aluna.valor_mensalidade is not None:
+            valor_mensalidade_str = (
+                f'{aluna.valor_mensalidade:.2f}'
+            )
+        else:
+            valor_mensalidade_str = ''
 
     except Exception as e:
-        print(f"Erro ao buscar dados: {e}")
+        print(f'Erro ao buscar dados da edição: {e}')
+
         responsaveis = []
         usuarios_adultas = []
         turmas = []
-        perfil = None
+        perfil_responsavel = None
+        perfil_aluna = None
+        valor_mensalidade_str = ''
 
     context = {
         'aluna': aluna,
         'responsaveis': responsaveis,
         'usuarios_adultas': usuarios_adultas,
         'turmas': turmas,
-        'perfil': perfil,
+        'perfil': perfil_responsavel,
+        'perfil_aluna': perfil_aluna,
+        'valor_mensalidade_str': valor_mensalidade_str,
     }
 
-    return render(request, 'admin_dashboard/alunas/editar.html', context)
+    return render(
+        request,
+        'admin_dashboard/alunas/editar.html',
+        context
+    )
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
