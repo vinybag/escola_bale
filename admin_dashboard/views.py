@@ -10,6 +10,8 @@ from django.db.models import Case, When, Value, IntegerField
 from django.conf import settings
 from espetaculo.models import Espetaculo, PedidoIngressoEvento
 from django.db.models import Q
+from datetime import date
+
 
 @login_required
 def dashboard(request):
@@ -1194,52 +1196,110 @@ def aluna_excluir(request, pk):
 
 @login_required
 def mensalidade_editar(request, pk):
-    """Editar mensalidade (principalmente status)"""
-    
+    """Editar mensalidade, status e data de pagamento."""
+
     if not request.user.is_staff:
-        return redirect('home')
-    
-    try:
-        from pagamentos.models import Mensalidade
-        mensalidade = Mensalidade.objects.get(pk=pk)
-    except Exception as e:
-        from django.contrib import messages
-        messages.error(request, f'Mensalidade nao encontrada: {e}')
-        return redirect('admin_dashboard:mensalidades_list')
-    
-    if request.method == 'POST':
+        return redirect("home")
+
+    mensalidade = get_object_or_404(Mensalidade, pk=pk)
+
+    if request.method == "POST":
         try:
-            from django.contrib import messages
-            from datetime import datetime
-            
-            # Atualiza dados
-            mes_referencia = request.POST.get('mes_referencia')
-            data_vencimento = request.POST.get('data_vencimento')
-            valor = request.POST.get('valor')
-            status = request.POST.get('status')
-            
-            # Converte datas
-            mensalidade.mes_referencia = datetime.strptime(mes_referencia + '-01', '%Y-%m-%d').date()
-            mensalidade.data_vencimento = datetime.strptime(data_vencimento, '%Y-%m-%d').date()
-            mensalidade.valor = Decimal(valor)
+            mes_referencia_str = request.POST.get("mes_referencia", "").strip()
+            data_vencimento_str = request.POST.get("data_vencimento", "").strip()
+            data_pagamento_str = request.POST.get("data_pagamento", "").strip()
+            valor_str = request.POST.get("valor", "").strip()
+            status = request.POST.get("status", "").strip()
+
+            status_permitidos = {"pendente", "pago", "vencido"}
+
+            if status not in status_permitidos:
+                raise ValueError("Status de pagamento inválido.")
+
+            if not mes_referencia_str:
+                raise ValueError("Informe o mês de referência.")
+
+            if not data_vencimento_str:
+                raise ValueError("Informe a data de vencimento.")
+
+            if not valor_str:
+                raise ValueError("Informe o valor da mensalidade.")
+
+            try:
+                mes_referencia = date.fromisoformat(f"{mes_referencia_str}-01")
+            except ValueError:
+                raise ValueError("O mês de referência é inválido.")
+
+            try:
+                data_vencimento = date.fromisoformat(data_vencimento_str)
+            except ValueError:
+                raise ValueError("A data de vencimento é inválida.")
+
+            try:
+                valor = Decimal(valor_str.replace(",", "."))
+            except (InvalidOperation, ValueError):
+                raise ValueError("O valor informado é inválido.")
+
+            if valor < 0:
+                raise ValueError("O valor não pode ser negativo.")
+
+            data_pagamento = None
+
+            if status == "pago":
+                if not data_pagamento_str:
+                    raise ValueError(
+                        "Informe a data em que o pagamento foi recebido."
+                    )
+
+                try:
+                    data_pagamento = date.fromisoformat(data_pagamento_str)
+                except ValueError:
+                    raise ValueError("A data de pagamento é inválida.")
+
+                hoje = timezone.localdate()
+
+                if data_pagamento > hoje:
+                    raise ValueError(
+                        "A data de pagamento não pode ser futura."
+                    )
+
+            mensalidade.mes_referencia = mes_referencia
+            mensalidade.data_vencimento = data_vencimento
+            mensalidade.valor = valor
             mensalidade.status = status
-            
+            mensalidade.data_pagamento = data_pagamento
+
             mensalidade.save()
-            
-            messages.success(request, 'Mensalidade atualizada com sucesso!')
-            return redirect('admin_dashboard:mensalidades_list')
-            
-        except Exception as e:
-            from django.contrib import messages
-            messages.error(request, f'Erro ao atualizar mensalidade: {e}')
-            return redirect('admin_dashboard:mensalidade_editar', pk=pk)
-    
-    # GET - mostra form preenchido
+
+            messages.success(
+                request,
+                "Mensalidade atualizada com sucesso!"
+            )
+
+            return redirect(
+                "admin_dashboard:mensalidades_list"
+            )
+
+        except Exception as erro:
+            messages.error(
+                request,
+                f"Erro ao atualizar mensalidade: {erro}"
+            )
+
+            return redirect(
+                "admin_dashboard:mensalidade_editar",
+                pk=pk,
+            )
+
     context = {
-        'mensalidade': mensalidade,
+        "mensalidade": mensalidade,
     }
-    
-    return render(request, 'admin_dashboard/mensalidades/editar.html', context)
+
+    return render(
+        request,
+        "admin_dashboard/mensalidades/editar.html",
+        context,
+    )
 
 
 @login_required
