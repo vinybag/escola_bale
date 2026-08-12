@@ -20,6 +20,16 @@ class Mensalidade(models.Model):
         ('transferencia', 'Transferência'),
     ]
 
+    AVISO_CHOICES = [
+        ('vencimento_amanha', 'Aviso 1 dia antes do vencimento'),
+        ('vencimento_hoje', 'Aviso no dia do vencimento'),
+        ('atraso_1', 'Atraso - dia 1'),
+        ('atraso_3', 'Atraso - dia 3'),
+        ('atraso_7', 'Atraso - dia 7'),
+        ('atraso_15', 'Atraso - dia 15'),
+        ('atraso_30', 'Atraso - dia 30'),
+    ]
+
     aluna = models.ForeignKey(Aluna, on_delete=models.CASCADE, related_name='mensalidades')
     responsavel = models.ForeignKey(User, on_delete=models.CASCADE, related_name='mensalidades')
     mes_referencia = models.DateField(verbose_name="Mês de referência")
@@ -33,6 +43,19 @@ class Mensalidade(models.Model):
     asaas_customer_id = models.CharField(max_length=100, blank=True, null=True)
     criado_em = models.DateTimeField(auto_now_add=True)
     atualizado_em = models.DateTimeField(auto_now=True)
+
+    ultimo_aviso_enviado = models.CharField(
+        max_length=30,
+        choices=AVISO_CHOICES,
+        blank=True,
+        null=True,
+        verbose_name='Último aviso de WhatsApp enviado'
+    )
+    data_ultimo_aviso = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name='Data do último aviso enviado'
+    )
 
     class Meta:
         ordering = ['-mes_referencia']
