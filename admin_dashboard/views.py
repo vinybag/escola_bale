@@ -2195,101 +2195,310 @@ def inscricao_audicao_excluir(request, pk):
     
     return redirect('admin_dashboard:inscricoes_audicao')
 
+from datetime import date
+from decimal import Decimal, InvalidOperation
+from urllib.parse import urlencode
+
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
+
+from agenda.models import Agendamento, ConfiguracaoAgendamento
+from agenda.services import liberar_gratuita
+from usuarios.models import Turma
+
+
 @login_required
 def agendamentos_list(request):
     if not request.user.is_staff:
-        return redirect('home')
-
-    from django.urls import reverse
-    from urllib.parse import urlencode
-    from decimal import Decimal, InvalidOperation
-    from agenda.models import Agendamento, ConfiguracaoAgendamento
-    from datetime import date
+        return redirect("home")
 
     configuracao = ConfiguracaoAgendamento.obter()
 
-    if request.method == 'POST':
-        acao = request.POST.get('acao')
+    turmas_disponiveis = (
+        Turma.objects
+        .filter(
+            ativa=True,
+            disponivel_experimental=True,
+        )
+        .order_by("nome")
+    )
 
-        if acao == 'toggle_campanha_gratuita':
-            configuracao.campanha_gratuita_ativa = not configuracao.campanha_gratuita_ativa
-            configuracao.save(update_fields=['campanha_gratuita_ativa'])
+    if request.method == "POST":
+        acao = request.POST.get("acao")
 
-        elif acao == 'atualizar_valor':
-            valor_str = (request.POST.get('valor_aula_experimental') or '').replace(',', '.').strip()
+        if acao == "toggle_campanha_gratuita":
+            campanha_ativa = (
+                request.POST.get(
+                    "campanha_gratuita_ativa"
+                )
+                == "on"
+            )
+
+            configuracao.campanha_gratuita_ativa = (
+                campanha_ativa
+            )
+
+            configuracao.save(
+                update_fields=[
+                    "campanha_gratuita_ativa",
+                    "atualizado_em",
+                ]
+            )
+
+            messages.success(
+                request,
+                "Campanha gratuita atualizada com sucesso.",
+            )
+
+        elif acao == "atualizar_valor":
+            valor_str = (
+                request.POST.get(
+                    "valor_aula_experimental",
+                    "",
+                )
+                .replace(",", ".")
+                .strip()
+            )
+
             try:
                 novo_valor = Decimal(valor_str)
-                if novo_valor >= 0:
-                    configuracao.valor_aula_experimental = novo_valor
-                    configuracao.save(update_fields=['valor_aula_experimental'])
-            except (InvalidOperation, TypeError):
-                pass
+
+                if novo_valor < 0:
+                    raise InvalidOperation
+
+                configuracao.valor_aula_experimental = (
+                    novo_valor
+                )
+
+                configuracao.save(
+                    update_fields=[
+                        "valor_aula_experimental",
+                        "atualizado_em",
+                    ]
+                )
+
+                messages.success(
+                    request,
+                    "Valor atualizado com sucesso.",
+                )
+
+            except (
+                InvalidOperation,
+                TypeError,
+                ValueError,
+            ):
+                messages.error(
+                    request,
+                    "Informe um valor válido.",
+                )
+
+        elif acao == "atualizar_turmas_gratuitas":
+            ids_turmas = request.POST.getlist(
+                "turmas_gratuitas"
+            )
+
+            turmas_selecionadas = turmas_disponiveis.filter(
+                id__in=ids_turmas
+            )
+
+            configuracao.turmas_gratuitas.set(
+                turmas_selecionadas
+            )
+
+            messages.success(
+                request,
+                "Turmas gratuitas atualizadas com sucesso.",
+            )
 
         query_params = {}
-        if request.POST.get('tipo'):
-            query_params['tipo'] = request.POST.get('tipo')
-        if request.POST.get('mes'):
-            query_params['mes'] = request.POST.get('mes')
-        if request.POST.get('semana'):
-            query_params['semana'] = request.POST.get('semana')
 
-        url = reverse('admin_dashboard:agendamentos_list')
+        if request.POST.get("tipo"):
+            query_params["tipo"] = request.POST.get(
+                "tipo"
+            )
+
+        if request.POST.get("mes"):
+            query_params["mes"] = request.POST.get(
+                "mes"
+            )
+
+        if request.POST.get("semana"):
+            query_params["semana"] = request.POST.get(
+                "semana"
+            )
+
+        url = reverse(
+            "admin_dashboard:agendamentos_list"
+        )
+
         if query_params:
-            url += '?' + urlencode(query_params)
+            url += "?" + urlencode(query_params)
+
         return redirect(url)
 
     hoje = date.today()
-    tipo = request.GET.get('tipo', 'proximos')
-    mes = request.GET.get('mes', '')
-    semana = request.GET.get('semana', '')
+
+    tipo = request.GET.get(
+        "tipo",
+        "proximos",
+    )
+
+    mes = request.GET.get(
+        "mes",
+        "",
+    )
+
+    semana = request.GET.get(
+        "semana",
+        "",
+    )
 
     agendamentos = Agendamento.objects.all()
 
-    if tipo == 'antigos':
-        agendamentos = agendamentos.filter(data__lt=hoje)
+    if tipo == "antigos":
+        agendamentos = agendamentos.filter(
+            data__lt=hoje,
+        )
     else:
-        tipo = 'proximos'
-        agendamentos = agendamentos.filter(data__gte=hoje)
+        tipo = "proximos"
+
+        agendamentos = agendamentos.filter(
+            data__gte=hoje,
+        )
 
     if mes:
         try:
-            ano, mes_num = mes.split('-')
-            agendamentos = agendamentos.filter(data__year=int(ano), data__month=int(mes_num))
+            ano, mes_num = mes.split("-")
+
+            agendamentos = agendamentos.filter(
+                data__year=int(ano),
+                data__month=int(mes_num),
+            )
+
         except ValueError:
             pass
 
     if semana:
         try:
-            ano_str, semana_str = semana.split('-W')
+            ano_str, semana_str = semana.split("-W")
+
             ano = int(ano_str)
             num_semana = int(semana_str)
-            inicio_semana = date.fromisocalendar(ano, num_semana, 1)
-            fim_semana = date.fromisocalendar(ano, num_semana, 7)
-            agendamentos = agendamentos.filter(data__gte=inicio_semana, data__lte=fim_semana)
-        except (ValueError, TypeError):
+
+            inicio_semana = date.fromisocalendar(
+                ano,
+                num_semana,
+                1,
+            )
+
+            fim_semana = date.fromisocalendar(
+                ano,
+                num_semana,
+                7,
+            )
+
+            agendamentos = agendamentos.filter(
+                data__gte=inicio_semana,
+                data__lte=fim_semana,
+            )
+
+        except (
+            ValueError,
+            TypeError,
+        ):
             pass
 
-    agendamentos = agendamentos.order_by('data', 'horario')
-    meses_disponiveis = Agendamento.objects.dates('data', 'month', order='DESC')
+    agendamentos = agendamentos.order_by(
+        "data",
+        "horario",
+    )
+
+    meses_disponiveis = Agendamento.objects.dates(
+        "data",
+        "month",
+        order="DESC",
+    )
 
     total_geral = Agendamento.objects.count()
-    total_proximos = Agendamento.objects.filter(data__gte=hoje).count()
-    total_antigos = Agendamento.objects.filter(data__lt=hoje).count()
+
+    total_proximos = Agendamento.objects.filter(
+        data__gte=hoje,
+    ).count()
+
+    total_antigos = Agendamento.objects.filter(
+        data__lt=hoje,
+    ).count()
+
+    turmas_gratuitas_ids = set(
+        configuracao.turmas_gratuitas.values_list(
+            "id",
+            flat=True,
+        )
+    )
 
     context = {
-        'agendamentos': agendamentos,
-        'tipo': tipo,
-        'mes': mes,
-        'semana': semana,
-        'hoje': hoje,
-        'meses_disponiveis': meses_disponiveis,
-        'total_geral': total_geral,
-        'total_proximos': total_proximos,
-        'total_antigos': total_antigos,
-        'configuracao': configuracao,
+        "agendamentos": agendamentos,
+        "tipo": tipo,
+        "mes": mes,
+        "semana": semana,
+        "hoje": hoje,
+        "meses_disponiveis": meses_disponiveis,
+        "total_geral": total_geral,
+        "total_proximos": total_proximos,
+        "total_antigos": total_antigos,
+        "configuracao": configuracao,
+        "turmas_disponiveis": turmas_disponiveis,
+        "turmas_gratuitas_ids": turmas_gratuitas_ids,
     }
 
-    return render(request, 'admin_dashboard/agendamentos/list.html', context)
+    return render(
+        request,
+        "admin_dashboard/agendamentos/list.html",
+        context,
+    )
+
+
+@login_required
+def agendamento_detalhes(request, pk):
+    """Exibe os detalhes de um agendamento."""
+
+    if not request.user.is_staff:
+        return redirect("home")
+
+    agendamento = get_object_or_404(
+        Agendamento,
+        pk=pk,
+    )
+
+    if (
+        request.method == "POST"
+        and request.POST.get("acao")
+        == "liberar_gratuita"
+    ):
+        liberar_gratuita(agendamento)
+
+        messages.success(
+            request,
+            (
+                "Aula liberada como gratuita e evento "
+                "criado na agenda."
+            ),
+        )
+
+        return redirect(
+            "admin_dashboard:agendamento_detalhes",
+            pk=agendamento.pk,
+        )
+
+    return render(
+        request,
+        "admin_dashboard/agendamentos/detalhes.html",
+        {
+            "agendamento": agendamento,
+        },
+    )
 
 @login_required
 def agendamento_detalhes(request, pk):

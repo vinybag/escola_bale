@@ -8,120 +8,589 @@
         form[method="get"] {
             grid-template-columns: 1fr !important;
         }
+
+        .config-grid {
+            grid-template-columns: 1fr !important;
+        }
     }
 
     .agendamentos-cards {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        grid-template-columns: repeat(
+            auto-fill,
+            minmax(320px, 1fr)
+        );
         gap: 1rem;
+    }
+
+    .turmas-select {
+        min-height: 180px;
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; gap: 1rem; flex-wrap: wrap;">
+<div
+    class="page-header"
+    style="
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        gap: 1rem;
+        flex-wrap: wrap;
+    "
+>
     <div>
-        <h2 style="color: #4a235f; margin-bottom: 0.35rem;">Agendamentos - Aula Experimental</h2>
+        <h2 style="color: #4a235f; margin-bottom: 0.35rem;">
+            Agendamentos - Aula Experimental
+        </h2>
+
         <p style="color: #6c757d; margin: 0;">
-            {{ agendamentos.count }} agendamento{{ agendamentos.count|pluralize:"s" }} encontrado{{ agendamentos.count|pluralize:"s" }}
+            {{ agendamentos.count }}
+            agendamento{{ agendamentos.count|pluralize:"s" }}
+            encontrado{{ agendamentos.count|pluralize:"s" }}
         </p>
     </div>
 </div>
 
-<!-- Configurações da aula experimental -->
-<div style="background: linear-gradient(135deg, #ffffff 0%, #f3eef6 100%); padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border: 1px solid #ece3f2; display: grid; gap: 1.25rem;">
-
-    <form method="post" style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
+<!-- Configurações -->
+<div
+    style="
+        background: linear-gradient(
+            135deg,
+            #ffffff 0%,
+            #f3eef6 100%
+        );
+        padding: 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        border: 1px solid #ece3f2;
+        display: grid;
+        gap: 1.25rem;
+    "
+>
+    <!-- Liga/desliga campanha -->
+    <form method="post">
         {% csrf_token %}
-        <input type="hidden" name="acao" value="toggle_campanha_gratuita">
-        <input type="hidden" name="tipo" value="{{ tipo }}">
-        <input type="hidden" name="mes" value="{{ mes }}">
-        <input type="hidden" name="semana" value="{{ semana }}">
 
-        <div>
-            <div style="font-weight: 700; color: #4a235f; font-size: 1.05rem;">
-                Campanha de aula experimental gratuita
+        <input
+            type="hidden"
+            name="acao"
+            value="toggle_campanha_gratuita"
+        >
+
+        <input
+            type="hidden"
+            name="tipo"
+            value="{{ tipo }}"
+        >
+
+        <input
+            type="hidden"
+            name="mes"
+            value="{{ mes }}"
+        >
+
+        <input
+            type="hidden"
+            name="semana"
+            value="{{ semana }}"
+        >
+
+        <div
+            style="
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 1rem;
+                flex-wrap: wrap;
+            "
+        >
+            <div>
+                <div
+                    style="
+                        font-weight: 700;
+                        color: #4a235f;
+                        font-size: 1.05rem;
+                    "
+                >
+                    Campanha de aula experimental gratuita
+                </div>
+
+                <div
+                    style="
+                        color: #6c757d;
+                        font-size: 0.85rem;
+                        margin-top: 0.25rem;
+                    "
+                >
+                    {% if configuracao.campanha_gratuita_ativa %}
+                        Ativa.
+                        {% if configuracao.turmas_gratuitas.exists %}
+                            Apenas as turmas selecionadas abaixo
+                            são gratuitas.
+                        {% else %}
+                            Todas as turmas são gratuitas.
+                        {% endif %}
+                    {% else %}
+                        Inativa.
+                        Novos agendamentos vão para pagamento via PIX.
+                    {% endif %}
+                </div>
             </div>
-            <div style="color: #6c757d; font-size: 0.85rem; margin-top: 0.25rem;">
-                {% if configuracao.campanha_gratuita_ativa %}
-                    Ativa — novos agendamentos não geram cobrança.
-                {% else %}
-                    Inativa — novos agendamentos vão para pagamento via PIX.
-                {% endif %}
-            </div>
+
+            <label
+                style="
+                    position: relative;
+                    display: inline-block;
+                    width: 52px;
+                    height: 28px;
+                    cursor: pointer;
+                "
+            >
+                <input
+                    type="checkbox"
+                    name="campanha_gratuita_ativa"
+                    {% if configuracao.campanha_gratuita_ativa %}
+                        checked
+                    {% endif %}
+                    onchange="this.form.submit()"
+                    style="
+                        opacity: 0;
+                        width: 0;
+                        height: 0;
+                    "
+                >
+
+                <span
+                    style="
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        bottom: 0;
+                        background:
+                        {% if configuracao.campanha_gratuita_ativa %}
+                            #6b2d8f
+                        {% else %}
+                            #ccc
+                        {% endif %};
+                        border-radius: 34px;
+                        transition: 0.3s;
+                    "
+                ></span>
+
+                <span
+                    style="
+                        position: absolute;
+                        height: 22px;
+                        width: 22px;
+                        left:
+                        {% if configuracao.campanha_gratuita_ativa %}
+                            27px
+                        {% else %}
+                            3px
+                        {% endif %};
+                        top: 3px;
+                        background: white;
+                        border-radius: 50%;
+                        transition: 0.3s;
+                        box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+                    "
+                ></span>
+            </label>
         </div>
-
-        <label style="position: relative; display: inline-block; width: 52px; height: 28px; cursor: pointer;">
-            <input type="checkbox"
-                   name="campanha_gratuita_ativa"
-                   {% if configuracao.campanha_gratuita_ativa %}checked{% endif %}
-                   onchange="this.form.submit()"
-                   style="opacity: 0; width: 0; height: 0;">
-            <span style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: {% if configuracao.campanha_gratuita_ativa %}#6b2d8f{% else %}#ccc{% endif %}; border-radius: 34px; transition: 0.3s;"></span>
-            <span style="position: absolute; height: 22px; width: 22px; left: {% if configuracao.campanha_gratuita_ativa %}27px{% else %}3px{% endif %}; top: 3px; background: white; border-radius: 50%; transition: 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></span>
-        </label>
     </form>
 
-    <div style="border-top: 1px solid #ece3f2; padding-top: 1.25rem;">
-        <form method="post" style="display: flex; align-items: end; gap: 1rem; flex-wrap: wrap;">
+    <!-- Valor -->
+    <div
+        style="
+            border-top: 1px solid #ece3f2;
+            padding-top: 1.25rem;
+        "
+    >
+        <form
+            method="post"
+            style="
+                display: flex;
+                align-items: end;
+                gap: 1rem;
+                flex-wrap: wrap;
+            "
+        >
             {% csrf_token %}
-            <input type="hidden" name="acao" value="atualizar_valor">
-            <input type="hidden" name="tipo" value="{{ tipo }}">
-            <input type="hidden" name="mes" value="{{ mes }}">
-            <input type="hidden" name="semana" value="{{ semana }}">
+
+            <input
+                type="hidden"
+                name="acao"
+                value="atualizar_valor"
+            >
+
+            <input
+                type="hidden"
+                name="tipo"
+                value="{{ tipo }}"
+            >
+
+            <input
+                type="hidden"
+                name="mes"
+                value="{{ mes }}"
+            >
+
+            <input
+                type="hidden"
+                name="semana"
+                value="{{ semana }}"
+            >
 
             <div>
-                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #4a235f;">
+                <label
+                    style="
+                        display: block;
+                        margin-bottom: 0.5rem;
+                        font-weight: 600;
+                        color: #4a235f;
+                    "
+                >
                     Valor da aula experimental (R$)
                 </label>
-                <input type="number" step="0.01" min="0" name="valor_aula_experimental"
-                       value="{{ configuracao.valor_aula_experimental }}"
-                       style="width: 160px; padding: 0.75rem; border: 1px solid #d8c7e3; border-radius: 6px; font-size: 1rem; background: #fff;">
+
+                <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    name="valor_aula_experimental"
+                    value="{{ configuracao.valor_aula_experimental }}"
+                    style="
+                        width: 160px;
+                        padding: 0.75rem;
+                        border: 1px solid #d8c7e3;
+                        border-radius: 6px;
+                        font-size: 1rem;
+                        background: #fff;
+                    "
+                >
             </div>
 
-            <button type="submit"
-                    style="padding: 0.75rem 1.5rem; background: #6b2d8f; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+            <button
+                type="submit"
+                style="
+                    padding: 0.75rem 1.5rem;
+                    background: #6b2d8f;
+                    color: white;
+                    border: none;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-weight: 600;
+                "
+            >
                 Salvar valor
             </button>
+        </form>
+    </div>
+
+    <!-- Turmas gratuitas -->
+    <div
+        style="
+            border-top: 1px solid #ece3f2;
+            padding-top: 1.25rem;
+        "
+    >
+        <form method="post">
+            {% csrf_token %}
+
+            <input
+                type="hidden"
+                name="acao"
+                value="atualizar_turmas_gratuitas"
+            >
+
+            <input
+                type="hidden"
+                name="tipo"
+                value="{{ tipo }}"
+            >
+
+            <input
+                type="hidden"
+                name="mes"
+                value="{{ mes }}"
+            >
+
+            <input
+                type="hidden"
+                name="semana"
+                value="{{ semana }}"
+            >
+
+            <label
+                style="
+                    display: block;
+                    margin-bottom: 0.5rem;
+                    font-weight: 600;
+                    color: #4a235f;
+                "
+            >
+                Turmas participantes da campanha gratuita
+            </label>
+
+            <p
+                style="
+                    color: #6c757d;
+                    font-size: 0.85rem;
+                    margin-top: 0;
+                "
+            >
+                Se nenhuma turma for selecionada, todas as turmas
+                ficarão gratuitas enquanto a campanha estiver ativa.
+            </p>
+
+            <select
+                name="turmas_gratuitas"
+                multiple
+                class="turmas-select"
+                style="
+                    width: 100%;
+                    max-width: 700px;
+                    padding: 0.75rem;
+                    border: 1px solid #d8c7e3;
+                    border-radius: 6px;
+                    font-size: 1rem;
+                    background: #fff;
+                "
+            >
+                {% for turma in turmas_disponiveis %}
+                    <option
+                        value="{{ turma.id }}"
+                        {% if turma.id in turmas_gratuitas_ids %}
+                            selected
+                        {% endif %}
+                    >
+                        {{ turma.nome }}
+                        {% if turma.dia_semana %}
+                            — {{ turma.get_dia_semana_display }}
+                        {% endif %}
+                        {% if turma.horario %}
+                            às {{ turma.horario|time:"H:i" }}
+                        {% endif %}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <div style="margin-top: 1rem;">
+                <button
+                    type="submit"
+                    style="
+                        padding: 0.75rem 1.5rem;
+                        background: #6b2d8f;
+                        color: white;
+                        border: none;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-weight: 600;
+                    "
+                >
+                    Salvar turmas gratuitas
+                </button>
+            </div>
         </form>
     </div>
 </div>
 
 <!-- Cards de resumo -->
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
-    <div style="background: linear-gradient(135deg, #ffffff 0%, #f3eef6 100%); padding: 1.5rem; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-top: 3px solid #6b2d8f;">
-        <div style="font-size: 0.9rem; color: #777; margin-bottom: 0.5rem;">Total geral</div>
-        <div style="font-size: 2rem; font-weight: bold; color: #4a235f;">{{ total_geral }}</div>
+<div
+    style="
+        display: grid;
+        grid-template-columns:
+            repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    "
+>
+    <div
+        style="
+            background: linear-gradient(
+                135deg,
+                #ffffff 0%,
+                #f3eef6 100%
+            );
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border-top: 3px solid #6b2d8f;
+        "
+    >
+        <div style="font-size: 0.9rem; color: #777;">
+            Total geral
+        </div>
+
+        <div
+            style="
+                font-size: 2rem;
+                font-weight: bold;
+                color: #4a235f;
+            "
+        >
+            {{ total_geral }}
+        </div>
     </div>
 
-    <div style="background: linear-gradient(135deg, #ffffff 0%, #f3eef6 100%); padding: 1.5rem; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-top: 3px solid #8e44ad;">
-        <div style="font-size: 0.9rem; color: #777; margin-bottom: 0.5rem;">Próximos</div>
-        <div style="font-size: 2rem; font-weight: bold; color: #6b2d8f;">{{ total_proximos }}</div>
+    <div
+        style="
+            background: linear-gradient(
+                135deg,
+                #ffffff 0%,
+                #f3eef6 100%
+            );
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border-top: 3px solid #8e44ad;
+        "
+    >
+        <div style="font-size: 0.9rem; color: #777;">
+            Próximos
+        </div>
+
+        <div
+            style="
+                font-size: 2rem;
+                font-weight: bold;
+                color: #6b2d8f;
+            "
+        >
+            {{ total_proximos }}
+        </div>
     </div>
 
-    <div style="background: linear-gradient(135deg, #ffffff 0%, #f7f4f8 100%); padding: 1.5rem; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-top: 3px solid #9b7bb0;">
-        <div style="font-size: 0.9rem; color: #777; margin-bottom: 0.5rem;">Antigos</div>
-        <div style="font-size: 2rem; font-weight: bold; color: #7a5c8f;">{{ total_antigos }}</div>
+    <div
+        style="
+            background: linear-gradient(
+                135deg,
+                #ffffff 0%,
+                #f7f4f8 100%
+            );
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border-top: 3px solid #9b7bb0;
+        "
+    >
+        <div style="font-size: 0.9rem; color: #777;">
+            Antigos
+        </div>
+
+        <div
+            style="
+                font-size: 2rem;
+                font-weight: bold;
+                color: #7a5c8f;
+            "
+        >
+            {{ total_antigos }}
+        </div>
     </div>
 </div>
 
 <!-- Filtros -->
-<div style="background: white; padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border: 1px solid #ece3f2;">
-    <form method="get" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; align-items: end;">
+<div
+    style="
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        border: 1px solid #ece3f2;
+    "
+>
+    <form
+        method="get"
+        style="
+            display: grid;
+            grid-template-columns:
+                repeat(auto-fit, minmax(160px, 1fr));
+            gap: 1rem;
+            align-items: end;
+        "
+    >
         <div>
-            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #4a235f;">Tipo</label>
-            <select name="tipo" style="width: 100%; padding: 0.75rem; border: 1px solid #d8c7e3; border-radius: 6px; font-size: 1rem; background: #fff;">
-                <option value="proximos" {% if tipo == 'proximos' %}selected{% endif %}>Próximos</option>
-                <option value="antigos" {% if tipo == 'antigos' %}selected{% endif %}>Antigos</option>
+            <label
+                style="
+                    display: block;
+                    margin-bottom: 0.5rem;
+                    font-weight: 600;
+                    color: #4a235f;
+                "
+            >
+                Tipo
+            </label>
+
+            <select
+                name="tipo"
+                style="
+                    width: 100%;
+                    padding: 0.75rem;
+                    border: 1px solid #d8c7e3;
+                    border-radius: 6px;
+                    font-size: 1rem;
+                    background: #fff;
+                "
+            >
+                <option
+                    value="proximos"
+                    {% if tipo == "proximos" %}
+                        selected
+                    {% endif %}
+                >
+                    Próximos
+                </option>
+
+                <option
+                    value="antigos"
+                    {% if tipo == "antigos" %}
+                        selected
+                    {% endif %}
+                >
+                    Antigos
+                </option>
             </select>
         </div>
 
         <div>
-            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #4a235f;">Mês</label>
-            <select name="mes" style="width: 100%; padding: 0.75rem; border: 1px solid #d8c7e3; border-radius: 6px; font-size: 1rem; background: #fff;">
+            <label
+                style="
+                    display: block;
+                    margin-bottom: 0.5rem;
+                    font-weight: 600;
+                    color: #4a235f;
+                "
+            >
+                Mês
+            </label>
+
+            <select
+                name="mes"
+                style="
+                    width: 100%;
+                    padding: 0.75rem;
+                    border: 1px solid #d8c7e3;
+                    border-radius: 6px;
+                    font-size: 1rem;
+                    background: #fff;
+                "
+            >
                 <option value="">Todos</option>
+
                 {% for item in meses_disponiveis %}
-                    <option value="{{ item|date:'Y-m' }}" {% if mes == item|date:'Y-m' %}selected{% endif %}>
+                    <option
+                        value="{{ item|date:'Y-m' }}"
+                        {% if mes == item|date:'Y-m' %}
+                            selected
+                        {% endif %}
+                    >
                         {{ item|date:"m/Y" }}
                     </option>
                 {% endfor %}
@@ -129,20 +598,70 @@
         </div>
 
         <div>
-            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #4a235f;">Semana</label>
-            <input type="week"
-                   name="semana"
-                   value="{{ semana }}"
-                   style="width: 100%; padding: 0.75rem; border: 1px solid #d8c7e3; border-radius: 6px; font-size: 1rem; background: #fff;">
+            <label
+                style="
+                    display: block;
+                    margin-bottom: 0.5rem;
+                    font-weight: 600;
+                    color: #4a235f;
+                "
+            >
+                Semana
+            </label>
+
+            <input
+                type="week"
+                name="semana"
+                value="{{ semana }}"
+                style="
+                    width: 100%;
+                    padding: 0.75rem;
+                    border: 1px solid #d8c7e3;
+                    border-radius: 6px;
+                    font-size: 1rem;
+                    background: #fff;
+                "
+            >
         </div>
 
-        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-            <button type="submit"
-                    style="flex: 1; min-width: 100px; padding: 0.75rem 1.5rem; background: #6b2d8f; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+        <div
+            style="
+                display: flex;
+                gap: 0.5rem;
+                flex-wrap: wrap;
+            "
+        >
+            <button
+                type="submit"
+                style="
+                    flex: 1;
+                    min-width: 100px;
+                    padding: 0.75rem 1.5rem;
+                    background: #6b2d8f;
+                    color: white;
+                    border: none;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-weight: 600;
+                "
+            >
                 Filtrar
             </button>
-            <a href="{% url 'admin_dashboard:agendamentos_list' %}"
-               style="flex: 1; min-width: 100px; text-align: center; padding: 0.75rem 1.5rem; background: #f3f3f3; color: #444; border: 1px solid #ddd; border-radius: 6px; text-decoration: none;">
+
+            <a
+                href="{% url 'admin_dashboard:agendamentos_list' %}"
+                style="
+                    flex: 1;
+                    min-width: 100px;
+                    text-align: center;
+                    padding: 0.75rem 1.5rem;
+                    background: #f3f3f3;
+                    color: #444;
+                    border: 1px solid #ddd;
+                    border-radius: 6px;
+                    text-decoration: none;
+                "
+            >
                 Limpar
             </a>
         </div>
@@ -152,117 +671,332 @@
 <!-- Cards de agendamentos -->
 <div class="agendamentos-cards">
     {% for agendamento in agendamentos %}
-        <div style="background: white; border-radius: 14px; padding: 1.25rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border: 1px solid #ece3f2;">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.75rem; margin-bottom: 0.85rem;">
-                <strong style="color: #35203f; font-size: 1.05rem;">{{ agendamento.nome_aluna }}</strong>
+        <div
+            style="
+                background: white;
+                border-radius: 14px;
+                padding: 1.25rem;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+                border: 1px solid #ece3f2;
+            "
+        >
+            <div
+                style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-start;
+                    gap: 0.75rem;
+                    margin-bottom: 0.85rem;
+                "
+            >
+                <strong
+                    style="
+                        color: #35203f;
+                        font-size: 1.05rem;
+                    "
+                >
+                    {{ agendamento.nome_aluna }}
+                </strong>
+
                 {% if agendamento.data >= hoje %}
-                    <span style="background: #efe7f5; color: #6b2d8f; padding: 0.3rem 0.7rem; border-radius: 20px; font-size: 0.78rem; font-weight: 600; white-space: nowrap;">
+                    <span
+                        style="
+                            background: #efe7f5;
+                            color: #6b2d8f;
+                            padding: 0.3rem 0.7rem;
+                            border-radius: 20px;
+                            font-size: 0.78rem;
+                            font-weight: 600;
+                            white-space: nowrap;
+                        "
+                    >
                         Próximo
                     </span>
                 {% else %}
-                    <span style="background: #f3edf7; color: #7a5c8f; padding: 0.3rem 0.7rem; border-radius: 20px; font-size: 0.78rem; font-weight: 600; white-space: nowrap;">
+                    <span
+                        style="
+                            background: #f3edf7;
+                            color: #7a5c8f;
+                            padding: 0.3rem 0.7rem;
+                            border-radius: 20px;
+                            font-size: 0.78rem;
+                            font-weight: 600;
+                            white-space: nowrap;
+                        "
+                    >
                         Antigo
                     </span>
                 {% endif %}
             </div>
 
-            <div style="display: grid; gap: 0.6rem; margin-bottom: 1rem;">
+            <div
+                style="
+                    display: grid;
+                    gap: 0.6rem;
+                    margin-bottom: 1rem;
+                "
+            >
                 <div>
-                    <div style="font-size: 0.72rem; font-weight: 700; color: #6b2d8f; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 0.15rem;">
+                    <div
+                        style="
+                            font-size: 0.72rem;
+                            font-weight: 700;
+                            color: #6b2d8f;
+                            text-transform: uppercase;
+                            margin-bottom: 0.15rem;
+                        "
+                    >
                         Turma
                     </div>
-                    <div style="color: #444;">{{ agendamento.aula.nome|default:"—" }}</div>
+
+                    <div style="color: #444;">
+                        {{ agendamento.aula.nome|default:"—" }}
+                    </div>
                 </div>
 
                 <div>
-                    <div style="font-size: 0.72rem; font-weight: 700; color: #6b2d8f; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 0.15rem;">
+                    <div
+                        style="
+                            font-size: 0.72rem;
+                            font-weight: 700;
+                            color: #6b2d8f;
+                            text-transform: uppercase;
+                            margin-bottom: 0.15rem;
+                        "
+                    >
                         Responsável
                     </div>
-                    <div style="color: #444;">{{ agendamento.nome_responsavel }}</div>
+
+                    <div style="color: #444;">
+                        {{ agendamento.nome_responsavel }}
+                    </div>
                 </div>
 
                 <div>
-                    <div style="font-size: 0.72rem; font-weight: 700; color: #6b2d8f; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 0.15rem;">
-                        Whatsapp
+                    <div
+                        style="
+                            font-size: 0.72rem;
+                            font-weight: 700;
+                            color: #6b2d8f;
+                            text-transform: uppercase;
+                            margin-bottom: 0.15rem;
+                        "
+                    >
+                        WhatsApp
                     </div>
-                    <a href="https://wa.me/55{{ agendamento.telefone|cut:' '|cut:'('|cut:')'|cut:'-'|cut:'+' }}"
-                       target="_blank"
-                       rel="noopener noreferrer"
-                       style="color: #6b2d8f; text-decoration: none; font-weight: 500;">
+
+                    <a
+                        href="https://wa.me/55{{ agendamento.telefone|cut:' '|cut:'('|cut:')'|cut:'-'|cut:'+' }}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style="
+                            color: #6b2d8f;
+                            text-decoration: none;
+                            font-weight: 500;
+                        "
+                    >
                         {{ agendamento.telefone }}
                     </a>
                 </div>
 
-                <div style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
+                <div
+                    style="
+                        display: flex;
+                        gap: 1.5rem;
+                        flex-wrap: wrap;
+                    "
+                >
                     <div>
-                        <div style="font-size: 0.72rem; font-weight: 700; color: #6b2d8f; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 0.15rem;">
+                        <div
+                            style="
+                                font-size: 0.72rem;
+                                font-weight: 700;
+                                color: #6b2d8f;
+                                text-transform: uppercase;
+                                margin-bottom: 0.15rem;
+                            "
+                        >
                             Idade
                         </div>
-                        <div style="color: #444;">{{ agendamento.idade_aluna }} anos</div>
+
+                        <div style="color: #444;">
+                            {{ agendamento.idade_aluna }} anos
+                        </div>
                     </div>
 
                     <div>
-                        <div style="font-size: 0.72rem; font-weight: 700; color: #6b2d8f; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 0.15rem;">
+                        <div
+                            style="
+                                font-size: 0.72rem;
+                                font-weight: 700;
+                                color: #6b2d8f;
+                                text-transform: uppercase;
+                                margin-bottom: 0.15rem;
+                            "
+                        >
                             Data e horário
                         </div>
+
                         <div style="color: #444;">
-                            {{ agendamento.data|date:"d/m/Y" }} às {{ agendamento.horario|time:"H:i" }}
+                            {{ agendamento.data|date:"d/m/Y" }}
+                            às
+                            {{ agendamento.horario|time:"H:i" }}
                         </div>
                     </div>
                 </div>
 
-                <div style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
+                <div
+                    style="
+                        display: flex;
+                        gap: 1.5rem;
+                        flex-wrap: wrap;
+                    "
+                >
                     <div>
-                        <div style="font-size: 0.72rem; font-weight: 700; color: #6b2d8f; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 0.15rem;">
+                        <div
+                            style="
+                                font-size: 0.72rem;
+                                font-weight: 700;
+                                color: #6b2d8f;
+                                text-transform: uppercase;
+                                margin-bottom: 0.15rem;
+                            "
+                        >
                             Pagamento
                         </div>
+
                         <div style="color: #444;">
-                            {% if agendamento.status_pagamento == 'pago' %}
-                                <span style="color: #1d6b36; font-weight: 600;">Pago</span>
-                            {% elif agendamento.status_pagamento == 'gratuito' %}
-                                <span style="color: #6b2d8f; font-weight: 600;">Gratuito</span>
+                            {% if agendamento.status_pagamento == "pago" %}
+                                <span
+                                    style="
+                                        color: #1d6b36;
+                                        font-weight: 600;
+                                    "
+                                >
+                                    Pago
+                                </span>
+                            {% elif agendamento.status_pagamento == "gratuito" %}
+                                <span
+                                    style="
+                                        color: #6b2d8f;
+                                        font-weight: 600;
+                                    "
+                                >
+                                    Gratuito
+                                </span>
                             {% else %}
-                                <span style="color: #b71c1c; font-weight: 600;">Pendente</span>
+                                <span
+                                    style="
+                                        color: #b71c1c;
+                                        font-weight: 600;
+                                    "
+                                >
+                                    Pendente
+                                </span>
                             {% endif %}
                         </div>
                     </div>
 
                     <div>
-                        <div style="font-size: 0.72rem; font-weight: 700; color: #6b2d8f; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 0.15rem;">
+                        <div
+                            style="
+                                font-size: 0.72rem;
+                                font-weight: 700;
+                                color: #6b2d8f;
+                                text-transform: uppercase;
+                                margin-bottom: 0.15rem;
+                            "
+                        >
                             Valor
                         </div>
-                        <div style="color: #444;">R$ {{ agendamento.valor|floatformat:2 }}</div>
+
+                        <div style="color: #444;">
+                            R$ {{ agendamento.valor|floatformat:2 }}
+                        </div>
                     </div>
                 </div>
 
                 <div>
-                    <div style="font-size: 0.72rem; font-weight: 700; color: #6b2d8f; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 0.15rem;">
+                    <div
+                        style="
+                            font-size: 0.72rem;
+                            font-weight: 700;
+                            color: #6b2d8f;
+                            text-transform: uppercase;
+                            margin-bottom: 0.15rem;
+                        "
+                    >
                         Criado em
                     </div>
-                    <div style="color: #444;">{{ agendamento.criado_em|date:"d/m/Y H:i" }}</div>
+
+                    <div style="color: #444;">
+                        {{ agendamento.criado_em|date:"d/m/Y H:i" }}
+                    </div>
                 </div>
             </div>
 
-            <div style="display: flex; justify-content: flex-end; align-items: center; gap: 1rem; border-top: 1px solid #eee7f3; padding-top: 0.85rem;">
-                <a href="{% url 'admin_dashboard:agendamento_detalhes' agendamento.pk %}"
-                   style="color: #6b2d8f; text-decoration: none; font-weight: 600;">
+            <div
+                style="
+                    display: flex;
+                    justify-content: flex-end;
+                    align-items: center;
+                    gap: 1rem;
+                    border-top: 1px solid #eee7f3;
+                    padding-top: 0.85rem;
+                "
+            >
+                <a
+                    href="{% url 'admin_dashboard:agendamento_detalhes' agendamento.pk %}"
+                    style="
+                        color: #6b2d8f;
+                        text-decoration: none;
+                        font-weight: 600;
+                    "
+                >
                     Ver
                 </a>
-                <form method="post"
-                      action="{% url 'admin_dashboard:agendamento_excluir' agendamento.pk %}"
-                      style="display: inline-block;"
-                      onsubmit="return confirm('Tem certeza que deseja excluir o agendamento de {{ agendamento.nome_aluna }}?');">
+
+                <form
+                    method="post"
+                    action="{% url 'admin_dashboard:agendamento_excluir' agendamento.pk %}"
+                    style="display: inline-block;"
+                    onsubmit="return confirm(
+                        'Tem certeza que deseja excluir o agendamento de {{ agendamento.nome_aluna }}?'
+                    );"
+                >
                     {% csrf_token %}
-                    <button type="submit"
-                            style="background: none; border: none; color: #8a6a9f; cursor: pointer; font-weight: 600; padding: 0;">
+
+                    <button
+                        type="submit"
+                        style="
+                            background: none;
+                            border: none;
+                            color: #8a6a9f;
+                            cursor: pointer;
+                            font-weight: 600;
+                            padding: 0;
+                        "
+                    >
                         Excluir
                     </button>
                 </form>
             </div>
         </div>
     {% empty %}
-        <div style="background: white; border-radius: 14px; padding: 2rem; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border: 1px solid #ece3f2; grid-column: 1 / -1;">
-            <p style="margin: 0; color: #8a8a8a;">Nenhum agendamento encontrado.</p>
+        <div
+            style="
+                background: white;
+                border-radius: 14px;
+                padding: 2rem;
+                text-align: center;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+                border: 1px solid #ece3f2;
+                grid-column: 1 / -1;
+            "
+        >
+            <p style="margin: 0; color: #8a8a8a;">
+                Nenhum agendamento encontrado.
+            </p>
         </div>
     {% endfor %}
 </div>
