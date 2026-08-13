@@ -14,7 +14,7 @@
     ">
 
         <h1 style="
-            color: #2c3e50;
+            color: #4a235f;
             margin-bottom: 0.5rem;
             font-size: 1.75rem;
         ">
@@ -22,7 +22,7 @@
         </h1>
 
         <p style="
-            color: #666;
+            color: #6c757d;
             margin-bottom: 1.5rem;
         ">
             Preencha os dados abaixo para agendar sua aula experimental.
@@ -30,26 +30,27 @@
 
         {% if erro %}
         <div style="
-            background: #f8d7da;
-            color: #721c24;
+            background: #f8e8ee;
+            color: #7a304c;
             padding: 1rem;
             border-radius: 5px;
             margin-bottom: 1.5rem;
-            border-left: 4px solid #dc3545;
+            border-left: 4px solid #b07a84;
         ">
             {{ erro }}
         </div>
         {% endif %}
 
+        <!-- Aviso da campanha -->
         {% if configuracao.campanha_gratuita_ativa %}
             {% if configuracao.turmas_gratuitas.exists %}
                 <div style="
-                    background: #fff3cd;
-                    color: #856404;
+                    background: #f7eff8;
+                    color: #5d3a6e;
                     padding: 1rem;
                     border-radius: 5px;
                     margin-bottom: 1.5rem;
-                    border-left: 4px solid #ffc107;
+                    border-left: 4px solid #8e44ad;
                 ">
                     <strong>
                         Campanha de aulas experimentais gratuitas!
@@ -63,12 +64,12 @@
                 </div>
             {% else %}
                 <div style="
-                    background: #d4edda;
-                    color: #155724;
+                    background: #f0eaf4;
+                    color: #4a235f;
                     padding: 1rem;
                     border-radius: 5px;
                     margin-bottom: 1.5rem;
-                    border-left: 4px solid #28a745;
+                    border-left: 4px solid #6b2d8f;
                 ">
                     <strong>
                         Campanha de aulas experimentais gratuitas ativa!
@@ -79,12 +80,12 @@
             {% endif %}
         {% else %}
             <div style="
-                background: #e7f3ff;
-                color: #084298;
+                background: #f3eef6;
+                color: #4a235f;
                 padding: 1rem;
                 border-radius: 5px;
                 margin-bottom: 1.5rem;
-                border-left: 4px solid #0d6efd;
+                border-left: 4px solid #b07a84;
             ">
                 <strong>
                     Aula experimental no valor de
@@ -101,6 +102,7 @@
 
             <div style="display: grid; gap: 1.5rem;">
 
+                <!-- Responsável e aluna -->
                 <div style="
                     display: grid;
                     grid-template-columns: 1fr 1fr;
@@ -123,7 +125,7 @@
                             style="
                                 width: 100%;
                                 padding: 0.75rem;
-                                border: 1px solid #ddd;
+                                border: 1px solid #d8c7e3;
                                 border-radius: 5px;
                                 font-size: 1rem;
                             "
@@ -147,7 +149,7 @@
                             style="
                                 width: 100%;
                                 padding: 0.75rem;
-                                border: 1px solid #ddd;
+                                border: 1px solid #d8c7e3;
                                 border-radius: 5px;
                                 font-size: 1rem;
                             "
@@ -155,6 +157,7 @@
                     </div>
                 </div>
 
+                <!-- Idade e telefone -->
                 <div style="
                     display: grid;
                     grid-template-columns: 1fr 1fr;
@@ -177,7 +180,7 @@
                             style="
                                 width: 100%;
                                 padding: 0.75rem;
-                                border: 1px solid #ddd;
+                                border: 1px solid #d8c7e3;
                                 border-radius: 5px;
                                 font-size: 1rem;
                             "
@@ -202,7 +205,7 @@
                             style="
                                 width: 100%;
                                 padding: 0.75rem;
-                                border: 1px solid #ddd;
+                                border: 1px solid #d8c7e3;
                                 border-radius: 5px;
                                 font-size: 1rem;
                             "
@@ -210,6 +213,7 @@
                     </div>
                 </div>
 
+                <!-- E-mail -->
                 <div>
                     <label style="
                         display: block;
@@ -227,14 +231,14 @@
                         style="
                             width: 100%;
                             padding: 0.75rem;
-                            border: 1px solid #ddd;
+                            border: 1px solid #d8c7e3;
                             border-radius: 5px;
                             font-size: 1rem;
                         "
                     >
                 </div>
 
-                <!-- Escolha da turma -->
+                <!-- Escolha da aula -->
                 <div>
                     <label style="
                         display: block;
@@ -254,7 +258,7 @@
                             style="
                                 width: 100%;
                                 padding: 0.75rem;
-                                border: 1px solid #ddd;
+                                border: 1px solid #d8c7e3;
                                 border-radius: 5px;
                                 font-size: 1rem;
                                 background: white;
@@ -291,7 +295,7 @@
                                 left: 0;
                                 right: 0;
                                 background: white;
-                                border: 1px solid #ddd;
+                                border: 1px solid #d8c7e3;
                                 border-radius: 5px;
                                 margin-top: 4px;
                                 max-height: 250px;
@@ -309,13 +313,13 @@
                                     style="
                                         padding: 0.75rem;
                                         cursor: pointer;
-                                        border-bottom: 1px solid #f0f0f0;
+                                        border-bottom: 1px solid #f0eaf4;
                                         transition: all 0.2s;
                                     "
                                 >
                                     <div style="
                                         font-weight: 500;
-                                        color: #2c3e50;
+                                        color: #4a235f;
                                         display: flex;
                                         justify-content: space-between;
                                         align-items: center;
@@ -328,7 +332,7 @@
                                         {% if item.gratuita %}
                                             <span style="
                                                 font-size: 0.7rem;
-                                                background: #28a745;
+                                                background: #8e44ad;
                                                 color: white;
                                                 padding: 0.15rem 0.5rem;
                                                 border-radius: 10px;
@@ -339,7 +343,7 @@
                                         {% else %}
                                             <span style="
                                                 font-size: 0.7rem;
-                                                background: #0d6efd;
+                                                background: #b07a84;
                                                 color: white;
                                                 padding: 0.15rem 0.5rem;
                                                 border-radius: 10px;
@@ -353,7 +357,7 @@
 
                                     <div style="
                                         font-size: 0.75rem;
-                                        color: #b07a84;
+                                        color: #9b7bb0;
                                     ">
                                         {% if item.turma.dia_semana %}
                                             {{ item.turma.get_dia_semana_display }}
@@ -384,7 +388,7 @@
                     >
                 </div>
 
-                <!-- Aviso após selecionar a turma -->
+                <!-- Aviso da turma selecionada -->
                 <div
                     id="aviso-turma-selecionada"
                     style="
@@ -414,7 +418,7 @@
                         style="
                             width: 100%;
                             padding: 0.75rem;
-                            border: 1px solid #ddd;
+                            border: 1px solid #d8c7e3;
                             border-radius: 5px;
                             font-size: 1rem;
                         "
@@ -426,7 +430,7 @@
                     <button
                         type="submit"
                         style="
-                            background: #b07a84;
+                            background: #6b2d8f;
                             color: white;
                             padding: 0.75rem 2rem;
                             border: none;
@@ -444,10 +448,11 @@
                             display: inline-block;
                             margin-left: 1rem;
                             padding: 0.75rem 1.5rem;
-                            background: #f5f5f5;
-                            color: #333;
+                            background: #f3eef6;
+                            color: #4a235f;
                             border-radius: 5px;
                             text-decoration: none;
+                            border: 1px solid #e4d7eb;
                         "
                     >
                         Cancelar
@@ -474,6 +479,7 @@ trigger.addEventListener('click', () => {
     const aberto = dropdown.style.display === 'block';
 
     dropdown.style.display = aberto ? 'none' : 'block';
+
     arrow.style.transform = aberto
         ? 'rotate(0deg)'
         : 'rotate(180deg)';
@@ -484,7 +490,7 @@ options.forEach(option => {
         const gratuita = option.dataset.gratuita === '1';
 
         selectedText.textContent = option.dataset.text;
-        selectedText.style.color = '#2c3e50';
+        selectedText.style.color = '#4a235f';
         hiddenInput.value = option.dataset.value;
 
         dropdown.style.display = 'none';
@@ -494,25 +500,25 @@ options.forEach(option => {
             item.style.background = 'white';
         });
 
-        option.style.background = '#faf8f9';
+        option.style.background = '#f7eff8';
         avisoTurma.style.display = 'block';
 
         if (gratuita) {
-            avisoTurma.style.background = '#d4edda';
-            avisoTurma.style.color = '#155724';
-            avisoTurma.style.borderLeft = '4px solid #28a745';
+            avisoTurma.style.background = '#f0eaf4';
+            avisoTurma.style.color = '#4a235f';
+            avisoTurma.style.borderLeft = '4px solid #8e44ad';
 
             avisoTurma.innerHTML =
-                'Esta turma participa da campanha de aula experimental '
+                '🎉 Esta turma participa da campanha de aula experimental '
                 + '<strong>gratuita</strong>. '
                 + 'Você não pagará nada por este agendamento.';
         } else {
-            avisoTurma.style.background = '#e7f3ff';
-            avisoTurma.style.color = '#084298';
-            avisoTurma.style.borderLeft = '4px solid #0d6efd';
+            avisoTurma.style.background = '#f3eef6';
+            avisoTurma.style.color = '#5d3a6e';
+            avisoTurma.style.borderLeft = '4px solid #b07a84';
 
             avisoTurma.innerHTML =
-                'Esta turma tem o valor de <strong>R$ '
+                '💳 Esta turma tem o valor de <strong>R$ '
                 + valorAula
                 + '</strong>. '
                 + 'O pagamento será realizado via PIX após o agendamento.';
