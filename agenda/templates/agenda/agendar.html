@@ -41,7 +41,6 @@
         </div>
         {% endif %}
 
-        <!-- Aviso da campanha -->
         {% if configuracao.campanha_gratuita_ativa %}
             {% if configuracao.turmas_gratuitas.exists %}
                 <div style="
@@ -102,7 +101,7 @@
 
             <div style="display: grid; gap: 1.5rem;">
 
-                <!-- Responsável e aluna -->
+                <!-- Nome do responsável e nome da aluna -->
                 <div style="
                     display: grid;
                     grid-template-columns: 1fr 1fr;
@@ -249,10 +248,8 @@
                         Escolha a aula
                     </label>
 
-                    <div
-                        id="custom-select"
-                        style="position: relative;"
-                    >
+                    <div id="custom-select" style="position: relative;">
+
                         <div
                             id="select-trigger"
                             style="
@@ -298,7 +295,7 @@
                                 border: 1px solid #dfc8c5;
                                 border-radius: 5px;
                                 margin-top: 4px;
-                                max-height: 250px;
+                                max-height: 300px;
                                 overflow-y: auto;
                                 z-index: 1000;
                                 box-shadow: 0 4px 12px rgba(0,0,0,0.15);
@@ -309,32 +306,55 @@
                                     class="select-option"
                                     data-value="{{ item.turma.id }}"
                                     data-gratuita="{{ item.gratuita|yesno:'1,0' }}"
-                                    data-text="{{ item.turma.nome }}{% if item.turma.dia_semana %} – {{ item.turma.get_dia_semana_display }}{% endif %}{% if item.turma.horario %} às {{ item.turma.horario|time:'H:i' }}{% endif %}{% if item.gratuita %} (Gratuita){% else %} (R$ {{ configuracao.valor_aula_experimental|floatformat:2 }}){% endif %}"
+                                    data-text="{{ item.turma.nome }}{% if item.turma.dia_semana %} — {{ item.turma.get_dia_semana_display }}{% endif %}{% if item.turma.horario %} às {{ item.turma.horario|time:'H:i' }}{% endif %}{% if item.gratuita %} (Gratuita){% else %} (R$ {{ configuracao.valor_aula_experimental|floatformat:2 }}){% endif %}"
                                     style="
-                                        padding: 0.75rem;
+                                        padding: 0.85rem;
                                         cursor: pointer;
                                         border-bottom: 1px solid #f5e9e5;
-                                        transition: all 0.2s;
+                                        transition: background 0.2s;
                                     "
                                 >
                                     <div style="
-                                        font-weight: 500;
-                                        color: #6f4a4f;
                                         display: flex;
                                         justify-content: space-between;
                                         align-items: center;
                                         gap: 0.5rem;
                                     ">
-                                        <span>
-                                            {{ item.turma.nome }}
-                                        </span>
+                                        <div>
+                                            <div style="
+                                                font-weight: 600;
+                                                color: #6f4a4f;
+                                            ">
+                                                {{ item.turma.nome }}
+                                            </div>
+
+                                            <div style="
+                                                margin-top: 0.25rem;
+                                                font-size: 0.85rem;
+                                                color: #a8787c;
+                                            ">
+                                                {% if item.turma.dia_semana %}
+                                                    {{ item.turma.get_dia_semana_display }}
+                                                {% endif %}
+
+                                                {% if item.turma.dia_semana and item.turma.horario %}
+                                                    —
+                                                {% endif %}
+
+                                                {% if item.turma.horario %}
+                                                    {{ item.turma.horario|time:"H:i" }}
+                                                {% else %}
+                                                    Horário a definir
+                                                {% endif %}
+                                            </div>
+                                        </div>
 
                                         {% if item.gratuita %}
                                             <span style="
                                                 font-size: 0.7rem;
                                                 background: #b07a84;
                                                 color: white;
-                                                padding: 0.15rem 0.5rem;
+                                                padding: 0.2rem 0.55rem;
                                                 border-radius: 10px;
                                                 white-space: nowrap;
                                             ">
@@ -345,7 +365,7 @@
                                                 font-size: 0.7rem;
                                                 background: #c58f94;
                                                 color: white;
-                                                padding: 0.15rem 0.5rem;
+                                                padding: 0.2rem 0.55rem;
                                                 border-radius: 10px;
                                                 white-space: nowrap;
                                             ">
@@ -354,27 +374,14 @@
                                             </span>
                                         {% endif %}
                                     </div>
-
-                                    <div style="
-                                        font-size: 0.75rem;
-                                        color: #a8787c;
-                                    ">
-                                        {% if item.turma.dia_semana %}
-                                            {{ item.turma.get_dia_semana_display }}
-                                        {% endif %}
-
-                                        {% if item.turma.dia_semana and item.turma.horario %}
-                                            às
-                                        {% endif %}
-
-                                        {% if item.turma.horario %}
-                                            {{ item.turma.horario|time:'H:i' }}
-                                        {% endif %}
-
-                                        {% if not item.turma.dia_semana and not item.turma.horario %}
-                                            Horário a definir
-                                        {% endif %}
-                                    </div>
+                                </div>
+                            {% empty %}
+                                <div style="
+                                    padding: 1rem;
+                                    color: #777;
+                                    text-align: center;
+                                ">
+                                    Nenhuma aula disponível para agendamento.
                                 </div>
                             {% endfor %}
                         </div>
@@ -399,7 +406,7 @@
                     "
                 ></div>
 
-                <!-- Data -->
+                <!-- Data da aula -->
                 <div>
                     <label style="
                         display: block;
@@ -473,7 +480,8 @@ const hiddenInput = document.getElementById('aula-selecionada');
 const arrow = document.getElementById('select-arrow');
 const avisoTurma = document.getElementById('aviso-turma-selecionada');
 
-const valorAula = "{{ configuracao.valor_aula_experimental|floatformat:'2' }}";
+const valorAula =
+    "{{ configuracao.valor_aula_experimental|floatformat:'2' }}";
 
 trigger.addEventListener('click', () => {
     const aberto = dropdown.style.display === 'block';
@@ -491,6 +499,7 @@ options.forEach(option => {
 
         selectedText.textContent = option.dataset.text;
         selectedText.style.color = '#6f4a4f';
+
         hiddenInput.value = option.dataset.value;
 
         dropdown.style.display = 'none';
@@ -501,6 +510,7 @@ options.forEach(option => {
         });
 
         option.style.background = '#f9eee8';
+
         avisoTurma.style.display = 'block';
 
         if (gratuita) {
@@ -509,8 +519,8 @@ options.forEach(option => {
             avisoTurma.style.borderLeft = '4px solid #b07a84';
 
             avisoTurma.innerHTML =
-                '🎉 Esta turma participa da campanha de aula experimental '
-                + '<strong>gratuita</strong>. '
+                'Esta turma participa da campanha de aula '
+                + 'experimental <strong>gratuita</strong>. '
                 + 'Você não pagará nada por este agendamento.';
         } else {
             avisoTurma.style.background = '#f9eee8';
@@ -518,10 +528,20 @@ options.forEach(option => {
             avisoTurma.style.borderLeft = '4px solid #c58f94';
 
             avisoTurma.innerHTML =
-                '💳 Esta turma tem o valor de <strong>R$ '
+                'Esta turma tem o valor de <strong>R$ '
                 + valorAula
                 + '</strong>. '
                 + 'O pagamento será realizado via PIX após o agendamento.';
+        }
+    });
+
+    option.addEventListener('mouseenter', () => {
+        option.style.background = '#f9eee8';
+    });
+
+    option.addEventListener('mouseleave', () => {
+        if (hiddenInput.value !== option.dataset.value) {
+            option.style.background = 'white';
         }
     });
 });
