@@ -41,6 +41,7 @@
         </div>
         {% endif %}
 
+        <!-- Avisos da campanha -->
         {% if configuracao.campanha_gratuita_ativa %}
             {% if configuracao.turmas_gratuitas.exists %}
                 <div style="
@@ -306,7 +307,7 @@
                                     class="select-option"
                                     data-value="{{ item.turma.id }}"
                                     data-gratuita="{{ item.gratuita|yesno:'1,0' }}"
-                                    data-text="{{ item.turma.nome }}{% if item.turma.dia_semana %} — {{ item.turma.get_dia_semana_display }}{% endif %}{% if item.turma.horario %} às {{ item.turma.horario|time:'H:i' }}{% endif %}{% if item.gratuita %} (Gratuita){% else %} (R$ {{ configuracao.valor_aula_experimental|floatformat:2 }}){% endif %}"
+                                    data-text="{{ item.turma.nome }}{% if item.turma.dia_semana %} — {{ item.turma.get_dia_semana_display }}{% endif %}{% if item.turma.horario %} — {{ item.turma.horario }}{% endif %}{% if item.gratuita %} (Gratuita){% else %} (R$ {{ configuracao.valor_aula_experimental|floatformat:2 }}){% endif %}"
                                     style="
                                         padding: 0.85rem;
                                         cursor: pointer;
@@ -342,7 +343,7 @@
                                                 {% endif %}
 
                                                 {% if item.turma.horario %}
-                                                    {{ item.turma.horario|time:"H:i" }}
+                                                    {{ item.turma.horario }}
                                                 {% else %}
                                                     Horário a definir
                                                 {% endif %}
@@ -519,7 +520,7 @@ options.forEach(option => {
             avisoTurma.style.borderLeft = '4px solid #b07a84';
 
             avisoTurma.innerHTML =
-                'Esta turma participa da campanha de aula '
+                '🎉 Esta turma participa da campanha de aula '
                 + 'experimental <strong>gratuita</strong>. '
                 + 'Você não pagará nada por este agendamento.';
         } else {
@@ -528,7 +529,7 @@ options.forEach(option => {
             avisoTurma.style.borderLeft = '4px solid #c58f94';
 
             avisoTurma.innerHTML =
-                'Esta turma tem o valor de <strong>R$ '
+                '💳 Esta turma tem o valor de <strong>R$ '
                 + valorAula
                 + '</strong>. '
                 + 'O pagamento será realizado via PIX após o agendamento.';
