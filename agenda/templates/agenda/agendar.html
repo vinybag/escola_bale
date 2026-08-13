@@ -14,7 +14,7 @@
     ">
 
         <h1 style="
-            color: #4a235f;
+            color: #6f4a4f;
             margin-bottom: 0.5rem;
             font-size: 1.75rem;
         ">
@@ -22,7 +22,7 @@
         </h1>
 
         <p style="
-            color: #6c757d;
+            color: #777;
             margin-bottom: 1.5rem;
         ">
             Preencha os dados abaixo para agendar sua aula experimental.
@@ -30,12 +30,12 @@
 
         {% if erro %}
         <div style="
-            background: #f8e8ee;
-            color: #7a304c;
+            background: #f8e8e8;
+            color: #8a4a4a;
             padding: 1rem;
             border-radius: 5px;
             margin-bottom: 1.5rem;
-            border-left: 4px solid #b07a84;
+            border-left: 4px solid #c58f94;
         ">
             {{ erro }}
         </div>
@@ -45,12 +45,12 @@
         {% if configuracao.campanha_gratuita_ativa %}
             {% if configuracao.turmas_gratuitas.exists %}
                 <div style="
-                    background: #f7eff8;
-                    color: #5d3a6e;
+                    background: #f9eee8;
+                    color: #805d52;
                     padding: 1rem;
                     border-radius: 5px;
                     margin-bottom: 1.5rem;
-                    border-left: 4px solid #8e44ad;
+                    border-left: 4px solid #c58f94;
                 ">
                     <strong>
                         Campanha de aulas experimentais gratuitas!
@@ -64,12 +64,12 @@
                 </div>
             {% else %}
                 <div style="
-                    background: #f0eaf4;
-                    color: #4a235f;
+                    background: #f5eee9;
+                    color: #76564f;
                     padding: 1rem;
                     border-radius: 5px;
                     margin-bottom: 1.5rem;
-                    border-left: 4px solid #6b2d8f;
+                    border-left: 4px solid #b07a84;
                 ">
                     <strong>
                         Campanha de aulas experimentais gratuitas ativa!
@@ -80,8 +80,8 @@
             {% endif %}
         {% else %}
             <div style="
-                background: #f3eef6;
-                color: #4a235f;
+                background: #f5eee9;
+                color: #76564f;
                 padding: 1rem;
                 border-radius: 5px;
                 margin-bottom: 1.5rem;
@@ -125,7 +125,7 @@
                             style="
                                 width: 100%;
                                 padding: 0.75rem;
-                                border: 1px solid #d8c7e3;
+                                border: 1px solid #dfc8c5;
                                 border-radius: 5px;
                                 font-size: 1rem;
                             "
@@ -149,7 +149,7 @@
                             style="
                                 width: 100%;
                                 padding: 0.75rem;
-                                border: 1px solid #d8c7e3;
+                                border: 1px solid #dfc8c5;
                                 border-radius: 5px;
                                 font-size: 1rem;
                             "
@@ -180,7 +180,7 @@
                             style="
                                 width: 100%;
                                 padding: 0.75rem;
-                                border: 1px solid #d8c7e3;
+                                border: 1px solid #dfc8c5;
                                 border-radius: 5px;
                                 font-size: 1rem;
                             "
@@ -205,7 +205,7 @@
                             style="
                                 width: 100%;
                                 padding: 0.75rem;
-                                border: 1px solid #d8c7e3;
+                                border: 1px solid #dfc8c5;
                                 border-radius: 5px;
                                 font-size: 1rem;
                             "
@@ -231,7 +231,7 @@
                         style="
                             width: 100%;
                             padding: 0.75rem;
-                            border: 1px solid #d8c7e3;
+                            border: 1px solid #dfc8c5;
                             border-radius: 5px;
                             font-size: 1rem;
                         "
@@ -258,7 +258,7 @@
                             style="
                                 width: 100%;
                                 padding: 0.75rem;
-                                border: 1px solid #d8c7e3;
+                                border: 1px solid #dfc8c5;
                                 border-radius: 5px;
                                 font-size: 1rem;
                                 background: white;
@@ -295,7 +295,7 @@
                                 left: 0;
                                 right: 0;
                                 background: white;
-                                border: 1px solid #d8c7e3;
+                                border: 1px solid #dfc8c5;
                                 border-radius: 5px;
                                 margin-top: 4px;
                                 max-height: 250px;
@@ -313,13 +313,13 @@
                                     style="
                                         padding: 0.75rem;
                                         cursor: pointer;
-                                        border-bottom: 1px solid #f0eaf4;
+                                        border-bottom: 1px solid #f5e9e5;
                                         transition: all 0.2s;
                                     "
                                 >
                                     <div style="
                                         font-weight: 500;
-                                        color: #4a235f;
+                                        color: #6f4a4f;
                                         display: flex;
                                         justify-content: space-between;
                                         align-items: center;
@@ -332,7 +332,7 @@
                                         {% if item.gratuita %}
                                             <span style="
                                                 font-size: 0.7rem;
-                                                background: #8e44ad;
+                                                background: #b07a84;
                                                 color: white;
                                                 padding: 0.15rem 0.5rem;
                                                 border-radius: 10px;
@@ -343,7 +343,7 @@
                                         {% else %}
                                             <span style="
                                                 font-size: 0.7rem;
-                                                background: #b07a84;
+                                                background: #c58f94;
                                                 color: white;
                                                 padding: 0.15rem 0.5rem;
                                                 border-radius: 10px;
@@ -357,7 +357,7 @@
 
                                     <div style="
                                         font-size: 0.75rem;
-                                        color: #9b7bb0;
+                                        color: #a8787c;
                                     ">
                                         {% if item.turma.dia_semana %}
                                             {{ item.turma.get_dia_semana_display }}
@@ -418,7 +418,7 @@
                         style="
                             width: 100%;
                             padding: 0.75rem;
-                            border: 1px solid #d8c7e3;
+                            border: 1px solid #dfc8c5;
                             border-radius: 5px;
                             font-size: 1rem;
                         "
@@ -430,7 +430,7 @@
                     <button
                         type="submit"
                         style="
-                            background: #6b2d8f;
+                            background: #b07a84;
                             color: white;
                             padding: 0.75rem 2rem;
                             border: none;
@@ -448,11 +448,11 @@
                             display: inline-block;
                             margin-left: 1rem;
                             padding: 0.75rem 1.5rem;
-                            background: #f3eef6;
-                            color: #4a235f;
+                            background: #f5eee9;
+                            color: #76564f;
                             border-radius: 5px;
                             text-decoration: none;
-                            border: 1px solid #e4d7eb;
+                            border: 1px solid #ead8d3;
                         "
                     >
                         Cancelar
@@ -490,7 +490,7 @@ options.forEach(option => {
         const gratuita = option.dataset.gratuita === '1';
 
         selectedText.textContent = option.dataset.text;
-        selectedText.style.color = '#4a235f';
+        selectedText.style.color = '#6f4a4f';
         hiddenInput.value = option.dataset.value;
 
         dropdown.style.display = 'none';
@@ -500,22 +500,22 @@ options.forEach(option => {
             item.style.background = 'white';
         });
 
-        option.style.background = '#f7eff8';
+        option.style.background = '#f9eee8';
         avisoTurma.style.display = 'block';
 
         if (gratuita) {
-            avisoTurma.style.background = '#f0eaf4';
-            avisoTurma.style.color = '#4a235f';
-            avisoTurma.style.borderLeft = '4px solid #8e44ad';
+            avisoTurma.style.background = '#f5eee9';
+            avisoTurma.style.color = '#76564f';
+            avisoTurma.style.borderLeft = '4px solid #b07a84';
 
             avisoTurma.innerHTML =
                 '🎉 Esta turma participa da campanha de aula experimental '
                 + '<strong>gratuita</strong>. '
                 + 'Você não pagará nada por este agendamento.';
         } else {
-            avisoTurma.style.background = '#f3eef6';
-            avisoTurma.style.color = '#5d3a6e';
-            avisoTurma.style.borderLeft = '4px solid #b07a84';
+            avisoTurma.style.background = '#f9eee8';
+            avisoTurma.style.color = '#805d52';
+            avisoTurma.style.borderLeft = '4px solid #c58f94';
 
             avisoTurma.innerHTML =
                 '💳 Esta turma tem o valor de <strong>R$ '
