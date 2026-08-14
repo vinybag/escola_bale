@@ -41,20 +41,165 @@ def dashboard(request):
 
     mes_atual = f"{meses_pt[mes]} {ano}"
 
-    total_alunas = 0
-    total_turmas = 0
-    total_recebido = Decimal("0.00")
-    mensalidades_pendentes = 0
-    mensalidades_atrasadas = 0
-    mensalidades_pagas = 0
-    total_a_receber = Decimal("0.00")
+    total_alunas = Aluna.objects.filter(
+        ativa=True,
+    ).count()
+
+    total_turmas = Turma.objects.filter(
+        ativa=True,
+    ).count()
+
+    mensalidades_mes = Mensalidade.objects.filter(
+        mes_referencia__month=mes,
+        mes_referencia__year=ano,
+    )
+
+    # Pagas
+    mensalidades_pagas_qs = mensalidades_mes.filter(
+        status="pago",
+    )
+
+    mensalidades_pagas = mensalidades_pagas_qs.count()
+
+    total_recebido = (
+        mensalidades_pagas_qs.aggregate(
+            total=Sum("valor"),
+        )["total"]
+        or Decimal("0.00")
+    )
+
+    # Pendentes ainda não vencidas
+    mensalidades_pendentes_qs = (
+        mensalidades_mes
+        .filter(
+            data_vencimento__gte=hoje,
+            data_pagamento__isnull=True,
+        )
+        .exclude(
+            status__in=[
+                "pago",
+                "cancelado",
+            ],
+        )
+    )
+
+    mensalidades_pendentes = (
+        mensalidades_pendentes_qs.count()
+    )
+
+    # Atrasadas
+    mensalidades_atrasadas_qs = (
+        mensalidades_mes
+        .filter(
+            data_vencimento__lt=hoje,
+            data_pagamento__isnull=True,
+        )
+        .exclude(
+            status__in=[
+                "pago",
+                "cancelado",
+            ],
+        )
+    )
+
+    mensalidades_atrasadas = (
+        mensalidades_atrasadas_qs.count()
+    )
+
+    # Todas as mensalidades em aberto
+    mensalidades_em_aberto_qs = (
+        mensalidades_mes
+        .filter(
+            data_pagamento__isnull=True,
+        )
+        .exclude(
+            status__in=[
+                "pago",
+                "cancelado",
+            ],
+        )
+    )
+
+    total_a_receber = (
+        mensalidades_pendentes_qs.aggregate(
+            total=Sum("valor"),
+        )["total"]
+        or Decimal("0.00")
+    )
+
+    # Não usamos Sum("valor_atualizado") porque esse valor
+    # provavelmente é uma property calculada no model.
     total_em_aberto = Decimal("0.00")
 
+    for mensalidade in mensalidades_em_aberto_qs:
+        try:
+            total_em_aberto += Decimal(
+                str(mensalidade.valor_atualizado)
+            )
+        except (
+            AttributeError,
+            TypeError,
+            ValueError,
+        ):
+            total_em_aberto += (
+                mensalidade.valor or Decimal("0.00")
+            )
+
+    # Faturamento dos últimos 6 meses
     faturamento_meses = []
     faturamento_valores = []
+
+    primeiro_dia_mes_atual = hoje.replace(day=1)
+
+    for i in range(5, -1, -1):
+        mes_calc = primeiro_dia_mes_atual
+
+        for _ in range(i):
+            mes_calc = (
+                mes_calc.replace(day=1)
+                - timedelta(days=1)
+            ).replace(day=1)
+
+        valor_mes = (
+            Mensalidade.objects
+            .filter(
+                mes_referencia__month=mes_calc.month,
+                mes_referencia__year=mes_calc.year,
+                status="pago",
+            )
+            .aggregate(
+                total=Sum("valor"),
+            )["total"]
+            or Decimal("0.00")
+        )
+
+        faturamento_meses.append(
+            f"{meses_pt[mes_calc.month][:3]}/{str(mes_calc.year)[2:]}"
+        )
+
+        faturamento_valores.append(
+            float(valor_mes)
+        )
+
+    # Alunas por turma
     turmas_labels = []
     turmas_valores = []
 
+    turmas = Turma.objects.filter(
+        ativa=True,
+    ).order_by("nome")
+
+    for turma in turmas:
+        total_alunas_turma = Aluna.objects.filter(
+            turmas=turma,
+            ativa=True,
+        ).count()
+
+        if total_alunas_turma > 0:
+            turmas_labels.append(turma.nome)
+            turmas_valores.append(total_alunas_turma)
+
+    # Dados do gráfico de status
     status_labels = [
         "Pagas",
         "Pendentes",
@@ -62,161 +207,10 @@ def dashboard(request):
     ]
 
     status_valores = [
-        0,
-        0,
-        0,
+        mensalidades_pagas,
+        mensalidades_pendentes,
+        mensalidades_atrasadas,
     ]
-
-    try:
-        total_alunas = Aluna.objects.filter(
-            ativa=True,
-        ).count()
-
-        total_turmas = Turma.objects.filter(
-            ativa=True,
-        ).count()
-
-        mensalidades_mes = Mensalidade.objects.filter(
-            mes_referencia__month=mes,
-            mes_referencia__year=ano,
-        )
-
-        # Mensalidades pagas no mês
-        mensalidades_pagas_qs = mensalidades_mes.filter(
-            status="pago",
-        )
-
-        mensalidades_pagas = mensalidades_pagas_qs.count()
-
-        total_recebido = (
-            mensalidades_pagas_qs.aggregate(
-                total=Sum("valor"),
-            )["total"]
-            or Decimal("0.00")
-        )
-
-        # Mensalidades ainda não pagas, mas que não venceram
-        mensalidades_pendentes_qs = (
-            mensalidades_mes
-            .filter(
-                data_pagamento__isnull=True,
-                data_vencimento__gte=hoje,
-            )
-            .exclude(
-                status__in=[
-                    "pago",
-                    "cancelado",
-                ],
-            )
-        )
-
-        mensalidades_pendentes = (
-            mensalidades_pendentes_qs.count()
-        )
-
-        # Mensalidades atrasadas:
-        # vencimento anterior a hoje, sem pagamento,
-        # e não canceladas nem marcadas como pagas
-        mensalidades_atrasadas_qs = (
-            mensalidades_mes
-            .filter(
-                data_vencimento__lt=hoje,
-                data_pagamento__isnull=True,
-            )
-            .exclude(
-                status__in=[
-                    "pago",
-                    "cancelado",
-                ],
-            )
-        )
-
-        mensalidades_atrasadas = (
-            mensalidades_atrasadas_qs.count()
-        )
-
-        # Total que ainda deve ser recebido,
-        # incluindo pendentes e atrasadas
-        mensalidades_em_aberto_qs = (
-            mensalidades_mes
-            .filter(
-                data_pagamento__isnull=True,
-            )
-            .exclude(
-                status__in=[
-                    "pago",
-                    "cancelado",
-                ],
-            )
-        )
-
-        total_a_receber = (
-            mensalidades_pendentes_qs.aggregate(
-                total=Sum("valor"),
-            )["total"]
-            or Decimal("0.00")
-        )
-
-        total_em_aberto = (
-            mensalidades_em_aberto_qs.aggregate(
-                total=Sum("valor_atualizado"),
-            )["total"]
-            or Decimal("0.00")
-        )
-
-        # Faturamento dos últimos 6 meses
-        for i in range(5, -1, -1):
-            primeiro_dia_mes = (
-                hoje.replace(day=1)
-            )
-
-            deslocamento_dias = 30 * i
-            mes_calculado = primeiro_dia_mes - timedelta(
-                days=deslocamento_dias,
-            )
-
-            valor_mes = Mensalidade.objects.filter(
-                mes_referencia__month=mes_calculado.month,
-                mes_referencia__year=mes_calculado.year,
-                status="pago",
-            ).aggregate(
-                total=Sum("valor"),
-            )["total"] or Decimal("0.00")
-
-            faturamento_meses.append(
-                mes_calculado.strftime("%b/%y")
-            )
-
-            faturamento_valores.append(
-                float(valor_mes)
-            )
-
-        # Alunas por turma
-        turmas = Turma.objects.filter(
-            ativa=True,
-        ).order_by("nome")
-
-        for turma in turmas:
-            total_alunas_turma = Aluna.objects.filter(
-                turmas=turma,
-                ativa=True,
-            ).count()
-
-            if total_alunas_turma > 0:
-                turmas_labels.append(turma.nome)
-                turmas_valores.append(total_alunas_turma)
-
-        # Dados do gráfico de status
-        status_valores[0] = mensalidades_pagas
-        status_valores[1] = mensalidades_pendentes
-        status_valores[2] = mensalidades_atrasadas
-
-    except Exception as erro:
-        print(f"Erro no dashboard: {erro}")
-
-        import traceback
-
-        traceback.print_exc()
 
     context = {
         "total_alunas": total_alunas,
