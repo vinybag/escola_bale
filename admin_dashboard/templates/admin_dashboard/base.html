@@ -2,9 +2,14 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
+
     <meta
         name="viewport"
-        content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+        content="
+            width=device-width,
+            initial-scale=1.0,
+            viewport-fit=cover
+        "
     >
 
     <title>
@@ -25,17 +30,14 @@
             box-sizing: border-box;
         }
 
-        html,
-        body {
-            min-height: 100%;
-        }
-
         html {
+            min-height: 100%;
             overflow-x: hidden;
         }
 
         body {
             min-width: 0;
+            min-height: 100%;
             overflow-x: hidden;
             padding-top: var(--header-height);
 
@@ -50,7 +52,10 @@
             background: #f5f5f5;
         }
 
-        /* Header fixo */
+        /* =====================================================
+           HEADER FIXO
+        ====================================================== */
+
         .header {
             position: fixed;
             top: 0;
@@ -101,6 +106,7 @@
         }
 
         .header-user span {
+            max-width: 220px;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -141,35 +147,40 @@
             cursor: pointer;
         }
 
-        /* Layout principal */
+        /* =====================================================
+           LAYOUT
+        ====================================================== */
+
         .container {
-            display: flex;
-            align-items: flex-start;
+            display: block;
 
             width: 100%;
             min-width: 0;
             min-height: calc(100dvh - var(--header-height));
         }
 
-        /* Sidebar desktop */
+        /* =====================================================
+           SIDEBAR FIXA
+        ====================================================== */
+
         .sidebar {
-            position: sticky;
+            position: fixed;
             top: var(--header-height);
+            left: 0;
 
             width: var(--sidebar-width);
             min-width: var(--sidebar-width);
             height: calc(100dvh - var(--header-height));
 
-            flex-shrink: 0;
-
-            overflow-y: auto;
             overflow-x: hidden;
+            overflow-y: auto;
 
             padding: 2rem 0;
 
             background: white;
             box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
 
+            z-index: 150;
             -webkit-overflow-scrolling: touch;
         }
 
@@ -208,18 +219,21 @@
         .sidebar hr {
             width: calc(100% - 2rem);
             margin: 1rem;
+
             border: none;
             border-top: 1px solid #eee;
         }
 
-        /* Conteúdo */
+        /* =====================================================
+           CONTENT
+        ====================================================== */
+
         .content {
-            flex: 1;
-
-            width: 100%;
+            width: calc(100% - var(--sidebar-width));
+            max-width: calc(100% - var(--sidebar-width));
             min-width: 0;
-            max-width: 100%;
 
+            margin-left: var(--sidebar-width);
             padding: 1.5rem;
 
             overflow-x: hidden;
@@ -240,7 +254,10 @@
             color: #666;
         }
 
-        /* Cards */
+        /* =====================================================
+           CARDS
+        ====================================================== */
+
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(
@@ -248,9 +265,10 @@
                 minmax(min(200px, 100%), 1fr)
             );
 
-            gap: 1rem;
             width: 100%;
             min-width: 0;
+
+            gap: 1rem;
             margin-bottom: 2rem;
         }
 
@@ -283,7 +301,10 @@
             font-weight: bold;
         }
 
-        /* Botões */
+        /* =====================================================
+           BOTÕES
+        ====================================================== */
+
         .btn {
             display: inline-block;
 
@@ -314,6 +335,7 @@
 
         .btn-primary:hover {
             transform: translateY(-2px);
+
             box-shadow: 0 5px 15px rgba(
                 176,
                 122,
@@ -322,7 +344,10 @@
             );
         }
 
-        /* Mensagens */
+        /* =====================================================
+           MENSAGENS
+        ====================================================== */
+
         .messages {
             margin-bottom: 1.5rem;
         }
@@ -346,7 +371,10 @@
             color: #721c24;
         }
 
-        /* Tabelas responsivas */
+        /* =====================================================
+           TABELAS
+        ====================================================== */
+
         .table-container {
             width: 100%;
             max-width: 100%;
@@ -361,12 +389,18 @@
             border-collapse: collapse;
         }
 
-        /* Overlay mobile */
+        /* =====================================================
+           OVERLAY MOBILE
+        ====================================================== */
+
         .sidebar-overlay {
             display: none;
         }
 
-        /* Tablet e mobile */
+        /* =====================================================
+           TABLET E MOBILE
+        ====================================================== */
+
         @media (max-width: 900px) {
             :root {
                 --header-height: 64px;
@@ -393,10 +427,6 @@
                 display: block;
             }
 
-            .container {
-                min-height: calc(100dvh - var(--header-height));
-            }
-
             .sidebar {
                 position: fixed;
                 top: var(--header-height);
@@ -404,7 +434,11 @@
 
                 width: 80%;
                 max-width: var(--sidebar-width);
+                min-width: 0;
                 height: calc(100dvh - var(--header-height));
+
+                margin-left: 0;
+                padding: 1.5rem 0;
 
                 transform: translateX(-100%);
                 transition: transform 0.3s ease;
@@ -415,6 +449,23 @@
 
             .sidebar.active {
                 transform: translateX(0);
+            }
+
+            .content {
+                width: 100%;
+                max-width: 100%;
+                min-width: 0;
+
+                margin-left: 0;
+                padding: 1rem;
+            }
+
+            .page-header h2 {
+                font-size: 1.5rem;
+            }
+
+            .stat-card .number {
+                font-size: 1.5rem;
             }
 
             .sidebar-overlay {
@@ -434,20 +485,6 @@
                 display: block;
             }
 
-            .content {
-                width: 100%;
-                max-width: 100%;
-                padding: 1rem;
-            }
-
-            .page-header h2 {
-                font-size: 1.5rem;
-            }
-
-            .stat-card .number {
-                font-size: 1.5rem;
-            }
-
             table {
                 font-size: 0.875rem;
             }
@@ -464,7 +501,10 @@
             }
         }
 
-        /* Celulares */
+        /* =====================================================
+           CELULARES
+        ====================================================== */
+
         @media (max-width: 480px) {
             :root {
                 --header-height: 58px;
@@ -534,10 +574,7 @@
 
         <div class="header-user">
             <span>
-                {{
-                    request.user.get_full_name
-                   |default:request.user.username
-                }}
+                {{ request.user.get_full_name|default:request.user.username }}
             </span>
 
             <a
@@ -552,7 +589,7 @@
     <!-- Container principal -->
     <div class="container">
 
-        <!-- Overlay do menu mobile -->
+        <!-- Overlay mobile -->
         <div
             class="sidebar-overlay"
             id="sidebar-overlay"
@@ -682,9 +719,9 @@
         }
 
         function toggleMenu() {
-            const aberto = sidebar.classList.contains("active");
+            const menuAberto = sidebar.classList.contains("active");
 
-            if (aberto) {
+            if (menuAberto) {
                 closeMenu();
             } else {
                 openMenu();
