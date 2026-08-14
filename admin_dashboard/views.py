@@ -13,6 +13,18 @@ from django.db.models import Q
 from datetime import date, timedelta
 
 
+from datetime import timedelta
+from decimal import Decimal
+
+from django.contrib.auth.decorators import login_required
+from django.db.models import Sum
+from django.shortcuts import redirect, render
+from django.utils import timezone
+
+from pagamentos.models import Mensalidade
+from usuarios.models import Aluna, Turma
+
+
 @login_required
 def dashboard(request):
     """Dashboard com dados reais do banco e gráficos."""
@@ -54,7 +66,6 @@ def dashboard(request):
         mes_referencia__year=ano,
     )
 
-    # Pagas
     mensalidades_pagas_qs = mensalidades_mes.filter(
         status="pago",
     )
@@ -68,7 +79,6 @@ def dashboard(request):
         or Decimal("0.00")
     )
 
-    # Pendentes ainda não vencidas
     mensalidades_pendentes_qs = (
         mensalidades_mes
         .filter(
@@ -87,7 +97,6 @@ def dashboard(request):
         mensalidades_pendentes_qs.count()
     )
 
-    # Atrasadas
     mensalidades_atrasadas_qs = (
         mensalidades_mes
         .filter(
@@ -106,7 +115,6 @@ def dashboard(request):
         mensalidades_atrasadas_qs.count()
     )
 
-    # Todas as mensalidades em aberto
     mensalidades_em_aberto_qs = (
         mensalidades_mes
         .filter(
@@ -127,13 +135,11 @@ def dashboard(request):
         or Decimal("0.00")
     )
 
-    # Não usamos Sum("valor_atualizado") porque esse valor
-    # provavelmente é uma property calculada no model.
-    total_em_aberto = Decimal("0.00")
+    total_atrasado = Decimal("0.00")
 
-    for mensalidade in mensalidades_em_aberto_qs:
+    for mensalidade in mensalidades_atrasadas_qs:
         try:
-            total_em_aberto += Decimal(
+            total_atrasado += Decimal(
                 str(mensalidade.valor_atualizado)
             )
         except (
@@ -141,30 +147,36 @@ def dashboard(request):
             TypeError,
             ValueError,
         ):
-            total_em_aberto += (
-                mensalidade.valor or Decimal("0.00")
+            total_atrasado += (
+                mensalidade.valor
+                or Decimal("0.00")
             )
 
-    # Faturamento dos últimos 6 meses
+    total_em_aberto = (
+        total_atrasado + total_a_receber
+    )
+
     faturamento_meses = []
     faturamento_valores = []
 
     primeiro_dia_mes_atual = hoje.replace(day=1)
 
-    for i in range(5, -1, -1):
-        mes_calc = primeiro_dia_mes_atual
+    for quantidade_meses_atras in range(5, -1, -1):
+        mes_calculado = primeiro_dia_mes_atual
 
-        for _ in range(i):
-            mes_calc = (
-                mes_calc.replace(day=1)
+        for _ in range(quantidade_meses_atras):
+            mes_anterior = (
+                mes_calculado.replace(day=1)
                 - timedelta(days=1)
-            ).replace(day=1)
+            )
+
+            mes_calculado = mes_anterior.replace(day=1)
 
         valor_mes = (
             Mensalidade.objects
             .filter(
-                mes_referencia__month=mes_calc.month,
-                mes_referencia__year=mes_calc.year,
+                mes_referencia__month=mes_calculado.month,
+                mes_referencia__year=mes_calculado.year,
                 status="pago",
             )
             .aggregate(
@@ -174,14 +186,16 @@ def dashboard(request):
         )
 
         faturamento_meses.append(
-            f"{meses_pt[mes_calc.month][:3]}/{str(mes_calc.year)[2:]}"
+            (
+                f"{meses_pt[mes_calculado.month][:3]}/"
+                f"{str(mes_calculado.year)[2:]}"
+            )
         )
 
         faturamento_valores.append(
             float(valor_mes)
         )
 
-    # Alunas por turma
     turmas_labels = []
     turmas_valores = []
 
@@ -199,7 +213,6 @@ def dashboard(request):
             turmas_labels.append(turma.nome)
             turmas_valores.append(total_alunas_turma)
 
-    # Dados do gráfico de status
     status_labels = [
         "Pagas",
         "Pendentes",
@@ -220,6 +233,7 @@ def dashboard(request):
         "mensalidades_atrasadas": mensalidades_atrasadas,
         "mensalidades_pagas": mensalidades_pagas,
         "total_a_receber": total_a_receber,
+        "total_atrasado": total_atrasado,
         "total_em_aberto": total_em_aberto,
         "mes_atual": mes_atual,
         "faturamento_meses": faturamento_meses,
