@@ -397,7 +397,7 @@
                 <section class="esp-create-section">
                     <div style="margin-bottom: 1.25rem;">
                         <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1rem; font-weight: 700;">Venda de Ingressos</h3>
-                        <p style="margin: 0; color: #7b7580; font-size: 0.92rem;">Preço e período de abertura das vendas.</p>
+                        <p style="margin: 0; color: #7b7580; font-size: 0.92rem;">Preço, período de abertura das vendas e mapa de assentos.</p>
                     </div>
 
                     <div class="esp-check-box">
@@ -416,6 +416,27 @@
                             <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Preço do Ingresso (R$)</label>
                             <input type="number" name="preco_ingresso" step="0.01" min="0" value="30.00" class="esp-input">
                         </div>
+                    </div>
+
+                    <div class="esp-check-box">
+                        <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer;">
+                            <input type="checkbox" name="venda_com_assentos_numerados" style="accent-color: #6b2d8f; width: 18px; height: 18px;">
+                            <span style="font-weight: 600; color: #4a235f;">Venda com assentos numerados</span>
+                        </label>
+                        <small class="esp-help">
+                            Se marcado, o comprador escolherá o assento em um mapa do local antes de finalizar a compra.
+                            Após criar o cadastro, você poderá subir o mapa de assentos deste evento.
+                        </small>
+                    </div>
+
+                    <div class="esp-check-box" style="margin-bottom: 0;">
+                        <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer;">
+                            <input type="checkbox" name="exige_login_para_compra" style="accent-color: #6b2d8f; width: 18px; height: 18px;">
+                            <span style="font-weight: 600; color: #4a235f;">Exigir login para comprar ingresso</span>
+                        </label>
+                        <small class="esp-help">
+                            Se marcado, apenas usuários autenticados poderão comprar ingressos deste evento.
+                        </small>
                     </div>
                 </section>
 

@@ -1511,6 +1511,9 @@ def espetaculo_criar(request):
 
             permite_ingresso_gratuito_aluna = request.POST.get('permite_ingresso_gratuito_aluna') == 'on'
 
+            venda_com_assentos_numerados = request.POST.get('venda_com_assentos_numerados') == 'on'
+            exige_login_para_compra = request.POST.get('exige_login_para_compra') == 'on'
+
             ativo = request.POST.get('ativo') == 'on'
 
             imagem = request.FILES.get('imagem')
@@ -1547,6 +1550,8 @@ def espetaculo_criar(request):
                 venda_data_inicio=venda_data_inicio if venda_data_inicio else None,
                 preco_ingresso=preco_ingresso,
                 permite_ingresso_gratuito_aluna=permite_ingresso_gratuito_aluna,
+                venda_com_assentos_numerados=venda_com_assentos_numerados,
+                exige_login_para_compra=exige_login_para_compra,
                 ativo=ativo
             )
 
@@ -1609,6 +1614,9 @@ def espetaculo_editar(request, pk):
             espetaculo.preco_ingresso = request.POST.get('preco_ingresso', '0')
 
             espetaculo.permite_ingresso_gratuito_aluna = request.POST.get('permite_ingresso_gratuito_aluna') == 'on'
+
+            espetaculo.venda_com_assentos_numerados = request.POST.get('venda_com_assentos_numerados') == 'on'
+            espetaculo.exige_login_para_compra = request.POST.get('exige_login_para_compra') == 'on'
 
             espetaculo.ativo = request.POST.get('ativo') == 'on'
 
@@ -4563,3 +4571,144 @@ def marcar_cobranca_pago_dinheiro(request, pk):
         messages.success(request, 'Cobrança inteira marcada como paga em dinheiro.')
 
     return redirect('admin_dashboard:participacao_cobrancas', pk=participacao_pk)
+
+@login_required
+def espetaculo_mapa_assentos(request, pk):
+    """Gerenciar e importar o mapa de assentos de um evento"""
+
+    if not request.user.is_staff:
+        return redirect('home')
+
+    from espetaculo.models import Espetaculo, MapaAssentos, Assento
+    from django.contrib import messages
+    import json
+    from decimal import Decimal, InvalidOperation
+
+    try:
+        espetaculo = Espetaculo.objects.get(pk=pk)
+    except Espetaculo.DoesNotExist:
+        messages.error(request, 'Espetáculo/evento não encontrado.')
+        return redirect('admin_dashboard:espetaculos_list')
+
+    mapa = MapaAssentos.objects.filter(evento=espetaculo).first()
+
+    if request.method == 'POST':
+        try:
+            imagem_mapa = request.FILES.get('imagem_mapa')
+            arquivo_json = request.FILES.get('arquivo_json')
+            json_colado = request.POST.get('json_colado', '').strip()
+            manter_vendidos = request.POST.get('manter_vendidos') == 'on'
+
+            if arquivo_json:
+                conteudo = arquivo_json.read().decode('utf-8')
+            elif json_colado:
+                conteudo = json_colado
+            else:
+                messages.error(request, 'Envie um arquivo JSON ou cole o conteúdo do JSON.')
+                return redirect('admin_dashboard:espetaculo_mapa_assentos', pk=pk)
+
+            try:
+                dados = json.loads(conteudo)
+            except json.JSONDecodeError as e:
+                messages.error(request, f'JSON inválido: {e}')
+                return redirect('admin_dashboard:espetaculo_mapa_assentos', pk=pk)
+
+            lista_assentos = dados.get('assentos', [])
+            if not lista_assentos:
+                messages.error(request, 'O JSON não contém nenhum assento em "assentos".')
+                return redirect('admin_dashboard:espetaculo_mapa_assentos', pk=pk)
+
+            if mapa is None:
+                mapa = MapaAssentos.objects.create(evento=espetaculo)
+
+            if imagem_mapa:
+                mapa.imagem_mapa = imagem_mapa
+
+            mapa.largura_original = dados.get('largura_original', mapa.largura_original or 1600)
+            mapa.altura_original = dados.get('altura_original', mapa.altura_original or 1200)
+            mapa.save()
+
+            identificadores_novos = set()
+            criados = 0
+            atualizados = 0
+            ignorados_vendidos = 0
+            erros = []
+
+            for item in lista_assentos:
+                identificador = str(item.get('id', '')).strip()
+                if not identificador:
+                    erros.append('Assento sem "id" foi ignorado.')
+                    continue
+
+                try:
+                    x_pct = Decimal(str(item.get('x_pct', 0)))
+                    y_pct = Decimal(str(item.get('y_pct', 0)))
+                except (InvalidOperation, TypeError):
+                    erros.append(f'Assento "{identificador}" com x_pct/y_pct inválido, foi ignorado.')
+                    continue
+
+                identificadores_novos.add(identificador)
+
+                assento_existente = Assento.objects.filter(mapa=mapa, identificador=identificador).first()
+
+                if assento_existente and manter_vendidos and assento_existente.status in ('vendido', 'bloqueado_manual'):
+                    ignorados_vendidos += 1
+                    continue
+
+                fileira = str(item.get('fileira', identificador[:1])).strip()
+                numero = item.get('numero', 0)
+                setor = str(item.get('setor', '')).strip()
+
+                if assento_existente:
+                    assento_existente.fileira = fileira
+                    assento_existente.numero = numero
+                    assento_existente.setor = setor
+                    assento_existente.x_pct = x_pct
+                    assento_existente.y_pct = y_pct
+                    assento_existente.save(update_fields=[
+                        'fileira', 'numero', 'setor', 'x_pct', 'y_pct', 'atualizado_em'
+                    ])
+                    atualizados += 1
+                else:
+                    Assento.objects.create(
+                        mapa=mapa,
+                        identificador=identificador,
+                        fileira=fileira,
+                        numero=numero,
+                        setor=setor,
+                        x_pct=x_pct,
+                        y_pct=y_pct,
+                    )
+                    criados += 1
+
+            removidos = 0
+            for assento_orfao in mapa.assentos.exclude(identificador__in=identificadores_novos):
+                if manter_vendidos and assento_orfao.status in ('vendido', 'bloqueado_manual'):
+                    continue
+                assento_orfao.delete()
+                removidos += 1
+
+            resumo = f'{criados} criado(s), {atualizados} atualizado(s), {removidos} removido(s)'
+            if ignorados_vendidos:
+                resumo += f', {ignorados_vendidos} vendido(s)/bloqueado(s) preservado(s)'
+
+            messages.success(request, f'Mapa de assentos importado com sucesso: {resumo}.')
+
+            if erros:
+                for erro in erros[:10]:
+                    messages.warning(request, erro)
+
+            return redirect('admin_dashboard:espetaculo_mapa_assentos', pk=pk)
+
+        except Exception as e:
+            messages.error(request, f'Erro ao importar mapa de assentos: {e}')
+            import traceback
+            traceback.print_exc()
+            return redirect('admin_dashboard:espetaculo_mapa_assentos', pk=pk)
+
+    context = {
+        'espetaculo': espetaculo,
+        'mapa': mapa,
+        'assentos': mapa.assentos.all() if mapa else [],
+    }
+    return render(request, 'admin_dashboard/espetaculos/mapa_assentos.html', context)

@@ -1,10 +1,16 @@
-from decimal import Decimal, ROUND_HALF_UP
 import uuid
+from decimal import Decimal, ROUND_HALF_UP
+from io import BytesIO
+
+import qrcode
+from PIL import Image, ImageDraw, ImageFont
 
 from django.core.exceptions import ValidationError
+from django.core.files.base import ContentFile
 from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.utils import timezone
+
 
 class Espetaculo(models.Model):
     TIPO_CHOICES = [
@@ -92,6 +98,19 @@ class Espetaculo(models.Model):
         help_text='Se marcado, alunas logadas poderão gerar ingresso sem pagamento.'
     )
 
+    # Assentos numerados e restrição de login
+    venda_com_assentos_numerados = models.BooleanField(
+        default=False,
+        verbose_name='Venda com assentos numerados',
+        help_text='Se marcado, exibe o mapa de assentos para escolha no momento da compra.'
+    )
+
+    exige_login_para_compra = models.BooleanField(
+        default=False,
+        verbose_name='Exigir login para comprar ingresso',
+        help_text='Se marcado, apenas usuários autenticados podem comprar ingressos deste evento.'
+    )
+
     # Controle
     ativo = models.BooleanField(default=True)
     criado_em = models.DateTimeField(auto_now_add=True)
@@ -116,8 +135,12 @@ class Espetaculo(models.Model):
         nome = self.arquivo_divulgacao.name.lower()
         return nome.split('.')[-1] if '.' in nome else ''
 
-
-from django.db import models
+    @property
+    def tem_mapa_assentos(self):
+        return (
+            self.venda_com_assentos_numerados
+            and hasattr(self, 'mapa_assentos')
+        )
 
 
 class InscricaoAudicao(models.Model):
@@ -210,12 +233,6 @@ class ParticipacaoEspetaculo(models.Model):
 
     def __str__(self):
         return f'{self.aluna.nome} - {self.espetaculo.titulo}'
-
-
-from decimal import Decimal, ROUND_HALF_UP
-from django.core.exceptions import ValidationError
-from django.db import models
-from django.utils import timezone
 
 
 class CobrancaEspetaculo(models.Model):
@@ -685,11 +702,6 @@ class ParcelaCobrancaEspetaculo(models.Model):
         self.save(update_fields=list(dict.fromkeys(campos_para_salvar)))
         self.cobranca.atualizar_status()
 
-import uuid
-
-from django.db import models
-from django.utils import timezone
-
 
 class PedidoIngressoEvento(models.Model):
     STATUS_CHOICES = [
@@ -751,18 +763,6 @@ class PedidoIngressoEvento(models.Model):
         return self.ingressos.exists()
 
 
-import os
-import uuid
-from io import BytesIO
-
-import qrcode
-from PIL import Image, ImageDraw, ImageFont
-
-from django.core.files.base import ContentFile
-from django.db import models
-from django.utils import timezone
-
-
 class IngressoEvento(models.Model):
     STATUS_CHOICES = [
         ('ativo', 'Ativo'),
@@ -779,6 +779,15 @@ class IngressoEvento(models.Model):
         'Espetaculo',
         on_delete=models.CASCADE,
         related_name='ingressos'
+    )
+
+    assento = models.ForeignKey(
+        'Assento',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='ingressos',
+        help_text='Preenchido apenas quando o evento usa venda com assentos numerados.',
     )
 
     codigo_unico = models.CharField(
@@ -830,6 +839,19 @@ class IngressoEvento(models.Model):
             self.status = 'usado'
             self.validado_em = timezone.now()
             self.save(update_fields=['status', 'validado_em'])
+
+    def cancelar_e_liberar_assento(self):
+        """
+        Cancela o ingresso e devolve o assento vinculado
+        (se houver) para disponível. Usado nos testes e
+        em cancelamentos manuais pelo admin.
+        """
+        if self.status != 'cancelado':
+            self.status = 'cancelado'
+            self.save(update_fields=['status'])
+
+        if self.assento_id:
+            self.assento.liberar()
 
     def qr_payload(self):
         return (
@@ -899,6 +921,14 @@ class IngressoEvento(models.Model):
         draw.text((60, 840), f"Participante: {self.nome_participante or '-'}", fill="black", font=fonte_texto)
         draw.text((60, 900), f"Código: {self.codigo_unico}", fill="black", font=fonte_codigo)
 
+        if self.assento_id:
+            draw.text(
+                (60, 930),
+                f"Assento: {self.assento.fileira}{self.assento.numero}",
+                fill="black",
+                font=fonte_texto
+            )
+
         data_evento = getattr(self.evento, 'data_apresentacao', None)
         if data_evento:
             draw.text(
@@ -930,3 +960,249 @@ class IngressoEvento(models.Model):
 
         if save:
             self.save(update_fields=['qrcode_image', 'imagem_ingresso'])
+
+
+class MapaAssentos(models.Model):
+    """
+    Guarda o mapa de assentos de um evento: a imagem do teatro
+    e o conjunto de assentos posicionados sobre ela.
+    """
+
+    evento = models.OneToOneField(
+        'Espetaculo',
+        on_delete=models.CASCADE,
+        related_name='mapa_assentos',
+    )
+
+    imagem_mapa = models.ImageField(
+        upload_to='espetaculos/mapas_assentos/',
+        blank=True,
+        null=True,
+        help_text='Imagem de fundo do teatro/salão usada no mapa.',
+    )
+
+    largura_original = models.PositiveIntegerField(
+        default=1600,
+        help_text='Largura original (em pixels) usada para gerar as coordenadas.',
+    )
+
+    altura_original = models.PositiveIntegerField(
+        default=1200,
+        help_text='Altura original (em pixels) usada para gerar as coordenadas.',
+    )
+
+    criado_em = models.DateTimeField(auto_now_add=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Mapa de assentos'
+        verbose_name_plural = 'Mapas de assentos'
+
+    def __str__(self):
+        return f'Mapa de assentos - {self.evento.titulo}'
+
+    @property
+    def total_assentos(self):
+        return self.assentos.count()
+
+    @property
+    def total_disponiveis(self):
+        return self.assentos.filter(status='disponivel').count()
+
+    @property
+    def total_vendidos(self):
+        return self.assentos.filter(status='vendido').count()
+
+    @property
+    def total_bloqueados(self):
+        return self.assentos.filter(status='bloqueado_manual').count()
+
+    @property
+    def total_reservados_temporariamente(self):
+        return self.assentos.filter(status='reservado_temporario').count()
+
+
+class Assento(models.Model):
+    """
+    Um assento específico dentro do mapa de um evento.
+    O status controla se ele pode ser escolhido, está em
+    processo de pagamento, foi vendido ou foi bloqueado
+    manualmente pelo admin (ex: reservado para patrocinador).
+    """
+
+    STATUS_CHOICES = [
+        ('disponivel', 'Disponível'),
+        ('reservado_temporario', 'Reservado temporariamente'),
+        ('vendido', 'Vendido'),
+        ('bloqueado_manual', 'Bloqueado manualmente'),
+    ]
+
+    mapa = models.ForeignKey(
+        'MapaAssentos',
+        on_delete=models.CASCADE,
+        related_name='assentos',
+    )
+
+    identificador = models.CharField(
+        max_length=20,
+        help_text='ID do assento vindo do JSON (ex: A1, A2).',
+    )
+
+    setor = models.CharField(
+        max_length=50,
+        blank=True,
+    )
+
+    fileira = models.CharField(max_length=10)
+
+    numero = models.PositiveIntegerField()
+
+    x_pct = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        help_text='Posição horizontal em porcentagem (0 a 100) sobre a imagem do mapa.',
+    )
+
+    y_pct = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        help_text='Posição vertical em porcentagem (0 a 100) sobre a imagem do mapa.',
+    )
+
+    status = models.CharField(
+        max_length=25,
+        choices=STATUS_CHOICES,
+        default='disponivel',
+    )
+
+    reservado_em = models.DateTimeField(
+        blank=True,
+        null=True,
+        help_text='Momento em que a reserva temporária começou.',
+    )
+
+    reservado_por_sessao = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text='Identificador da sessão/comprador que reservou temporariamente.',
+    )
+
+    bloqueado_motivo = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text='Motivo do bloqueio manual (ex: patrocinador, família).',
+    )
+
+    criado_em = models.DateTimeField(auto_now_add=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Assento'
+        verbose_name_plural = 'Assentos'
+        ordering = ['fileira', 'numero']
+        unique_together = ('mapa', 'identificador')
+
+    def __str__(self):
+        return f'{self.fileira}{self.numero} - {self.mapa.evento.titulo} ({self.get_status_display()})'
+
+    @property
+    def esta_disponivel(self):
+        return self.status == 'disponivel'
+
+    @property
+    def esta_reservado_expirado(self):
+        """
+        Verifica se uma reserva temporária já passou do tempo limite
+        (usado depois para liberar assentos abandonados no pagamento).
+        """
+        if self.status != 'reservado_temporario' or not self.reservado_em:
+            return False
+
+        limite = self.reservado_em + timezone.timedelta(minutes=15)
+        return timezone.now() > limite
+
+    def reservar_temporariamente(self, identificador_sessao):
+        self.status = 'reservado_temporario'
+        self.reservado_em = timezone.now()
+        self.reservado_por_sessao = identificador_sessao
+        self.save(update_fields=[
+            'status',
+            'reservado_em',
+            'reservado_por_sessao',
+            'atualizado_em',
+        ])
+
+    def marcar_como_vendido(self):
+        self.status = 'vendido'
+        self.reservado_em = None
+        self.reservado_por_sessao = None
+        self.save(update_fields=[
+            'status',
+            'reservado_em',
+            'reservado_por_sessao',
+            'atualizado_em',
+        ])
+
+    def liberar(self):
+        """Devolve o assento para disponível (cancelamento, reserva expirada, etc.)."""
+        self.status = 'disponivel'
+        self.reservado_em = None
+        self.reservado_por_sessao = None
+        self.bloqueado_motivo = ''
+        self.save(update_fields=[
+            'status',
+            'reservado_em',
+            'reservado_por_sessao',
+            'bloqueado_motivo',
+            'atualizado_em',
+        ])
+
+    def bloquear_manualmente(self, motivo=''):
+        """Uso pelo admin: reserva o assento sem passar por venda (patrocinador, família, etc.)."""
+        self.status = 'bloqueado_manual'
+        self.reservado_em = None
+        self.reservado_por_sessao = None
+        self.bloqueado_motivo = motivo
+        self.save(update_fields=[
+            'status',
+            'reservado_em',
+            'reservado_por_sessao',
+            'bloqueado_motivo',
+            'atualizado_em',
+        ])
+
+
+class IngressoGratuitoAluna(models.Model):
+    """
+    Controla quantos ingressos gratuitos uma aluna já resgatou
+    para um determinado evento (1 por evento por aluna).
+    """
+
+    aluna = models.ForeignKey(
+        'usuarios.Aluna',
+        on_delete=models.CASCADE,
+        related_name='ingressos_gratuitos',
+    )
+
+    evento = models.ForeignKey(
+        'Espetaculo',
+        on_delete=models.CASCADE,
+        related_name='ingressos_gratuitos_alunas',
+    )
+
+    pedido = models.ForeignKey(
+        PedidoIngressoEvento,
+        on_delete=models.CASCADE,
+        related_name='ingressos_gratuitos_aluna',
+    )
+
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Ingresso gratuito de aluna'
+        verbose_name_plural = 'Ingressos gratuitos de alunas'
+        unique_together = ('aluna', 'evento')
+
+    def __str__(self):
+        return f'{self.aluna.nome} - {self.evento.titulo}'

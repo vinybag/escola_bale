@@ -1,0 +1,219 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Mapa de Assentos{% endblock %}
+
+{% block content %}
+<style>
+    .mapa-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 2rem;
+    }
+    .mapa-shell {
+        width: 100%;
+        max-width: 980px;
+    }
+    .mapa-main {
+        background: white;
+        border: 1px solid #ebe3f1;
+        border-radius: 18px;
+        box-shadow: 0 8px 24px rgba(107, 45, 143, 0.08);
+        overflow: hidden;
+    }
+    .mapa-top {
+        padding: 1.5rem 2rem;
+        background: linear-gradient(135deg, #ffffff 0%, #f5eff9 100%);
+        border-bottom: 1px solid #ece3f2;
+    }
+    .mapa-body {
+        padding: 2rem;
+        display: grid;
+        gap: 1.5rem;
+        background: #fcfbfd;
+    }
+    .mapa-section {
+        background: white;
+        border: 1px solid #ece3f2;
+        border-radius: 16px;
+        padding: 1.5rem;
+    }
+    .mapa-input,
+    .mapa-textarea {
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        padding: 0.82rem 0.95rem;
+        border: 1px solid #d9cbe4;
+        border-radius: 10px;
+        font-size: 0.95rem;
+        background: #fff;
+        color: #2f2438;
+        font-family: inherit;
+    }
+    .mapa-textarea { resize: vertical; font-family: monospace; }
+    .mapa-check-box {
+        padding: 0.95rem 1rem;
+        background: #faf7fc;
+        border: 1px solid #ece3f2;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+    }
+    .mapa-help {
+        display: block;
+        margin-top: 0.45rem;
+        color: #8a8390;
+        font-size: 0.88rem;
+    }
+    .mapa-stats {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    .mapa-stat {
+        padding: 1rem;
+        border-radius: 12px;
+        text-align: center;
+        font-weight: 700;
+    }
+    .mapa-stat span {
+        display: block;
+        font-size: 1.5rem;
+    }
+    .mapa-stat small {
+        font-weight: 500;
+        font-size: 0.8rem;
+    }
+    .mapa-footer {
+        display: flex;
+        gap: 1rem;
+        margin-top: 0.5rem;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+    @media (max-width: 640px) {
+        .mapa-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .mapa-top, .mapa-body, .mapa-section { padding: 1.2rem; }
+    }
+</style>
+
+<div class="mapa-header">
+    <div>
+        <h2 style="margin: 0 0 0.35rem 0; color: #4a235f;">Mapa de Assentos</h2>
+        <p style="margin: 0; color: #6f6f78;">{{ espetaculo.titulo }}</p>
+    </div>
+    <a href="{% url 'admin_dashboard:espetaculo_editar' espetaculo.pk %}"
+       style="padding: 0.78rem 1.25rem; background: #f3f3f3; color: #444; text-decoration: none; border: 1px solid #ddd; border-radius: 10px; font-weight: 600;">
+        Voltar para o evento
+    </a>
+</div>
+
+<div class="mapa-shell">
+    <div class="mapa-main">
+        <div class="mapa-top">
+            <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1.15rem;">Importar mapa de assentos</h3>
+            <p style="margin: 0; color: #7a7280; font-size: 0.95rem;">
+                Envie a imagem do local e o JSON com as coordenadas dos assentos.
+            </p>
+        </div>
+
+        <div class="mapa-body">
+
+            {% if mapa %}
+            <section class="mapa-section">
+                <div style="margin-bottom: 1.25rem;">
+                    <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1rem; font-weight: 700;">Situação atual</h3>
+                </div>
+                <div class="mapa-stats">
+                    <div class="mapa-stat" style="background:#eafaf1; color:#1e8449;">
+                        <span>{{ mapa.total_disponiveis }}</span>
+                        <small>Disponíveis</small>
+                    </div>
+                    <div class="mapa-stat" style="background:#fdecea; color:#c0392b;">
+                        <span>{{ mapa.total_vendidos }}</span>
+                        <small>Vendidos</small>
+                    </div>
+                    <div class="mapa-stat" style="background:#fdecea; color:#a04000;">
+                        <span>{{ mapa.total_bloqueados }}</span>
+                        <small>Bloqueados</small>
+                    </div>
+                    <div class="mapa-stat" style="background:#eaf2fd; color:#2471a3;">
+                        <span>{{ mapa.total_assentos }}</span>
+                        <small>Total</small>
+                    </div>
+                </div>
+                {% if mapa.imagem_mapa %}
+                    <div class="esp-file-current" style="background:#f6f8fb;border:1px solid #e1e7ef;padding:0.95rem 1rem;border-radius:12px;color:#415166;">
+                        Imagem atual do mapa: <a href="{{ mapa.imagem_mapa.url }}" target="_blank" style="color:#6b2d8f;font-weight:600;">Ver imagem</a>
+                    </div>
+                {% endif %}
+                <p style="margin-top:0.75rem;">
+                    <a href="{% url 'admin_dashboard:espetaculo_assentos_gerenciar' espetaculo.pk %}"
+                       style="color:#6b2d8f; font-weight:600; text-decoration:none;">
+                        Ir para o gerenciamento visual dos assentos →
+                    </a>
+                </p>
+            </section>
+            {% endif %}
+
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                <section class="mapa-section">
+                    <div style="margin-bottom: 1.25rem;">
+                        <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1rem; font-weight: 700;">Imagem do mapa</h3>
+                        <p style="margin: 0; color: #7b7580; font-size: 0.92rem;">Planta do teatro/salão usada como fundo do mapa de assentos.</p>
+                    </div>
+                    <input type="file" name="imagem_mapa" accept=".jpg,.jpeg,.png,.webp,image/*" class="mapa-input">
+                    <small class="mapa-help">Deixe em branco para manter a imagem atual, se já houver.</small>
+                </section>
+
+                <section class="mapa-section">
+                    <div style="margin-bottom: 1.25rem;">
+                        <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1rem; font-weight: 700;">JSON dos assentos</h3>
+                        <p style="margin: 0; color: #7b7580; font-size: 0.92rem;">Envie um arquivo .json ou cole o conteúdo diretamente abaixo.</p>
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Arquivo JSON</label>
+                        <input type="file" name="arquivo_json" accept=".json,application/json" class="mapa-input">
+                    </div>
+
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Ou cole o JSON aqui</label>
+                        <textarea name="json_colado" rows="10" class="mapa-textarea"
+                                  placeholder='{"largura_original": 1600, "altura_original": 1200, "assentos": [{"id": "A1", "fileira": "A", "numero": 1, "setor": "Plateia", "x_pct": 12.5, "y_pct": 40.0}]}'></textarea>
+                    </div>
+                </section>
+
+                <section class="mapa-section">
+                    <div class="mapa-check-box" style="margin-bottom: 0;">
+                        <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer;">
+                            <input type="checkbox" name="manter_vendidos" checked style="accent-color: #6b2d8f; width: 18px; height: 18px;">
+                            <span style="font-weight: 600; color: #4a235f;">Preservar assentos já vendidos/bloqueados ao reimportar</span>
+                        </label>
+                        <small class="mapa-help">
+                            Recomendado manter marcado. Assim, assentos já vendidos ou bloqueados manualmente não são apagados ou sobrescritos ao reimportar o mapa.
+                        </small>
+                    </div>
+                </section>
+
+                <div class="mapa-footer">
+                    <a href="{% url 'admin_dashboard:espetaculo_editar' espetaculo.pk %}"
+                       style="padding: 0.85rem 1.5rem; background: #f3f3f3; color: #444; border: 1px solid #ddd; border-radius: 10px; text-decoration: none; font-weight: 600;">
+                        Cancelar
+                    </a>
+                    <button type="submit"
+                            style="background: linear-gradient(135deg, #6b2d8f 0%, #7e3aa5 100%); color: white; border: none; padding: 0.85rem 1.6rem; border-radius: 10px; cursor: pointer; font-weight: 700; box-shadow: 0 8px 18px rgba(107, 45, 143, 0.18);">
+                        Importar mapa de assentos
+                    </button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
