@@ -4960,30 +4960,48 @@ def espetaculo_assentos_gerenciar(request, pk):
 
     from django.contrib import messages
     from django.shortcuts import get_object_or_404, redirect, render
-    from espetaculo.models import Espetaculo, MapaAssentos, Assento
+    from espetaculo.models import Espetaculo, MapaAssentos
 
-    espetaculo = get_object_or_404(Espetaculo, pk=pk)
+    espetaculo = get_object_or_404(
+        Espetaculo,
+        pk=pk
+    )
 
-    mapa = MapaAssentos.objects.filter(
-        evento=espetaculo
-    ).prefetch_related('assentos').first()
+    mapa = (
+        MapaAssentos.objects
+        .filter(evento=espetaculo)
+        .prefetch_related('assentos')
+        .first()
+    )
 
-    if not mapa:
+    if mapa is None:
         messages.warning(
             request,
             'Este evento ainda não possui um mapa de assentos importado.'
         )
+
         return redirect(
             'admin_dashboard:espetaculo_mapa_assentos',
             pk=pk
         )
 
-    assentos = mapa.assentos.all().order_by('fileira', 'numero')
+    assentos = list(
+        mapa.assentos.all().order_by(
+            'fileira',
+            'numero'
+        )
+    )
+
+    print(
+        f'[MAPA ASSENTOS] evento={espetaculo.pk} '
+        f'mapa={mapa.pk} total={len(assentos)}'
+    )
 
     context = {
         'espetaculo': espetaculo,
         'mapa': mapa,
         'assentos': assentos,
+        'total_assentos': len(assentos),
     }
 
     return render(
