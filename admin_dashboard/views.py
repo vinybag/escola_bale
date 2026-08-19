@@ -4712,3 +4712,107 @@ def espetaculo_mapa_assentos(request, pk):
         'assentos': mapa.assentos.all() if mapa else [],
     }
     return render(request, 'admin_dashboard/espetaculos/mapa_assentos.html', context)
+
+@login_required
+def espetaculo_assentos_gerenciar(request, pk):
+    """Exibir e gerenciar visualmente os assentos de um evento."""
+
+    if not request.user.is_staff:
+        return redirect('home')
+
+    from django.contrib import messages
+    from django.shortcuts import get_object_or_404, redirect, render
+    from espetaculo.models import Espetaculo, MapaAssentos, Assento
+
+    espetaculo = get_object_or_404(Espetaculo, pk=pk)
+
+    mapa = MapaAssentos.objects.filter(
+        evento=espetaculo
+    ).prefetch_related('assentos').first()
+
+    if not mapa:
+        messages.warning(
+            request,
+            'Este evento ainda não possui um mapa de assentos importado.'
+        )
+        return redirect(
+            'admin_dashboard:espetaculo_mapa_assentos',
+            pk=pk
+        )
+
+    assentos = mapa.assentos.all().order_by('fileira', 'numero')
+
+    context = {
+        'espetaculo': espetaculo,
+        'mapa': mapa,
+        'assentos': assentos,
+    }
+
+    return render(
+        request,
+        'admin_dashboard/espetaculos/assentos_gerenciar.html',
+        context
+    )
+
+
+@login_required
+def espetaculo_assento_acao(request, pk, assento_id):
+    """Bloquear ou liberar manualmente um assento."""
+
+    if not request.user.is_staff:
+        return redirect('home')
+
+    from django.contrib import messages
+    from django.shortcuts import get_object_or_404, redirect
+    from espetaculo.models import Espetaculo, Assento
+
+    espetaculo = get_object_or_404(Espetaculo, pk=pk)
+
+    assento = get_object_or_404(
+        Assento.objects.select_related('mapa__evento'),
+        pk=assento_id,
+        mapa__evento=espetaculo,
+    )
+
+    if request.method != 'POST':
+        return redirect(
+            'admin_dashboard:espetaculo_assentos_gerenciar',
+            pk=pk
+        )
+
+    acao = request.POST.get('acao')
+    motivo = request.POST.get('motivo', '').strip()
+
+    if acao == 'bloquear':
+        if assento.status != 'disponivel':
+            messages.error(
+                request,
+                f'O assento {assento.identificador} não está disponível.'
+            )
+        else:
+            assento.bloquear_manualmente(motivo=motivo)
+            messages.success(
+                request,
+                f'Assento {assento.identificador} bloqueado manualmente.'
+            )
+
+    elif acao == 'liberar':
+        if assento.status != 'bloqueado_manual':
+            messages.error(
+                request,
+                f'O assento {assento.identificador} não está bloqueado manualmente.'
+            )
+        else:
+            assento.liberar()
+            messages.success(
+                request,
+                f'Assento {assento.identificador} liberado.'
+            )
+
+    else:
+        messages.error(request, 'Ação de assento inválida.')
+
+    return redirect(
+        'admin_dashboard:espetaculo_assentos_gerenciar',
+        pk=pk
+    )

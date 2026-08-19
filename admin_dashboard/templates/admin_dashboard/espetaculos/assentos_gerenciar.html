@@ -1,0 +1,595 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Gerenciar Assentos{% endblock %}
+
+{% block content %}
+<style>
+    .assentos-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 2rem;
+    }
+
+    .assentos-shell {
+        width: 100%;
+        max-width: 1180px;
+        min-width: 0;
+    }
+
+    .assentos-main {
+        background: white;
+        border: 1px solid #ebe3f1;
+        border-radius: 18px;
+        box-shadow: 0 8px 24px rgba(107, 45, 143, 0.08);
+        overflow: hidden;
+    }
+
+    .assentos-top {
+        padding: 1.5rem 2rem;
+        background: linear-gradient(135deg, #ffffff 0%, #f5eff9 100%);
+        border-bottom: 1px solid #ece3f2;
+    }
+
+    .assentos-body {
+        padding: 2rem;
+        display: grid;
+        gap: 1.5rem;
+        background: #fcfbfd;
+    }
+
+    .assentos-section {
+        background: white;
+        border: 1px solid #ece3f2;
+        border-radius: 16px;
+        padding: 1.5rem;
+    }
+
+    .assentos-legenda {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 1rem;
+    }
+
+    .legenda-item {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        color: #514957;
+        font-size: 0.9rem;
+    }
+
+    .legenda-cor {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+
+    .legenda-disponivel {
+        background: #2ecc71;
+    }
+
+    .legenda-vendido {
+        background: #e74c3c;
+    }
+
+    .legenda-bloqueado {
+        background: #8e44ad;
+    }
+
+    .legenda-reservado {
+        background: #f39c12;
+    }
+
+    .mapa-visual-wrapper {
+        width: 100%;
+        overflow-x: auto;
+        padding-bottom: 0.5rem;
+    }
+
+    .mapa-visual {
+        position: relative;
+        width: 100%;
+        min-width: 760px;
+        aspect-ratio: 1600 / 1200;
+        overflow: hidden;
+        border: 1px solid #d9cbe4;
+        border-radius: 14px;
+        background: #f4f1f6;
+    }
+
+    .mapa-fundo {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        background: #f4f1f6;
+    }
+
+    .mapa-sem-imagem {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: #8a8390;
+        font-weight: 600;
+        text-align: center;
+        padding: 2rem;
+    }
+
+    .assento-item {
+        position: absolute;
+        transform: translate(-50%, -50%);
+        width: 30px;
+        height: 30px;
+        padding: 0;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        z-index: 2;
+    }
+
+    .assento-svg {
+        width: 30px;
+        height: 30px;
+        display: block;
+        transition: transform 0.15s ease, filter 0.15s ease;
+    }
+
+    .assento-item:hover .assento-svg {
+        transform: scale(1.18);
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.25));
+    }
+
+    .status-disponivel {
+        color: #2ecc71;
+    }
+
+    .status-vendido {
+        color: #e74c3c;
+        cursor: not-allowed;
+    }
+
+    .status-bloqueado {
+        color: #8e44ad;
+    }
+
+    .status-reservado {
+        color: #f39c12;
+        cursor: not-allowed;
+    }
+
+    .assento-label {
+        position: absolute;
+        left: 50%;
+        top: calc(100% + 3px);
+        transform: translateX(-50%);
+        white-space: nowrap;
+        background: rgba(38, 30, 43, 0.88);
+        color: #fff;
+        border-radius: 4px;
+        padding: 2px 4px;
+        font-size: 9px;
+        line-height: 1.1;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.15s ease;
+    }
+
+    .assento-item:hover .assento-label {
+        opacity: 1;
+    }
+
+    .assentos-info {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 1rem;
+    }
+
+    .assento-info-card {
+        padding: 1rem;
+        border-radius: 12px;
+        text-align: center;
+        font-weight: 700;
+    }
+
+    .assento-info-card span {
+        display: block;
+        font-size: 1.5rem;
+    }
+
+    .assento-info-card small {
+        display: block;
+        margin-top: 0.25rem;
+        font-weight: 500;
+        font-size: 0.8rem;
+    }
+
+    .assentos-help {
+        color: #7b7580;
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+
+    .assentos-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .assento-modal-backdrop {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+        background: rgba(34, 25, 40, 0.55);
+        z-index: 9999;
+    }
+
+    .assento-modal-backdrop.is-open {
+        display: flex;
+    }
+
+    .assento-modal {
+        width: 100%;
+        max-width: 430px;
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 18px 45px rgba(0, 0, 0, 0.2);
+    }
+
+    .assento-modal h3 {
+        margin: 0 0 0.5rem;
+        color: #4a235f;
+    }
+
+    .assento-modal p {
+        margin: 0 0 1rem;
+        color: #6f6f78;
+    }
+
+    .assento-modal label {
+        display: block;
+        margin-bottom: 0.45rem;
+        color: #44384c;
+        font-weight: 600;
+    }
+
+    .assento-modal input {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 0.8rem 0.9rem;
+        border: 1px solid #d9cbe4;
+        border-radius: 9px;
+        font-size: 1rem;
+    }
+
+    .assento-modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        margin-top: 1.25rem;
+    }
+
+    .btn-secundario,
+    .btn-primario,
+    .btn-perigo {
+        border: none;
+        border-radius: 9px;
+        padding: 0.75rem 1rem;
+        cursor: pointer;
+        font-weight: 700;
+    }
+
+    .btn-secundario {
+        background: #f1f1f1;
+        color: #444;
+    }
+
+    .btn-primario {
+        background: #6b2d8f;
+        color: #fff;
+    }
+
+    .btn-perigo {
+        background: #e74c3c;
+        color: #fff;
+    }
+
+    @media (max-width: 700px) {
+        .assentos-top,
+        .assentos-body,
+        .assentos-section {
+            padding: 1.2rem;
+        }
+
+        .assentos-info {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+</style>
+
+<div class="assentos-header">
+    <div>
+        <h2 style="margin: 0 0 0.35rem 0; color: #4a235f;">
+            Gerenciar Assentos
+        </h2>
+        <p style="margin: 0; color: #6f6f78;">
+            {{ espetaculo.titulo }}
+        </p>
+    </div>
+
+    <a href="{% url 'admin_dashboard:espetaculo_mapa_assentos' espetaculo.pk %}"
+       style="padding: 0.78rem 1.25rem; background: #f3f3f3; color: #444; text-decoration: none; border: 1px solid #ddd; border-radius: 10px; font-weight: 600;">
+        Voltar para importação
+    </a>
+</div>
+
+<div class="assentos-shell">
+    <div class="assentos-main">
+        <div class="assentos-top">
+            <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1.15rem;">
+                Controle visual do mapa
+            </h3>
+            <p style="margin: 0; color: #7a7280; font-size: 0.95rem;">
+                Clique em um assento disponível para bloqueá-lo manualmente ou liberar um bloqueio.
+            </p>
+        </div>
+
+        <div class="assentos-body">
+
+            <section class="assentos-section">
+                <div class="assentos-info">
+                    <div class="assento-info-card" style="background:#eafaf1;color:#1e8449;">
+                        <span>{{ mapa.total_disponiveis }}</span>
+                        <small>Disponíveis</small>
+                    </div>
+
+                    <div class="assento-info-card" style="background:#fdecea;color:#c0392b;">
+                        <span>{{ mapa.total_vendidos }}</span>
+                        <small>Vendidos</small>
+                    </div>
+
+                    <div class="assento-info-card" style="background:#f4eafa;color:#6c3483;">
+                        <span>{{ mapa.total_bloqueados }}</span>
+                        <small>Bloqueados</small>
+                    </div>
+
+                    <div class="assento-info-card" style="background:#eaf2fd;color:#2471a3;">
+                        <span>{{ mapa.total_assentos }}</span>
+                        <small>Total</small>
+                    </div>
+                </div>
+            </section>
+
+            <section class="assentos-section">
+                <div class="assentos-legenda">
+                    <div class="legenda-item">
+                        <span class="legenda-cor legenda-disponivel"></span>
+                        Disponível
+                    </div>
+
+                    <div class="legenda-item">
+                        <span class="legenda-cor legenda-vendido"></span>
+                        Vendido
+                    </div>
+
+                    <div class="legenda-item">
+                        <span class="legenda-cor legenda-bloqueado"></span>
+                        Bloqueado manualmente
+                    </div>
+
+                    <div class="legenda-item">
+                        <span class="legenda-cor legenda-reservado"></span>
+                        Reserva temporária
+                    </div>
+                </div>
+
+                <p class="assentos-help">
+                    Assentos vendidos e reservas temporárias não podem ser alterados nesta tela.
+                    Assentos bloqueados manualmente podem ser liberados.
+                </p>
+
+                <div class="mapa-visual-wrapper">
+                    <div
+                        class="mapa-visual"
+                        style="aspect-ratio: {{ mapa.largura_original }} / {{ mapa.altura_original }};"
+                    >
+                        {% if mapa.imagem_mapa %}
+                            <img
+                                src="{{ mapa.imagem_mapa.url }}"
+                                alt="Mapa de assentos de {{ espetaculo.titulo }}"
+                                class="mapa-fundo"
+                            >
+                        {% else %}
+                            <div class="mapa-sem-imagem">
+                                Nenhuma imagem de fundo foi cadastrada para este mapa.
+                            </div>
+                        {% endif %}
+
+                        {% for assento in assentos %}
+                            <button
+                                type="button"
+                                class="assento-item"
+                                data-id="{{ assento.id }}"
+                                data-identificador="{{ assento.identificador }}"
+                                data-status="{{ assento.status }}"
+                                data-fileira="{{ assento.fileira }}"
+                                data-numero="{{ assento.numero }}"
+                                data-motivo="{{ assento.bloqueado_motivo|default:'' }}"
+                                style="left: {{ assento.x_pct }}%; top: {{ assento.y_pct }}%;"
+                                title="{{ assento.identificador }} - {{ assento.get_status_display }}"
+                            >
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    class="assento-svg
+                                    {% if assento.status == 'disponivel' %}status-disponivel{% elif assento.status == 'vendido' %}status-vendido{% elif assento.status == 'bloqueado_manual' %}status-bloqueado{% elif assento.status == 'reservado_temporario' %}status-reservado{% endif %}"
+                                >
+                                    <path
+                                        d="M5 12 L5 6.5 C5 5.12 6.12 4 7.5 4 L16.5 4 C17.88 4 19 5.12 19 6.5 L19 12
+                                           L20 12 C20.55 12 21 12.45 21 13 L21 16 C21 16.55 20.55 17 20 17 L19 17 L19 20
+                                           L17 20 L17 17.5 L7 17.5 L7 20 L5 20 L5 17 L4 17 C3.45 17 3 16.55 3 16 L3 13
+                                           C3 12.45 3.45 12 4 12 Z"
+                                        fill="currentColor"
+                                        stroke="rgba(0,0,0,0.25)"
+                                        stroke-width="0.4"
+                                    />
+                                </svg>
+
+                                <span class="assento-label">
+                                    {{ assento.identificador }}
+                                </span>
+                            </button>
+                        {% endfor %}
+                    </div>
+                </div>
+            </section>
+
+            <section class="assentos-section">
+                <p class="assentos-help">
+                    Para bloquear um assento, clique em um assento verde e informe o motivo.
+                    O assento ficará vermelho/indisponível para o público e será identificado
+                    como bloqueio manual no seu painel.
+                </p>
+            </section>
+
+            <div class="assentos-footer">
+                <a href="{% url 'admin_dashboard:espetaculo_editar' espetaculo.pk %}"
+                   style="padding: 0.85rem 1.5rem; background: #f3f3f3; color: #444; border: 1px solid #ddd; border-radius: 10px; text-decoration: none; font-weight: 600;">
+                    Voltar para o evento
+                </a>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div id="assentoModalBackdrop" class="assento-modal-backdrop">
+    <div class="assento-modal">
+        <h3 id="assentoModalTitulo">Gerenciar assento</h3>
+        <p id="assentoModalDescricao"></p>
+
+        <form id="assentoModalForm" method="post">
+            {% csrf_token %}
+
+            <input type="hidden" name="acao" id="assentoAcao">
+
+            <div id="motivoContainer">
+                <label for="bloqueadoMotivo">Motivo do bloqueio</label>
+                <input
+                    type="text"
+                    id="bloqueadoMotivo"
+                    name="motivo"
+                    maxlength="200"
+                    placeholder="Ex: patrocinador, família, produção"
+                >
+            </div>
+
+            <div class="assento-modal-actions">
+                <button type="button" class="btn-secundario" id="assentoModalCancelar">
+                    Cancelar
+                </button>
+
+                <button type="submit" class="btn-primario" id="assentoModalConfirmar">
+                    Confirmar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+(function () {
+    const modalBackdrop = document.getElementById('assentoModalBackdrop');
+    const modalForm = document.getElementById('assentoModalForm');
+    const modalTitulo = document.getElementById('assentoModalTitulo');
+    const modalDescricao = document.getElementById('assentoModalDescricao');
+    const modalAcao = document.getElementById('assentoAcao');
+    const motivoContainer = document.getElementById('motivoContainer');
+    const motivoInput = document.getElementById('bloqueadoMotivo');
+    const botaoConfirmar = document.getElementById('assentoModalConfirmar');
+    const botaoCancelar = document.getElementById('assentoModalCancelar');
+
+    function abrirModal(assento) {
+        const status = assento.dataset.status;
+        const identificador = assento.dataset.identificador;
+        const assentoId = assento.dataset.id;
+        const motivo = assento.dataset.motivo || '';
+
+        modalForm.action = "{% url 'admin_dashboard:espetaculo_assento_acao' espetaculo.pk 0 %}"
+            .replace('/0/', '/' + assentoId + '/');
+
+        motivoInput.value = motivo;
+
+        if (status === 'disponivel') {
+            modalTitulo.textContent = 'Bloquear assento ' + identificador;
+            modalDescricao.textContent =
+                'Este assento ficará indisponível para compras públicas.';
+            modalAcao.value = 'bloquear';
+            motivoContainer.style.display = 'block';
+            motivoInput.required = false;
+            botaoConfirmar.textContent = 'Bloquear assento';
+            botaoConfirmar.className = 'btn-primario';
+        } else if (status === 'bloqueado_manual') {
+            modalTitulo.textContent = 'Liberar assento ' + identificador;
+            modalDescricao.textContent =
+                'O assento voltará a ficar disponível para compra.';
+            modalAcao.value = 'liberar';
+            motivoContainer.style.display = 'none';
+            motivoInput.required = false;
+            botaoConfirmar.textContent = 'Liberar assento';
+            botaoConfirmar.className = 'btn-perigo';
+        } else {
+            return;
+        }
+
+        modalBackdrop.classList.add('is-open');
+
+        if (status === 'disponivel') {
+            motivoInput.focus();
+        }
+    }
+
+    function fecharModal() {
+        modalBackdrop.classList.remove('is-open');
+    }
+
+    document.querySelectorAll('.assento-item').forEach(function (assento) {
+        assento.addEventListener('click', function () {
+            const status = this.dataset.status;
+
+            if (status === 'disponivel' || status === 'bloqueado_manual') {
+                abrirModal(this);
+            }
+        });
+    });
+
+    botaoCancelar.addEventListener('click', fecharModal);
+
+    modalBackdrop.addEventListener('click', function (event) {
+        if (event.target === modalBackdrop) {
+            fecharModal();
+        }
+    });
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') {
+            fecharModal();
+        }
+    });
+})();
+</script>
+{% endblock %}

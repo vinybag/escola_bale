@@ -61,7 +61,9 @@
         margin-bottom: 1rem;
     }
 
-    .esp-grid-2 > div { min-width: 0; }
+    .esp-grid-2 > div {
+        min-width: 0;
+    }
 
     .esp-input,
     .esp-select,
@@ -78,7 +80,9 @@
         font-family: inherit;
     }
 
-    .esp-textarea { resize: vertical; }
+    .esp-textarea {
+        resize: vertical;
+    }
 
     .esp-input:focus,
     .esp-select:focus,
@@ -106,6 +110,7 @@
         margin-top: 0.45rem;
         color: #8a8390;
         font-size: 0.88rem;
+        line-height: 1.45;
     }
 
     .esp-file-current {
@@ -141,6 +146,34 @@
         border-radius: 10px;
     }
 
+    .esp-map-actions {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        margin-top: 0.9rem;
+    }
+
+    .esp-map-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.65rem 1rem;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    .esp-map-button-primary {
+        background: #efe7f5;
+        color: #6b2d8f;
+    }
+
+    .esp-map-button-secondary {
+        background: #eafaf1;
+        color: #1e8449;
+    }
+
     .esp-create-footer {
         display: flex;
         gap: 1rem;
@@ -160,7 +193,9 @@
             text-align: center;
         }
 
-        .esp-create-shell { max-width: 100%; }
+        .esp-create-shell {
+            max-width: 100%;
+        }
 
         .esp-create-top,
         .esp-create-body,
@@ -182,17 +217,33 @@
             text-align: center;
             justify-content: center;
         }
+
+        .esp-map-actions {
+            flex-direction: column;
+        }
+
+        .esp-map-button {
+            width: 100%;
+            box-sizing: border-box;
+        }
     }
 </style>
 
 <div class="esp-create-header">
     <div>
-        <h2 style="margin: 0 0 0.35rem 0; color: #4a235f;">Editar Espetáculo / Evento</h2>
-        <p style="margin: 0; color: #6f6f78;">{{ espetaculo.titulo }}</p>
+        <h2 style="margin: 0 0 0.35rem 0; color: #4a235f;">
+            Editar Espetáculo / Evento
+        </h2>
+
+        <p style="margin: 0; color: #6f6f78;">
+            {{ espetaculo.titulo }}
+        </p>
     </div>
 
-    <a href="{% url 'admin_dashboard:espetaculos_list' %}"
-       style="padding: 0.78rem 1.25rem; background: #f3f3f3; color: #444; text-decoration: none; border: 1px solid #ddd; border-radius: 10px; font-weight: 600;">
+    <a
+        href="{% url 'admin_dashboard:espetaculos_list' %}"
+        style="padding: 0.78rem 1.25rem; background: #f3f3f3; color: #444; text-decoration: none; border: 1px solid #ddd; border-radius: 10px; font-weight: 600;"
+    >
         Voltar
     </a>
 </div>
@@ -202,14 +253,19 @@
         {% csrf_token %}
 
         <div class="esp-create-main">
+
             <div class="esp-create-top">
                 <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
                     <div>
-                        <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1.15rem;">Edição do espetáculo / evento</h3>
+                        <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1.15rem;">
+                            Edição do espetáculo / evento
+                        </h3>
+
                         <p style="margin: 0; color: #7a7280; font-size: 0.95rem;">
                             Atualize os dados, arquivos e configurações de venda.
                         </p>
                     </div>
+
                     <div style="padding: 0.55rem 0.9rem; border-radius: 999px; background: #efe7f5; color: #6b2d8f; font-size: 0.85rem; font-weight: 600;">
                         BKN Tech
                     </div>
@@ -221,8 +277,13 @@
                 <!-- Informações Básicas -->
                 <section class="esp-create-section">
                     <div style="margin-bottom: 1.25rem;">
-                        <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1rem; font-weight: 700;">Informações Básicas</h3>
-                        <p style="margin: 0; color: #7b7580; font-size: 0.92rem;">Tipo, visibilidade ao público, título e descrição.</p>
+                        <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1rem; font-weight: 700;">
+                            Informações Básicas
+                        </h3>
+
+                        <p style="margin: 0; color: #7b7580; font-size: 0.92rem;">
+                            Tipo, visibilidade ao público, título e descrição.
+                        </p>
                     </div>
 
                     <div class="esp-grid-2">
@@ -230,9 +291,15 @@
                             <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
                                 Tipo *
                             </label>
+
                             <select name="tipo" required class="esp-select">
-                                <option value="espetaculo" {% if espetaculo.tipo == 'espetaculo' %}selected{% endif %}>Espetáculo</option>
-                                <option value="evento" {% if espetaculo.tipo == 'evento' %}selected{% endif %}>Evento</option>
+                                <option value="espetaculo" {% if espetaculo.tipo == 'espetaculo' %}selected{% endif %}>
+                                    Espetáculo
+                                </option>
+
+                                <option value="evento" {% if espetaculo.tipo == 'evento' %}selected{% endif %}>
+                                    Evento
+                                </option>
                             </select>
                         </div>
 
@@ -240,10 +307,19 @@
                             <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
                                 Público
                             </label>
+
                             <div class="esp-check-box" style="margin-bottom: 0;">
                                 <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer;">
-                                    <input type="checkbox" name="publico" {% if espetaculo.publico %}checked{% endif %} style="accent-color: #6b2d8f; width: 18px; height: 18px;">
-                                    <span style="font-weight: 600; color: #4a235f;">Aberto ao público</span>
+                                    <input
+                                        type="checkbox"
+                                        name="publico"
+                                        {% if espetaculo.publico %}checked{% endif %}
+                                        style="accent-color: #6b2d8f; width: 18px; height: 18px;"
+                                    >
+
+                                    <span style="font-weight: 600; color: #4a235f;">
+                                        Aberto ao público
+                                    </span>
                                 </label>
                             </div>
                         </div>
@@ -253,32 +329,53 @@
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
                             Título *
                         </label>
-                        <input type="text" name="titulo" value="{{ espetaculo.titulo }}" required
-                               class="esp-input">
+
+                        <input
+                            type="text"
+                            name="titulo"
+                            value="{{ espetaculo.titulo }}"
+                            required
+                            class="esp-input"
+                        >
                     </div>
 
                     <div style="margin-bottom: 1rem;">
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
                             Subtítulo
                         </label>
-                        <input type="text" name="subtitulo" value="{{ espetaculo.subtitulo }}"
-                               class="esp-input">
+
+                        <input
+                            type="text"
+                            name="subtitulo"
+                            value="{{ espetaculo.subtitulo }}"
+                            class="esp-input"
+                        >
                     </div>
 
                     <div style="margin-bottom: 1rem;">
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
                             Descrição *
                         </label>
-                        <textarea name="descricao" rows="5" required
-                                  class="esp-textarea">{{ espetaculo.descricao }}</textarea>
+
+                        <textarea
+                            name="descricao"
+                            rows="5"
+                            required
+                            class="esp-textarea"
+                        >{{ espetaculo.descricao }}</textarea>
                     </div>
                 </section>
 
                 <!-- Imagem e Arquivos -->
                 <section class="esp-create-section">
                     <div style="margin-bottom: 1.25rem;">
-                        <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1rem; font-weight: 700;">Imagem e Arquivos</h3>
-                        <p style="margin: 0; color: #7b7580; font-size: 0.92rem;">Capa principal, arte do ingresso, arquivo de divulgação e PDFs complementares.</p>
+                        <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1rem; font-weight: 700;">
+                            Imagem e Arquivos
+                        </h3>
+
+                        <p style="margin: 0; color: #7b7580; font-size: 0.92rem;">
+                            Capa principal, arte do ingresso, arquivo de divulgação e PDFs complementares.
+                        </p>
                     </div>
 
                     <div style="margin-bottom: 1rem;">
@@ -289,15 +386,26 @@
                         {% if espetaculo.imagem %}
                             <div class="esp-file-current">
                                 Arquivo atual:
-                                <a href="{{ espetaculo.imagem.url }}" target="_blank">Ver imagem</a>
+                                <a href="{{ espetaculo.imagem.url }}" target="_blank">
+                                    Ver imagem
+                                </a>
                             </div>
+
                             <div class="esp-image-preview">
-                                <img src="{{ espetaculo.imagem.url }}" alt="Imagem principal atual">
+                                <img
+                                    src="{{ espetaculo.imagem.url }}"
+                                    alt="Imagem principal atual"
+                                >
                             </div>
                         {% endif %}
 
-                        <input type="file" name="imagem" accept=".jpg,.jpeg,.png,.webp,image/*"
-                               class="esp-input">
+                        <input
+                            type="file"
+                            name="imagem"
+                            accept=".jpg,.jpeg,.png,.webp,image/*"
+                            class="esp-input"
+                        >
+
                         <small class="esp-help">
                             Deixe em branco para manter a imagem atual.
                         </small>
@@ -311,17 +419,29 @@
                         {% if espetaculo.imagem_ingresso %}
                             <div class="esp-file-current">
                                 Arquivo atual:
-                                <a href="{{ espetaculo.imagem_ingresso.url }}" target="_blank">Ver imagem</a>
+                                <a href="{{ espetaculo.imagem_ingresso.url }}" target="_blank">
+                                    Ver imagem
+                                </a>
                             </div>
+
                             <div class="esp-image-preview">
-                                <img src="{{ espetaculo.imagem_ingresso.url }}" alt="Imagem atual do ingresso">
+                                <img
+                                    src="{{ espetaculo.imagem_ingresso.url }}"
+                                    alt="Imagem atual do ingresso"
+                                >
                             </div>
                         {% endif %}
 
-                        <input type="file" name="imagem_ingresso" accept=".jpg,.jpeg,.png,.webp,image/*"
-                               class="esp-input">
+                        <input
+                            type="file"
+                            name="imagem_ingresso"
+                            accept=".jpg,.jpeg,.png,.webp,image/*"
+                            class="esp-input"
+                        >
+
                         <small class="esp-help">
-                            Essa imagem será usada como base visual para gerar os ingressos com QR code individual. Deixe em branco para manter a atual.
+                            Essa imagem será usada como base visual para gerar os ingressos com QR code individual.
+                            Deixe em branco para manter a atual.
                         </small>
                     </div>
 
@@ -333,12 +453,19 @@
                         {% if espetaculo.arquivo_divulgacao %}
                             <div class="esp-file-current">
                                 Arquivo atual:
-                                <a href="{{ espetaculo.arquivo_divulgacao.url }}" target="_blank">Ver arquivo</a>
+                                <a href="{{ espetaculo.arquivo_divulgacao.url }}" target="_blank">
+                                    Ver arquivo
+                                </a>
                             </div>
                         {% endif %}
 
-                        <input type="file" name="arquivo_divulgacao" accept=".png,.jpg,.jpeg,.pdf"
-                               class="esp-input">
+                        <input
+                            type="file"
+                            name="arquivo_divulgacao"
+                            accept=".png,.jpg,.jpeg,.pdf"
+                            class="esp-input"
+                        >
+
                         <small class="esp-help">
                             Pode ser PNG, JPG, JPEG ou PDF. Deixe em branco para manter o arquivo atual.
                         </small>
@@ -352,12 +479,19 @@
                         {% if espetaculo.arquivo_informacoes %}
                             <div class="esp-file-current">
                                 Arquivo atual:
-                                <a href="{{ espetaculo.arquivo_informacoes.url }}" target="_blank">Ver PDF</a>
+                                <a href="{{ espetaculo.arquivo_informacoes.url }}" target="_blank">
+                                    Ver PDF
+                                </a>
                             </div>
                         {% endif %}
 
-                        <input type="file" name="arquivo_informacoes" accept=".pdf"
-                               class="esp-input">
+                        <input
+                            type="file"
+                            name="arquivo_informacoes"
+                            accept=".pdf"
+                            class="esp-input"
+                        >
+
                         <small class="esp-help">
                             Deixe em branco para manter o arquivo atual.
                         </small>
@@ -371,14 +505,22 @@
                         {% if espetaculo.arquivo_edital %}
                             <div class="esp-file-current">
                                 Arquivo atual:
-                                <a href="{{ espetaculo.arquivo_edital.url }}" target="_blank">Ver PDF</a>
+                                <a href="{{ espetaculo.arquivo_edital.url }}" target="_blank">
+                                    Ver PDF
+                                </a>
                             </div>
                         {% endif %}
 
-                        <input type="file" name="arquivo_edital" accept=".pdf"
-                               class="esp-input">
+                        <input
+                            type="file"
+                            name="arquivo_edital"
+                            accept=".pdf"
+                            class="esp-input"
+                        >
+
                         <small class="esp-help">
-                            PDF com edital, regulamento ou material de apoio. Deixe em branco para manter o atual.
+                            PDF com edital, regulamento ou material de apoio.
+                            Deixe em branco para manter o atual.
                         </small>
                     </div>
                 </section>
@@ -386,61 +528,109 @@
                 <!-- Data e Local -->
                 <section class="esp-create-section">
                     <div style="margin-bottom: 1.25rem;">
-                        <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1rem; font-weight: 700;">Data e Local</h3>
-                        <p style="margin: 0; color: #7b7580; font-size: 0.92rem;">Data, horário e endereço da apresentação.</p>
+                        <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1rem; font-weight: 700;">
+                            Data e Local
+                        </h3>
+
+                        <p style="margin: 0; color: #7b7580; font-size: 0.92rem;">
+                            Data, horário e endereço da apresentação.
+                        </p>
                     </div>
 
                     <div style="margin-bottom: 1rem;">
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
                             Data e Horário da Apresentação *
                         </label>
-                        <input type="datetime-local" name="data_apresentacao"
-                               value="{{ espetaculo.data_apresentacao|date:'Y-m-d\\TH:i' }}" required class="esp-input">
+
+                        <input
+                            type="datetime-local"
+                            name="data_apresentacao"
+                            value="{{ espetaculo.data_apresentacao|date:'Y-m-d\\TH:i' }}"
+                            required
+                            class="esp-input"
+                        >
                     </div>
 
                     <div style="margin-bottom: 1rem;">
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
                             Local *
                         </label>
-                        <input type="text" name="local" value="{{ espetaculo.local }}" required
-                               class="esp-input">
+
+                        <input
+                            type="text"
+                            name="local"
+                            value="{{ espetaculo.local }}"
+                            required
+                            class="esp-input"
+                        >
                     </div>
 
                     <div>
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
                             Endereço *
                         </label>
-                        <textarea name="endereco" rows="3" required
-                                  class="esp-textarea">{{ espetaculo.endereco }}</textarea>
+
+                        <textarea
+                            name="endereco"
+                            rows="3"
+                            required
+                            class="esp-textarea"
+                        >{{ espetaculo.endereco }}</textarea>
                     </div>
                 </section>
 
                 <!-- Audição -->
                 <section class="esp-create-section">
                     <div style="margin-bottom: 1.25rem;">
-                        <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1rem; font-weight: 700;">Audição</h3>
-                        <p style="margin: 0; color: #7b7580; font-size: 0.92rem;">Configurações de período e instruções para audição.</p>
+                        <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1rem; font-weight: 700;">
+                            Audição
+                        </h3>
+
+                        <p style="margin: 0; color: #7b7580; font-size: 0.92rem;">
+                            Configurações de período e instruções para audição.
+                        </p>
                     </div>
 
                     <div class="esp-check-box">
                         <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer;">
-                            <input type="checkbox" name="audicao_aberta" {% if espetaculo.audicao_aberta %}checked{% endif %} style="accent-color: #6b2d8f; width: 18px; height: 18px;">
-                            <span style="font-weight: 600; color: #4a235f;">Audição aberta</span>
+                            <input
+                                type="checkbox"
+                                name="audicao_aberta"
+                                {% if espetaculo.audicao_aberta %}checked{% endif %}
+                                style="accent-color: #6b2d8f; width: 18px; height: 18px;"
+                            >
+
+                            <span style="font-weight: 600; color: #4a235f;">
+                                Audição aberta
+                            </span>
                         </label>
                     </div>
 
                     <div class="esp-grid-2">
                         <div>
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Data Início</label>
-                            <input type="date" name="audicao_data_inicio"
-                                   value="{% if espetaculo.audicao_data_inicio %}{{ espetaculo.audicao_data_inicio|date:'Y-m-d' }}{% endif %}"
-                                   class="esp-input">
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
+                                Data Início
+                            </label>
+
+                            <input
+                                type="date"
+                                name="audicao_data_inicio"
+                                value="{% if espetaculo.audicao_data_inicio %}{{ espetaculo.audicao_data_inicio|date:'Y-m-d' }}{% endif %}"
+                                class="esp-input"
+                            >
                         </div>
+
                         <div>
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Data Fim</label>
-                            <input type="date" name="audicao_data_fim"
-                                   value="{% if espetaculo.audicao_data_fim %}{{ espetaculo.audicao_data_fim|date:'Y-m-d' }}{% endif %}"
-                                   class="esp-input">
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
+                                Data Fim
+                            </label>
+
+                            <input
+                                type="date"
+                                name="audicao_data_fim"
+                                value="{% if espetaculo.audicao_data_fim %}{{ espetaculo.audicao_data_fim|date:'Y-m-d' }}{% endif %}"
+                                class="esp-input"
+                            >
                         </div>
                     </div>
 
@@ -448,56 +638,135 @@
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
                             Instruções para Audição
                         </label>
-                        <textarea name="audicao_instrucoes" rows="4"
-                                  class="esp-textarea">{{ espetaculo.audicao_instrucoes }}</textarea>
+
+                        <textarea
+                            name="audicao_instrucoes"
+                            rows="4"
+                            class="esp-textarea"
+                        >{{ espetaculo.audicao_instrucoes }}</textarea>
                     </div>
                 </section>
 
                 <!-- Venda de Ingressos -->
                 <section class="esp-create-section">
                     <div style="margin-bottom: 1.25rem;">
-                        <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1rem; font-weight: 700;">Venda de Ingressos</h3>
-                        <p style="margin: 0; color: #7b7580; font-size: 0.92rem;">Preço, período de abertura das vendas e mapa de assentos.</p>
+                        <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1rem; font-weight: 700;">
+                            Venda de Ingressos
+                        </h3>
+
+                        <p style="margin: 0; color: #7b7580; font-size: 0.92rem;">
+                            Preço, período de abertura das vendas e mapa de assentos.
+                        </p>
                     </div>
 
                     <div class="esp-check-box">
                         <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer;">
-                            <input type="checkbox" name="venda_aberta" {% if espetaculo.venda_aberta %}checked{% endif %} style="accent-color: #6b2d8f; width: 18px; height: 18px;">
-                            <span style="font-weight: 600; color: #4a235f;">Vendas abertas</span>
+                            <input
+                                type="checkbox"
+                                name="venda_aberta"
+                                {% if espetaculo.venda_aberta %}checked{% endif %}
+                                style="accent-color: #6b2d8f; width: 18px; height: 18px;"
+                            >
+
+                            <span style="font-weight: 600; color: #4a235f;">
+                                Vendas abertas
+                            </span>
                         </label>
                     </div>
 
                     <div class="esp-grid-2">
                         <div>
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Data Início das Vendas</label>
-                            <input type="date" name="venda_data_inicio"
-                                   value="{% if espetaculo.venda_data_inicio %}{{ espetaculo.venda_data_inicio|date:'Y-m-d' }}{% endif %}"
-                                   class="esp-input">
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
+                                Data Início das Vendas
+                            </label>
+
+                            <input
+                                type="date"
+                                name="venda_data_inicio"
+                                value="{% if espetaculo.venda_data_inicio %}{{ espetaculo.venda_data_inicio|date:'Y-m-d' }}{% endif %}"
+                                class="esp-input"
+                            >
                         </div>
+
                         <div>
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Preço do Ingresso (R$)</label>
-                            <input type="number" name="preco_ingresso" step="0.01" min="0" value="{{ espetaculo.preco_ingresso }}" class="esp-input">
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">
+                                Preço do Ingresso (R$)
+                            </label>
+
+                            <input
+                                type="number"
+                                name="preco_ingresso"
+                                step="0.01"
+                                min="0"
+                                value="{{ espetaculo.preco_ingresso }}"
+                                class="esp-input"
+                            >
                         </div>
                     </div>
 
+                    <!-- Assentos numerados e mapa -->
                     <div class="esp-check-box">
                         <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer;">
-                            <input type="checkbox" name="venda_com_assentos_numerados" {% if espetaculo.venda_com_assentos_numerados %}checked{% endif %} style="accent-color: #6b2d8f; width: 18px; height: 18px;">
-                            <span style="font-weight: 600; color: #4a235f;">Venda com assentos numerados</span>
+                            <input
+                                type="checkbox"
+                                name="venda_com_assentos_numerados"
+                                {% if espetaculo.venda_com_assentos_numerados %}checked{% endif %}
+                                style="accent-color: #6b2d8f; width: 18px; height: 18px;"
+                            >
+
+                            <span style="font-weight: 600; color: #4a235f;">
+                                Venda com assentos numerados
+                            </span>
                         </label>
+
                         <small class="esp-help">
                             Se marcado, o comprador escolherá o assento em um mapa do local antes de finalizar a compra.
+
                             {% if espetaculo.venda_com_assentos_numerados and not espetaculo.tem_mapa_assentos %}
-                                <strong style="color:#b3541e;">Este evento ainda não possui um mapa de assentos cadastrado.</strong>
+                                <strong style="display: block; margin-top: 0.35rem; color: #b3541e;">
+                                    Este evento ainda não possui um mapa de assentos cadastrado.
+                                </strong>
                             {% endif %}
                         </small>
+
+                        <div class="esp-map-actions">
+                            <a
+                                href="{% url 'admin_dashboard:espetaculo_mapa_assentos' espetaculo.pk %}"
+                                class="esp-map-button esp-map-button-primary"
+                            >
+                                {% if espetaculo.tem_mapa_assentos %}
+                                    Reimportar mapa de assentos
+                                {% else %}
+                                    Importar mapa de assentos
+                                {% endif %}
+                            </a>
+
+                            {% if espetaculo.tem_mapa_assentos %}
+                                <a
+                                    href="{% url 'admin_dashboard:espetaculo_assentos_gerenciar' espetaculo.pk %}"
+                                    class="esp-map-button esp-map-button-secondary"
+                                >
+                                    Gerenciar assentos
+                                </a>
+                            {% endif %}
+                        </div>
                     </div>
 
+                    <!-- Login obrigatório -->
                     <div class="esp-check-box" style="margin-bottom: 0;">
                         <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer;">
-                            <input type="checkbox" name="exige_login_para_compra" {% if espetaculo.exige_login_para_compra %}checked{% endif %} style="accent-color: #6b2d8f; width: 18px; height: 18px;">
-                            <span style="font-weight: 600; color: #4a235f;">Exigir login para comprar ingresso</span>
+                            <input
+                                type="checkbox"
+                                name="exige_login_para_compra"
+                                {% if espetaculo.exige_login_para_compra %}checked{% endif %}
+                                style="accent-color: #6b2d8f; width: 18px; height: 18px;"
+                            >
+
+                            <span style="font-weight: 600; color: #4a235f;">
+                                Exigir login para comprar ingresso
+                            </span>
                         </label>
+
                         <small class="esp-help">
                             Se marcado, apenas usuários autenticados poderão comprar ingressos deste evento.
                         </small>
@@ -507,14 +776,27 @@
                 <!-- Ingresso Gratuito para Alunas -->
                 <section class="esp-create-section">
                     <div style="margin-bottom: 1.25rem;">
-                        <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1rem; font-weight: 700;">Ingresso Gratuito</h3>
-                        <p style="margin: 0; color: #7b7580; font-size: 0.92rem;">Permita que alunas logadas gerem ingresso sem pagamento.</p>
+                        <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1rem; font-weight: 700;">
+                            Ingresso Gratuito
+                        </h3>
+
+                        <p style="margin: 0; color: #7b7580; font-size: 0.92rem;">
+                            Permita que alunas logadas gerem ingresso sem pagamento.
+                        </p>
                     </div>
 
                     <div class="esp-check-box" style="margin-bottom: 0;">
                         <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer;">
-                            <input type="checkbox" name="permite_ingresso_gratuito_aluna" {% if espetaculo.permite_ingresso_gratuito_aluna %}checked{% endif %} style="accent-color: #6b2d8f; width: 18px; height: 18px;">
-                            <span style="font-weight: 600; color: #4a235f;">Permitir ingresso gratuito para alunas</span>
+                            <input
+                                type="checkbox"
+                                name="permite_ingresso_gratuito_aluna"
+                                {% if espetaculo.permite_ingresso_gratuito_aluna %}checked{% endif %}
+                                style="accent-color: #6b2d8f; width: 18px; height: 18px;"
+                            >
+
+                            <span style="font-weight: 600; color: #4a235f;">
+                                Permitir ingresso gratuito para alunas
+                            </span>
                         </label>
                     </div>
                 </section>
@@ -522,26 +804,43 @@
                 <!-- Visibilidade -->
                 <section class="esp-create-section">
                     <div style="margin-bottom: 1.25rem;">
-                        <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1rem; font-weight: 700;">Visibilidade</h3>
-                        <p style="margin: 0; color: #7b7580; font-size: 0.92rem;">Controle se o cadastro está ativo e visível no site.</p>
+                        <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1rem; font-weight: 700;">
+                            Visibilidade
+                        </h3>
+
+                        <p style="margin: 0; color: #7b7580; font-size: 0.92rem;">
+                            Controle se o cadastro está ativo e visível no site.
+                        </p>
                     </div>
 
                     <div class="esp-check-box" style="margin-bottom: 0;">
                         <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer;">
-                            <input type="checkbox" name="ativo" {% if espetaculo.ativo %}checked{% endif %} style="accent-color: #6b2d8f; width: 18px; height: 18px;">
-                            <span style="font-weight: 600; color: #4a235f;">Cadastro ativo (visível no site)</span>
+                            <input
+                                type="checkbox"
+                                name="ativo"
+                                {% if espetaculo.ativo %}checked{% endif %}
+                                style="accent-color: #6b2d8f; width: 18px; height: 18px;"
+                            >
+
+                            <span style="font-weight: 600; color: #4a235f;">
+                                Cadastro ativo (visível no site)
+                            </span>
                         </label>
                     </div>
                 </section>
 
                 <div class="esp-create-footer">
-                    <a href="{% url 'admin_dashboard:espetaculos_list' %}"
-                       style="padding: 0.85rem 1.5rem; background: #f3f3f3; color: #444; border: 1px solid #ddd; border-radius: 10px; text-decoration: none; font-weight: 600;">
+                    <a
+                        href="{% url 'admin_dashboard:espetaculos_list' %}"
+                        style="padding: 0.85rem 1.5rem; background: #f3f3f3; color: #444; border: 1px solid #ddd; border-radius: 10px; text-decoration: none; font-weight: 600;"
+                    >
                         Cancelar
                     </a>
 
-                    <button type="submit"
-                            style="background: linear-gradient(135deg, #6b2d8f 0%, #7e3aa5 100%); color: white; border: none; padding: 0.85rem 1.6rem; border-radius: 10px; cursor: pointer; font-weight: 700; box-shadow: 0 8px 18px rgba(107, 45, 143, 0.18);">
+                    <button
+                        type="submit"
+                        style="background: linear-gradient(135deg, #6b2d8f 0%, #7e3aa5 100%); color: white; border: none; padding: 0.85rem 1.6rem; border-radius: 10px; cursor: pointer; font-weight: 700; box-shadow: 0 8px 18px rgba(107, 45, 143, 0.18);"
+                    >
                         Salvar alterações
                     </button>
                 </div>
