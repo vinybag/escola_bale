@@ -4588,11 +4588,16 @@ def espetaculo_mapa_assentos(request, pk):
 
     from espetaculo.models import Espetaculo, MapaAssentos, Assento
 
-    espetaculo = get_object_or_404(Espetaculo, pk=pk)
+    espetaculo = get_object_or_404(
+        Espetaculo,
+        pk=pk
+    )
 
-    mapa = MapaAssentos.objects.filter(
-        evento=espetaculo
-    ).first()
+    mapa = (
+        MapaAssentos.objects
+        .filter(evento=espetaculo)
+        .first()
+    )
 
     if request.method == 'POST':
         imagem_mapa = request.FILES.get('imagem_mapa')
@@ -4629,7 +4634,8 @@ def espetaculo_mapa_assentos(request, pk):
         except json.JSONDecodeError as erro:
             messages.error(
                 request,
-                f'JSON inválido na linha {erro.lineno}, coluna {erro.colno}: {erro.msg}'
+                f'JSON inválido na linha {erro.lineno}, '
+                f'coluna {erro.colno}: {erro.msg}'
             )
             return redirect(
                 'admin_dashboard:espetaculo_mapa_assentos',
@@ -4658,15 +4664,28 @@ def espetaculo_mapa_assentos(request, pk):
                 pk=pk
             )
 
+        dados_mapa = dados.get('mapa', {})
+
+        if not isinstance(dados_mapa, dict):
+            messages.error(
+                request,
+                'A chave "mapa" precisa ser um objeto JSON.'
+            )
+            return redirect(
+                'admin_dashboard:espetaculo_mapa_assentos',
+                pk=pk
+            )
+
         try:
             largura_original = int(
-                dados.get(
+                dados_mapa.get(
                     'largura_original',
                     mapa.largura_original if mapa else 1600
                 )
             )
+
             altura_original = int(
-                dados.get(
+                dados_mapa.get(
                     'altura_original',
                     mapa.altura_original if mapa else 1200
                 )
@@ -4674,7 +4693,8 @@ def espetaculo_mapa_assentos(request, pk):
         except (TypeError, ValueError):
             messages.error(
                 request,
-                'largura_original e altura_original precisam ser números inteiros.'
+                'Os campos mapa.largura_original e '
+                'mapa.altura_original precisam ser números inteiros.'
             )
             return redirect(
                 'admin_dashboard:espetaculo_mapa_assentos',
@@ -4684,7 +4704,7 @@ def espetaculo_mapa_assentos(request, pk):
         if largura_original <= 0 or altura_original <= 0:
             messages.error(
                 request,
-                'largura_original e altura_original precisam ser maiores que zero.'
+                'A largura e a altura originais precisam ser maiores que zero.'
             )
             return redirect(
                 'admin_dashboard:espetaculo_mapa_assentos',
@@ -4702,7 +4722,9 @@ def espetaculo_mapa_assentos(request, pk):
                 )
                 continue
 
-            identificador = str(item.get('id', '')).strip()
+            identificador = str(
+                item.get('id', '')
+            ).strip()
 
             if not identificador:
                 erros.append(
@@ -4719,11 +4741,17 @@ def espetaculo_mapa_assentos(request, pk):
             identificadores_vistos.add(identificador)
 
             fileira = str(
-                item.get('fileira', identificador[:1])
+                item.get(
+                    'fileira',
+                    identificador[:1]
+                )
             ).strip()
 
             setor = str(
-                item.get('setor', '')
+                item.get(
+                    'setor',
+                    ''
+                )
             ).strip()
 
             if not fileira:
@@ -4733,37 +4761,59 @@ def espetaculo_mapa_assentos(request, pk):
                 continue
 
             try:
-                numero = int(item.get('numero'))
+                numero = int(
+                    item.get('numero')
+                )
             except (TypeError, ValueError):
                 erros.append(
-                    f'Assento "{identificador}": numero inválido.'
+                    f'Assento "{identificador}": número inválido.'
                 )
                 continue
 
             if numero < 0:
                 erros.append(
-                    f'Assento "{identificador}": numero não pode ser negativo.'
+                    f'Assento "{identificador}": número não pode ser negativo.'
                 )
                 continue
 
             try:
-                x_pct = Decimal(str(item.get('x_pct')))
-                y_pct = Decimal(str(item.get('y_pct')))
-            except (InvalidOperation, TypeError, ValueError):
+                x_pct = Decimal(
+                    str(item.get('x_pct'))
+                )
+
+                y_pct = Decimal(
+                    str(item.get('y_pct'))
+                )
+            except (
+                InvalidOperation,
+                TypeError,
+                ValueError
+            ):
                 erros.append(
-                    f'Assento "{identificador}": x_pct/y_pct inválidos.'
+                    f'Assento "{identificador}": '
+                    'x_pct/y_pct inválidos.'
                 )
                 continue
 
-            if not (Decimal('0') <= x_pct <= Decimal('100')):
+            if not (
+                Decimal('0')
+                <= x_pct
+                <= Decimal('100')
+            ):
                 erros.append(
-                    f'Assento "{identificador}": x_pct precisa estar entre 0 e 100.'
+                    f'Assento "{identificador}": '
+                    'x_pct precisa estar entre 0 e 100.'
                 )
                 continue
 
-            if not (Decimal('0') <= y_pct <= Decimal('100')):
+            if not (
+                Decimal('0')
+                <= y_pct
+                <= Decimal('100')
+            ):
                 erros.append(
-                    f'Assento "{identificador}": y_pct precisa estar entre 0 e 100.'
+                    f'Assento "{identificador}": '
+                    'y_pct precisa estar entre 0 e 100.'
                 )
                 continue
 
@@ -4777,14 +4827,19 @@ def espetaculo_mapa_assentos(request, pk):
             })
 
         if erros:
-            mensagens = '\n'.join(erros[:10])
+            mensagens = '\n'.join(
+                erros[:10]
+            )
 
             if len(erros) > 10:
-                mensagens += f'\nE mais {len(erros) - 10} erro(s).'
+                mensagens += (
+                    f'\nE mais {len(erros) - 10} erro(s).'
+                )
 
             messages.error(
                 request,
-                f'O JSON possui erros e não foi importado:\n{mensagens}'
+                'O JSON possui erros e não foi importado:\n'
+                f'{mensagens}'
             )
 
             return redirect(
@@ -4828,7 +4883,12 @@ def espetaculo_mapa_assentos(request, pk):
 
                 for item in dados_validados:
                     identificador = item['identificador']
-                    assento_existente = assentos_existentes.get(identificador)
+
+                    assento_existente = (
+                        assentos_existentes.get(
+                            identificador
+                        )
+                    )
 
                     if assento_existente:
                         if (
@@ -4847,7 +4907,10 @@ def espetaculo_mapa_assentos(request, pk):
                         assento_existente.x_pct = item['x_pct']
                         assento_existente.y_pct = item['y_pct']
 
-                        para_atualizar.append(assento_existente)
+                        para_atualizar.append(
+                            assento_existente
+                        )
+
                         atualizados += 1
 
                     else:
@@ -4860,8 +4923,10 @@ def espetaculo_mapa_assentos(request, pk):
                                 setor=item['setor'],
                                 x_pct=item['x_pct'],
                                 y_pct=item['y_pct'],
+                                status='disponivel',
                             )
                         )
+
                         criados += 1
 
                 if para_criar:
@@ -4883,8 +4948,10 @@ def espetaculo_mapa_assentos(request, pk):
                         batch_size=500
                     )
 
-                assentos_orfaos = mapa.assentos.exclude(
-                    identificador__in=ids_importados
+                assentos_orfaos = (
+                    mapa.assentos.exclude(
+                        identificador__in=ids_importados
+                    )
                 )
 
                 removidos = 0
@@ -4905,6 +4972,7 @@ def espetaculo_mapa_assentos(request, pk):
 
         except Exception as erro:
             import traceback
+
             traceback.print_exc()
 
             messages.error(
@@ -4925,8 +4993,7 @@ def espetaculo_mapa_assentos(request, pk):
 
         if preservados:
             resumo += (
-                f' {preservados} vendido(s)/bloqueado(s) '
-                f'preservado(s).'
+                f' {preservados} vendido(s)/bloqueado(s) preservado(s).'
             )
 
         messages.success(
@@ -4942,7 +5009,11 @@ def espetaculo_mapa_assentos(request, pk):
     context = {
         'espetaculo': espetaculo,
         'mapa': mapa,
-        'assentos': mapa.assentos.all() if mapa else [],
+        'assentos': (
+            mapa.assentos.all()
+            if mapa
+            else []
+        ),
     }
 
     return render(
