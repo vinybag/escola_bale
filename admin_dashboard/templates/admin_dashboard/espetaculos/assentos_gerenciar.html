@@ -5,6 +5,14 @@
 
 {% block content %}
 <style>
+    .assentos-shell {
+        /* Paleta de status dos assentos — tons ajustados para combinar com o teatro rosado/bordô */
+        --seat-disponivel: #8aab6f;
+        --seat-vendido: #a83c46;
+        --seat-bloqueado: #8c6b93;
+        --seat-reservado: #c99a4b;
+    }
+
     .assentos-header {
         display: flex;
         justify-content: space-between;
@@ -72,19 +80,19 @@
     }
 
     .legenda-disponivel {
-        background: #2ecc71;
+        background: var(--seat-disponivel);
     }
 
     .legenda-vendido {
-        background: #e74c3c;
+        background: var(--seat-vendido);
     }
 
     .legenda-bloqueado {
-        background: #8e44ad;
+        background: var(--seat-bloqueado);
     }
 
     .legenda-reservado {
-        background: #f39c12;
+        background: var(--seat-reservado);
     }
 
     .mapa-visual-wrapper {
@@ -136,8 +144,8 @@
         transform: translate(-50%, -50%);
         z-index: 20 !important;
         display: block !important;
-        width: 34px;
-        height: 34px;
+        width: 24px;
+        height: 24px;
         margin: 0;
         padding: 0;
         border: 0;
@@ -151,36 +159,36 @@
         position: relative;
         z-index: 21;
         display: block;
-        width: 34px;
-        height: 34px;
-        color: #2ecc71;
+        width: 24px;
+        height: 24px;
+        color: var(--seat-disponivel);
         fill: currentColor;
         transition: transform 0.15s ease, filter 0.15s ease;
     }
 
     .assento-item:hover .assento-svg {
-        transform: scale(1.18);
+        transform: scale(1.1);
         filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.25));
     }
 
     .status-disponivel {
-        color: #2ecc71 !important;
+        color: var(--seat-disponivel) !important;
         fill: currentColor !important;
     }
 
     .status-vendido {
-        color: #e74c3c !important;
+        color: var(--seat-vendido) !important;
         fill: currentColor !important;
         cursor: not-allowed;
     }
 
     .status-bloqueado {
-        color: #8e44ad !important;
+        color: var(--seat-bloqueado) !important;
         fill: currentColor !important;
     }
 
     .status-reservado {
-        color: #f39c12 !important;
+        color: var(--seat-reservado) !important;
         fill: currentColor !important;
         cursor: not-allowed;
     }
