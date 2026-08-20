@@ -38,3 +38,6 @@ desktop.ini
 # Outros
 *.bak
 *.tmp
+
+*.dump
+*.sql
