@@ -96,11 +96,13 @@
         background: var(--seat-reservado);
     }
 
+    /* Antes: overflow-x: auto (scroll nativo do navegador).
+       Agora: overflow hidden, pois o Panzoom controla o zoom/arraste internamente. */
     .mapa-visual-wrapper {
         width: 100%;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        padding-bottom: 0.5rem;
+        overflow: hidden;
+        position: relative;
+        border-radius: 14px;
     }
 
     .mapa-visual {
@@ -113,6 +115,12 @@
         border: 1px solid #d9cbe4;
         border-radius: 14px;
         background: #f4f1f6;
+        touch-action: none; /* deixa o Panzoom controlar o gesto de pinça, sem o navegador interferir */
+        cursor: grab;
+    }
+
+    .mapa-visual:active {
+        cursor: grabbing;
     }
 
     .mapa-fundo {
@@ -126,6 +134,7 @@
         object-fit: fill !important;
         object-position: left top;
         background: #f4f1f6;
+        pointer-events: none; /* evita que a imagem "capture" o gesto antes do Panzoom */
     }
 
     .mapa-sem-imagem {
@@ -156,6 +165,7 @@
         background: transparent;
         cursor: pointer;
         line-height: 0;
+        touch-action: manipulation;
     }
 
     .assento-svg {
@@ -262,6 +272,47 @@
         color: #8a7c94;
         font-size: 0.8rem;
         margin-bottom: 0.6rem;
+    }
+
+    /* Controles de zoom (+ / - / redefinir) sobre o mapa */
+    .mapa-zoom-controls {
+        position: absolute;
+        bottom: 12px;
+        right: 12px;
+        z-index: 30;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid #d9cbe4;
+        border-radius: 10px;
+        padding: 6px;
+        box-shadow: 0 4px 12px rgba(107, 45, 143, 0.15);
+    }
+
+    .mapa-zoom-controls button {
+        width: 34px;
+        height: 34px;
+        border-radius: 7px;
+        border: 1px solid #e0d4ea;
+        background: white;
+        color: #6b2d8f;
+        font-size: 1.1rem;
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
+        padding: 0;
+    }
+
+    .mapa-zoom-controls button:hover {
+        background: #f5eff9;
+    }
+
+    .mapa-zoom-controls button:active {
+        background: #ece3f2;
     }
 
     .assento-modal-backdrop {
@@ -416,6 +467,12 @@
         .assento-modal-actions button {
             width: 100%;
         }
+
+        .mapa-zoom-controls button {
+            width: 38px;
+            height: 38px;
+            font-size: 1.25rem;
+        }
     }
 
     @media (max-width: 420px) {
@@ -527,12 +584,13 @@
                 </p>
 
                 <div class="mapa-scroll-hint">
-                    ↔️ Arraste o mapa para os lados para ver todos os assentos
+                    🤏 Belisque para dar zoom · arraste para navegar pelo mapa
                 </div>
 
-                <div class="mapa-visual-wrapper">
+                <div class="mapa-visual-wrapper" id="mapaVisualWrapper">
                     <div
                         class="mapa-visual"
+                        id="mapaVisual"
                         style="
                             aspect-ratio:
                             {{ mapa.largura_original|unlocalize }}
@@ -596,6 +654,12 @@
                             </div>
                         {% endfor %}
 
+                    </div>
+
+                    <div class="mapa-zoom-controls">
+                        <button type="button" id="zoomInBtn" aria-label="Aumentar zoom">+</button>
+                        <button type="button" id="zoomOutBtn" aria-label="Diminuir zoom">−</button>
+                        <button type="button" id="zoomResetBtn" aria-label="Redefinir zoom" style="font-size: 0.85rem;">⟲</button>
                     </div>
                 </div>
             </section>
@@ -679,6 +743,9 @@
         </form>
     </div>
 </div>
+
+<!-- Panzoom: biblioteca leve responsável pelo pinch-to-zoom e arraste dentro do mapa -->
+<script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
 
 <script>
 (function () {
@@ -807,6 +874,37 @@
             }
         }
     );
+
+    // --- Pinch-to-zoom / arrastar no mapa (Panzoom) ---
+    const mapaVisual = document.getElementById('mapaVisual');
+
+    if (mapaVisual && window.Panzoom) {
+        const panzoomInstance = Panzoom(mapaVisual, {
+            maxScale: 4,
+            minScale: 1,
+            contain: 'outside',
+            canvas: false
+        });
+
+        document.getElementById('zoomInBtn').addEventListener('click', function () {
+            panzoomInstance.zoomIn();
+        });
+
+        document.getElementById('zoomOutBtn').addEventListener('click', function () {
+            panzoomInstance.zoomOut();
+        });
+
+        document.getElementById('zoomResetBtn').addEventListener('click', function () {
+            panzoomInstance.reset();
+        });
+
+        // Permite dar zoom com o gesto de pinça em telas touch
+        mapaVisual.parentElement.addEventListener('touchmove', function (event) {
+            if (event.touches.length > 1) {
+                event.preventDefault();
+            }
+        }, { passive: false });
+    }
 })();
 </script>
 {% endblock %}
