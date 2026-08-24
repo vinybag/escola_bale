@@ -2,26 +2,143 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>{% block title %}BAILAH - Corpo e Cia{% endblock %}</title>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, user-scalable=yes"
+    >
+
+    <title>
+        {% block title %}BAILAH - Corpo e Cia{% endblock %}
+    </title>
+
     {% load static %}
-    
-    <link rel="icon" type="image/png" href="{% static 'favicon.png' %}">
-    <link rel="shortcut icon" type="image/png" href="{% static 'favicon.png' %}">
-    
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+    <link
+        rel="icon"
+        type="image/png"
+        href="{% static 'favicon.png' %}"
+    >
+
+    <link
+        rel="shortcut icon"
+        type="image/png"
+        href="{% static 'favicon.png' %}"
+    >
+
+    <link
+        rel="stylesheet"
+        href="{% static 'css/style.css' %}"
+    >
 </head>
+
 <body>
     <nav class="navbar">
         <div class="container">
-            <a href="/" class="logo">
-                <img src="{% static 'img/logo.png' %}" alt="BAILAH - Corpo e Cia">
+            <a
+                href="/"
+                class="logo"
+            >
+                <img
+                    src="{% static 'img/logo.png' %}"
+                    alt="BAILAH - Corpo e Cia"
+                >
             </a>
+
             <ul class="nav-links">
-                <li><a href="/">Início</a></li>
-                <li><a href="/espetaculos/">Espetáculos</a></li>
-                <li><a href="/agenda/experimental/">Aula Experimental</a></li>
-                <li><a href="/conta/login/" class="btn-login">Área dos Pais</a></li>
+                <li>
+                    <a href="/">
+                        Início
+                    </a>
+                </li>
+
+                <li>
+                    <a href="{% url 'espetaculo:lista_publica' %}">
+                        Espetáculos
+                    </a>
+                </li>
+
+                <li>
+                    <a href="/agenda/experimental/">
+                        Aula Experimental
+                    </a>
+                </li>
+
+                {% if user.is_authenticated %}
+
+                    {% if user.is_staff %}
+                        <li>
+                            <a href="/admin-dashboard/">
+                                Dashboard
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="/admin-dashboard/mensalidades/">
+                                Mensalidades
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="/admin-dashboard/avisos/">
+                                Avisos
+                            </a>
+                        </li>
+
+                    {% elif user.groups.all.0.name == 'Professores' %}
+                        <li>
+                            <a href="{% url 'admin_dashboard:professor_dashboard' %}">
+                                Dashboard
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="{% url 'admin_dashboard:professor_avisos' %}">
+                                Avisos
+                            </a>
+                        </li>
+
+                    {% else %}
+                        <li>
+                            <a href="/conta/dashboard/">
+                                Dashboard
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="/pagamentos/mensalidades/">
+                                Mensalidades
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="/avisos/">
+                                Avisos
+                            </a>
+                        </li>
+                    {% endif %}
+
+                    <li>
+                        <a href="/conta/perfil/">
+                            Perfil
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="/conta/logout/">
+                            Sair
+                        </a>
+                    </li>
+
+                {% else %}
+                    <li>
+                        <a
+                            href="/conta/login/"
+                            class="btn-login"
+                        >
+                            Login
+                        </a>
+                    </li>
+                {% endif %}
             </ul>
         </div>
     </nav>
@@ -41,7 +158,10 @@
     </main>
 
     <footer>
-        <p>&copy; 2026 BAILAH - Corpo e Cia - Todos os direitos reservados</p>
+        <p>
+            &copy; 2026 BAILAH - Corpo e Cia -
+            Todos os direitos reservados
+        </p>
     </footer>
 </body>
 </html>
