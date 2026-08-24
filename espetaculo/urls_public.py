@@ -18,6 +18,9 @@ urlpatterns = [
 
     # Evento público e ingressos
     path('evento/<int:pk>/', views.evento_detalhe_publico, name='evento_detalhe_publico'),
+    path('espetaculos/<int:pk>/mapa/',views.mapa_assentos_publico,name='mapa_assentos_publico'),
+    path('espetaculos/<int:pk>/mapa/selecionar/',views.assento_selecionar_api,name='assento_selecionar_api'),
+    path('espetaculos/<int:pk>/mapa/confirmar/',views.confirmar_selecao_assentos,name='confirmar_selecao_assentos'),
     path('evento/<int:pk>/comprar/', views.comprar_ingresso, name='comprar_ingresso'),
     path('ingresso/pix/<int:pedido_id>/', views.pagar_ingresso_pix, name='pagar_ingresso_pix'),
     path('ingresso/verificar-pix/<str:payment_id>/', views.verificar_pagamento_ingresso_pix, name='verificar_pagamento_ingresso_pix'),
