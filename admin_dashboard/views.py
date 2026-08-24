@@ -1584,18 +1584,29 @@ def espetaculo_editar(request, pk):
         return redirect('admin_dashboard:espetaculos_list')
 
     if request.method == 'POST':
-        try:
-            from django.contrib import messages
-            from datetime import datetime
+        from django.contrib import messages
+        from datetime import datetime
 
+        data_apresentacao_raw = request.POST.get('data_apresentacao')
+
+        try:
+            data_apresentacao_convertida = datetime.strptime(data_apresentacao_raw, '%Y-%m-%dT%H:%M')
+        except (TypeError, ValueError) as e:
+            messages.error(
+                request,
+                f'Data e horário de apresentação inválidos ("{data_apresentacao_raw}"). '
+                f'Corrija esse campo e salve novamente. Detalhe: {e}'
+            )
+            return redirect('admin_dashboard:espetaculo_editar', pk=pk)
+
+        try:
             espetaculo.titulo = request.POST.get('titulo')
             espetaculo.subtitulo = request.POST.get('subtitulo', '')
             espetaculo.descricao = request.POST.get('descricao')
             espetaculo.tipo = request.POST.get('tipo', 'espetaculo')
             espetaculo.publico = request.POST.get('publico') == 'on'
 
-            data_apresentacao = request.POST.get('data_apresentacao')
-            espetaculo.data_apresentacao = datetime.strptime(data_apresentacao, '%Y-%m-%dT%H:%M')
+            espetaculo.data_apresentacao = data_apresentacao_convertida
 
             espetaculo.local = request.POST.get('local')
             espetaculo.endereco = request.POST.get('endereco')
@@ -1646,7 +1657,8 @@ def espetaculo_editar(request, pk):
             return redirect('admin_dashboard:espetaculos_list')
 
         except Exception as e:
-            from django.contrib import messages
+            import traceback
+            traceback.print_exc()
             messages.error(request, f'Erro ao atualizar espetáculo/evento: {e}')
             return redirect('admin_dashboard:espetaculo_editar', pk=pk)
 
