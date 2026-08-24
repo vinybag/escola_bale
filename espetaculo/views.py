@@ -1,17 +1,27 @@
-from decimal import Decimal, InvalidOperation
+import json
+import os
 import traceback
+from decimal import Decimal, InvalidOperation
 
+from django.conf import settings
 from django.contrib import messages
-from django.http import JsonResponse
+from django.http import FileResponse, Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.views.decorators.http import require_POST
 
 from pagamentos.asaas_helper import AsaasAPI
-
 from usuarios.models import Aluna
 
 from .forms import InscricaoAudicaoForm
-from .models import Espetaculo, IngressoEvento, InscricaoAudicao, PedidoIngressoEvento
+from .models import (
+    Assento,
+    Espetaculo,
+    IngressoEvento,
+    InscricaoAudicao,
+    MapaAssentos,
+    PedidoIngressoEvento,
+)
 
 
 def espetaculo_home(request):
@@ -186,7 +196,12 @@ def audicao_nova_publica(request):
     return render(request, 'espetaculo/audicao_nova_publica.html', {'espetaculo': espetaculo})
 
 
-def gerar_ingressos_do_pedido(pedido):
+def gerar_ingressos_do_pedido(pedido, assentos_ids=None):
+    """
+    Gera os IngressoEvento do pedido. Se assentos_ids for informado
+    (fluxo com mapa de assentos numerados), cada ingresso criado é
+    vinculado a um assento e o assento é marcado como vendido.
+    """
     ingressos_existentes = pedido.ingressos.count()
 
     if ingressos_existentes >= pedido.quantidade:
@@ -196,19 +211,33 @@ def gerar_ingressos_do_pedido(pedido):
 
     faltantes = pedido.quantidade - ingressos_existentes
 
-    for _ in range(faltantes):
+    assentos_disponiveis = []
+    if assentos_ids:
+        assentos_disponiveis = list(
+            Assento.objects.filter(id__in=assentos_ids, mapa__evento=pedido.evento)
+        )
+
+    for indice in range(faltantes):
         codigo = IngressoEvento.gerar_codigo()
 
         while IngressoEvento.objects.filter(codigo_unico=codigo).exists():
             codigo = IngressoEvento.gerar_codigo()
+
+        assento_vinculado = None
+        if indice < len(assentos_disponiveis):
+            assento_vinculado = assentos_disponiveis[indice]
 
         ingresso = IngressoEvento.objects.create(
             pedido=pedido,
             evento=pedido.evento,
             codigo_unico=codigo,
             nome_participante=pedido.nome_completo,
+            assento=assento_vinculado,
         )
         ingresso.garantir_arquivos()
+
+        if assento_vinculado:
+            assento_vinculado.marcar_como_vendido()
 
 
 def extrair_pix_data_evento(qrcode_data):
@@ -268,6 +297,10 @@ def comprar_ingresso(request, pk):
     if not evento.venda_aberta:
         return redirect('espetaculo:evento_detalhe_publico', pk=evento.pk)
 
+    if evento.exige_login_para_compra and not request.user.is_authenticated:
+        messages.error(request, 'Você precisa estar logado para comprar ingresso para este evento.')
+        return redirect('espetaculo:evento_detalhe_publico', pk=evento.pk)
+
     aluna = None
     if request.user.is_authenticated:
         aluna = Aluna.objects.filter(usuario=request.user).first()
@@ -325,6 +358,24 @@ def comprar_ingresso(request, pk):
 
         valor_unitario = evento.preco_ingresso or Decimal('0.00')
         valor_total = valor_unitario * quantidade
+
+        if evento.venda_com_assentos_numerados:
+            if not evento.tem_mapa_assentos:
+                return render(request, 'espetaculo/comprar_ingresso.html', {
+                    'evento': evento,
+                    'erro': 'Este evento ainda não possui mapa de assentos configurado. Fale com a organização.',
+                })
+
+            request.session[f'compra_evento_{pk}_quantidade'] = quantidade
+            request.session[f'compra_evento_{pk}_nome_completo'] = nome_completo
+            request.session[f'compra_evento_{pk}_email'] = email
+            request.session[f'compra_evento_{pk}_whatsapp'] = whatsapp
+            request.session[f'compra_evento_{pk}_cpf'] = cpf
+            request.session[f'compra_evento_{pk}_valor_unitario'] = str(valor_unitario)
+            request.session[f'compra_evento_{pk}_assentos_ids'] = []
+            request.session.modified = True
+
+            return redirect('espetaculo:mapa_assentos_publico', pk=pk)
 
         pedido = PedidoIngressoEvento.objects.create(
             evento=evento,
@@ -387,7 +438,7 @@ def pagar_ingresso_pix(request, pedido_id):
 
                 if status_existente == 'RECEIVED':
                     pedido.marcar_como_pago()
-                    gerar_ingressos_do_pedido(pedido)
+                    gerar_ingressos_do_pedido(pedido, assentos_ids=_obter_assentos_confirmados_pedido(pedido))
                     return redirect('espetaculo:ingresso_sucesso', pedido_id=pedido.id)
 
                 if status_existente in ['PENDING', 'OVERDUE']:
@@ -422,7 +473,7 @@ def pagar_ingresso_pix(request, pedido_id):
 
             if resultado.get('status') == 'RECEIVED':
                 pedido.marcar_como_pago()
-                gerar_ingressos_do_pedido(pedido)
+                gerar_ingressos_do_pedido(pedido, assentos_ids=_obter_assentos_confirmados_pedido(pedido))
                 return redirect('espetaculo:ingresso_sucesso', pedido_id=pedido.id)
 
             qrcode_data = asaas.obter_qrcode_pix(resultado['id'])
@@ -453,6 +504,16 @@ def pagar_ingresso_pix(request, pedido_id):
         })
 
 
+def _obter_assentos_confirmados_pedido(pedido):
+    """
+    Recupera os IDs de assentos já vinculados aos ingressos deste pedido
+    (usado ao reconsultar um pagamento já processado, sem sessão ativa).
+    """
+    return list(
+        IngressoEvento.objects.filter(pedido=pedido, assento__isnull=False).values_list('assento_id', flat=True)
+    )
+
+
 def verificar_pagamento_ingresso_pix(request, payment_id):
     try:
         asaas = AsaasAPI()
@@ -461,7 +522,7 @@ def verificar_pagamento_ingresso_pix(request, payment_id):
         if resultado and resultado.get('status') == 'RECEIVED':
             pedido = PedidoIngressoEvento.objects.get(asaas_payment_id=payment_id)
             pedido.marcar_como_pago()
-            gerar_ingressos_do_pedido(pedido)
+            gerar_ingressos_do_pedido(pedido, assentos_ids=_obter_assentos_confirmados_pedido(pedido))
 
             return JsonResponse({
                 'status': 'paid',
@@ -593,10 +654,6 @@ def ingresso_sucesso(request, pedido_id):
     }
     return render(request, 'espetaculo/ingresso_sucesso.html', context)
 
-import os
-from django.conf import settings
-from django.http import FileResponse, Http404
-
 
 def ver_imagem_ingresso(request, ingresso_id):
     ingresso = get_object_or_404(IngressoEvento, id=ingresso_id)
@@ -673,3 +730,214 @@ def baixar_qrcode_ingresso(request, ingresso_id):
         as_attachment=True,
         filename=os.path.basename(nome),
     )
+
+
+def mapa_assentos_publico(request, pk):
+    """
+    Página pública onde o comprador escolhe os assentos.
+    Espera que a sessão já tenha os dados definidos em comprar_ingresso.
+    """
+    evento = get_object_or_404(Espetaculo, pk=pk, ativo=True)
+
+    if not evento.venda_aberta:
+        messages.error(request, 'As vendas para este evento não estão abertas.')
+        return redirect('espetaculo:evento_detalhe_publico', pk=pk)
+
+    if not evento.venda_com_assentos_numerados or not evento.tem_mapa_assentos:
+        messages.error(request, 'Este evento não possui venda com assentos numerados.')
+        return redirect('espetaculo:evento_detalhe_publico', pk=pk)
+
+    quantidade = request.session.get(f'compra_evento_{pk}_quantidade')
+
+    if not quantidade:
+        messages.error(request, 'Informe a quantidade de ingressos antes de escolher os assentos.')
+        return redirect('espetaculo:comprar_ingresso', pk=pk)
+
+    mapa = MapaAssentos.objects.prefetch_related('assentos').get(evento=evento)
+
+    liberar_assentos_expirados(mapa)
+
+    if not request.session.session_key:
+        request.session.create()
+
+    identificador_sessao = request.session.session_key
+
+    assentos = mapa.assentos.all().order_by('fileira', 'numero')
+
+    ja_selecionados = request.session.get(f'compra_evento_{pk}_assentos_ids', [])
+
+    context = {
+        'espetaculo': evento,
+        'mapa': mapa,
+        'assentos': assentos,
+        'quantidade': quantidade,
+        'identificador_sessao': identificador_sessao,
+        'ja_selecionados': ja_selecionados,
+    }
+
+    return render(request, 'espetaculo/mapa_assentos_publico.html', context)
+
+
+def liberar_assentos_expirados(mapa):
+    """Libera assentos cuja reserva temporária já passou do tempo limite."""
+    for assento in mapa.assentos.filter(status='reservado_temporario'):
+        if assento.esta_reservado_expirado:
+            assento.liberar()
+
+
+@require_POST
+def assento_selecionar_api(request, pk):
+    """
+    API chamada via JS quando o comprador clica num assento.
+    Reserva temporariamente se estiver disponível, ou libera
+    se o próprio comprador estiver desmarcando.
+    """
+    evento = get_object_or_404(Espetaculo, pk=pk, ativo=True)
+    mapa = get_object_or_404(MapaAssentos, evento=evento)
+
+    if not request.session.session_key:
+        request.session.create()
+
+    identificador_sessao = request.session.session_key
+
+    try:
+        dados = json.loads(request.body)
+        assento_id = int(dados.get('assento_id'))
+        acao = dados.get('acao')
+    except (ValueError, TypeError, json.JSONDecodeError):
+        return JsonResponse({'ok': False, 'erro': 'Requisição inválida.'}, status=400)
+
+    assento = get_object_or_404(Assento, pk=assento_id, mapa=mapa)
+
+    quantidade = request.session.get(f'compra_evento_{pk}_quantidade', 1)
+    selecionados = request.session.get(f'compra_evento_{pk}_assentos_ids', [])
+
+    if acao == 'selecionar':
+        if assento.esta_reservado_expirado:
+            assento.liberar()
+
+        if assento.status != 'disponivel':
+            return JsonResponse({
+                'ok': False,
+                'erro': 'Este assento não está mais disponível.'
+            }, status=409)
+
+        if len(selecionados) >= quantidade:
+            return JsonResponse({
+                'ok': False,
+                'erro': f'Você já selecionou {quantidade} assento(s).'
+            }, status=400)
+
+        assento.reservar_temporariamente(identificador_sessao)
+
+        selecionados.append(assento.id)
+        request.session[f'compra_evento_{pk}_assentos_ids'] = selecionados
+        request.session.modified = True
+
+        return JsonResponse({
+            'ok': True,
+            'status': assento.status,
+            'total_selecionados': len(selecionados),
+        })
+
+    elif acao == 'desmarcar':
+        if assento.status == 'reservado_temporario' and assento.reservado_por_sessao == identificador_sessao:
+            assento.liberar()
+
+            if assento.id in selecionados:
+                selecionados.remove(assento.id)
+                request.session[f'compra_evento_{pk}_assentos_ids'] = selecionados
+                request.session.modified = True
+
+            return JsonResponse({
+                'ok': True,
+                'status': 'disponivel',
+                'total_selecionados': len(selecionados),
+            })
+
+        return JsonResponse({
+            'ok': False,
+            'erro': 'Você só pode desmarcar assentos que você mesmo selecionou.'
+        }, status=403)
+
+    return JsonResponse({'ok': False, 'erro': 'Ação inválida.'}, status=400)
+
+
+def confirmar_selecao_assentos(request, pk):
+    """
+    Confirma a seleção, cria o PedidoIngressoEvento com os dados
+    salvos na sessão pela view comprar_ingresso, e segue para o PIX.
+    """
+    evento = get_object_or_404(Espetaculo, pk=pk, ativo=True)
+
+    quantidade = request.session.get(f'compra_evento_{pk}_quantidade', 0)
+    selecionados_ids = request.session.get(f'compra_evento_{pk}_assentos_ids', [])
+
+    if not quantidade or len(selecionados_ids) != quantidade:
+        messages.error(
+            request,
+            f'Selecione exatamente {quantidade} assento(s) antes de continuar.'
+        )
+        return redirect('espetaculo:mapa_assentos_publico', pk=pk)
+
+    if not request.session.session_key:
+        request.session.create()
+
+    identificador_sessao = request.session.session_key
+
+    assentos = Assento.objects.filter(
+        id__in=selecionados_ids,
+        mapa__evento=evento,
+        status='reservado_temporario',
+        reservado_por_sessao=identificador_sessao,
+    )
+
+    if assentos.count() != quantidade:
+        messages.error(
+            request,
+            'Algum assento selecionado expirou ou foi escolhido por outra pessoa. Selecione novamente.'
+        )
+        request.session[f'compra_evento_{pk}_assentos_ids'] = []
+        request.session.modified = True
+        return redirect('espetaculo:mapa_assentos_publico', pk=pk)
+
+    nome_completo = request.session.get(f'compra_evento_{pk}_nome_completo', '')
+    email = request.session.get(f'compra_evento_{pk}_email', '')
+    whatsapp = request.session.get(f'compra_evento_{pk}_whatsapp', '')
+    cpf = request.session.get(f'compra_evento_{pk}_cpf', '')
+    valor_unitario = Decimal(request.session.get(f'compra_evento_{pk}_valor_unitario', '0'))
+    valor_total = valor_unitario * quantidade
+
+    pedido = PedidoIngressoEvento.objects.create(
+        evento=evento,
+        nome_completo=nome_completo,
+        email=email,
+        whatsapp=whatsapp,
+        cpf=cpf,
+        quantidade=quantidade,
+        valor_unitario=valor_unitario,
+        valor_total=valor_total,
+        status='pendente',
+    )
+    pedido.external_reference = f'ingresso_evento:{pedido.id}'
+    pedido.save(update_fields=['external_reference'])
+
+    for assento in assentos:
+        assento.reservado_por_sessao = f'pedido:{pedido.id}'
+        assento.save(update_fields=['reservado_por_sessao', 'atualizado_em'])
+
+    for chave in (
+        'quantidade',
+        'nome_completo',
+        'email',
+        'whatsapp',
+        'cpf',
+        'valor_unitario',
+        'assentos_ids',
+    ):
+        request.session.pop(f'compra_evento_{pk}_{chave}', None)
+
+    request.session[f'pedido_{pedido.id}_assentos_ids'] = list(selecionados_ids)
+    request.session.modified = True
+
+    return redirect('espetaculo:pagar_ingresso_pix', pedido_id=pedido.id)
