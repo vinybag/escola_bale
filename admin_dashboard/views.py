@@ -12,6 +12,9 @@ from espetaculo.models import Espetaculo, PedidoIngressoEvento
 from django.db.models import Q
 from datetime import date, timedelta
 
+from django.views.decorators.http import require_POST
+
+
 
 from datetime import timedelta
 from decimal import Decimal
@@ -4218,7 +4221,7 @@ def espetaculo_ingressos_vendidos(request, pk):
         )
 
     total_pedidos = pedidos.count()
-    total_ingressos = sum(pedido.ingressos.count() for pedido in pedidos)
+    total_ingressos = sum(pedido.ingressos.filter(status__in=['ativo', 'usado']).count()for pedido in pedidos)
 
     context = {
         'espetaculo': espetaculo,
@@ -5154,4 +5157,48 @@ def espetaculo_assento_acao(request, pk, assento_id):
     return redirect(
         'admin_dashboard:espetaculo_assentos_gerenciar',
         pk=pk
+    )
+
+@login_required
+@require_POST
+def pedido_ingresso_cancelar(request, pedido_id):
+    """
+    Cancela um pedido de ingresso, cancela os ingressos
+    vinculados e libera os assentos numerados associados.
+    Uso: testes em produção e cancelamentos administrativos.
+    """
+    if not request.user.is_staff:
+        return redirect('home')
+
+    from espetaculo.models import PedidoIngressoEvento
+
+    pedido = get_object_or_404(
+        PedidoIngressoEvento,
+        pk=pedido_id,
+    )
+
+    if pedido.status == 'cancelado':
+        messages.warning(
+            request,
+            f'O pedido #{pedido.id} já está cancelado.',
+        )
+        return redirect(
+            'admin_dashboard:espetaculo_assentos_gerenciar',
+            pk=pedido.evento_id,
+        )
+
+    pedido.cancelar_e_liberar_assentos()
+
+    messages.success(
+        request,
+        (
+            f'Pedido #{pedido.id} cancelado. '
+            'Os assentos vinculados foram liberados e '
+            'já podem ser vendidos novamente.'
+        ),
+    )
+
+    return redirect(
+        'admin_dashboard:espetaculo_assentos_gerenciar',
+        pk=pedido.evento_id,
     )

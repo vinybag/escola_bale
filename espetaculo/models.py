@@ -762,6 +762,25 @@ class PedidoIngressoEvento(models.Model):
     def ingresso_gerado(self):
         return self.ingressos.exists()
 
+    def cancelar_e_liberar_assentos(self):
+        """
+        Cancela o pedido, cancela os ingressos vinculados
+        e libera os assentos numerados.
+        """
+        for ingresso in self.ingressos.filter(
+            status__in=['ativo', 'usado']
+        ):
+            ingresso.cancelar_e_liberar_assento()
+
+        if self.status != 'cancelado':
+            self.status = 'cancelado'
+            self.save(
+                update_fields=[
+                    'status',
+                    'atualizado_em',
+                ]
+            )
+
 
 class IngressoEvento(models.Model):
     STATUS_CHOICES = [
@@ -842,13 +861,21 @@ class IngressoEvento(models.Model):
 
     def cancelar_e_liberar_assento(self):
         """
-        Cancela o ingresso e devolve o assento vinculado
-        (se houver) para disponível. Usado nos testes e
-        em cancelamentos manuais pelo admin.
+        Cancela o ingresso e libera o assento vinculado.
         """
+        assento = self.assento
+
         if self.status != 'cancelado':
             self.status = 'cancelado'
-            self.save(update_fields=['status'])
+            self.assento = None
+
+            self.save(
+                update_fields=[
+                    'status',
+                    'assento',
+
+                ]
+            )        
 
         if self.assento_id:
             self.assento.liberar()

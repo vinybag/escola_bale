@@ -1,13 +1,15 @@
 {% extends 'admin_dashboard/base.html' %}
 
-{% block title %}Ingressos vendidos - {{ espetaculo.titulo }}{% endblock %}
+{% block title %}
+    Ingressos vendidos - {{ espetaculo.titulo }}
+{% endblock %}
 
 {% block content %}
 <style>
     .ing-list-header {
         display: flex;
-        justify-content: space-between;
         align-items: center;
+        justify-content: space-between;
         gap: 1rem;
         flex-wrap: wrap;
         margin-bottom: 2rem;
@@ -20,46 +22,47 @@
     }
 
     .ing-toolbar {
-        background: white;
-        border: 1px solid #ece3f2;
-        border-radius: 18px;
-        box-shadow: 0 4px 16px rgba(107, 45, 143, 0.07);
-        padding: 1rem 1.25rem;
-        margin-bottom: 1.25rem;
         display: flex;
-        justify-content: space-between;
         align-items: center;
+        justify-content: space-between;
         gap: 1rem;
         flex-wrap: wrap;
+        margin-bottom: 1.25rem;
+        padding: 1rem 1.25rem;
+        border: 1px solid #ece3f2;
+        border-radius: 18px;
+        background: #fff;
+        box-shadow: 0 4px 16px rgba(107, 45, 143, 0.07);
     }
 
     .ing-toolbar form {
         display: flex;
+        align-items: center;
+        justify-content: space-between;
         gap: 0.75rem;
         flex-wrap: wrap;
         width: 100%;
-        justify-content: space-between;
-        align-items: center;
     }
 
     .ing-search-group {
         display: flex;
+        align-items: center;
         gap: 0.65rem;
-        flex-wrap: wrap;
         flex: 1;
         min-width: 260px;
+        flex-wrap: wrap;
     }
 
     .ing-search-input {
         flex: 1;
         min-width: 220px;
         padding: 0.82rem 1rem;
-        border-radius: 10px;
         border: 1px solid #ddd2e7;
+        border-radius: 10px;
+        outline: none;
         background: #fcfbfd;
         color: #44384c;
         font-size: 0.95rem;
-        outline: none;
     }
 
     .ing-search-input:focus {
@@ -72,63 +75,84 @@
         align-items: center;
         justify-content: center;
         padding: 0.78rem 1.15rem;
+        border: 1px solid transparent;
         border-radius: 10px;
-        text-decoration: none;
         font-size: 0.9rem;
         font-weight: 700;
-        border: 1px solid transparent;
+        text-decoration: none;
         cursor: pointer;
         transition: 0.2s ease;
     }
 
     .ing-btn-primary {
-        background: linear-gradient(135deg, #6b2d8f 0%, #7e3aa5 100%);
-        color: white;
+        background: linear-gradient(
+            135deg,
+            #6b2d8f 0%,
+            #7e3aa5 100%
+        );
+        color: #fff;
         box-shadow: 0 6px 14px rgba(107, 45, 143, 0.16);
     }
 
+    .ing-btn-primary:hover {
+        filter: brightness(1.05);
+    }
+
     .ing-btn-light {
+        border-color: #ddd;
         background: #f3f3f3;
         color: #44384c;
-        border-color: #ddd;
+    }
+
+    .ing-btn-danger {
+        border-color: #a83245;
+        background: #b83d4b;
+        color: #fff;
+    }
+
+    .ing-btn-danger:hover {
+        background: #9f3040;
     }
 
     .ing-summary {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        grid-template-columns: repeat(
+            auto-fit,
+            minmax(180px, 1fr)
+        );
         gap: 1rem;
         margin-bottom: 1.25rem;
     }
 
     .ing-summary-card {
-        background: white;
+        padding: 1.2rem 1.25rem;
         border: 1px solid #ece3f2;
         border-radius: 18px;
+        background: #fff;
         box-shadow: 0 4px 16px rgba(107, 45, 143, 0.07);
-        padding: 1.2rem 1.25rem;
     }
 
     .ing-summary-label {
-        font-size: 0.78rem;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: #7a7280;
-        font-weight: 700;
         margin-bottom: 0.35rem;
+        color: #7a7280;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
     }
 
     .ing-summary-value {
-        font-size: 1.25rem;
         color: #4a235f;
+        font-size: 1.25rem;
         font-weight: 800;
     }
 
     .pedido-card {
-        background: white;
+        overflow: hidden;
         border: 1px solid #ece3f2;
         border-radius: 18px;
+        background: #fff;
         box-shadow: 0 4px 16px rgba(107, 45, 143, 0.07);
-        overflow: hidden;
     }
 
     .pedido-card + .pedido-card {
@@ -136,22 +160,25 @@
     }
 
     .pedido-top {
-        padding: 1.35rem 1.5rem;
-        border-bottom: 1px solid #f1ebf6;
         display: flex;
-        justify-content: space-between;
         align-items: flex-start;
+        justify-content: space-between;
         gap: 1rem;
         flex-wrap: wrap;
+        padding: 1.35rem 1.5rem;
+        border-bottom: 1px solid #f1ebf6;
     }
 
     .pedido-body {
-        padding: 1.25rem 1.5rem;
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        grid-template-columns: repeat(
+            auto-fit,
+            minmax(170px, 1fr)
+        );
         gap: 1rem;
-        background: #fcfbfd;
+        padding: 1.25rem 1.5rem;
         border-bottom: 1px solid #f1ebf6;
+        background: #fcfbfd;
     }
 
     .pedido-footer {
@@ -166,16 +193,16 @@
     }
 
     .pedido-info-label {
-        font-size: 0.78rem;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
         color: #7a7280;
+        font-size: 0.78rem;
         font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
     }
 
     .pedido-info-value {
-        font-size: 0.96rem;
         color: #3f3548;
+        font-size: 0.96rem;
         font-weight: 500;
         word-break: break-word;
     }
@@ -183,37 +210,57 @@
     .status-pill {
         display: inline-flex;
         align-items: center;
+        width: fit-content;
         padding: 0.28rem 0.75rem;
         border-radius: 999px;
         font-size: 0.78rem;
         font-weight: 700;
-        text-transform: uppercase;
         letter-spacing: 0.03em;
-        width: fit-content;
+        text-transform: uppercase;
     }
 
-    .status-success  { background: #dff3e4; color: #206a38; }
-    .status-neutral  { background: #e9e9e9; color: #555; }
-    .status-warning  { background: #fff1d6; color: #8a5a00; }
-    .status-purple   { background: #efe7f5; color: #6b2d8f; }
+    .status-success {
+        background: #dff3e4;
+        color: #206a38;
+    }
+
+    .status-neutral {
+        background: #e9e9e9;
+        color: #555;
+    }
+
+    .status-warning {
+        background: #fff1d6;
+        color: #8a5a00;
+    }
+
+    .status-danger {
+        background: #fde2e5;
+        color: #a83245;
+    }
 
     .pedido-actions {
         display: flex;
-        gap: 0.65rem;
-        flex-wrap: wrap;
         align-items: center;
         justify-content: flex-end;
+        gap: 0.65rem;
+        flex-wrap: wrap;
+    }
+
+    .pedido-cancelar-form {
+        display: inline-flex;
+        margin: 0;
     }
 
     .ingressos-box {
-        background: white;
+        padding: 1rem;
         border: 1px solid #ece3f2;
         border-radius: 14px;
-        padding: 1rem;
+        background: #fff;
     }
 
     .ingressos-title {
-        margin: 0 0 0.85rem 0;
+        margin: 0 0 0.85rem;
         color: #4a235f;
         font-size: 0.98rem;
         font-weight: 800;
@@ -225,15 +272,15 @@
     }
 
     .ingresso-item {
-        border: 1px solid #eee3f4;
-        background: #fcfbfd;
-        border-radius: 12px;
-        padding: 0.85rem 1rem;
         display: flex;
+        align-items: center;
         justify-content: space-between;
         gap: 1rem;
         flex-wrap: wrap;
-        align-items: center;
+        padding: 0.85rem 1rem;
+        border: 1px solid #eee3f4;
+        border-radius: 12px;
+        background: #fcfbfd;
     }
 
     .ingresso-meta {
@@ -244,44 +291,55 @@
     }
 
     .ingresso-codigo {
-        font-weight: 800;
         color: #4a235f;
         font-size: 0.92rem;
+        font-weight: 800;
         word-break: break-word;
     }
 
     .ingresso-status {
-        font-size: 0.85rem;
         color: #7a7280;
+        font-size: 0.85rem;
+        line-height: 1.5;
+    }
+
+    .ingresso-status-cancelado {
+        color: #a83245;
+        font-weight: 700;
     }
 
     .ingresso-links {
         display: flex;
+        justify-content: flex-end;
         gap: 0.55rem;
         flex-wrap: wrap;
-        justify-content: flex-end;
     }
 
     .ingresso-link {
         display: inline-flex;
         align-items: center;
+        justify-content: center;
         padding: 0.5rem 0.8rem;
-        background: #f3f3f3;
-        color: #44384c;
         border: 1px solid #ddd;
         border-radius: 8px;
-        text-decoration: none;
+        background: #f3f3f3;
+        color: #44384c;
         font-size: 0.82rem;
         font-weight: 700;
+        text-decoration: none;
+    }
+
+    .ingresso-link:hover {
+        background: #e9e9e9;
     }
 
     .empty-state {
-        background: white;
+        padding: 3rem 1rem;
         border: 1px solid #ece3f2;
         border-radius: 18px;
-        padding: 3rem 1rem;
-        text-align: center;
+        background: #fff;
         color: #7b7580;
+        text-align: center;
         box-shadow: 0 4px 16px rgba(107, 45, 143, 0.07);
     }
 
@@ -299,39 +357,50 @@
             max-width: 100%;
         }
 
+        .ing-toolbar,
         .pedido-top,
         .pedido-body,
-        .pedido-footer,
-        .ing-toolbar {
+        .pedido-footer {
             padding: 1.1rem;
         }
 
         .pedido-actions,
+        .pedido-cancelar-form {
+            width: 100%;
+        }
+
+        .pedido-actions .ing-btn,
+        .pedido-cancelar-form .ing-btn {
+            width: 100%;
+        }
+
         .ingresso-links {
             width: 100%;
             justify-content: stretch;
         }
 
-        .pedido-actions a,
-        .ingresso-links a,
-        .ing-btn {
+        .ingresso-links a {
             flex: 1;
             text-align: center;
-            justify-content: center;
         }
     }
 </style>
 
 <div class="ing-list-header">
     <div>
-        <h2 style="margin: 0 0 0.35rem 0; color: #4a235f;">Ingressos vendidos</h2>
+        <h2 style="margin: 0 0 0.35rem; color: #4a235f;">
+            Ingressos vendidos
+        </h2>
+
         <p style="margin: 0; color: #6f6f78;">
             {{ espetaculo.titulo }}
         </p>
     </div>
 
-    <a href="{% url 'admin_dashboard:espetaculos_list' %}"
-       class="ing-btn ing-btn-light">
+    <a
+        href="{% url 'admin_dashboard:espetaculos_list' %}"
+        class="ing-btn ing-btn-light"
+    >
         ← Voltar para espetáculos
     </a>
 </div>
@@ -339,16 +408,34 @@
 <div class="ing-list-shell">
     <div class="ing-summary">
         <div class="ing-summary-card">
-            <div class="ing-summary-label">Compradores</div>
-            <div class="ing-summary-value">{{ total_pedidos }}</div>
+            <div class="ing-summary-label">
+                Compradores
+            </div>
+
+            <div class="ing-summary-value">
+                {{ total_pedidos }}
+            </div>
         </div>
+
         <div class="ing-summary-card">
-            <div class="ing-summary-label">Ingressos</div>
-            <div class="ing-summary-value">{{ total_ingressos }}</div>
+            <div class="ing-summary-label">
+                Ingressos válidos
+            </div>
+
+            <div class="ing-summary-value">
+                {{ total_ingressos }}
+            </div>
         </div>
+
         <div class="ing-summary-card">
-            <div class="ing-summary-label">Data do evento</div>
-            <div class="ing-summary-value" style="font-size: 1rem;">
+            <div class="ing-summary-label">
+                Data do evento
+            </div>
+
+            <div
+                class="ing-summary-value"
+                style="font-size: 1rem;"
+            >
                 {{ espetaculo.data_apresentacao|date:"d/m/Y H:i" }}
             </div>
         </div>
@@ -364,13 +451,20 @@
                     placeholder="Buscar por nome, email ou WhatsApp"
                     class="ing-search-input"
                 >
-                <button type="submit" class="ing-btn ing-btn-primary">
+
+                <button
+                    type="submit"
+                    class="ing-btn ing-btn-primary"
+                >
                     Buscar
                 </button>
             </div>
 
             {% if busca %}
-                <a href="{% url 'admin_dashboard:espetaculo_ingressos_vendidos' espetaculo.pk %}" class="ing-btn ing-btn-light">
+                <a
+                    href="{% url 'admin_dashboard:espetaculo_ingressos_vendidos' espetaculo.pk %}"
+                    class="ing-btn ing-btn-light"
+                >
                     Limpar busca
                 </a>
             {% endif %}
@@ -381,90 +475,209 @@
         <div class="pedido-card">
             <div class="pedido-top">
                 <div style="flex: 1; min-width: 0;">
-                    <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.35rem;">
-                        <h3 style="margin: 0; color: #4a235f; font-size: 1.12rem; font-weight: 800;">
+                    <div
+                        style="
+                            display: flex;
+                            align-items: center;
+                            gap: 0.75rem;
+                            flex-wrap: wrap;
+                            margin-bottom: 0.35rem;
+                        "
+                    >
+                        <h3
+                            style="
+                                margin: 0;
+                                color: #4a235f;
+                                font-size: 1.12rem;
+                                font-weight: 800;
+                            "
+                        >
                             {{ pedido.nome_completo }}
                         </h3>
 
-                        <span class="status-pill
-                            {% if pedido.status == 'pago' %}status-success
-                            {% elif pedido.status == 'pendente' %}status-warning
-                            {% else %}status-neutral{% endif %}">
-                            {{ pedido.status }}
+                        <span
+                            class="
+                                status-pill
+                                {% if pedido.status == 'pago' %}
+                                    status-success
+                                {% elif pedido.status == 'pendente' %}
+                                    status-warning
+                                {% elif pedido.status == 'cancelado' %}
+                                    status-danger
+                                {% else %}
+                                    status-neutral
+                                {% endif %}
+                            "
+                        >
+                            {{ pedido.get_status_display }}
                         </span>
                     </div>
 
-                    <p style="margin: 0; color: #7a7280; font-size: 0.92rem;">
-                        Pedido #{{ pedido.id }} • Criado em {{ pedido.criado_em|date:"d/m/Y H:i" }}
+                    <p
+                        style="
+                            margin: 0;
+                            color: #7a7280;
+                            font-size: 0.92rem;
+                        "
+                    >
+                        Pedido #{{ pedido.id }}
+                        • Criado em
+                        {{ pedido.criado_em|date:"d/m/Y H:i" }}
                     </p>
                 </div>
 
                 <div class="pedido-actions">
-                    <a href="{% url 'admin_dashboard:espetaculo_ingressos_vendidos' espetaculo.pk %}?q={{ pedido.nome_completo|urlencode }}"
-                       class="ingresso-link">
+                    <a
+                        href="{% url 'admin_dashboard:espetaculo_ingressos_vendidos' espetaculo.pk %}?q={{ pedido.nome_completo|urlencode }}"
+                        class="ingresso-link"
+                    >
                         Filtrar este comprador
                     </a>
+
+                    {% if pedido.status == 'pago' %}
+                        <form
+                            method="post"
+                            class="pedido-cancelar-form"
+                            action="{% url 'admin_dashboard:pedido_ingresso_cancelar' pedido.id %}"
+                            onsubmit="
+                                return confirm(
+                                    'Cancelar este pedido, cancelar os ingressos e liberar os assentos?'
+                                );
+                            "
+                        >
+                            {% csrf_token %}
+
+                            <button
+                                type="submit"
+                                class="ing-btn ing-btn-danger"
+                            >
+                                Cancelar pedido
+                            </button>
+                        </form>
+                    {% endif %}
                 </div>
             </div>
 
             <div class="pedido-body">
                 <div class="pedido-info-item">
-                    <span class="pedido-info-label">Email</span>
-                    <span class="pedido-info-value">{{ pedido.email|default:"—" }}</span>
+                    <span class="pedido-info-label">
+                        Email
+                    </span>
+
+                    <span class="pedido-info-value">
+                        {{ pedido.email|default:"—" }}
+                    </span>
                 </div>
 
                 <div class="pedido-info-item">
-                    <span class="pedido-info-label">WhatsApp</span>
-                    <span class="pedido-info-value">{{ pedido.whatsapp|default:"—" }}</span>
+                    <span class="pedido-info-label">
+                        WhatsApp
+                    </span>
+
+                    <span class="pedido-info-value">
+                        {{ pedido.whatsapp|default:"—" }}
+                    </span>
                 </div>
 
                 <div class="pedido-info-item">
-                    <span class="pedido-info-label">Quantidade</span>
-                    <span class="pedido-info-value">{{ pedido.quantidade }}</span>
+                    <span class="pedido-info-label">
+                        Quantidade
+                    </span>
+
+                    <span class="pedido-info-value">
+                        {{ pedido.quantidade }}
+                    </span>
                 </div>
 
                 <div class="pedido-info-item">
-                    <span class="pedido-info-label">Valor total</span>
-                    <span class="pedido-info-value">R$ {{ pedido.valor_total|floatformat:2 }}</span>
+                    <span class="pedido-info-label">
+                        Valor total
+                    </span>
+
+                    <span class="pedido-info-value">
+                        R$ {{ pedido.valor_total|floatformat:2 }}
+                    </span>
                 </div>
             </div>
 
             <div class="pedido-footer">
                 <div class="ingressos-box">
-                    <h4 class="ingressos-title">Ingressos relacionados</h4>
+                    <h4 class="ingressos-title">
+                        Ingressos relacionados
+                    </h4>
 
                     <div class="ingressos-list">
                         {% for ingresso in pedido.ingressos.all %}
                             <div class="ingresso-item">
                                 <div class="ingresso-meta">
-                                    <span class="ingresso-codigo">{{ ingresso.codigo_unico }}</span>
-                                    <span class="ingresso-status">
-                                        Participante: {{ ingresso.nome_participante }} • Status: {{ ingresso.status }}
+                                    <span class="ingresso-codigo">
+                                        {{ ingresso.codigo_unico }}
+                                    </span>
+
+                                    <span
+                                        class="
+                                            ingresso-status
+                                            {% if ingresso.status == 'cancelado' %}
+                                                ingresso-status-cancelado
+                                            {% endif %}
+                                        "
+                                    >
+                                        Participante:
+                                        {{ ingresso.nome_participante }}
+
+                                        • Status:
+                                        {{ ingresso.get_status_display }}
+
+                                        {% if ingresso.assento %}
+                                            • Assento:
+                                            {{ ingresso.assento.fileira }}{{ ingresso.assento.numero }}
+                                        {% endif %}
                                     </span>
                                 </div>
 
                                 <div class="ingresso-links">
-                                    {% if ingresso.imagem_ingresso %}
-                                        <a href="{% url 'espetaculo:ver_imagem_ingresso' ingresso.pk %}" target="_blank" class="ingresso-link">
-                                            Ver imagem
-                                        </a>
-                                        <a href="{% url 'espetaculo:baixar_ingresso' ingresso.pk %}" target="_blank" class="ingresso-link">
-                                            Baixar ingresso
-                                        </a>
-                                    {% endif %}
+                                    {% if ingresso.status != 'cancelado' %}
+                                        {% if ingresso.imagem_ingresso %}
+                                            <a
+                                                href="{% url 'espetaculo:ver_imagem_ingresso' ingresso.pk %}"
+                                                target="_blank"
+                                                class="ingresso-link"
+                                            >
+                                                Ver imagem
+                                            </a>
 
-                                    {% if ingresso.qrcode_image %}
-                                        <a href="{% url 'espetaculo:baixar_qrcode_ingresso' ingresso.pk %}" target="_blank" class="ingresso-link">
-                                            Baixar QR
-                                        </a>
+                                            <a
+                                                href="{% url 'espetaculo:baixar_ingresso' ingresso.pk %}"
+                                                target="_blank"
+                                                class="ingresso-link"
+                                            >
+                                                Baixar ingresso
+                                            </a>
+                                        {% endif %}
+
+                                        {% if ingresso.qrcode_image %}
+                                            <a
+                                                href="{% url 'espetaculo:baixar_qrcode_ingresso' ingresso.pk %}"
+                                                target="_blank"
+                                                class="ingresso-link"
+                                            >
+                                                Baixar QR
+                                            </a>
+                                        {% endif %}
                                     {% endif %}
                                 </div>
                             </div>
                         {% empty %}
                             <div class="ingresso-item">
                                 <div class="ingresso-meta">
-                                    <span class="ingresso-codigo">Nenhum ingresso gerado ainda</span>
-                                    <span class="ingresso-status">Este pedido ainda não possui ingressos relacionados.</span>
+                                    <span class="ingresso-codigo">
+                                        Nenhum ingresso gerado ainda
+                                    </span>
+
+                                    <span class="ingresso-status">
+                                        Este pedido ainda não possui
+                                        ingressos relacionados.
+                                    </span>
                                 </div>
                             </div>
                         {% endfor %}
@@ -474,10 +687,15 @@
         </div>
     {% empty %}
         <div class="empty-state">
-            <p style="margin: 0 0 1rem 0;">Nenhum comprador encontrado para este espetáculo.</p>
+            <p style="margin: 0 0 1rem;">
+                Nenhum comprador encontrado para este espetáculo.
+            </p>
+
             {% if busca %}
-                <a href="{% url 'admin_dashboard:espetaculo_ingressos_vendidos' espetaculo.pk %}"
-                   class="ing-btn ing-btn-light">
+                <a
+                    href="{% url 'admin_dashboard:espetaculo_ingressos_vendidos' espetaculo.pk %}"
+                    class="ing-btn ing-btn-light"
+                >
                     Limpar busca
                 </a>
             {% endif %}
