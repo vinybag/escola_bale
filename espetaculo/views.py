@@ -298,10 +298,14 @@ def comprar_ingresso(request, pk):
         return redirect('espetaculo:evento_detalhe_publico', pk=evento.pk)
 
     if evento.exige_login_para_compra and not request.user.is_authenticated:
-        messages.error(request, 'Você precisa estar logado para comprar ingresso para este evento.')
+        messages.error(
+            request,
+            'Você precisa estar logado para comprar ingresso para este evento.'
+        )
         return redirect('espetaculo:evento_detalhe_publico', pk=evento.pk)
 
     aluna = None
+
     if request.user.is_authenticated:
         aluna = Aluna.objects.filter(usuario=request.user).first()
 
@@ -314,7 +318,10 @@ def comprar_ingresso(request, pk):
         ).first()
 
         if pedido_existente:
-            return redirect('espetaculo:ingresso_sucesso', pedido_id=pedido_existente.id)
+            return redirect(
+                'espetaculo:ingresso_sucesso',
+                pedido_id=pedido_existente.id
+            )
 
         pedido = PedidoIngressoEvento.objects.create(
             evento=evento,
@@ -327,13 +334,17 @@ def comprar_ingresso(request, pk):
             valor_total=Decimal('0.00'),
             status='pago',
         )
+
         pedido.data_pagamento = timezone.now()
         pedido.external_reference = f'ingresso_gratuito_aluna:{pedido.id}'
         pedido.save(update_fields=['data_pagamento', 'external_reference'])
 
         gerar_ingressos_do_pedido(pedido)
 
-        return redirect('espetaculo:ingresso_sucesso', pedido_id=pedido.id)
+        return redirect(
+            'espetaculo:ingresso_sucesso',
+            pedido_id=pedido.id
+        )
 
     if request.method == 'POST':
         nome_completo = request.POST.get('nome_completo', '').strip()
@@ -344,14 +355,20 @@ def comprar_ingresso(request, pk):
 
         try:
             quantidade = int(quantidade)
-        except Exception:
+        except (TypeError, ValueError):
             quantidade = 1
 
         if quantidade < 1:
             quantidade = 1
 
         if not nome_completo or not whatsapp:
-            return render(request, 'espetaculo/comprar_ingresso.html', {
+            template = (
+                'espetaculo/comprar_ingresso_assentos.html'
+                if evento.venda_com_assentos_numerados
+                else 'espetaculo/comprar_ingresso.html'
+            )
+
+            return render(request, template, {
                 'evento': evento,
                 'erro': 'Preencha os campos obrigatórios.',
             })
@@ -361,9 +378,12 @@ def comprar_ingresso(request, pk):
 
         if evento.venda_com_assentos_numerados:
             if not evento.tem_mapa_assentos:
-                return render(request, 'espetaculo/comprar_ingresso.html', {
+                return render(request, 'espetaculo/comprar_ingresso_assentos.html', {
                     'evento': evento,
-                    'erro': 'Este evento ainda não possui mapa de assentos configurado. Fale com a organização.',
+                    'erro': (
+                        'Este evento ainda não possui mapa de assentos configurado. '
+                        'Fale com a organização.'
+                    ),
                 })
 
             request.session[f'compra_evento_{pk}_quantidade'] = quantidade
@@ -375,7 +395,10 @@ def comprar_ingresso(request, pk):
             request.session[f'compra_evento_{pk}_assentos_ids'] = []
             request.session.modified = True
 
-            return redirect('espetaculo:mapa_assentos_publico', pk=pk)
+            return redirect(
+                'espetaculo:mapa_assentos_publico',
+                pk=pk
+            )
 
         pedido = PedidoIngressoEvento.objects.create(
             evento=evento,
@@ -388,10 +411,19 @@ def comprar_ingresso(request, pk):
             valor_total=valor_total,
             status='pendente',
         )
+
         pedido.external_reference = f'ingresso_evento:{pedido.id}'
         pedido.save(update_fields=['external_reference'])
 
-        return redirect('espetaculo:pagar_ingresso_pix', pedido_id=pedido.id)
+        return redirect(
+            'espetaculo:pagar_ingresso_pix',
+            pedido_id=pedido.id
+        )
+
+    if evento.venda_com_assentos_numerados:
+        return render(request, 'espetaculo/comprar_ingresso_assentos.html', {
+            'evento': evento,
+        })
 
     return render(request, 'espetaculo/comprar_ingresso.html', {
         'evento': evento,
