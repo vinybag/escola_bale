@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load l10n %}
 
-{% block title %}Escolha seu assento{% endblock %}
+{% block title %}Escolha seus assentos{% endblock %}
 
 {% block content %}
 <style>
@@ -9,7 +9,10 @@
         box-sizing: border-box;
     }
 
+    html,
     body {
+        margin: 0;
+        padding: 0;
         overflow: hidden;
     }
 
@@ -26,53 +29,61 @@
         align-items: center;
         justify-content: space-between;
         gap: 0.75rem;
-        padding: 0.75rem 1rem;
+        padding: 0.65rem 1rem;
         background: #221a2b;
         color: #fff;
         z-index: 5;
+        flex-shrink: 0;
     }
 
     .mapa-publico-header a {
         color: #d9c8e6;
         text-decoration: none;
         font-size: 0.85rem;
-        display: flex;
-        align-items: center;
-        gap: 0.3rem;
+        white-space: nowrap;
     }
 
     .mapa-publico-titulo {
-        text-align: center;
         flex: 1;
         min-width: 0;
+        text-align: center;
     }
 
     .mapa-publico-titulo h1 {
         margin: 0;
+        color: #fff;
         font-size: 0.95rem;
         font-weight: 700;
-        color: #fff;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
     }
 
     .mapa-publico-titulo small {
+        display: block;
+        margin-top: 0.2rem;
         color: #b9a7c7;
-        font-size: 0.75rem;
+        font-size: 0.72rem;
+    }
+
+    .mapa-publico-header-placeholder {
+        width: 60px;
+        flex-shrink: 0;
     }
 
     .mapa-publico-legenda {
         display: flex;
-        gap: 0.6rem;
-        padding: 0.5rem 1rem;
-        background: #1d1524;
         justify-content: center;
+        align-items: center;
         flex-wrap: wrap;
+        gap: 0.65rem;
+        padding: 0.45rem 1rem;
+        background: #1d1524;
+        flex-shrink: 0;
     }
 
     .legenda-pill {
-        display: flex;
+        display: inline-flex;
         align-items: center;
         gap: 0.3rem;
         color: #cfc0da;
@@ -84,15 +95,17 @@
         height: 10px;
         border-radius: 50%;
         display: inline-block;
+        flex-shrink: 0;
     }
 
     .mapa-publico-viewport {
-        flex: 1;
         position: relative;
+        flex: 1;
+        min-height: 0;
         overflow: hidden;
-        touch-action: none;
         background: #17101d;
         cursor: grab;
+        touch-action: none;
     }
 
     .mapa-publico-viewport.arrastando {
@@ -111,11 +124,14 @@
         position: relative;
         width: 92vw;
         max-width: 1100px;
-        aspect-ratio: {{ mapa.largura_original|unlocalize }} / {{ mapa.altura_original|unlocalize }};
+        aspect-ratio:
+            {{ mapa.largura_original|unlocalize }}
+            /
+            {{ mapa.altura_original|unlocalize }};
         background: #f4f1f6;
         border-radius: 10px;
         overflow: hidden;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
     }
 
     .mapa-publico-fundo {
@@ -125,6 +141,8 @@
         height: 100%;
         object-fit: fill;
         display: block;
+        user-select: none;
+        -webkit-user-drag: none;
     }
 
     .mapa-publico-assento {
@@ -137,6 +155,8 @@
         background: transparent;
         line-height: 0;
         z-index: 10;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
     }
 
     .mapa-publico-assento[data-clicavel="1"] {
@@ -153,65 +173,78 @@
         display: block;
         fill: currentColor;
         color: #2ecc71;
-        transition: transform 0.12s ease;
+        transition:
+            transform 0.12s ease,
+            filter 0.12s ease;
     }
 
-    .status-disponivel { color: #2ecc71; }
-    .status-selecionado { color: #3498db; }
-    .status-ocupado { color: #e74c3c; }
+    .status-disponivel {
+        color: #2ecc71;
+    }
+
+    .status-selecionado {
+        color: #3498db;
+    }
+
+    .status-ocupado {
+        color: #e74c3c;
+    }
 
     .mapa-publico-assento.selecionado .mapa-publico-svg {
         transform: scale(1.25);
-        filter: drop-shadow(0 0 4px rgba(52, 152, 219, 0.85));
+        filter: drop-shadow(
+            0 0 4px rgba(52, 152, 219, 0.85)
+        );
     }
 
     .mapa-publico-zoom-controles {
         position: absolute;
         right: 12px;
-        bottom: 110px;
+        bottom: 100px;
+        z-index: 20;
         display: flex;
         flex-direction: column;
         gap: 8px;
-        z-index: 20;
     }
 
     .zoom-btn {
         width: 42px;
         height: 42px;
-        border-radius: 50%;
-        border: none;
-        background: rgba(255,255,255,0.12);
-        color: #fff;
-        font-size: 1.3rem;
-        font-weight: 700;
         display: flex;
         align-items: center;
         justify-content: center;
+        border: none;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.12);
+        color: #fff;
+        font-size: 1.3rem;
+        font-weight: 700;
         cursor: pointer;
         backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
     }
 
     .zoom-btn:active {
-        background: rgba(255,255,255,0.25);
+        background: rgba(255, 255, 255, 0.25);
     }
 
     .mapa-publico-footer {
-        position: sticky;
-        bottom: 0;
-        background: #221a2b;
-        color: #fff;
-        padding: 0.85rem 1rem;
+        position: relative;
+        z-index: 5;
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: 1rem;
-        z-index: 5;
-        box-shadow: 0 -4px 16px rgba(0,0,0,0.3);
+        padding: 0.75rem 1rem;
+        background: #221a2b;
+        color: #fff;
+        box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.3);
+        flex-shrink: 0;
     }
 
     .mapa-publico-contador {
-        font-size: 0.85rem;
         color: #d9c8e6;
+        font-size: 0.85rem;
     }
 
     .mapa-publico-contador strong {
@@ -220,11 +253,15 @@
     }
 
     .mapa-publico-confirmar {
-        background: linear-gradient(135deg, #6b2d8f 0%, #7e3aa5 100%);
-        color: #fff;
-        border: none;
         padding: 0.75rem 1.4rem;
+        border: none;
         border-radius: 10px;
+        background: linear-gradient(
+            135deg,
+            #6b2d8f 0%,
+            #7e3aa5 100%
+        );
+        color: #fff;
         font-weight: 700;
         cursor: pointer;
         opacity: 0.4;
@@ -237,64 +274,147 @@
         pointer-events: auto;
     }
 
+    .mapa-publico-confirmar.carregando {
+        opacity: 0.7;
+        pointer-events: none;
+    }
+
     .mapa-publico-toast {
         position: fixed;
         top: 70px;
         left: 50%;
-        transform: translateX(-50%) translateY(-20px);
-        background: #a83c46;
-        color: #fff;
+        z-index: 999;
+        max-width: 90vw;
         padding: 0.6rem 1rem;
         border-radius: 8px;
+        background: #a83c46;
+        color: #fff;
         font-size: 0.85rem;
-        z-index: 999;
-        opacity: 0;
-        transition: opacity 0.2s ease, transform 0.2s ease;
-        pointer-events: none;
-        max-width: 90vw;
         text-align: center;
+        opacity: 0;
+        pointer-events: none;
+        transform: translateX(-50%) translateY(-20px);
+        transition:
+            opacity 0.2s ease,
+            transform 0.2s ease;
     }
 
     .mapa-publico-toast.visivel {
         opacity: 1;
         transform: translateX(-50%) translateY(0);
     }
+
+    @media (max-width: 640px) {
+        .mapa-publico-header {
+            padding: 0.55rem 0.7rem;
+        }
+
+        .mapa-publico-header a {
+            font-size: 0.78rem;
+        }
+
+        .mapa-publico-header-placeholder {
+            width: 48px;
+        }
+
+        .mapa-publico-titulo h1 {
+            font-size: 0.85rem;
+        }
+
+        .mapa-publico-titulo small {
+            font-size: 0.68rem;
+        }
+
+        .mapa-publico-legenda {
+            gap: 0.45rem;
+            padding: 0.35rem 0.5rem;
+        }
+
+        .legenda-pill {
+            font-size: 0.66rem;
+        }
+
+        .mapa-publico-footer {
+            align-items: stretch;
+            padding: 0.65rem 0.75rem;
+        }
+
+        .mapa-publico-contador {
+            display: flex;
+            align-items: center;
+            font-size: 0.75rem;
+        }
+
+        .mapa-publico-confirmar {
+            padding: 0.65rem 0.85rem;
+            font-size: 0.78rem;
+        }
+
+        .mapa-publico-zoom-controles {
+            right: 8px;
+            bottom: 92px;
+        }
+
+        .zoom-btn {
+            width: 38px;
+            height: 38px;
+        }
+    }
 </style>
 
 <div class="mapa-publico-page">
-
     <div class="mapa-publico-header">
-        <a href="{% url 'espetaculo:evento_detalhe_publico' espetaculo.pk %}">
+        <a
+            href="{% url 'espetaculo:evento_detalhe_publico' espetaculo.pk %}"
+        >
             ← Voltar
         </a>
 
         <div class="mapa-publico-titulo">
             <h1>{{ espetaculo.titulo }}</h1>
-            <small>Toque nos assentos verdes para escolher</small>
+            <small>
+                Selecione a quantidade desejada de assentos
+            </small>
         </div>
 
-        <div style="width: 60px;"></div>
+        <div class="mapa-publico-header-placeholder"></div>
     </div>
 
     <div class="mapa-publico-legenda">
         <span class="legenda-pill">
-            <span class="legenda-dot" style="background:#2ecc71;"></span>
+            <span
+                class="legenda-dot"
+                style="background: #2ecc71;"
+            ></span>
             Disponível
         </span>
+
         <span class="legenda-pill">
-            <span class="legenda-dot" style="background:#3498db;"></span>
+            <span
+                class="legenda-dot"
+                style="background: #3498db;"
+            ></span>
             Selecionado
         </span>
+
         <span class="legenda-pill">
-            <span class="legenda-dot" style="background:#e74c3c;"></span>
+            <span
+                class="legenda-dot"
+                style="background: #e74c3c;"
+            ></span>
             Indisponível
         </span>
     </div>
 
-    <div class="mapa-publico-viewport" id="mapaViewport">
-        <div class="mapa-publico-canvas" id="mapaCanvas">
+    <div
+        class="mapa-publico-viewport"
+        id="mapaViewport"
+    >
+        <div
+            class="mapa-publico-canvas"
+            id="mapaCanvas"
+        >
             <div class="mapa-publico-imagem-wrap">
-
                 {% if mapa.imagem_mapa %}
                     <img
                         src="{{ mapa.imagem_mapa.url }}"
@@ -307,59 +427,128 @@
                 {% for assento in assentos %}
                     <button
                         type="button"
-                        class="mapa-publico-assento{% if assento.id in ja_selecionados %} selecionado{% endif %}"
+                        class="mapa-publico-assento
+                            {% if assento.id in ja_selecionados %}
+                                selecionado
+                            {% endif %}"
                         data-id="{{ assento.id }}"
-                        data-status="{% if assento.id in ja_selecionados %}selecionado{% elif assento.status == 'disponivel' %}disponivel{% else %}ocupado{% endif %}"
-                        data-clicavel="{% if assento.status == 'disponivel' or assento.id in ja_selecionados %}1{% else %}0{% endif %}"
-                        style="left: {{ assento.x_pct|unlocalize }}%; top: {{ assento.y_pct|unlocalize }}%;"
+                        data-status="
+                            {% if assento.id in ja_selecionados %}
+                                selecionado
+                            {% elif assento.status == 'disponivel' %}
+                                disponivel
+                            {% else %}
+                                ocupado
+                            {% endif %}
+                        "
+                        data-clicavel="
+                            {% if assento.status == 'disponivel'
+                                  or assento.id in ja_selecionados %}
+                                1
+                            {% else %}
+                                0
+                            {% endif %}
+                        "
+                        style="
+                            left: {{ assento.x_pct|unlocalize }}%;
+                            top: {{ assento.y_pct|unlocalize }}%;
+                        "
                         title="{{ assento.identificador }}"
                     >
                         <svg
                             viewBox="0 0 24 24"
                             xmlns="http://www.w3.org/2000/svg"
-                            class="mapa-publico-svg {% if assento.id in ja_selecionados %}status-selecionado{% elif assento.status == 'disponivel' %}status-disponivel{% else %}status-ocupado{% endif %}"
+                            class="mapa-publico-svg
+                                {% if assento.id in ja_selecionados %}
+                                    status-selecionado
+                                {% elif assento.status == 'disponivel' %}
+                                    status-disponivel
+                                {% else %}
+                                    status-ocupado
+                                {% endif %}"
+                            aria-hidden="true"
                         >
                             <path
-                                d="M5 12 L5 6.5 C5 5.12 6.12 4 7.5 4 L16.5 4 C17.88 4 19 5.12 19 6.5 L19 12
-                                   L20 12 C20.55 12 21 12.45 21 13 L21 16 C21 16.55 20.55 17 20 17 L19 17 L19 20
-                                   L17 20 L17 17.5 L7 17.5 L7 20 L5 20 L5 17 L4 17 C3.45 17 3 16.55 3 16 L3 13
+                                d="M5 12 L5 6.5
+                                   C5 5.12 6.12 4 7.5 4
+                                   L16.5 4
+                                   C17.88 4 19 5.12 19 6.5
+                                   L19 12
+                                   L20 12
+                                   C20.55 12 21 12.45 21 13
+                                   L21 16
+                                   C21 16.55 20.55 17 20 17
+                                   L19 17 L19 20
+                                   L17 20 L17 17.5
+                                   L7 17.5 L7 20 L5 20 L5 17
+                                   L4 17
+                                   C3.45 17 3 16.55 3 16
+                                   L3 13
                                    C3 12.45 3.45 12 4 12 Z"
                                 fill="currentColor"
-                                stroke="rgba(0,0,0,0.25)"
+                                stroke="rgba(0, 0, 0, 0.25)"
                                 stroke-width="0.4"
                             />
                         </svg>
                     </button>
                 {% endfor %}
-
             </div>
         </div>
 
         <div class="mapa-publico-zoom-controles">
-            <button type="button" class="zoom-btn" id="zoomIn">+</button>
-            <button type="button" class="zoom-btn" id="zoomOut">−</button>
-            <button type="button" class="zoom-btn" id="zoomReset" style="font-size: 0.9rem;">⤾</button>
+            <button
+                type="button"
+                class="zoom-btn"
+                id="zoomIn"
+                aria-label="Aumentar zoom"
+            >
+                +
+            </button>
+
+            <button
+                type="button"
+                class="zoom-btn"
+                id="zoomOut"
+                aria-label="Diminuir zoom"
+            >
+                −
+            </button>
+
+            <button
+                type="button"
+                class="zoom-btn"
+                id="zoomReset"
+                style="font-size: 0.9rem;"
+                aria-label="Redefinir zoom"
+            >
+                ⤾
+            </button>
         </div>
     </div>
 
     <div class="mapa-publico-footer">
         <div class="mapa-publico-contador">
-            <strong id="totalSelecionados">{{ ja_selecionados|length }}</strong>
-            de {{ quantidade }} assento(s) selecionado(s)
+            <strong id="totalSelecionados">
+                {{ ja_selecionados|length }}
+            </strong>
+            assento(s) selecionado(s)
         </div>
 
         <button
             type="button"
-            class="mapa-publico-confirmar {% if ja_selecionados|length == quantidade %}habilitado{% endif %}"
+            class="mapa-publico-confirmar
+                {% if ja_selecionados %}habilitado{% endif %}"
             id="btnConfirmar"
         >
             Confirmar seleção
         </button>
     </div>
-
 </div>
 
-<div class="mapa-publico-toast" id="toastAviso"></div>
+<div
+    class="mapa-publico-toast"
+    id="toastAviso"
+></div>
 
 <form
     method="post"
@@ -372,230 +561,474 @@
 
 <script>
 (function () {
-    const quantidade = {{ quantidade|unlocalize }};
-    const urlSelecionar = "{% url 'espetaculo:assento_selecionar_api' espetaculo.pk %}";
-    const csrftoken = document.querySelector('#formConfirmar [name=csrfmiddlewaretoken]').value;
+    const urlSelecionar =
+        "{% url 'espetaculo:assento_selecionar_api' espetaculo.pk %}";
 
-    const viewport = document.getElementById('mapaViewport');
-    const canvas = document.getElementById('mapaCanvas');
-    const totalSpan = document.getElementById('totalSelecionados');
-    const btnConfirmar = document.getElementById('btnConfirmar');
-    const toast = document.getElementById('toastAviso');
+    const formConfirmar =
+        document.getElementById('formConfirmar');
+
+    const csrftoken =
+        formConfirmar.querySelector(
+            '[name=csrfmiddlewaretoken]'
+        ).value;
+
+    const viewport =
+        document.getElementById('mapaViewport');
+
+    const canvas =
+        document.getElementById('mapaCanvas');
+
+    const totalSpan =
+        document.getElementById('totalSelecionados');
+
+    const btnConfirmar =
+        document.getElementById('btnConfirmar');
+
+    const toast =
+        document.getElementById('toastAviso');
 
     let scale = 1;
     let posX = 0;
     let posY = 0;
+
     const minScale = 1;
     const maxScale = 4;
 
     function aplicarTransform() {
         canvas.style.transform =
-            `translate(-50%, -50%) translate(${posX}px, ${posY}px) scale(${scale})`;
+            'translate(-50%, -50%) ' +
+            'translate(' + posX + 'px, ' + posY + 'px) ' +
+            'scale(' + scale + ')';
     }
 
     function limitarPan() {
-        const limite = 400 * scale;
-        posX = Math.max(-limite, Math.min(limite, posX));
-        posY = Math.max(-limite, Math.min(limite, posY));
+        const limiteX =
+            Math.max(0, (canvas.offsetWidth * scale -
+            viewport.clientWidth) / 2);
+
+        const limiteY =
+            Math.max(0, (canvas.offsetHeight * scale -
+            viewport.clientHeight) / 2);
+
+        posX = Math.max(
+            -limiteX,
+            Math.min(limiteX, posX)
+        );
+
+        posY = Math.max(
+            -limiteY,
+            Math.min(limiteY, posY)
+        );
     }
 
     function mostrarToast(mensagem) {
         toast.textContent = mensagem;
         toast.classList.add('visivel');
+
         clearTimeout(toast._timeout);
+
         toast._timeout = setTimeout(function () {
             toast.classList.remove('visivel');
         }, 2600);
     }
 
-    document.getElementById('zoomIn').addEventListener('click', function () {
-        scale = Math.min(maxScale, scale + 0.4);
-        limitarPan();
-        aplicarTransform();
-    });
-
-    document.getElementById('zoomOut').addEventListener('click', function () {
-        scale = Math.max(minScale, scale - 0.4);
-        limitarPan();
-        aplicarTransform();
-    });
-
-    document.getElementById('zoomReset').addEventListener('click', function () {
-        scale = 1;
-        posX = 0;
-        posY = 0;
-        aplicarTransform();
-    });
-
-    let arrastando = false;
-    let ultimoX = 0;
-    let ultimoY = 0;
-
-    viewport.addEventListener('mousedown', function (e) {
-        if (scale <= 1) return;
-        arrastando = true;
-        viewport.classList.add('arrastando');
-        ultimoX = e.clientX;
-        ultimoY = e.clientY;
-    });
-
-    window.addEventListener('mousemove', function (e) {
-        if (!arrastando) return;
-        posX += e.clientX - ultimoX;
-        posY += e.clientY - ultimoY;
-        ultimoX = e.clientX;
-        ultimoY = e.clientY;
-        limitarPan();
-        aplicarTransform();
-    });
-
-    window.addEventListener('mouseup', function () {
-        arrastando = false;
-        viewport.classList.remove('arrastando');
-    });
-
-    viewport.addEventListener('wheel', function (e) {
-        e.preventDefault();
-        const delta = e.deltaY > 0 ? -0.15 : 0.15;
-        scale = Math.max(minScale, Math.min(maxScale, scale + delta));
-        limitarPan();
-        aplicarTransform();
-    }, { passive: false });
-
-    let pontosToque = [];
-    let distanciaInicial = 0;
-    let escalaInicial = 1;
-    let ultimoToqueX = 0;
-    let ultimoToqueY = 0;
-
-    function distanciaEntreToques(touches) {
-        const dx = touches[0].clientX - touches[1].clientX;
-        const dy = touches[0].clientY - touches[1].clientY;
-        return Math.sqrt(dx * dx + dy * dy);
-    }
-
-    viewport.addEventListener('touchstart', function (e) {
-        if (e.touches.length === 2) {
-            distanciaInicial = distanciaEntreToques(e.touches);
-            escalaInicial = scale;
-        } else if (e.touches.length === 1 && scale > 1) {
-            ultimoToqueX = e.touches[0].clientX;
-            ultimoToqueY = e.touches[0].clientY;
-        }
-    }, { passive: true });
-
-    viewport.addEventListener('touchmove', function (e) {
-        if (e.touches.length === 2) {
-            e.preventDefault();
-            const novaDistancia = distanciaEntreToques(e.touches);
-            const fator = novaDistancia / distanciaInicial;
-            scale = Math.max(minScale, Math.min(maxScale, escalaInicial * fator));
-            limitarPan();
-            aplicarTransform();
-        } else if (e.touches.length === 1 && scale > 1) {
-            e.preventDefault();
-            const dx = e.touches[0].clientX - ultimoToqueX;
-            const dy = e.touches[0].clientY - ultimoToqueY;
-            posX += dx;
-            posY += dy;
-            ultimoToqueX = e.touches[0].clientX;
-            ultimoToqueY = e.touches[0].clientY;
-            limitarPan();
-            aplicarTransform();
-        }
-    }, { passive: false });
-
-    let ultimoTap = 0;
-    viewport.addEventListener('touchend', function (e) {
-        const agora = Date.now();
-        if (agora - ultimoTap < 300 && e.touches.length === 0) {
-            scale = scale > 1 ? 1 : 2.2;
-            posX = 0;
-            posY = 0;
-            aplicarTransform();
-        }
-        ultimoTap = agora;
-    });
-
     function atualizarContador() {
-        const total = document.querySelectorAll('.mapa-publico-assento.selecionado').length;
+        const total =
+            document.querySelectorAll(
+                '.mapa-publico-assento.selecionado'
+            ).length;
+
         totalSpan.textContent = total;
 
-        if (total === quantidade) {
+        if (total > 0) {
             btnConfirmar.classList.add('habilitado');
         } else {
             btnConfirmar.classList.remove('habilitado');
         }
     }
 
-    document.querySelectorAll('.mapa-publico-assento').forEach(function (botao) {
-        botao.addEventListener('click', function (e) {
-            e.stopPropagation();
+    function atualizarVisualAssento(
+        botao,
+        selecionado
+    ) {
+        const svg =
+            botao.querySelector('svg');
 
-            const clicavel = this.dataset.clicavel === '1';
-            if (!clicavel) return;
+        if (selecionado) {
+            botao.classList.add('selecionado');
+            botao.dataset.status = 'selecionado';
 
-            const assentoId = this.dataset.id;
-            const jaSelecionado = this.classList.contains('selecionado');
-            const acao = jaSelecionado ? 'desmarcar' : 'selecionar';
+            svg.classList.remove(
+                'status-disponivel'
+            );
 
-            const totalAtual = document.querySelectorAll('.mapa-publico-assento.selecionado').length;
+            svg.classList.add(
+                'status-selecionado'
+            );
+        } else {
+            botao.classList.remove('selecionado');
+            botao.dataset.status = 'disponivel';
 
-            if (acao === 'selecionar' && totalAtual >= quantidade) {
-                mostrarToast(`Você já selecionou ${quantidade} assento(s).`);
-                return;
-            }
+            svg.classList.remove(
+                'status-selecionado'
+            );
 
-            fetch(urlSelecionar, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrftoken,
-                },
-                body: JSON.stringify({
-                    assento_id: assentoId,
-                    acao: acao,
-                }),
+            svg.classList.add(
+                'status-disponivel'
+            );
+        }
+    }
+
+    function enviarAcaoAssento(
+        botao,
+        acao
+    ) {
+        botao.disabled = true;
+
+        fetch(urlSelecionar, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken,
+            },
+            body: JSON.stringify({
+                assento_id: botao.dataset.id,
+                acao: acao,
+            }),
+        })
+            .then(function (resposta) {
+                return resposta.json().then(function (dados) {
+                    return {
+                        ok: resposta.ok,
+                        dados: dados,
+                    };
+                });
             })
-                .then(function (resposta) {
-                    return resposta.json().then(function (dados) {
-                        return { ok: resposta.ok, dados: dados };
-                    });
-                })
-                .then(function (resultado) {
-                    if (!resultado.ok || !resultado.dados.ok) {
-                        mostrarToast(resultado.dados.erro || 'Não foi possível atualizar o assento.');
+            .then(function (resultado) {
+                if (
+                    !resultado.ok ||
+                    !resultado.dados.ok
+                ) {
+                    mostrarToast(
+                        resultado.dados.erro ||
+                        'Não foi possível atualizar o assento.'
+                    );
+                    return;
+                }
+
+                atualizarVisualAssento(
+                    botao,
+                    acao === 'selecionar'
+                );
+
+                atualizarContador();
+            })
+            .catch(function () {
+                mostrarToast(
+                    'Erro de conexão. Tente novamente.'
+                );
+            })
+            .finally(function () {
+                botao.disabled = false;
+            });
+    }
+
+    document
+        .querySelectorAll('.mapa-publico-assento')
+        .forEach(function (botao) {
+            botao.addEventListener(
+                'click',
+                function (evento) {
+                    evento.stopPropagation();
+
+                    if (
+                        botao.dataset.clicavel !== '1'
+                    ) {
                         return;
                     }
 
-                    if (acao === 'selecionar') {
-                        botao.classList.add('selecionado');
-                        botao.dataset.status = 'selecionado';
-                        const svg = botao.querySelector('svg');
-                        svg.classList.remove('status-disponivel');
-                        svg.classList.add('status-selecionado');
-                    } else {
-                        botao.classList.remove('selecionado');
-                        botao.dataset.status = 'disponivel';
-                        const svg = botao.querySelector('svg');
-                        svg.classList.remove('status-selecionado');
-                        svg.classList.add('status-disponivel');
-                    }
+                    const jaSelecionado =
+                        botao.classList.contains(
+                            'selecionado'
+                        );
 
-                    atualizarContador();
-                })
-                .catch(function () {
-                    mostrarToast('Erro de conexão. Tente novamente.');
-                });
+                    const acao =
+                        jaSelecionado
+                            ? 'desmarcar'
+                            : 'selecionar';
+
+                    enviarAcaoAssento(
+                        botao,
+                        acao
+                    );
+                }
+            );
         });
-    });
 
-    btnConfirmar.addEventListener('click', function () {
-        if (!btnConfirmar.classList.contains('habilitado')) return;
-        document.getElementById('formConfirmar').submit();
-    });
+    document
+        .getElementById('zoomIn')
+        .addEventListener('click', function () {
+            scale = Math.min(
+                maxScale,
+                scale + 0.4
+            );
+
+            limitarPan();
+            aplicarTransform();
+        });
+
+    document
+        .getElementById('zoomOut')
+        .addEventListener('click', function () {
+            scale = Math.max(
+                minScale,
+                scale - 0.4
+            );
+
+            limitarPan();
+            aplicarTransform();
+        });
+
+    document
+        .getElementById('zoomReset')
+        .addEventListener('click', function () {
+            scale = 1;
+            posX = 0;
+            posY = 0;
+            aplicarTransform();
+        });
+
+    let arrastando = false;
+    let ultimoX = 0;
+    let ultimoY = 0;
+
+    viewport.addEventListener(
+        'mousedown',
+        function (evento) {
+            if (scale <= 1) {
+                return;
+            }
+
+            if (
+                evento.target.closest(
+                    '.mapa-publico-assento'
+                )
+            ) {
+                return;
+            }
+
+            arrastando = true;
+            viewport.classList.add('arrastando');
+
+            ultimoX = evento.clientX;
+            ultimoY = evento.clientY;
+        }
+    );
+
+    window.addEventListener(
+        'mousemove',
+        function (evento) {
+            if (!arrastando) {
+                return;
+            }
+
+            posX += evento.clientX - ultimoX;
+            posY += evento.clientY - ultimoY;
+
+            ultimoX = evento.clientX;
+            ultimoY = evento.clientY;
+
+            limitarPan();
+            aplicarTransform();
+        }
+    );
+
+    window.addEventListener(
+        'mouseup',
+        function () {
+            arrastando = false;
+            viewport.classList.remove('arrastando');
+        }
+    );
+
+    viewport.addEventListener(
+        'wheel',
+        function (evento) {
+            evento.preventDefault();
+
+            const delta =
+                evento.deltaY > 0
+                    ? -0.15
+                    : 0.15;
+
+            scale = Math.max(
+                minScale,
+                Math.min(
+                    maxScale,
+                    scale + delta
+                )
+            );
+
+            limitarPan();
+            aplicarTransform();
+        },
+        { passive: false }
+    );
+
+    let distanciaInicial = 0;
+    let escalaInicial = 1;
+    let ultimoToqueX = 0;
+    let ultimoToqueY = 0;
+
+    function distanciaEntreToques(toques) {
+        const dx =
+            toques[0].clientX -
+            toques[1].clientX;
+
+        const dy =
+            toques[0].clientY -
+            toques[1].clientY;
+
+        return Math.sqrt(
+            dx * dx + dy * dy
+        );
+    }
+
+    viewport.addEventListener(
+        'touchstart',
+        function (evento) {
+            if (evento.touches.length === 2) {
+                distanciaInicial =
+                    distanciaEntreToques(
+                        evento.touches
+                    );
+
+                escalaInicial = scale;
+            } else if (
+                evento.touches.length === 1 &&
+                scale > 1
+            ) {
+                ultimoToqueX =
+                    evento.touches[0].clientX;
+
+                ultimoToqueY =
+                    evento.touches[0].clientY;
+            }
+        },
+        { passive: true }
+    );
+
+    viewport.addEventListener(
+        'touchmove',
+        function (evento) {
+            if (
+                evento.touches.length === 2 &&
+                distanciaInicial > 0
+            ) {
+                evento.preventDefault();
+
+                const novaDistancia =
+                    distanciaEntreToques(
+                        evento.touches
+                    );
+
+                const fator =
+                    novaDistancia / distanciaInicial;
+
+                scale = Math.max(
+                    minScale,
+                    Math.min(
+                        maxScale,
+                        escalaInicial * fator
+                    )
+                );
+
+                limitarPan();
+                aplicarTransform();
+            } else if (
+                evento.touches.length === 1 &&
+                scale > 1
+            ) {
+                evento.preventDefault();
+
+                const dx =
+                    evento.touches[0].clientX -
+                    ultimoToqueX;
+
+                const dy =
+                    evento.touches[0].clientY -
+                    ultimoToqueY;
+
+                posX += dx;
+                posY += dy;
+
+                ultimoToqueX =
+                    evento.touches[0].clientX;
+
+                ultimoToqueY =
+                    evento.touches[0].clientY;
+
+                limitarPan();
+                aplicarTransform();
+            }
+        },
+        { passive: false }
+    );
+
+    let ultimoTap = 0;
+
+    viewport.addEventListener(
+        'touchend',
+        function (evento) {
+            const agora = Date.now();
+
+            if (
+                agora - ultimoTap < 300 &&
+                evento.touches.length === 0
+            ) {
+                scale = scale > 1 ? 1 : 2.2;
+                posX = 0;
+                posY = 0;
+
+                aplicarTransform();
+            }
+
+            ultimoTap = agora;
+        }
+    );
+
+    btnConfirmar.addEventListener(
+        'click',
+        function () {
+            const total =
+                document.querySelectorAll(
+                    '.mapa-publico-assento.selecionado'
+                ).length;
+
+            if (total < 1) {
+                mostrarToast(
+                    'Selecione pelo menos um assento.'
+                );
+                return;
+            }
+
+            btnConfirmar.classList.add('carregando');
+            btnConfirmar.textContent = 'Confirmando...';
+
+            formConfirmar.submit();
+        }
+    );
+
+    window.addEventListener(
+        'resize',
+        function () {
+            limitarPan();
+            aplicarTransform();
+        }
+    );
 
     atualizarContador();
+    aplicarTransform();
 })();
 </script>
 {% endblock %}

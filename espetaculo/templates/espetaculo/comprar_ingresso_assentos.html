@@ -127,8 +127,7 @@
         <h1>{{ evento.titulo }}</h1>
 
         <p>
-            Preencha seus dados e informe quantos ingressos deseja comprar.
-            Na próxima etapa, você escolherá os assentos no mapa.
+            Preencha seus dados. Na próxima etapa, você escolherá os assentos no mapa.
         </p>
 
         {% if erro %}
@@ -184,19 +183,7 @@
                         value="{{ request.POST.cpf|default:'' }}"
                     >
                 </div>
-
-                <div>
-                    <label for="quantidade">Quantidade de ingressos *</label>
-                    <input
-                        type="number"
-                        id="quantidade"
-                        name="quantidade"
-                        min="1"
-                        value="{{ request.POST.quantidade|default:'1' }}"
-                        required
-                    >
-                </div>
-            </div>
+        </div>
 
             <div class="compra-assentos-actions">
                 <a
