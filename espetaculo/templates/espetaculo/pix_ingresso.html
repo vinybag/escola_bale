@@ -1,6 +1,6 @@
 {% extends 'base_public.html' %}
 
-{% block title %}Pagamento PIX{% endblock %}
+{% block title %}Pagamento do ingresso{% endblock %}
 
 {% block content %}
 <style>
@@ -15,8 +15,8 @@
         display: inline-block;
         margin-bottom: 1rem;
         color: #b07a84;
-        text-decoration: none;
         font-weight: 600;
+        text-decoration: none;
     }
 
     .pix-card {
@@ -53,8 +53,8 @@
         border-radius: 10px;
         background: #fff4dc;
         color: #8a5a00;
-        text-align: center;
         font-weight: 700;
+        text-align: center;
     }
 
     .pix-timer strong {
@@ -164,6 +164,20 @@
         color: #a83245;
     }
 
+    .pix-gratuito {
+        margin: 1.5rem 0;
+        padding: 1.25rem;
+        border-radius: 12px;
+        background: #eafaf1;
+        color: #206a38;
+        text-align: center;
+    }
+
+    .pix-gratuito h3 {
+        margin-top: 0;
+        color: #206a38;
+    }
+
     .pix-error {
         padding: 1rem;
         border-radius: 10px;
@@ -193,14 +207,25 @@
 
 <div class="pix-page">
     <a
-        href="{% url 'espetaculo:evento_detalhe_publico' evento.id %}"
+        href="{% url 'espetaculo:voltar_do_pagamento_ingresso' pedido.id %}"
         class="pix-back-link"
+        onclick="
+            return confirm(
+                'Voltar agora irá cancelar esta tentativa e liberar os assentos. Deseja continuar?'
+            );
+        "
     >
-        ← Voltar para o evento
+        ← Voltar e liberar assentos
     </a>
 
     <div class="pix-card">
-        <h1>Pagamento via PIX</h1>
+        <h1>
+            {% if pedido.valor_total == 0 %}
+                Confirmação dos ingressos
+            {% else %}
+                Pagamento via PIX
+            {% endif %}
+        </h1>
 
         <div class="pix-summary">
             <p>
@@ -218,13 +243,27 @@
                 {{ pedido.quantidade }}
             </p>
 
+            {% if pedido.quantidade_gratuita %}
+                <p>
+                    <strong>Ingressos gratuitos:</strong>
+                    {{ pedido.quantidade_gratuita }}
+                </p>
+            {% endif %}
+
+            {% if pedido.quantidade_paga %}
+                <p>
+                    <strong>Ingressos pagos:</strong>
+                    {{ pedido.quantidade_paga }}
+                </p>
+            {% endif %}
+
             <p>
                 <strong>Valor total:</strong>
                 R$ {{ pedido.valor_total|floatformat:2 }}
             </p>
         </div>
 
-        {% if reserva_expira_em %}
+        {% if reserva_expira_em and pedido.valor_total > 0 %}
             <div
                 id="timerReserva"
                 class="pix-timer"
@@ -238,7 +277,39 @@
             </div>
         {% endif %}
 
-        {% if pix_data %}
+        {% if pedido.valor_total == 0 %}
+            <div class="pix-gratuito">
+                <h3>Ingressos gratuitos confirmados</h3>
+
+                <p>
+                    Não é necessário realizar pagamento.
+                    Seus ingressos foram gerados com sucesso.
+                </p>
+
+                <div
+                    id="status-pagamento"
+                    class="pix-status confirmado"
+                >
+                    <p>
+                        Pedido confirmado!
+                    </p>
+
+                    <p>
+                        Redirecionando para seus ingressos...
+                    </p>
+                </div>
+            </div>
+
+            <div class="pix-actions">
+                <a
+                    href="{% url 'espetaculo:ingresso_sucesso' pedido.id %}"
+                    class="pix-back-button"
+                >
+                    Ver meus ingressos
+                </a>
+            </div>
+
+        {% elif pix_data %}
             <div class="pix-content">
                 <h3>Pague com PIX</h3>
 
@@ -302,6 +373,7 @@
                     </a>
                 </div>
             </div>
+
         {% else %}
             <div class="pix-error">
                 Não foi possível gerar o PIX.
@@ -319,7 +391,7 @@
     </div>
 </div>
 
-{% if reserva_expira_em %}
+{% if reserva_expira_em and pedido.valor_total > 0 %}
 <script>
 (function () {
     const timerReserva =
@@ -338,19 +410,27 @@
     const dataExpiracao =
         new Date(valorExpiracao);
 
+    let timerInterval;
+
     function atualizarTimer() {
         const agora = new Date();
+
         const diferenca =
-            dataExpiracao.getTime() - agora.getTime();
+            dataExpiracao.getTime() -
+            agora.getTime();
 
         if (diferenca <= 0) {
             tempoRestante.textContent = '00:00';
-            timerReserva.classList.add('expirado');
+
+            timerReserva.classList.add(
+                'expirado'
+            );
 
             timerReserva.innerHTML =
                 'O tempo de reserva dos assentos terminou.';
 
             clearInterval(timerInterval);
+
             return;
         }
 
@@ -371,13 +451,15 @@
 
     atualizarTimer();
 
-    const timerInterval =
-        setInterval(atualizarTimer, 1000);
+    timerInterval = setInterval(
+        atualizarTimer,
+        1000
+    );
 })();
 </script>
 {% endif %}
 
-{% if pix_data and payment_id %}
+{% if pix_data and payment_id and pedido.valor_total > 0 %}
 <script>
 (function () {
     const copiarPixButton =
@@ -429,7 +511,6 @@
         document.getElementById('timerReserva');
 
     let verificacaoInterval;
-    let pagamentoConfirmado = false;
 
     function verificarPagamento() {
         fetch(verificarUrl)
@@ -438,19 +519,19 @@
             })
             .then(function (data) {
                 if (data.status === 'paid') {
-                    pagamentoConfirmado = true;
-
                     clearInterval(
                         verificacaoInterval
                     );
 
-                    statusPagamento.classList.add(
-                        'confirmado'
-                    );
+                    if (statusPagamento) {
+                        statusPagamento.classList.add(
+                            'confirmado'
+                        );
 
-                    statusPagamento.innerHTML =
-                        '<p>Pagamento confirmado!</p>' +
-                        '<p>Redirecionando...</p>';
+                        statusPagamento.innerHTML =
+                            '<p>Pagamento confirmado!</p>' +
+                            '<p>Redirecionando...</p>';
+                    }
 
                     setTimeout(function () {
                         window.location.href =
@@ -474,13 +555,15 @@
                             'O tempo de reserva dos assentos terminou.';
                     }
 
-                    statusPagamento.classList.add(
-                        'erro'
-                    );
+                    if (statusPagamento) {
+                        statusPagamento.classList.add(
+                            'erro'
+                        );
 
-                    statusPagamento.innerHTML =
-                        '<p>O tempo de reserva terminou.</p>' +
-                        '<p>Os assentos foram liberados. Redirecionando...</p>';
+                        statusPagamento.innerHTML =
+                            '<p>O tempo de reserva terminou.</p>' +
+                            '<p>Os assentos foram liberados. Redirecionando...</p>';
+                    }
 
                     setTimeout(function () {
                         window.location.href =
@@ -495,15 +578,17 @@
                     data.status !== 'pending' &&
                     data.status !== 'overdue'
                 ) {
-                    statusPagamento.classList.add(
-                        'erro'
-                    );
+                    if (statusPagamento) {
+                        statusPagamento.classList.add(
+                            'erro'
+                        );
 
-                    statusPagamento.innerHTML =
-                        '<p>Status atual: ' +
-                        data.status +
-                        '</p>' +
-                        '<p>Aguardando atualização do pagamento.</p>';
+                        statusPagamento.innerHTML =
+                            '<p>Status atual: ' +
+                            data.status +
+                            '</p>' +
+                            '<p>Aguardando atualização do pagamento.</p>';
+                    }
                 }
             })
             .catch(function (error) {
@@ -514,13 +599,23 @@
             });
     }
 
-    verificacaoInterval =
-        setInterval(
-            verificarPagamento,
-            5000
-        );
+    verificacaoInterval = setInterval(
+        verificarPagamento,
+        5000
+    );
 
     verificarPagamento();
+})();
+</script>
+{% endif %}
+
+{% if pedido.valor_total == 0 %}
+<script>
+(function () {
+    setTimeout(function () {
+        window.location.href =
+            "{% url 'espetaculo:ingresso_sucesso' pedido.id %}";
+    }, 1800);
 })();
 </script>
 {% endif %}

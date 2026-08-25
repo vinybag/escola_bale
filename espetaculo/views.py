@@ -3,6 +3,8 @@ import os
 import traceback
 from decimal import Decimal, InvalidOperation
 
+from django.db import models
+
 from django.conf import settings
 from django.contrib import messages
 from django.http import FileResponse, Http404, JsonResponse
@@ -196,36 +198,79 @@ def audicao_nova_publica(request):
     return render(request, 'espetaculo/audicao_nova_publica.html', {'espetaculo': espetaculo})
 
 
-def gerar_ingressos_do_pedido(pedido, assentos_ids=None):
+def gerar_ingressos_do_pedido(
+    pedido,
+    assentos_ids=None,
+    quantidade_gratuita=None,
+):
     """
-    Gera os IngressoEvento do pedido. Se assentos_ids for informado
-    (fluxo com mapa de assentos numerados), cada ingresso criado é
-    vinculado a um assento e o assento é marcado como vendido.
+    Gera os ingressos do pedido.
+
+    Quando assentos_ids é informado:
+    - cada ingresso é vinculado a um assento;
+    - os primeiros ingressos definidos por quantidade_gratuita
+      recebem gratuito=True;
+    - os demais recebem gratuito=False;
+    - os assentos vinculados são marcados como vendidos.
+
+    Quando assentos_ids não é informado:
+    - mantém o comportamento dos eventos sem assentos numerados;
+    - utiliza a quantidade de ingressos do pedido.
     """
     ingressos_existentes = pedido.ingressos.count()
 
     if ingressos_existentes >= pedido.quantidade:
         for ingresso in pedido.ingressos.all():
             ingresso.garantir_arquivos()
+
         return
 
-    faltantes = pedido.quantidade - ingressos_existentes
+    faltantes = (
+        pedido.quantidade
+        - ingressos_existentes
+    )
+
+    if quantidade_gratuita is None:
+        quantidade_gratuita = getattr(
+            pedido,
+            'quantidade_gratuita',
+            0,
+        )
+
+    quantidade_gratuita = max(
+        int(quantidade_gratuita),
+        0,
+    )
 
     assentos_disponiveis = []
+
     if assentos_ids:
         assentos_disponiveis = list(
-            Assento.objects.filter(id__in=assentos_ids, mapa__evento=pedido.evento)
+            Assento.objects.filter(
+                id__in=assentos_ids,
+                mapa__evento=pedido.evento,
+            ).order_by('fileira', 'numero')
         )
 
     for indice in range(faltantes):
         codigo = IngressoEvento.gerar_codigo()
 
-        while IngressoEvento.objects.filter(codigo_unico=codigo).exists():
+        while IngressoEvento.objects.filter(
+            codigo_unico=codigo,
+        ).exists():
             codigo = IngressoEvento.gerar_codigo()
 
         assento_vinculado = None
+
         if indice < len(assentos_disponiveis):
-            assento_vinculado = assentos_disponiveis[indice]
+            assento_vinculado = (
+                assentos_disponiveis[indice]
+            )
+
+        ingresso_gratuito = (
+            ingressos_existentes + indice
+            < quantidade_gratuita
+        )
 
         ingresso = IngressoEvento.objects.create(
             pedido=pedido,
@@ -233,7 +278,9 @@ def gerar_ingressos_do_pedido(pedido, assentos_ids=None):
             codigo_unico=codigo,
             nome_participante=pedido.nome_completo,
             assento=assento_vinculado,
+            gratuito=ingresso_gratuito,
         )
+
         ingresso.garantir_arquivos()
 
         if assento_vinculado:
@@ -552,6 +599,19 @@ def pagar_ingresso_pix(request, pedido_id):
         )
 
     if pedido.status == 'pago':
+        if not pedido.ingressos.exists():
+            gerar_ingressos_do_pedido(
+                pedido,
+                assentos_ids=(
+                    _obter_assentos_confirmados_pedido(
+                        pedido,
+                    )
+                ),
+                quantidade_gratuita=(
+                    pedido.quantidade_gratuita
+                ),
+            )
+
         return redirect(
             'espetaculo:ingresso_sucesso',
             pedido_id=pedido.id,
@@ -568,6 +628,7 @@ def pagar_ingresso_pix(request, pedido_id):
                 'Escolha os assentos novamente.'
             ),
         )
+
         return redirect(
             'espetaculo:comprar_ingresso',
             pk=evento.pk,
@@ -576,7 +637,9 @@ def pagar_ingresso_pix(request, pedido_id):
     assentos_pedido = Assento.objects.filter(
         mapa__evento=evento,
         status='reservado_temporario',
-        reservado_por_sessao=f'pedido:{pedido.id}',
+        reservado_por_sessao=(
+            f'pedido:{pedido.id}'
+        ),
     )
 
     reserva_expirada = False
@@ -588,6 +651,7 @@ def pagar_ingresso_pix(request, pedido_id):
 
     if reserva_expirada:
         pedido.status = 'expirado'
+
         pedido.save(
             update_fields=[
                 'status',
@@ -623,6 +687,28 @@ def pagar_ingresso_pix(request, pedido_id):
     reserva_expira_em = request.session.get(
         f'pedido_{pedido.id}_reserva_expira_em',
     )
+
+    if pedido.valor_total == Decimal('0.00'):
+        assentos_ids = (
+            _obter_assentos_confirmados_pedido(
+                pedido,
+            )
+        )
+
+        pedido.marcar_como_pago()
+
+        gerar_ingressos_do_pedido(
+            pedido,
+            assentos_ids=assentos_ids,
+            quantidade_gratuita=(
+                pedido.quantidade_gratuita
+            ),
+        )
+
+        return redirect(
+            'espetaculo:ingresso_sucesso',
+            pedido_id=pedido.id,
+        )
 
     try:
         asaas = AsaasAPI()
@@ -675,6 +761,9 @@ def pagar_ingresso_pix(request, pedido_id):
                             _obter_assentos_confirmados_pedido(
                                 pedido,
                             )
+                        ),
+                        quantidade_gratuita=(
+                            pedido.quantidade_gratuita
                         ),
                     )
 
@@ -771,6 +860,9 @@ def pagar_ingresso_pix(request, pedido_id):
                             pedido,
                         )
                     ),
+                    quantidade_gratuita=(
+                        pedido.quantidade_gratuita
+                    ),
                 )
 
                 return redirect(
@@ -851,8 +943,8 @@ def pagar_ingresso_pix(request, pedido_id):
 
 def voltar_do_pagamento_ingresso(request, pedido_id):
     """
-    Cancela um pedido pendente quando o comprador abandona
-    a tela de pagamento e libera os assentos vinculados.
+    Cancela um pedido pendente e libera imediatamente os assentos
+    reservados para esse pedido.
     """
     pedido = get_object_or_404(
         PedidoIngressoEvento,
@@ -862,24 +954,45 @@ def voltar_do_pagamento_ingresso(request, pedido_id):
     if pedido.status == 'pago':
         messages.info(
             request,
-            'Este pedido já foi pago e não pode ser cancelado por este botão.',
+            'Este pedido já foi pago e os assentos não serão liberados.',
         )
         return redirect(
             'espetaculo:ingresso_sucesso',
             pedido_id=pedido.id,
         )
 
-    if pedido.status != 'pendente':
+    if pedido.status in [
+        'cancelado',
+        'expirado',
+    ]:
         messages.info(
             request,
-            'Este pedido não está mais pendente.',
+            'Este pedido já está cancelado ou expirado.',
         )
         return redirect(
-            'espetaculo:evento_detalhe_publico',
+            'espetaculo:mapa_assentos_publico',
             pk=pedido.evento_id,
         )
 
-    pedido.cancelar_e_liberar_assentos()
+    assentos = Assento.objects.filter(
+        mapa__evento=pedido.evento,
+        status='reservado_temporario',
+        reservado_por_sessao=f'pedido:{pedido.id}',
+    )
+
+    total_liberados = assentos.count()
+
+    for assento in assentos:
+        assento.liberar()
+
+    if pedido.status != 'cancelado':
+        pedido.status = 'cancelado'
+        pedido.save(
+            update_fields=[
+                'status',
+                'atualizado_em',
+            ],
+        )
 
     request.session.pop(
         f'pedido_{pedido.id}_assentos_ids',
@@ -895,11 +1008,14 @@ def voltar_do_pagamento_ingresso(request, pedido_id):
 
     messages.success(
         request,
-        'Pedido cancelado e assentos liberados.',
+        (
+            f'Pedido cancelado. '
+            f'{total_liberados} assento(s) liberado(s).'
+        ),
     )
 
     return redirect(
-        'espetaculo:evento_detalhe_publico',
+        'espetaculo:mapa_assentos_publico',
         pk=pedido.evento_id,
     )
 
@@ -939,18 +1055,32 @@ def liberar_reservas_expiradas_do_pedido(pedido):
 
 def _obter_assentos_confirmados_pedido(pedido):
     """
-    Recupera os IDs de assentos já vinculados aos ingressos deste pedido
-    (usado ao reconsultar um pagamento já processado, sem sessão ativa).
+    Retorna os IDs dos assentos associados ao pedido.
+    Usa o campo permanente do pedido e mantém fallback
+    para ingressos antigos que já possuam assento vinculado.
     """
+    if pedido.assentos_ids:
+        return list(pedido.assentos_ids)
+
     return list(
-        IngressoEvento.objects.filter(pedido=pedido, assento__isnull=False).values_list('assento_id', flat=True)
+        IngressoEvento.objects.filter(
+            pedido=pedido,
+            assento__isnull=False,
+        ).values_list(
+            'assento_id',
+            flat=True,
+        )
     )
 
 
 def verificar_pagamento_ingresso_pix(request, payment_id):
     """
     Consulta o pagamento PIX e libera os assentos quando a reserva
-    temporária do pedido expira.
+    temporária expira.
+
+    Pedidos gratuitos não possuem payment_id no Asaas e, portanto,
+    não devem chegar normalmente a esta view. Caso cheguem, são
+    tratados como pagos sem consultar o Asaas.
     """
     try:
         pedido = get_object_or_404(
@@ -959,6 +1089,19 @@ def verificar_pagamento_ingresso_pix(request, payment_id):
         )
 
         if pedido.status == 'pago':
+            if not pedido.ingressos.exists():
+                gerar_ingressos_do_pedido(
+                    pedido,
+                    assentos_ids=(
+                        _obter_assentos_confirmados_pedido(
+                            pedido,
+                        )
+                    ),
+                    quantidade_gratuita=(
+                        pedido.quantidade_gratuita
+                    ),
+                )
+
             return JsonResponse({
                 'status': 'paid',
                 'redirect': (
@@ -975,10 +1118,38 @@ def verificar_pagamento_ingresso_pix(request, payment_id):
                 'status': 'expired',
             })
 
+        if (
+            pedido.valor_total == Decimal('0.00')
+            or pedido.quantidade_gratuita == pedido.quantidade
+        ):
+            pedido.marcar_como_pago()
+
+            gerar_ingressos_do_pedido(
+                pedido,
+                assentos_ids=(
+                    _obter_assentos_confirmados_pedido(
+                        pedido,
+                    )
+                ),
+                quantidade_gratuita=(
+                    pedido.quantidade_gratuita
+                ),
+            )
+
+            return JsonResponse({
+                'status': 'paid',
+                'redirect': (
+                    f'/espetaculos/ingresso/sucesso/'
+                    f'{pedido.id}/'
+                ),
+            })
+
         assentos = Assento.objects.filter(
             mapa__evento=pedido.evento,
             status='reservado_temporario',
-            reservado_por_sessao=f'pedido:{pedido.id}',
+            reservado_por_sessao=(
+                f'pedido:{pedido.id}'
+            ),
         )
 
         reserva_expirada = False
@@ -990,6 +1161,7 @@ def verificar_pagamento_ingresso_pix(request, payment_id):
 
         if reserva_expirada:
             pedido.status = 'expirado'
+
             pedido.save(
                 update_fields=[
                     'status',
@@ -1002,7 +1174,10 @@ def verificar_pagamento_ingresso_pix(request, payment_id):
             })
 
         asaas = AsaasAPI()
-        resultado = asaas.consultar_cobranca(payment_id)
+
+        resultado = asaas.consultar_cobranca(
+            payment_id,
+        )
 
         if (
             resultado
@@ -1017,6 +1192,9 @@ def verificar_pagamento_ingresso_pix(request, payment_id):
                         pedido,
                     )
                 ),
+                quantidade_gratuita=(
+                    pedido.quantidade_gratuita
+                ),
             )
 
             return JsonResponse({
@@ -1028,7 +1206,10 @@ def verificar_pagamento_ingresso_pix(request, payment_id):
             })
 
         status = (
-            resultado.get('status', 'PENDING')
+            resultado.get(
+                'status',
+                'PENDING',
+            )
             if resultado
             else 'ERROR'
         )
@@ -1470,12 +1651,48 @@ def assento_selecionar_api(request, pk):
         }
     )
 
+def quantidade_gratuita_disponivel(request, evento):
+    """
+    Retorna quantos ingressos gratuitos o usuário pode utilizar
+    para este evento.
+
+    A quantidade é formada por:
+    - alunas ativas que tenham o usuário como responsável;
+    - uma aluna ativa vinculada diretamente ao usuário, quando existir.
+
+    Cada aluna pode utilizar apenas uma gratuidade por evento.
+    """
+    if not request.user.is_authenticated:
+        return 0
+
+    alunas = Aluna.objects.filter(
+        ativa=True,
+    ).filter(
+        models.Q(responsavel=request.user)
+        | models.Q(usuario=request.user)
+    ).distinct()
+
+    total_beneficiarias = alunas.count()
+
+    if total_beneficiarias == 0:
+        return 0
+
+    gratuitas_usadas = IngressoEvento.objects.filter(
+        evento=evento,
+        pedido__status__in=['pago', 'pendente'],
+        gratuito=True,
+    ).count()
+
+    return max(
+        total_beneficiarias - gratuitas_usadas,
+        0,
+    )
 
 def confirmar_selecao_assentos(request, pk):
     """
-    Confirma os assentos selecionados no mapa, calcula a quantidade
-    pelo número de assentos escolhidos, cria o pedido, registra a
-    expiração da reserva em 15 minutos e encaminha para o PIX.
+    Confirma os assentos selecionados no mapa, calcula as gratuidades,
+    cria o pedido, salva os IDs dos assentos permanentemente, registra
+    a expiração da reserva e encaminha para o PIX quando necessário.
     """
     evento = get_object_or_404(
         Espetaculo,
@@ -1509,7 +1726,10 @@ def confirmar_selecao_assentos(request, pk):
     )
 
     selecionados_ids = list(
-        dict.fromkeys(selecionados_ids)
+        dict.fromkeys(
+            int(assento_id)
+            for assento_id in selecionados_ids
+        )
     )
 
     quantidade = len(selecionados_ids)
@@ -1544,6 +1764,9 @@ def confirmar_selecao_assentos(request, pk):
                 'por outra pessoa. Selecione novamente.'
             ),
         )
+
+        for assento in assentos:
+            assento.liberar()
 
         request.session[
             f'compra_evento_{pk}_assentos_ids'
@@ -1607,7 +1830,56 @@ def confirmar_selecao_assentos(request, pk):
             pk=pk,
         )
 
-    valor_total = valor_unitario * quantidade
+    quantidade_beneficiarias = 0
+
+    if request.user.is_authenticated:
+        from django.db.models import Q
+
+        quantidade_beneficiarias = (
+            Aluna.objects.filter(
+                Q(responsavel=request.user)
+                | Q(usuario=request.user),
+                ativa=True,
+            )
+            .distinct()
+            .count()
+        )
+
+    gratuitas_utilizadas = (
+        IngressoEvento.objects.filter(
+            evento=evento,
+            gratuito=True,
+            pedido__status__in=[
+                'pago',
+                'pendente',
+            ],
+        ).count()
+    )
+
+    gratuitas_disponiveis = max(
+        quantidade_beneficiarias
+        - gratuitas_utilizadas,
+        0,
+    )
+
+    quantidade_gratuita = min(
+        quantidade,
+        gratuitas_disponiveis,
+    )
+
+    quantidade_paga = (
+        quantidade - quantidade_gratuita
+    )
+
+    valor_total = (
+        valor_unitario * quantidade_paga
+    )
+
+    status_pedido = (
+        'pago'
+        if valor_total == Decimal('0.00')
+        else 'pendente'
+    )
 
     pedido = PedidoIngressoEvento.objects.create(
         evento=evento,
@@ -1616,20 +1888,38 @@ def confirmar_selecao_assentos(request, pk):
         whatsapp=whatsapp,
         cpf=cpf,
         quantidade=quantidade,
+        quantidade_gratuita=quantidade_gratuita,
+        assentos_ids=selecionados_ids,
         valor_unitario=valor_unitario,
         valor_total=valor_total,
-        status='pendente',
+        status=status_pedido,
     )
 
     pedido.external_reference = (
         f'ingresso_evento:{pedido.id}'
     )
 
-    pedido.save(
-        update_fields=[
-            'external_reference',
-        ]
-    )
+    if status_pedido == 'pago':
+        pedido.data_pagamento = timezone.now()
+        pedido.external_reference = (
+            f'ingresso_gratuito_aluna:{pedido.id}'
+        )
+
+        pedido.save(
+            update_fields=[
+                'status',
+                'data_pagamento',
+                'external_reference',
+                'atualizado_em',
+            ],
+        )
+    else:
+        pedido.save(
+            update_fields=[
+                'external_reference',
+                'atualizado_em',
+            ],
+        )
 
     assentos_ids_confirmados = list(
         assentos.values_list(
@@ -1647,7 +1937,7 @@ def confirmar_selecao_assentos(request, pk):
             update_fields=[
                 'reservado_por_sessao',
                 'atualizado_em',
-            ]
+            ],
         )
 
     data_expiracao = (
@@ -1663,6 +1953,10 @@ def confirmar_selecao_assentos(request, pk):
         f'pedido_{pedido.id}_assentos_ids'
     ] = assentos_ids_confirmados
 
+    request.session[
+        f'pedido_{pedido.id}_quantidade_gratuita'
+    ] = quantidade_gratuita
+
     for chave in (
         'nome_completo',
         'email',
@@ -1677,6 +1971,25 @@ def confirmar_selecao_assentos(request, pk):
         )
 
     request.session.modified = True
+
+    if status_pedido == 'pago':
+        gerar_ingressos_do_pedido(
+            pedido,
+            assentos_ids=assentos_ids_confirmados,
+            quantidade_gratuita=quantidade_gratuita,
+        )
+
+        request.session.pop(
+            f'pedido_{pedido.id}_reserva_expira_em',
+            None,
+        )
+
+        request.session.modified = True
+
+        return redirect(
+            'espetaculo:ingresso_sucesso',
+            pedido_id=pedido.id,
+        )
 
     return redirect(
         'espetaculo:pagar_ingresso_pix',

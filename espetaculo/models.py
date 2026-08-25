@@ -714,35 +714,108 @@ class PedidoIngressoEvento(models.Model):
     evento = models.ForeignKey(
         'Espetaculo',
         on_delete=models.CASCADE,
-        related_name='pedidos_ingresso'
+        related_name='pedidos_ingresso',
     )
-    nome_completo = models.CharField(max_length=200)
-    email = models.EmailField(blank=True)
-    whatsapp = models.CharField(max_length=20)
-    cpf = models.CharField(max_length=14, blank=True)
-    quantidade = models.PositiveIntegerField(default=1)
 
-    valor_unitario = models.DecimalField(max_digits=10, decimal_places=2)
-    valor_total = models.DecimalField(max_digits=10, decimal_places=2)
+    nome_completo = models.CharField(
+        max_length=200,
+    )
+
+    email = models.EmailField(
+        blank=True,
+    )
+
+    whatsapp = models.CharField(
+        max_length=20,
+    )
+
+    cpf = models.CharField(
+        max_length=14,
+        blank=True,
+    )
+
+    quantidade = models.PositiveIntegerField(
+        default=1,
+    )
+
+    quantidade_gratuita = models.PositiveIntegerField(
+        default=0,
+        verbose_name='Quantidade de ingressos gratuitos',
+    )
+
+    assentos_ids = models.JSONField(
+        default=list,
+        blank=True,
+        verbose_name='IDs dos assentos',
+    )
+
+    valor_unitario = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+    )
+
+    valor_total = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+    )
 
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
-        default='pendente'
+        default='pendente',
     )
-    data_pagamento = models.DateTimeField(blank=True, null=True)
 
-    asaas_payment_id = models.CharField(max_length=100, blank=True, null=True)
-    asaas_customer_id = models.CharField(max_length=100, blank=True, null=True)
-    asaas_status = models.CharField(max_length=50, blank=True, null=True)
-    asaas_invoice_url = models.URLField(blank=True, null=True)
+    data_pagamento = models.DateTimeField(
+        blank=True,
+        null=True,
+    )
 
-    codigo_pix = models.TextField(blank=True, null=True)
-    qr_code_pix = models.TextField(blank=True, null=True)
-    external_reference = models.CharField(max_length=100, blank=True, null=True)
+    asaas_payment_id = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+    )
 
-    criado_em = models.DateTimeField(auto_now_add=True)
-    atualizado_em = models.DateTimeField(auto_now=True)
+    asaas_customer_id = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+    )
+
+    asaas_status = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+    )
+
+    asaas_invoice_url = models.URLField(
+        blank=True,
+        null=True,
+    )
+
+    codigo_pix = models.TextField(
+        blank=True,
+        null=True,
+    )
+
+    qr_code_pix = models.TextField(
+        blank=True,
+        null=True,
+    )
+
+    external_reference = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+    )
+
+    criado_em = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    atualizado_em = models.DateTimeField(
+        auto_now=True,
+    )
 
     class Meta:
         verbose_name = 'Pedido de ingresso'
@@ -750,35 +823,53 @@ class PedidoIngressoEvento(models.Model):
         ordering = ['-criado_em']
 
     def __str__(self):
-        return f'{self.nome_completo} - {self.evento.titulo}'
+        return (
+            f'{self.nome_completo} - '
+            f'{self.evento.titulo}'
+        )
 
     def marcar_como_pago(self):
         if self.status != 'pago':
             self.status = 'pago'
             self.data_pagamento = timezone.now()
-            self.save(update_fields=['status', 'data_pagamento', 'atualizado_em'])
+
+            self.save(
+                update_fields=[
+                    'status',
+                    'data_pagamento',
+                    'atualizado_em',
+                ],
+            )
 
     @property
     def ingresso_gerado(self):
         return self.ingressos.exists()
 
+    @property
+    def quantidade_paga(self):
+        return max(
+            self.quantidade - self.quantidade_gratuita,
+            0,
+        )
+
     def cancelar_e_liberar_assentos(self):
         """
         Cancela o pedido, cancela os ingressos vinculados
-        e libera os assentos numerados.
+        e libera os assentos associados.
         """
         for ingresso in self.ingressos.filter(
-            status__in=['ativo', 'usado']
+            status__in=['ativo', 'usado'],
         ):
             ingresso.cancelar_e_liberar_assento()
 
         if self.status != 'cancelado':
             self.status = 'cancelado'
+
             self.save(
                 update_fields=[
                     'status',
                     'atualizado_em',
-                ]
+                ],
             )
 
 
@@ -792,12 +883,13 @@ class IngressoEvento(models.Model):
     pedido = models.ForeignKey(
         PedidoIngressoEvento,
         on_delete=models.CASCADE,
-        related_name='ingressos'
+        related_name='ingressos',
     )
+
     evento = models.ForeignKey(
         'Espetaculo',
         on_delete=models.CASCADE,
-        related_name='ingressos'
+        related_name='ingressos',
     )
 
     assento = models.ForeignKey(
@@ -806,35 +898,54 @@ class IngressoEvento(models.Model):
         null=True,
         blank=True,
         related_name='ingressos',
-        help_text='Preenchido apenas quando o evento usa venda com assentos numerados.',
+        help_text=(
+            'Preenchido apenas quando o evento usa '
+            'venda com assentos numerados.'
+        ),
     )
 
     codigo_unico = models.CharField(
         max_length=50,
         unique=True,
-        editable=False
+        editable=False,
     )
 
-    nome_participante = models.CharField(max_length=200, blank=True)
+    nome_participante = models.CharField(
+        max_length=200,
+        blank=True,
+    )
 
     qrcode_image = models.ImageField(
         upload_to='ingressos/qrcodes/',
         blank=True,
-        null=True
+        null=True,
     )
+
     imagem_ingresso = models.ImageField(
         upload_to='ingressos/finais/',
         blank=True,
-        null=True
+        null=True,
     )
 
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
-        default='ativo'
+        default='ativo',
     )
-    validado_em = models.DateTimeField(blank=True, null=True)
-    criado_em = models.DateTimeField(auto_now_add=True)
+
+    gratuito = models.BooleanField(
+        default=False,
+        verbose_name='Ingresso gratuito',
+    )
+
+    validado_em = models.DateTimeField(
+        blank=True,
+        null=True,
+    )
+
+    criado_em = models.DateTimeField(
+        auto_now_add=True,
+    )
 
     class Meta:
         verbose_name = 'Ingresso'
@@ -847,6 +958,7 @@ class IngressoEvento(models.Model):
     def save(self, *args, **kwargs):
         if not self.codigo_unico:
             self.codigo_unico = self.gerar_codigo()
+
         super().save(*args, **kwargs)
 
     @staticmethod
@@ -857,7 +969,13 @@ class IngressoEvento(models.Model):
         if self.status != 'usado':
             self.status = 'usado'
             self.validado_em = timezone.now()
-            self.save(update_fields=['status', 'validado_em'])
+
+            self.save(
+                update_fields=[
+                    'status',
+                    'validado_em',
+                ],
+            )
 
     def cancelar_e_liberar_assento(self):
         """
@@ -873,25 +991,28 @@ class IngressoEvento(models.Model):
                 update_fields=[
                     'status',
                     'assento',
+                ],
+            )
 
-                ]
-            )        
-
-        if self.assento_id:
-            self.assento.liberar()
+        if assento:
+            assento.liberar()
 
     def qr_payload(self):
         return (
-            f"Ingresso: {self.codigo_unico}\n"
-            f"Evento: {self.evento.titulo}\n"
-            f"Participante: {self.nome_participante}\n"
-            f"Pedido: {self.pedido_id}"
+            f'Ingresso: {self.codigo_unico}\n'
+            f'Evento: {self.evento.titulo}\n'
+            f'Participante: {self.nome_participante}\n'
+            f'Pedido: {self.pedido_id}'
         )
 
     def gerar_qrcode_image(self, force=False):
         if self.qrcode_image and not force:
             storage = self.qrcode_image.storage
-            if self.qrcode_image.name and storage.exists(self.qrcode_image.name):
+
+            if (
+                self.qrcode_image.name
+                and storage.exists(self.qrcode_image.name)
+            ):
                 return
 
         qr = qrcode.QRCode(
@@ -899,29 +1020,60 @@ class IngressoEvento(models.Model):
             box_size=10,
             border=4,
         )
+
         qr.add_data(self.qr_payload())
         qr.make(fit=True)
 
-        img_qr = qr.make_image(fill_color="black", back_color="white").convert("RGB")
+        img_qr = qr.make_image(
+            fill_color='black',
+            back_color='white',
+        ).convert('RGB')
 
         buffer = BytesIO()
-        img_qr.save(buffer, format='PNG')
+        img_qr.save(
+            buffer,
+            format='PNG',
+        )
         buffer.seek(0)
 
-        filename = f"qr-{self.codigo_unico}.png"
-        self.qrcode_image.save(filename, ContentFile(buffer.read()), save=False)
+        filename = f'qr-{self.codigo_unico}.png'
+
+        self.qrcode_image.save(
+            filename,
+            ContentFile(buffer.read()),
+            save=False,
+        )
 
     def gerar_imagem_ingresso(self, force=False):
         if self.imagem_ingresso and not force:
             storage = self.imagem_ingresso.storage
-            if self.imagem_ingresso.name and storage.exists(self.imagem_ingresso.name):
+
+            if (
+                self.imagem_ingresso.name
+                and storage.exists(self.imagem_ingresso.name)
+            ):
                 return
 
-        if not self.qrcode_image or not self.qrcode_image.name or not self.qrcode_image.storage.exists(self.qrcode_image.name):
-            self.gerar_qrcode_image(force=force)
+        if (
+            not self.qrcode_image
+            or not self.qrcode_image.name
+            or not self.qrcode_image.storage.exists(
+                self.qrcode_image.name
+            )
+        ):
+            self.gerar_qrcode_image(
+                force=force,
+            )
 
-        largura, altura = 1200, 1600
-        canvas = Image.new("RGB", (largura, altura), "white")
+        largura = 1200
+        altura = 1600
+
+        canvas = Image.new(
+            'RGB',
+            (largura, altura),
+            'white',
+        )
+
         draw = ImageDraw.Draw(canvas)
 
         fonte_titulo = ImageFont.load_default()
@@ -929,64 +1081,190 @@ class IngressoEvento(models.Model):
         fonte_codigo = ImageFont.load_default()
 
         imagem_evento = None
-        if hasattr(self.evento, 'imagem') and self.evento.imagem:
+
+        if (
+            hasattr(self.evento, 'imagem')
+            and self.evento.imagem
+        ):
             try:
                 self.evento.imagem.open('rb')
-                imagem_evento = Image.open(self.evento.imagem).convert("RGB")
+
+                imagem_evento = Image.open(
+                    self.evento.imagem
+                ).convert('RGB')
+
             except Exception:
                 imagem_evento = None
 
         if imagem_evento:
-            imagem_evento = imagem_evento.resize((largura, 700))
-            canvas.paste(imagem_evento, (0, 0))
-            draw.rectangle([(0, 700), (largura, altura)], fill="white")
-        else:
-            draw.rectangle([(0, 0), (largura, 700)], fill=(230, 230, 230))
-            draw.rectangle([(0, 700), (largura, altura)], fill="white")
+            imagem_evento = imagem_evento.resize(
+                (largura, 700)
+            )
 
-        draw.text((60, 760), self.evento.titulo or "Evento", fill="black", font=fonte_titulo)
-        draw.text((60, 840), f"Participante: {self.nome_participante or '-'}", fill="black", font=fonte_texto)
-        draw.text((60, 900), f"Código: {self.codigo_unico}", fill="black", font=fonte_codigo)
+            canvas.paste(
+                imagem_evento,
+                (0, 0),
+            )
+
+            draw.rectangle(
+                [
+                    (0, 700),
+                    (largura, altura),
+                ],
+                fill='white',
+            )
+        else:
+            draw.rectangle(
+                [
+                    (0, 0),
+                    (largura, 700),
+                ],
+                fill=(230, 230, 230),
+            )
+
+            draw.rectangle(
+                [
+                    (0, 700),
+                    (largura, altura),
+                ],
+                fill='white',
+            )
+
+        draw.text(
+            (60, 760),
+            self.evento.titulo or 'Evento',
+            fill='black',
+            font=fonte_titulo,
+        )
+
+        draw.text(
+            (60, 840),
+            (
+                'Participante: '
+                f'{self.nome_participante or "-"}'
+            ),
+            fill='black',
+            font=fonte_texto,
+        )
+
+        draw.text(
+            (60, 900),
+            f'Código: {self.codigo_unico}',
+            fill='black',
+            font=fonte_codigo,
+        )
 
         if self.assento_id:
             draw.text(
                 (60, 930),
-                f"Assento: {self.assento.fileira}{self.assento.numero}",
-                fill="black",
-                font=fonte_texto
+                (
+                    'Assento: '
+                    f'{self.assento.fileira}'
+                    f'{self.assento.numero}'
+                ),
+                fill='black',
+                font=fonte_texto,
             )
 
-        data_evento = getattr(self.evento, 'data_apresentacao', None)
+        data_evento = getattr(
+            self.evento,
+            'data_apresentacao',
+            None,
+        )
+
         if data_evento:
+            if timezone.is_aware(data_evento):
+                data_formatada = timezone.localtime(
+                    data_evento
+                ).strftime('%d/%m/%Y %H:%M')
+            else:
+                data_formatada = data_evento.strftime(
+                    '%d/%m/%Y %H:%M'
+                )
+
             draw.text(
                 (60, 960),
-                f"Data: {timezone.localtime(data_evento).strftime('%d/%m/%Y %H:%M')}" if timezone.is_aware(data_evento) else f"Data: {data_evento.strftime('%d/%m/%Y %H:%M')}",
-                fill="black",
-                font=fonte_texto
+                f'Data: {data_formatada}',
+                fill='black',
+                font=fonte_texto,
             )
 
-        if self.qrcode_image and self.qrcode_image.name:
-            self.qrcode_image.open('rb')
-            qr_img = Image.open(self.qrcode_image).convert("RGB")
-            qr_img = qr_img.resize((320, 320))
-            canvas.paste(qr_img, (60, 1080))
+        if self.gratuito:
+            draw.text(
+                (60, 990),
+                'Ingresso gratuito',
+                fill='black',
+                font=fonte_texto,
+            )
 
-        draw.text((420, 1120), "Apresente este ingresso na entrada.", fill="black", font=fonte_texto)
-        draw.text((420, 1180), "Formato digital válido com QR code.", fill="black", font=fonte_texto)
+        if (
+            self.qrcode_image
+            and self.qrcode_image.name
+        ):
+            self.qrcode_image.open('rb')
+
+            qr_img = Image.open(
+                self.qrcode_image
+            ).convert('RGB')
+
+            qr_img = qr_img.resize(
+                (320, 320)
+            )
+
+            canvas.paste(
+                qr_img,
+                (60, 1080),
+            )
+
+        draw.text(
+            (420, 1120),
+            'Apresente este ingresso na entrada.',
+            fill='black',
+            font=fonte_texto,
+        )
+
+        draw.text(
+            (420, 1180),
+            'Formato digital válido com QR code.',
+            fill='black',
+            font=fonte_texto,
+        )
 
         buffer = BytesIO()
-        canvas.save(buffer, format='PNG')
+
+        canvas.save(
+            buffer,
+            format='PNG',
+        )
+
         buffer.seek(0)
 
-        filename = f"ingresso-{self.codigo_unico}.png"
-        self.imagem_ingresso.save(filename, ContentFile(buffer.read()), save=False)
+        filename = (
+            f'ingresso-{self.codigo_unico}.png'
+        )
+
+        self.imagem_ingresso.save(
+            filename,
+            ContentFile(buffer.read()),
+            save=False,
+        )
 
     def garantir_arquivos(self, force=False, save=True):
-        self.gerar_qrcode_image(force=force)
-        self.gerar_imagem_ingresso(force=force)
+        self.gerar_qrcode_image(
+            force=force,
+        )
+
+        self.gerar_imagem_ingresso(
+            force=force,
+        )
 
         if save:
-            self.save(update_fields=['qrcode_image', 'imagem_ingresso'])
+            self.save(
+                update_fields=[
+                    'qrcode_image',
+                    'imagem_ingresso',
+                ],
+            )
 
 
 class MapaAssentos(models.Model):
