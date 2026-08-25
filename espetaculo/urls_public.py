@@ -22,6 +22,7 @@ urlpatterns = [
     path('espetaculos/<int:pk>/mapa/selecionar/',views.assento_selecionar_api,name='assento_selecionar_api'),
     path('espetaculos/<int:pk>/mapa/confirmar/',views.confirmar_selecao_assentos,name='confirmar_selecao_assentos'),
     path('evento/<int:pk>/comprar/', views.comprar_ingresso, name='comprar_ingresso'),
+    path('ingresso/pix/<int:pedido_id>/voltar/',views.voltar_do_pagamento_ingresso,name='voltar_do_pagamento_ingresso',),
     path('ingresso/pix/<int:pedido_id>/', views.pagar_ingresso_pix, name='pagar_ingresso_pix'),
     path('ingresso/verificar-pix/<str:payment_id>/', views.verificar_pagamento_ingresso_pix, name='verificar_pagamento_ingresso_pix'),
     path('ingresso/sucesso/<int:pedido_id>/', views.ingresso_sucesso, name='ingresso_sucesso'),

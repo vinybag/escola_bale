@@ -3,105 +3,525 @@
 {% block title %}Pagamento PIX{% endblock %}
 
 {% block content %}
-<div style="max-width: 860px; margin: 0 auto; padding: 2rem 1rem 3rem;">
+<style>
+    .pix-page {
+        width: 100%;
+        max-width: 860px;
+        margin: 0 auto;
+        padding: 2rem 1rem 3rem;
+    }
 
-    <a href="{% url 'espetaculo:evento_detalhe_publico' evento.id %}" style="color: #b07a84; text-decoration: none;">
+    .pix-back-link {
+        display: inline-block;
+        margin-bottom: 1rem;
+        color: #b07a84;
+        text-decoration: none;
+        font-weight: 600;
+    }
+
+    .pix-card {
+        padding: 2rem;
+        border-radius: 18px;
+        background: #fff;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    .pix-card h1 {
+        margin-top: 0;
+        color: #2c3e50;
+    }
+
+    .pix-summary {
+        margin-bottom: 1.5rem;
+        padding: 1rem;
+        border-radius: 12px;
+        background: #faf7f8;
+    }
+
+    .pix-summary p {
+        margin: 0 0 0.5rem;
+        color: #555;
+    }
+
+    .pix-summary p:last-child {
+        margin-bottom: 0;
+    }
+
+    .pix-timer {
+        margin-bottom: 2rem;
+        padding: 1rem;
+        border-radius: 10px;
+        background: #fff4dc;
+        color: #8a5a00;
+        text-align: center;
+        font-weight: 700;
+    }
+
+    .pix-timer strong {
+        font-size: 1.2rem;
+    }
+
+    .pix-timer.expirado {
+        background: #fde2e5;
+        color: #a83245;
+    }
+
+    .pix-content {
+        text-align: center;
+    }
+
+    .pix-content h3 {
+        color: #32bcad;
+    }
+
+    .pix-qrcode-wrapper {
+        display: inline-block;
+        max-width: 100%;
+        margin-bottom: 1rem;
+        padding: 1rem;
+        border-radius: 10px;
+        background: #fff;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+    }
+
+    .pix-qrcode {
+        display: block;
+        width: 100%;
+        max-width: 300px;
+        height: auto;
+    }
+
+    .pix-code-wrapper {
+        max-width: 600px;
+        margin: 1rem auto;
+        padding: 1rem;
+        border-radius: 8px;
+        background: #f8f9fa;
+        word-break: break-all;
+    }
+
+    .pix-code {
+        font-size: 0.85rem;
+    }
+
+    .pix-copy-button,
+    .pix-back-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.8rem 1.2rem;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .pix-copy-button {
+        background: #f1f1f1;
+        color: #333;
+    }
+
+    .pix-back-button {
+        background: #f7eef1;
+        color: #8f4f60;
+    }
+
+    .pix-actions {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        margin-top: 1.5rem;
+    }
+
+    .pix-status {
+        margin-top: 2rem;
+        padding: 1rem;
+        border-radius: 8px;
+        background: #fff3cd;
+        color: #664d03;
+    }
+
+    .pix-status p {
+        margin: 0;
+    }
+
+    .pix-status p + p {
+        margin-top: 0.5rem;
+        color: #666;
+        font-size: 0.9rem;
+    }
+
+    .pix-status.confirmado {
+        background: #dff3e4;
+        color: #206a38;
+    }
+
+    .pix-status.erro {
+        background: #fde2e5;
+        color: #a83245;
+    }
+
+    .pix-error {
+        padding: 1rem;
+        border-radius: 10px;
+        background: #fdeaea;
+        color: #b00020;
+    }
+
+    @media (max-width: 640px) {
+        .pix-page {
+            padding: 1rem 0.75rem 2rem;
+        }
+
+        .pix-card {
+            padding: 1.25rem;
+        }
+
+        .pix-actions {
+            flex-direction: column;
+        }
+
+        .pix-copy-button,
+        .pix-back-button {
+            width: 100%;
+        }
+    }
+</style>
+
+<div class="pix-page">
+    <a
+        href="{% url 'espetaculo:evento_detalhe_publico' evento.id %}"
+        class="pix-back-link"
+    >
         ← Voltar para o evento
     </a>
 
-    <div style="background: white; border-radius: 18px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); padding: 2rem; margin-top: 1rem;">
-        <h1 style="margin-top: 0;">Pagamento via PIX</h1>
+    <div class="pix-card">
+        <h1>Pagamento via PIX</h1>
 
-        <div style="background: #faf7f8; border-radius: 12px; padding: 1rem; margin-bottom: 2rem;">
-            <p style="margin: 0 0 0.5rem 0;"><strong>Evento:</strong> {{ evento.titulo }}</p>
-            <p style="margin: 0 0 0.5rem 0;"><strong>Comprador:</strong> {{ pedido.nome_completo }}</p>
-            <p style="margin: 0 0 0.5rem 0;"><strong>Quantidade:</strong> {{ pedido.quantidade }}</p>
-            <p style="margin: 0;"><strong>Valor total:</strong> R$ {{ pedido.valor_total|floatformat:2 }}</p>
+        <div class="pix-summary">
+            <p>
+                <strong>Evento:</strong>
+                {{ evento.titulo }}
+            </p>
+
+            <p>
+                <strong>Comprador:</strong>
+                {{ pedido.nome_completo }}
+            </p>
+
+            <p>
+                <strong>Quantidade:</strong>
+                {{ pedido.quantidade }}
+            </p>
+
+            <p>
+                <strong>Valor total:</strong>
+                R$ {{ pedido.valor_total|floatformat:2 }}
+            </p>
         </div>
 
+        {% if reserva_expira_em %}
+            <div
+                id="timerReserva"
+                class="pix-timer"
+                data-expira-em="{{ reserva_expira_em }}"
+            >
+                Seus assentos estão reservados por mais:
+
+                <strong id="tempoRestante">
+                    15:00
+                </strong>
+            </div>
+        {% endif %}
+
         {% if pix_data %}
-            <div style="text-align: center;">
-                <h3 style="color: #32BCAD;">Pague com PIX</h3>
+            <div class="pix-content">
+                <h3>Pague com PIX</h3>
 
                 {% if pix_data.encodedImage %}
-                    <div style="background: white; padding: 1rem; display: inline-block; border-radius: 10px; margin-bottom: 1rem; box-shadow: 0 2px 10px rgba(0,0,0,0.06);">
-                        <img src="data:image/png;base64,{{ pix_data.encodedImage }}" alt="QR Code PIX" style="max-width: 300px; width: 100%;">
+                    <div class="pix-qrcode-wrapper">
+                        <img
+                            src="data:image/png;base64,{{ pix_data.encodedImage }}"
+                            alt="QR Code PIX"
+                            class="pix-qrcode"
+                        >
                     </div>
                 {% endif %}
 
                 {% if pix_data.payload %}
-                    <p><small>Ou copie o código PIX:</small></p>
+                    <p>
+                        <small>
+                            Ou copie o código PIX:
+                        </small>
+                    </p>
 
-                    <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin: 1rem auto; word-break: break-all; max-width: 600px;">
-                        <code id="pix-code" style="font-size: 0.85rem;">{{ pix_data.payload }}</code>
+                    <div class="pix-code-wrapper">
+                        <code
+                            id="pix-code"
+                            class="pix-code"
+                        >{{ pix_data.payload }}</code>
                     </div>
 
-                    <button type="button"
-                            onclick="copiarPix()"
-                            style="padding: 0.8rem 1.2rem; border: none; border-radius: 8px; background: #f1f1f1; cursor: pointer; font-weight: 600;">
+                    <button
+                        type="button"
+                        id="copiarPixButton"
+                        class="pix-copy-button"
+                    >
                         Copiar código PIX
                     </button>
                 {% endif %}
 
-                <div id="status-pagamento" style="margin-top: 2rem; padding: 1rem; background: #fff3cd; border-radius: 8px;">
-                    <p style="margin: 0; font-weight: 600;">Aguardando pagamento...</p>
-                    <p style="margin: 0.5rem 0 0 0; font-size: 0.9rem; color: #666;">
+                <div
+                    id="status-pagamento"
+                    class="pix-status"
+                >
+                    <p>
+                        Aguardando pagamento...
+                    </p>
+
+                    <p>
                         Verificando automaticamente a cada 5 segundos.
                     </p>
                 </div>
+
+                <div class="pix-actions">
+                    <a
+                        href="{% url 'espetaculo:voltar_do_pagamento_ingresso' pedido.id %}"
+                        class="pix-back-button"
+                        onclick="
+                            return confirm(
+                                'Voltar agora irá cancelar esta tentativa e liberar os assentos. Deseja continuar?'
+                            );
+                        "
+                    >
+                        Voltar e liberar assentos
+                    </a>
+                </div>
             </div>
         {% else %}
-            <div style="background: #fdeaea; color: #b00020; padding: 1rem; border-radius: 10px;">
+            <div class="pix-error">
                 Não foi possível gerar o PIX.
+            </div>
+
+            <div class="pix-actions">
+                <a
+                    href="{% url 'espetaculo:voltar_do_pagamento_ingresso' pedido.id %}"
+                    class="pix-back-button"
+                >
+                    Voltar e liberar assentos
+                </a>
             </div>
         {% endif %}
     </div>
 </div>
 
+{% if reserva_expira_em %}
+<script>
+(function () {
+    const timerReserva =
+        document.getElementById('timerReserva');
+
+    const tempoRestante =
+        document.getElementById('tempoRestante');
+
+    if (!timerReserva || !tempoRestante) {
+        return;
+    }
+
+    const valorExpiracao =
+        timerReserva.dataset.expiraEm;
+
+    const dataExpiracao =
+        new Date(valorExpiracao);
+
+    function atualizarTimer() {
+        const agora = new Date();
+        const diferenca =
+            dataExpiracao.getTime() - agora.getTime();
+
+        if (diferenca <= 0) {
+            tempoRestante.textContent = '00:00';
+            timerReserva.classList.add('expirado');
+
+            timerReserva.innerHTML =
+                'O tempo de reserva dos assentos terminou.';
+
+            clearInterval(timerInterval);
+            return;
+        }
+
+        const totalSegundos =
+            Math.floor(diferenca / 1000);
+
+        const minutos =
+            Math.floor(totalSegundos / 60);
+
+        const segundos =
+            totalSegundos % 60;
+
+        tempoRestante.textContent =
+            String(minutos).padStart(2, '0') +
+            ':' +
+            String(segundos).padStart(2, '0');
+    }
+
+    atualizarTimer();
+
+    const timerInterval =
+        setInterval(atualizarTimer, 1000);
+})();
+</script>
+{% endif %}
+
 {% if pix_data and payment_id %}
 <script>
-function copiarPix() {
-    const codigo = document.getElementById('pix-code').textContent;
-    navigator.clipboard.writeText(codigo).then(() => {
-        alert('Código PIX copiado!');
-    });
-}
+(function () {
+    const copiarPixButton =
+        document.getElementById('copiarPixButton');
 
-const paymentId = '{{ payment_id }}';
-const verificarUrlBase = "{% url 'espetaculo:verificar_pagamento_ingresso_pix' '__PAYMENT_ID__' %}";
-const verificarUrl = verificarUrlBase.replace('__PAYMENT_ID__', paymentId);
-let verificacaoInterval;
+    const pixCode =
+        document.getElementById('pix-code');
 
-function verificarPagamento() {
-    fetch(verificarUrl)
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'paid') {
-                clearInterval(verificacaoInterval);
-                document.getElementById('status-pagamento').innerHTML = `
-                    <p style="margin: 0; color: #28a745; font-weight: bold;">Pagamento confirmado!</p>
-                    <p style="margin: 0.5rem 0 0 0; font-size: 0.9rem;">Redirecionando...</p>
-                `;
-                setTimeout(() => {
-                    window.location.href = data.redirect;
-                }, 2000);
-                return;
+    if (copiarPixButton && pixCode) {
+        copiarPixButton.addEventListener(
+            'click',
+            function () {
+                navigator.clipboard.writeText(
+                    pixCode.textContent.trim()
+                ).then(function () {
+                    copiarPixButton.textContent =
+                        'Código copiado!';
+
+                    setTimeout(function () {
+                        copiarPixButton.textContent =
+                            'Copiar código PIX';
+                    }, 2000);
+                }).catch(function () {
+                    alert(
+                        'Não foi possível copiar automaticamente. '
+                        + 'Selecione e copie o código manualmente.'
+                    );
+                });
             }
+        );
+    }
 
-            if (data.status && data.status !== 'pending' && data.status !== 'overdue') {
-                document.getElementById('status-pagamento').innerHTML = `
-                    <p style="margin: 0; color: #856404; font-weight: bold;">Status atual: ${data.status}</p>
-                    <p style="margin: 0.5rem 0 0 0; font-size: 0.9rem;">Aguardando atualização do pagamento.</p>
-                `;
-            }
-        })
-        .catch(error => {
-            console.error('Erro ao verificar pagamento:', error);
-        });
-}
+    const paymentId =
+        '{{ payment_id }}';
 
-verificacaoInterval = setInterval(verificarPagamento, 5000);
-verificarPagamento();
+    const verificarUrlBase =
+        "{% url 'espetaculo:verificar_pagamento_ingresso_pix' '__PAYMENT_ID__' %}";
+
+    const verificarUrl =
+        verificarUrlBase.replace(
+            '__PAYMENT_ID__',
+            paymentId
+        );
+
+    const statusPagamento =
+        document.getElementById('status-pagamento');
+
+    const timerReserva =
+        document.getElementById('timerReserva');
+
+    let verificacaoInterval;
+    let pagamentoConfirmado = false;
+
+    function verificarPagamento() {
+        fetch(verificarUrl)
+            .then(function (response) {
+                return response.json();
+            })
+            .then(function (data) {
+                if (data.status === 'paid') {
+                    pagamentoConfirmado = true;
+
+                    clearInterval(
+                        verificacaoInterval
+                    );
+
+                    statusPagamento.classList.add(
+                        'confirmado'
+                    );
+
+                    statusPagamento.innerHTML =
+                        '<p>Pagamento confirmado!</p>' +
+                        '<p>Redirecionando...</p>';
+
+                    setTimeout(function () {
+                        window.location.href =
+                            data.redirect;
+                    }, 2000);
+
+                    return;
+                }
+
+                if (data.status === 'expired') {
+                    clearInterval(
+                        verificacaoInterval
+                    );
+
+                    if (timerReserva) {
+                        timerReserva.classList.add(
+                            'expirado'
+                        );
+
+                        timerReserva.innerHTML =
+                            'O tempo de reserva dos assentos terminou.';
+                    }
+
+                    statusPagamento.classList.add(
+                        'erro'
+                    );
+
+                    statusPagamento.innerHTML =
+                        '<p>O tempo de reserva terminou.</p>' +
+                        '<p>Os assentos foram liberados. Redirecionando...</p>';
+
+                    setTimeout(function () {
+                        window.location.href =
+                            "{% url 'espetaculo:comprar_ingresso' evento.pk %}";
+                    }, 2500);
+
+                    return;
+                }
+
+                if (
+                    data.status &&
+                    data.status !== 'pending' &&
+                    data.status !== 'overdue'
+                ) {
+                    statusPagamento.classList.add(
+                        'erro'
+                    );
+
+                    statusPagamento.innerHTML =
+                        '<p>Status atual: ' +
+                        data.status +
+                        '</p>' +
+                        '<p>Aguardando atualização do pagamento.</p>';
+                }
+            })
+            .catch(function (error) {
+                console.error(
+                    'Erro ao verificar pagamento:',
+                    error
+                );
+            });
+    }
+
+    verificacaoInterval =
+        setInterval(
+            verificarPagamento,
+            5000
+        );
+
+    verificarPagamento();
+})();
 </script>
 {% endif %}
 {% endblock %}

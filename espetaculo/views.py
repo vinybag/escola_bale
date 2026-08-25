@@ -521,109 +521,420 @@ def comprar_ingresso(request, pk):
 
 
 def pagar_ingresso_pix(request, pedido_id):
-    pedido = get_object_or_404(PedidoIngressoEvento, id=pedido_id)
+    pedido = get_object_or_404(
+        PedidoIngressoEvento,
+        id=pedido_id,
+    )
+
     evento = pedido.evento
 
-    if not evento.publico and not request.user.is_authenticated:
-        return redirect('espetaculo:lista_publica')
+    if (
+        not evento.publico
+        and not request.user.is_authenticated
+    ):
+        return redirect(
+            'espetaculo:lista_publica',
+        )
 
     if evento.tipo != 'evento':
-        return redirect('espetaculo:detalhes_publico', pk=evento.pk)
+        return redirect(
+            'espetaculo:detalhes_publico',
+            pk=evento.pk,
+        )
 
-    if not evento.venda_aberta and pedido.status != 'pago':
-        return redirect('espetaculo:evento_detalhe_publico', pk=evento.pk)
+    if (
+        not evento.venda_aberta
+        and pedido.status != 'pago'
+    ):
+        return redirect(
+            'espetaculo:evento_detalhe_publico',
+            pk=evento.pk,
+        )
 
     if pedido.status == 'pago':
-        return redirect('espetaculo:ingresso_sucesso', pedido_id=pedido.id)
+        return redirect(
+            'espetaculo:ingresso_sucesso',
+            pedido_id=pedido.id,
+        )
+
+    if pedido.status in [
+        'cancelado',
+        'expirado',
+    ]:
+        messages.error(
+            request,
+            (
+                'Este pedido não está mais disponível. '
+                'Escolha os assentos novamente.'
+            ),
+        )
+        return redirect(
+            'espetaculo:comprar_ingresso',
+            pk=evento.pk,
+        )
+
+    assentos_pedido = Assento.objects.filter(
+        mapa__evento=evento,
+        status='reservado_temporario',
+        reservado_por_sessao=f'pedido:{pedido.id}',
+    )
+
+    reserva_expirada = False
+
+    for assento in assentos_pedido:
+        if assento.esta_reservado_expirado:
+            assento.liberar()
+            reserva_expirada = True
+
+    if reserva_expirada:
+        pedido.status = 'expirado'
+        pedido.save(
+            update_fields=[
+                'status',
+                'atualizado_em',
+            ],
+        )
+
+        request.session.pop(
+            f'pedido_{pedido.id}_assentos_ids',
+            None,
+        )
+
+        request.session.pop(
+            f'pedido_{pedido.id}_reserva_expira_em',
+            None,
+        )
+
+        request.session.modified = True
+
+        messages.error(
+            request,
+            (
+                'O tempo de reserva dos assentos terminou. '
+                'Escolha novamente.'
+            ),
+        )
+
+        return redirect(
+            'espetaculo:comprar_ingresso',
+            pk=evento.pk,
+        )
+
+    reserva_expira_em = request.session.get(
+        f'pedido_{pedido.id}_reserva_expira_em',
+    )
 
     try:
         asaas = AsaasAPI()
 
-        cpf_cliente = (pedido.cpf or '').replace('.', '').replace('-', '').replace('/', '')
-        if not cpf_cliente or len(cpf_cliente) != 11:
+        cpf_cliente = (
+            pedido.cpf or ''
+        ).replace('.', '').replace('-', '').replace('/', '')
+
+        if (
+            not cpf_cliente
+            or len(cpf_cliente) != 11
+        ):
             cpf_cliente = '24971563792'
 
         customer_data = {
             'name': pedido.nome_completo,
-            'email': pedido.email or 'sem-email@evento.local',
+            'email': (
+                pedido.email
+                or 'sem-email@evento.local'
+            ),
             'cpfCnpj': cpf_cliente,
         }
 
-        descricao = f"Ingresso - {pedido.evento.titulo}"
-        payment_id_existente = pedido.asaas_payment_id
+        descricao = (
+            f'Ingresso - {pedido.evento.titulo}'
+        )
+
+        payment_id_existente = (
+            pedido.asaas_payment_id
+        )
 
         if payment_id_existente:
-            cobranca_existente = asaas.consultar_cobranca(payment_id_existente)
+            cobranca_existente = (
+                asaas.consultar_cobranca(
+                    payment_id_existente,
+                )
+            )
 
             if cobranca_existente:
-                status_existente = cobranca_existente.get('status')
+                status_existente = (
+                    cobranca_existente.get('status')
+                )
 
                 if status_existente == 'RECEIVED':
                     pedido.marcar_como_pago()
-                    gerar_ingressos_do_pedido(pedido, assentos_ids=_obter_assentos_confirmados_pedido(pedido))
-                    return redirect('espetaculo:ingresso_sucesso', pedido_id=pedido.id)
 
-                if status_existente in ['PENDING', 'OVERDUE']:
-                    qrcode_data = asaas.obter_qrcode_pix(payment_id_existente)
-                    pix_data = extrair_pix_data_evento(qrcode_data)
-                    return render(request, 'espetaculo/pix_ingresso.html', {
-                        'pedido': pedido,
-                        'evento': evento,
-                        'payment_id': payment_id_existente,
-                        'pix_data': pix_data,
-                        'valor': cobranca_existente.get('value', pedido.valor_total),
-                    })
+                    gerar_ingressos_do_pedido(
+                        pedido,
+                        assentos_ids=(
+                            _obter_assentos_confirmados_pedido(
+                                pedido,
+                            )
+                        ),
+                    )
+
+                    return redirect(
+                        'espetaculo:ingresso_sucesso',
+                        pedido_id=pedido.id,
+                    )
+
+                if status_existente in [
+                    'PENDING',
+                    'OVERDUE',
+                ]:
+                    qrcode_data = (
+                        asaas.obter_qrcode_pix(
+                            payment_id_existente,
+                        )
+                    )
+
+                    pix_data = (
+                        extrair_pix_data_evento(
+                            qrcode_data,
+                        )
+                    )
+
+                    return render(
+                        request,
+                        'espetaculo/pix_ingresso.html',
+                        {
+                            'pedido': pedido,
+                            'evento': evento,
+                            'payment_id': (
+                                payment_id_existente
+                            ),
+                            'pix_data': pix_data,
+                            'valor': (
+                                cobranca_existente.get(
+                                    'value',
+                                    pedido.valor_total,
+                                )
+                            ),
+                            'reserva_expira_em': (
+                                reserva_expira_em
+                            ),
+                        },
+                    )
 
         resultado = asaas.criar_cobranca_pix(
             valor=pedido.valor_total,
             descricao=descricao,
             customer_data=customer_data,
-            external_reference=pedido.external_reference,
+            external_reference=(
+                pedido.external_reference
+            ),
         )
 
         if resultado and 'error' in resultado:
-            return render(request, 'espetaculo/comprar_ingresso.html', {
-                'evento': evento,
-                'erro': f"Erro Asaas: {resultado['error']}",
-            })
+            return render(
+                request,
+                'espetaculo/comprar_ingresso.html',
+                {
+                    'evento': evento,
+                    'erro': (
+                        f"Erro Asaas: "
+                        f"{resultado['error']}"
+                    ),
+                },
+            )
 
         if resultado and 'id' in resultado:
-            pedido.asaas_payment_id = resultado['id']
+            pedido.asaas_payment_id = (
+                resultado['id']
+            )
+
             if 'customer' in resultado:
-                pedido.asaas_customer_id = resultado['customer']
-            pedido.save(update_fields=['asaas_payment_id', 'asaas_customer_id'])
+                pedido.asaas_customer_id = (
+                    resultado['customer']
+                )
+
+            pedido.save(
+                update_fields=[
+                    'asaas_payment_id',
+                    'asaas_customer_id',
+                    'atualizado_em',
+                ],
+            )
 
             if resultado.get('status') == 'RECEIVED':
                 pedido.marcar_como_pago()
-                gerar_ingressos_do_pedido(pedido, assentos_ids=_obter_assentos_confirmados_pedido(pedido))
-                return redirect('espetaculo:ingresso_sucesso', pedido_id=pedido.id)
 
-            qrcode_data = asaas.obter_qrcode_pix(resultado['id'])
-            pix_data = extrair_pix_data_evento(qrcode_data)
+                gerar_ingressos_do_pedido(
+                    pedido,
+                    assentos_ids=(
+                        _obter_assentos_confirmados_pedido(
+                            pedido,
+                        )
+                    ),
+                )
 
-            if pix_data and pix_data.get('payload'):
-                pedido.codigo_pix = pix_data['payload']
-                pedido.save(update_fields=['codigo_pix'])
+                return redirect(
+                    'espetaculo:ingresso_sucesso',
+                    pedido_id=pedido.id,
+                )
 
-            return render(request, 'espetaculo/pix_ingresso.html', {
-                'pedido': pedido,
+            qrcode_data = (
+                asaas.obter_qrcode_pix(
+                    resultado['id'],
+                )
+            )
+
+            pix_data = (
+                extrair_pix_data_evento(
+                    qrcode_data,
+                )
+            )
+
+            if (
+                pix_data
+                and pix_data.get('payload')
+            ):
+                pedido.codigo_pix = (
+                    pix_data['payload']
+                )
+
+                pedido.save(
+                    update_fields=[
+                        'codigo_pix',
+                        'atualizado_em',
+                    ],
+                )
+
+            return render(
+                request,
+                'espetaculo/pix_ingresso.html',
+                {
+                    'pedido': pedido,
+                    'evento': evento,
+                    'payment_id': resultado['id'],
+                    'pix_data': pix_data,
+                    'valor': resultado.get(
+                        'value',
+                        pedido.valor_total,
+                    ),
+                    'reserva_expira_em': (
+                        reserva_expira_em
+                    ),
+                },
+            )
+
+        return render(
+            request,
+            'espetaculo/comprar_ingresso.html',
+            {
                 'evento': evento,
-                'payment_id': resultado['id'],
-                'pix_data': pix_data,
-                'valor': resultado.get('value', pedido.valor_total),
-            })
-
-        return render(request, 'espetaculo/comprar_ingresso.html', {
-            'evento': evento,
-            'erro': f'Resposta inesperada do Asaas: {resultado}',
-        })
+                'erro': (
+                    'Resposta inesperada do Asaas: '
+                    f'{resultado}'
+                ),
+            },
+        )
 
     except Exception as e:
         traceback.print_exc()
-        return render(request, 'espetaculo/comprar_ingresso.html', {
-            'evento': evento,
-            'erro': f'Erro ao gerar PIX: {str(e)}',
-        })
+
+        return render(
+            request,
+            'espetaculo/comprar_ingresso.html',
+            {
+                'evento': evento,
+                'erro': (
+                    f'Erro ao gerar PIX: {str(e)}'
+                ),
+            },
+        )
+
+def voltar_do_pagamento_ingresso(request, pedido_id):
+    """
+    Cancela um pedido pendente quando o comprador abandona
+    a tela de pagamento e libera os assentos vinculados.
+    """
+    pedido = get_object_or_404(
+        PedidoIngressoEvento,
+        pk=pedido_id,
+    )
+
+    if pedido.status == 'pago':
+        messages.info(
+            request,
+            'Este pedido já foi pago e não pode ser cancelado por este botão.',
+        )
+        return redirect(
+            'espetaculo:ingresso_sucesso',
+            pedido_id=pedido.id,
+        )
+
+    if pedido.status != 'pendente':
+        messages.info(
+            request,
+            'Este pedido não está mais pendente.',
+        )
+        return redirect(
+            'espetaculo:evento_detalhe_publico',
+            pk=pedido.evento_id,
+        )
+
+    pedido.cancelar_e_liberar_assentos()
+
+    request.session.pop(
+        f'pedido_{pedido.id}_assentos_ids',
+        None,
+    )
+
+    request.session.pop(
+        f'pedido_{pedido.id}_reserva_expira_em',
+        None,
+    )
+
+    request.session.modified = True
+
+    messages.success(
+        request,
+        'Pedido cancelado e assentos liberados.',
+    )
+
+    return redirect(
+        'espetaculo:evento_detalhe_publico',
+        pk=pedido.evento_id,
+    )
+
+def liberar_reservas_expiradas_do_pedido(pedido):
+    """
+    Libera os assentos temporariamente reservados por um pedido
+    pendente cujo prazo já expirou.
+    """
+    if pedido.status != 'pendente':
+        return False
+
+    assentos = Assento.objects.filter(
+        mapa__evento=pedido.evento,
+        status='reservado_temporario',
+        reservado_por_sessao=f'pedido:{pedido.id}',
+        reservado_em__isnull=False,
+    )
+
+    houve_liberacao = False
+
+    for assento in assentos:
+        if assento.esta_reservado_expirado:
+            assento.liberar()
+            houve_liberacao = True
+
+    if houve_liberacao:
+        pedido.status = 'expirado'
+        pedido.save(
+            update_fields=[
+                'status',
+                'atualizado_em',
+            ]
+        )
+
+    return houve_liberacao
 
 
 def _obter_assentos_confirmados_pedido(pedido):
@@ -637,95 +948,102 @@ def _obter_assentos_confirmados_pedido(pedido):
 
 
 def verificar_pagamento_ingresso_pix(request, payment_id):
+    """
+    Consulta o pagamento PIX e libera os assentos quando a reserva
+    temporária do pedido expira.
+    """
     try:
+        pedido = get_object_or_404(
+            PedidoIngressoEvento,
+            asaas_payment_id=payment_id,
+        )
+
+        if pedido.status == 'pago':
+            return JsonResponse({
+                'status': 'paid',
+                'redirect': (
+                    f'/espetaculos/ingresso/sucesso/'
+                    f'{pedido.id}/'
+                ),
+            })
+
+        if pedido.status in [
+            'cancelado',
+            'expirado',
+        ]:
+            return JsonResponse({
+                'status': 'expired',
+            })
+
+        assentos = Assento.objects.filter(
+            mapa__evento=pedido.evento,
+            status='reservado_temporario',
+            reservado_por_sessao=f'pedido:{pedido.id}',
+        )
+
+        reserva_expirada = False
+
+        for assento in assentos:
+            if assento.esta_reservado_expirado:
+                assento.liberar()
+                reserva_expirada = True
+
+        if reserva_expirada:
+            pedido.status = 'expirado'
+            pedido.save(
+                update_fields=[
+                    'status',
+                    'atualizado_em',
+                ],
+            )
+
+            return JsonResponse({
+                'status': 'expired',
+            })
+
         asaas = AsaasAPI()
         resultado = asaas.consultar_cobranca(payment_id)
 
-        if resultado and resultado.get('status') == 'RECEIVED':
-            pedido = PedidoIngressoEvento.objects.get(asaas_payment_id=payment_id)
+        if (
+            resultado
+            and resultado.get('status') == 'RECEIVED'
+        ):
             pedido.marcar_como_pago()
-            gerar_ingressos_do_pedido(pedido, assentos_ids=_obter_assentos_confirmados_pedido(pedido))
+
+            gerar_ingressos_do_pedido(
+                pedido,
+                assentos_ids=(
+                    _obter_assentos_confirmados_pedido(
+                        pedido,
+                    )
+                ),
+            )
 
             return JsonResponse({
                 'status': 'paid',
-                'redirect': f"/espetaculos/ingresso/sucesso/{pedido.id}/"
+                'redirect': (
+                    f'/espetaculos/ingresso/sucesso/'
+                    f'{pedido.id}/'
+                ),
             })
 
-        status = resultado.get('status', 'PENDING') if resultado else 'ERROR'
-        return JsonResponse({'status': status.lower()})
-
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=400)
-
-
-def evento_ingressos(request, evento_id):
-    evento = get_object_or_404(
-        Espetaculo,
-        pk=evento_id,
-        ativo=True,
-        publico=True,
-        venda_aberta=True
-    )
-
-    context = {
-        'evento': evento,
-    }
-    return render(request, 'espetaculo/evento_ingressos.html', context)
-
-
-def checkout_ingresso(request, evento_id):
-    evento = get_object_or_404(
-        Espetaculo,
-        pk=evento_id,
-        ativo=True,
-        publico=True,
-        venda_aberta=True
-    )
-
-    if request.method == 'POST':
-        nome_completo = request.POST.get('nome_completo', '').strip()
-        email = request.POST.get('email', '').strip()
-        whatsapp = request.POST.get('whatsapp', '').strip()
-        cpf = request.POST.get('cpf', '').strip()
-        quantidade = request.POST.get('quantidade', '1')
-
-        if not nome_completo or not whatsapp:
-            messages.error(request, 'Preencha nome completo e WhatsApp.')
-            return render(request, 'espetaculo/checkout_ingresso.html', {'evento': evento})
-
-        try:
-            quantidade = int(quantidade)
-            if quantidade < 1:
-                raise ValueError
-        except (TypeError, ValueError):
-            messages.error(request, 'Informe uma quantidade válida.')
-            return render(request, 'espetaculo/checkout_ingresso.html', {'evento': evento})
-
-        try:
-            valor_unitario = Decimal(evento.preco_ingresso)
-            valor_total = valor_unitario * quantidade
-        except (InvalidOperation, TypeError):
-            messages.error(request, 'Não foi possível calcular o valor do ingresso.')
-            return render(request, 'espetaculo/checkout_ingresso.html', {'evento': evento})
-
-        pedido = PedidoIngressoEvento.objects.create(
-            evento=evento,
-            nome_completo=nome_completo,
-            email=email,
-            whatsapp=whatsapp,
-            cpf=cpf,
-            quantidade=quantidade,
-            valor_unitario=valor_unitario,
-            valor_total=valor_total,
-            status='pendente',
+        status = (
+            resultado.get('status', 'PENDING')
+            if resultado
+            else 'ERROR'
         )
 
-        return redirect('espetaculo:pagamento_pix_ingresso', pedido_id=pedido.pk)
+        return JsonResponse({
+            'status': status.lower(),
+        })
 
-    context = {
-        'evento': evento,
-    }
-    return render(request, 'espetaculo/checkout_ingresso.html', context)
+    except Exception as e:
+        return JsonResponse(
+            {
+                'error': str(e),
+            },
+            status=400,
+        )
 
 
 def pagamento_pix_ingresso(request, pedido_id):
@@ -1156,8 +1474,8 @@ def assento_selecionar_api(request, pk):
 def confirmar_selecao_assentos(request, pk):
     """
     Confirma os assentos selecionados no mapa, calcula a quantidade
-    pelo número de assentos escolhidos, cria o pedido e encaminha
-    para o pagamento PIX.
+    pelo número de assentos escolhidos, cria o pedido, registra a
+    expiração da reserva em 15 minutos e encaminha para o PIX.
     """
     evento = get_object_or_404(
         Espetaculo,
@@ -1275,7 +1593,11 @@ def confirmar_selecao_assentos(request, pk):
                 '0',
             )
         )
-    except (InvalidOperation, TypeError, ValueError):
+    except (
+        InvalidOperation,
+        TypeError,
+        ValueError,
+    ):
         messages.error(
             request,
             'Não foi possível calcular o valor dos ingressos.',
@@ -1328,6 +1650,19 @@ def confirmar_selecao_assentos(request, pk):
             ]
         )
 
+    data_expiracao = (
+        timezone.now()
+        + timezone.timedelta(minutes=15)
+    )
+
+    request.session[
+        f'pedido_{pedido.id}_reserva_expira_em'
+    ] = data_expiracao.isoformat()
+
+    request.session[
+        f'pedido_{pedido.id}_assentos_ids'
+    ] = assentos_ids_confirmados
+
     for chave in (
         'nome_completo',
         'email',
@@ -1340,10 +1675,6 @@ def confirmar_selecao_assentos(request, pk):
             f'compra_evento_{pk}_{chave}',
             None,
         )
-
-    request.session[
-        f'pedido_{pedido.id}_assentos_ids'
-    ] = assentos_ids_confirmados
 
     request.session.modified = True
 
