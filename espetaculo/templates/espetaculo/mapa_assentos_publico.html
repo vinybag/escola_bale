@@ -146,14 +146,19 @@
                 {{ mapa.altura_original|unlocalize }}
             )
         );
-        height: min(
-            94%,
-            calc(100vh - 58px - 34px - 72px)
-        );
+        /* Altura removida daqui de propósito: agora ela é calculada
+           automaticamente a partir do aspect-ratio abaixo, usando a
+           largura como referência. Isso garante que largura e altura
+           nunca "briguem" entre si e a imagem nunca fique achatada. */
+        height: auto;
         aspect-ratio:
             {{ mapa.largura_original|unlocalize }}
             /
             {{ mapa.altura_original|unlocalize }};
+        max-height: min(
+            94%,
+            calc(100vh - 58px - 34px - 72px)
+        );
         overflow: hidden;
         border-radius: 10px;
         background: #f4f1f6;
@@ -175,8 +180,9 @@
     .mapa-publico-assento {
         position: absolute;
         z-index: 10;
-        width: 26px;
-        height: 26px;
+        width: 2%;
+        height: auto;
+        aspect-ratio: 1 / 1;
         padding: 0;
         border: 0;
         background: transparent;
@@ -196,8 +202,8 @@
 
     .mapa-publico-svg {
         display: block;
-        width: 26px;
-        height: 26px;
+        width: 100%;
+        height: 100%;
         fill: currentColor;
         color: #2ecc71;
         transition:
