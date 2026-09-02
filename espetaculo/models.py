@@ -998,12 +998,7 @@ class IngressoEvento(models.Model):
             assento.liberar()
 
     def qr_payload(self):
-        return (
-            f'Ingresso: {self.codigo_unico}\n'
-            f'Evento: {self.evento.titulo}\n'
-            f'Participante: {self.nome_participante}\n'
-            f'Pedido: {self.pedido_id}'
-        )
+        return self.codigo_unico
 
     def gerar_qrcode_image(self, force=False):
         if self.qrcode_image and not force:

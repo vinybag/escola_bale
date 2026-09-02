@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="max-width: 500px; margin: 0 auto;">
+    <h2>Check-in: {{ evento.titulo }}</h2>
+
+    <p>
+        Validados: <strong id="contador-usados">{{ total_usados }}</strong>
+        de <strong>{{ total_ingressos }}</strong>
+    </p>
+
+    <div id="leitor" style="width: 100%;"></div>
+    <div id="resultado" style="margin-top: 20px; font-size: 1.2em;"></div>
+</div>
+
+<script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
+<script>
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+}
+
+const resultadoDiv = document.getElementById('resultado');
+const contadorSpan = document.getElementById('contador-usados');
+let processando = false;
+
+function onScanSuccess(decodedText) {
+    if (processando) return;
+    processando = true;
+
+    fetch("{% url 'espetaculo:validar_ingresso_checkin' %}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': getCookie('csrftoken'),
+        },
+        body: `codigo=${encodeURIComponent(decodedText)}`,
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.ok) {
+            resultadoDiv.innerHTML =
+                `<p style="color: green;">✅ ${data.mensagem}<br>${data.nome} — ${data.assento}</p>`;
+
+            contadorSpan.textContent = parseInt(contadorSpan.textContent) + 1;
+        } else {
+            resultadoDiv.innerHTML =
+                `<p style="color: red;">❌ ${data.mensagem}<br>${data.nome || ''}</p>`;
+        }
+    })
+    .catch(() => {
+        resultadoDiv.innerHTML = '<p style="color: red;">Erro de conexão. Tente novamente.</p>';
+    })
+    .finally(() => {
+        setTimeout(() => { processando = false; }, 2000);
+    });
+}
+
+const html5QrcodeScanner = new Html5QrcodeScanner(
+    "leitor",
+    { fps: 10, qrbox: 250 },
+);
+
+html5QrcodeScanner.render(onScanSuccess);
+</script>
+{% endblock %}

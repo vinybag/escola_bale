@@ -1,6 +1,8 @@
 import json
 import os
 import traceback
+import re
+
 from decimal import Decimal, InvalidOperation
 
 from django.db import models
@@ -11,6 +13,11 @@ from django.http import FileResponse, Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
+
+from django.contrib.auth import authenticate, login as django_login
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import logout as django_logout
+
 
 from pagamentos.asaas_helper import AsaasAPI
 from usuarios.models import Aluna
@@ -1995,3 +2002,127 @@ def confirmar_selecao_assentos(request, pk):
         'espetaculo:pagar_ingresso_pix',
         pedido_id=pedido.id,
     )
+
+@login_required(login_url='espetaculo:login_checkin')
+@require_POST
+def validar_ingresso_checkin(request):
+    """
+    Recebe o conteúdo lido do QR Code e tenta dar baixa no ingresso.
+    Funciona com qualquer navegador com câmera, sem instalação de app.
+    """
+    codigo_bruto = request.POST.get('codigo', '').strip()
+
+    match = re.search(r'Ingresso:\s*(\S+)', codigo_bruto)
+    codigo = match.group(1) if match else codigo_bruto
+
+    try:
+        ingresso = IngressoEvento.objects.select_related(
+            'evento',
+            'pedido',
+            'assento',
+        ).get(codigo_unico=codigo)
+    except IngressoEvento.DoesNotExist:
+        return JsonResponse({
+            'ok': False,
+            'mensagem': 'QR Code inválido ou não encontrado.',
+        }, status=404)
+
+    if ingresso.status == 'cancelado':
+        return JsonResponse({
+            'ok': False,
+            'mensagem': 'Este ingresso foi cancelado.',
+        }, status=400)
+
+    if ingresso.status == 'usado':
+        validado_em = (
+            timezone.localtime(ingresso.validado_em).strftime('%d/%m/%Y às %H:%M')
+            if ingresso.validado_em
+            else 'horário não registrado'
+        )
+
+        return JsonResponse({
+            'ok': False,
+            'mensagem': f'Ingresso já utilizado em {validado_em}.',
+            'nome': ingresso.nome_participante,
+            'assento': (
+                f'{ingresso.assento.fileira}{ingresso.assento.numero}'
+                if ingresso.assento_id
+                else '-'
+            ),
+        }, status=409)
+
+    ingresso.marcar_como_usado()
+
+    return JsonResponse({
+        'ok': True,
+        'mensagem': 'Entrada liberada!',
+        'nome': ingresso.nome_participante,
+        'evento': ingresso.evento.titulo,
+        'assento': (
+            f'{ingresso.assento.fileira}{ingresso.assento.numero}'
+            if ingresso.assento_id
+            else 'Sem assento'
+        ),
+        'gratuito': ingresso.gratuito,
+    })
+
+@login_required(login_url='espetaculo:login_checkin')
+def checkin_ingressos(request, pk):
+    """
+    Página com o leitor de QR Code para dar baixa nos ingressos.
+    Restrita a staff/equipe autorizada.
+    """
+    evento = get_object_or_404(
+        Espetaculo,
+        pk=pk,
+    )
+
+    total_ingressos = evento.ingressos.exclude(
+        status='cancelado',
+    ).count()
+
+    total_usados = evento.ingressos.filter(
+        status='usado',
+    ).count()
+
+    context = {
+        'evento': evento,
+        'total_ingressos': total_ingressos,
+        'total_usados': total_usados,
+    }
+
+    return render(request, 'espetaculo/checkin_ingressos.html', context)
+
+
+def login_checkin(request):
+    erro = None
+
+    if request.method == 'POST':
+        username = request.POST.get('username', '').strip()
+        password = request.POST.get('password', '').strip()
+
+        user = authenticate(
+            request,
+            username=username,
+            password=password,
+        )
+
+        if user is not None:
+            django_login(request, user)
+
+            proximo = request.GET.get('next') or 'espetaculo:selecionar_evento_checkin'
+
+            return redirect(proximo)
+
+        erro = 'Usuário ou senha inválidos.'
+
+    return render(
+        request,
+        'espetaculo/login_checkin.html',
+        {'erro': erro},
+    )
+
+
+def logout_checkin(request):
+    django_logout(request)
+    return redirect('espetaculo:login_checkin')
