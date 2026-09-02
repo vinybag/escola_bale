@@ -4,7 +4,9 @@ import os
 import dj_database_url
 
 
+
 BASE_DIR = Path(__file__).resolve().parent.parent
+
 
 
 # SECURITY
@@ -12,11 +14,13 @@ SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
 
 
+
 # ALLOWED_HOSTS
 ALLOWED_HOSTS = config(
     'ALLOWED_HOSTS',
     default='localhost,127.0.0.1,web-production-4389a.up.railway.app,bailahcorpoecia.com,www.bailahcorpoecia.com'
 ).split(',')
+
 
 
 # Application definition
@@ -28,6 +32,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+
     # Apps do projeto
     'core',
     'usuarios',
@@ -37,9 +42,11 @@ INSTALLED_APPS = [
     'admin_dashboard',
     'espetaculo',
 
+
     # Email
     'anymail',
 ]
+
 
 
 MIDDLEWARE = [
@@ -54,7 +61,9 @@ MIDDLEWARE = [
 ]
 
 
+
 ROOT_URLCONF = 'config.urls'
+
 
 
 TEMPLATES = [
@@ -74,11 +83,14 @@ TEMPLATES = [
 ]
 
 
+
 WSGI_APPLICATION = 'config.wsgi.application'
+
 
 
 # Database
 DATABASE_URL = config('DATABASE_URL', default=None)
+
 
 if DATABASE_URL:
     # Produção (Railway com PostgreSQL)
@@ -95,6 +107,7 @@ else:
     }
 
 
+
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
@@ -104,11 +117,13 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
+
 # Internationalization
 LANGUAGE_CODE = 'pt-br'
 TIME_ZONE = 'America/Sao_Paulo'
 USE_I18N = True
 USE_TZ = True
+
 
 
 # Static files
@@ -118,9 +133,11 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 
+
 # Media files
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 
 
 # Login/Logout
@@ -129,15 +146,18 @@ LOGIN_REDIRECT_URL = 'redirecionar_dashboard'
 LOGOUT_REDIRECT_URL = 'home'
 
 
+
 # Google Calendar
 GOOGLE_CALENDAR_CREDENTIALS = BASE_DIR / 'config' / 'credentials' / 'google_calendar.json'
 GOOGLE_CALENDAR_ID = config('GOOGLE_CALENDAR_ID', default='')
+
 
 
 # Stripe
 STRIPE_PUBLIC_KEY = config('STRIPE_PUBLIC_KEY', default='')
 STRIPE_SECRET_KEY = config('STRIPE_SECRET_KEY', default='')
 STRIPE_WEBHOOK_SECRET = config('STRIPE_WEBHOOK_SECRET', default='')
+
 
 
 # Asaas
@@ -147,11 +167,19 @@ ASAAS_BASE_URL = 'https://api.asaas.com/v3'
 ASAAS_WEBHOOK_TOKEN = config('ASAAS_WEBHOOK_TOKEN', default='')
 
 
+
 # Default primary key
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
+
 # Security settings for production
+# IMPORTANTE: todas as configuracoes de cookie seguro/dominio ficam
+# aqui dentro, pois so fazem sentido em producao (HTTPS + dominio
+# proprio). Se ficarem fora deste bloco, o cookie de sessao e o
+# cookie de CSRF sao rejeitados pelo navegador em ambiente local
+# (HTTP em 127.0.0.1), o que impede o login de funcionar mesmo com
+# usuario e senha corretos.
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SECURE_SSL_REDIRECT = False  # Railway já faz isso
@@ -160,6 +188,9 @@ if not DEBUG:
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
     X_FRAME_OPTIONS = 'DENY'
+    CSRF_COOKIE_DOMAIN = '.bailahcorpoecia.com'
+    SESSION_COOKIE_DOMAIN = '.bailahcorpoecia.com'
+
 
 
 # =========================
@@ -167,17 +198,21 @@ if not DEBUG:
 # =========================
 EMAIL_BACKEND = "anymail.backends.brevo.EmailBackend"
 
+
 ANYMAIL = {
     "BREVO_API_KEY": config("BREVO_API_KEY", default=""),
 }
+
 
 DEFAULT_FROM_EMAIL = config(
     'DEFAULT_FROM_EMAIL',
     default='BAILAH <naoresponda@bailahcorpoecia.com>'
 )
 
+
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
 EMAIL_SUBJECT_PREFIX = '[BAILAH] '
+
 
 
 # CSRF e Security settings
@@ -187,11 +222,6 @@ CSRF_TRUSTED_ORIGINS = [
     'https://web-production-4389a.up.railway.app',
 ]
 
-
-CSRF_COOKIE_SECURE = True
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_DOMAIN = '.bailahcorpoecia.com'
-SESSION_COOKIE_DOMAIN = '.bailahcorpoecia.com'
 
 # WhatsApp Business API (Meta)
 WHATSAPP_PHONE_NUMBER_ID = os.environ.get('WHATSAPP_PHONE_NUMBER_ID')
