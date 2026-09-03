@@ -51,6 +51,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'csp.middleware.CSPMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -58,6 +59,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django_permissions_policy.PermissionsPolicyMiddleware',
 ]
 
 
@@ -190,6 +192,49 @@ if not DEBUG:
     X_FRAME_OPTIONS = 'DENY'
     CSRF_COOKIE_DOMAIN = '.bailahcorpoecia.com'
     SESSION_COOKIE_DOMAIN = '.bailahcorpoecia.com'
+
+    # HSTS - forca o navegador a SEMPRE usar HTTPS neste dominio
+    SECURE_HSTS_SECONDS = 3600  # 1 hora (aumentamos depois de confirmar que ta tudo ok)
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+
+
+
+# Permissions-Policy - bloqueia recursos que o site nao usa,
+# mas libera camera para o proprio site (usado no leitor de QR Code)
+PERMISSIONS_POLICY = {
+    "accelerometer": [],
+    "camera": ["self"],  # Libera camera apenas para o proprio dominio
+    "geolocation": [],
+    "gyroscope": [],
+    "magnetometer": [],
+    "microphone": [],
+    "payment": [],
+    "usb": [],
+}
+
+
+
+# Content-Security-Policy - MODO DE TESTE (report-only)
+# Nada e bloqueado ainda, so registra no console do navegador o que
+# SERIA bloqueado se a policy estivesse ativa de verdade. Depois de
+# confirmar que nao aparece nenhum erro navegando pelo site inteiro
+# (incluindo o leitor de QR Code), trocamos esta chave para
+# CONTENT_SECURITY_POLICY (sem o _REPORT_ONLY) para valer de verdade.
+CONTENT_SECURITY_POLICY_REPORT_ONLY = {
+    'DIRECTIVES': {
+        'default-src': ["'self'"],
+        'script-src': ["'self'", "'unsafe-inline'"],
+        'style-src': ["'self'", "'unsafe-inline'"],
+        'img-src': ["'self'", 'data:'],
+        'font-src': ["'self'"],
+        'connect-src': ["'self'"],
+        'frame-src': ["'none'"],
+        'object-src': ["'none'"],
+        'base-uri': ["'self'"],
+        'form-action': ["'self'"],
+    },
+}
 
 
 
