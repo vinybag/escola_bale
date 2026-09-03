@@ -1,67 +1,183 @@
-{% extends 'base.html' %}
+{% extends 'espetaculo/base_checkin.html' %}
 
-{% block content %}
-<div style="max-width: 500px; margin: 0 auto;">
-    <h2>Check-in: {{ evento.titulo }}</h2>
+{% block title %}
+    Leitor de ingressos
+{% endblock %}
+
+{% block checkin_content %}
+<div class="checkin-card">
+    <h2>{{ evento.titulo }}</h2>
+
+    {% if evento.data_apresentacao %}
+        <p>
+            {{ evento.data_apresentacao|date:"d/m/Y H:i" }}
+        </p>
+    {% endif %}
 
     <p>
-        Validados: <strong id="contador-usados">{{ total_usados }}</strong>
-        de <strong>{{ total_ingressos }}</strong>
+        Validados:
+        <strong id="contador-usados">
+            {{ total_usados }}
+        </strong>
+        de
+        <strong>
+            {{ total_ingressos }}
+        </strong>
     </p>
 
-    <div id="leitor" style="width: 100%;"></div>
-    <div id="resultado" style="margin-top: 20px; font-size: 1.2em;"></div>
+    <div id="leitor"></div>
+
+    <div id="resultado"></div>
+
+    <div class="acoes">
+        <a
+            class="botao botao-secundario"
+            href="{% url 'espetaculo:selecionar_evento_checkin' %}"
+        >
+            Trocar evento
+        </a>
+
+        <a
+            class="botao botao-secundario"
+            href="{% url 'espetaculo:logout_checkin' %}"
+        >
+            Sair
+        </a>
+    </div>
 </div>
 
 <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
+
 <script>
 function getCookie(name) {
     const value = `; ${document.cookie}`;
     const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop().split(';').shift();
+
+    if (parts.length === 2) {
+        return parts.pop().split(';').shift();
+    }
+
+    return null;
 }
 
-const resultadoDiv = document.getElementById('resultado');
-const contadorSpan = document.getElementById('contador-usados');
+const resultadoDiv = document.getElementById(
+    'resultado',
+);
+
+const contadorSpan = document.getElementById(
+    'contador-usados',
+);
+
 let processando = false;
+let ultimoCodigo = '';
+let ultimoMomento = 0;
+
+function mostrarResultado(
+    classe,
+    mensagem,
+) {
+    resultadoDiv.className = classe;
+    resultadoDiv.innerHTML = mensagem;
+}
 
 function onScanSuccess(decodedText) {
-    if (processando) return;
+    const agora = Date.now();
+
+    if (processando) {
+        return;
+    }
+
+    if (
+        decodedText === ultimoCodigo
+        && agora - ultimoMomento < 3000
+    ) {
+        return;
+    }
+
     processando = true;
+    ultimoCodigo = decodedText;
+    ultimoMomento = agora;
 
-    fetch("{% url 'espetaculo:validar_ingresso_checkin' %}", {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'X-CSRFToken': getCookie('csrftoken'),
+    fetch(
+        "{% url 'espetaculo:validar_ingresso_checkin' %}",
+        {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type':
+                    'application/x-www-form-urlencoded',
+                'X-CSRFToken': getCookie('csrftoken'),
+            },
+            body: (
+                'codigo='
+                + encodeURIComponent(decodedText)
+            ),
         },
-        body: `codigo=${encodeURIComponent(decodedText)}`,
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.ok) {
-            resultadoDiv.innerHTML =
-                `<p style="color: green;">✅ ${data.mensagem}<br>${data.nome} — ${data.assento}</p>`;
+    )
+    .then(async function(response) {
+        const data = await response.json();
 
-            contadorSpan.textContent = parseInt(contadorSpan.textContent) + 1;
-        } else {
-            resultadoDiv.innerHTML =
-                `<p style="color: red;">❌ ${data.mensagem}<br>${data.nome || ''}</p>`;
+        return {
+            ok: response.ok,
+            data: data,
+        };
+    })
+    .then(function(resultado) {
+        const data = resultado.data;
+
+        if (data.ok) {
+            mostrarResultado(
+                'mensagem-sucesso',
+                `
+                    <strong>Entrada liberada!</strong><br>
+                    ${data.nome || ''}<br>
+                    Assento: ${data.assento || '-'}
+                `,
+            );
+
+            contadorSpan.textContent = (
+                parseInt(contadorSpan.textContent, 10)
+                + 1
+            );
+
+            return;
         }
+
+        mostrarResultado(
+            'mensagem-erro',
+            `
+                <strong>Entrada não liberada</strong><br>
+                ${data.mensagem || 'Ingresso inválido.'}<br>
+                ${data.nome || ''}
+            `,
+        );
     })
-    .catch(() => {
-        resultadoDiv.innerHTML = '<p style="color: red;">Erro de conexão. Tente novamente.</p>';
+    .catch(function() {
+        mostrarResultado(
+            'mensagem-erro',
+            'Erro de conexão. Tente novamente.',
+        );
     })
-    .finally(() => {
-        setTimeout(() => { processando = false; }, 2000);
+    .finally(function() {
+        setTimeout(function() {
+            processando = false;
+        }, 1500);
     });
 }
 
 const html5QrcodeScanner = new Html5QrcodeScanner(
-    "leitor",
-    { fps: 10, qrbox: 250 },
+    'leitor',
+    {
+        fps: 10,
+        qrbox: {
+            width: 250,
+            height: 250,
+        },
+    },
 );
 
-html5QrcodeScanner.render(onScanSuccess);
+html5QrcodeScanner.render(
+    onScanSuccess,
+);
 </script>
 {% endblock %}

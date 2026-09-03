@@ -13,10 +13,14 @@ from django.http import FileResponse, Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
+from functools import wraps
+from django.http import HttpResponseForbidden
 
 from django.contrib.auth import authenticate, login as django_login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout as django_logout
+from django.contrib.auth import authenticate, login, logout
+
 
 
 from pagamentos.asaas_helper import AsaasAPI
@@ -2003,7 +2007,24 @@ def confirmar_selecao_assentos(request, pk):
         pedido_id=pedido.id,
     )
 
-@login_required(login_url='espetaculo:login_checkin')
+def usuario_checkin_required(view_func):
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect(
+                'espetaculo:login_checkin',
+            )
+
+        if request.user.username != 'checkin_evento':
+            return HttpResponseForbidden(
+                'Acesso permitido somente à equipe de check-in.'
+            )
+
+        return view_func(request, *args, **kwargs)
+
+    return wrapper
+
+@usuario_checkin_required
 @require_POST
 def validar_ingresso_checkin(request):
     """
@@ -2066,7 +2087,7 @@ def validar_ingresso_checkin(request):
         'gratuito': ingresso.gratuito,
     })
 
-@login_required(login_url='espetaculo:login_checkin')
+@usuario_checkin_required
 def checkin_ingressos(request, pk):
     """
     Página com o leitor de QR Code para dar baixa nos ingressos.
@@ -2102,6 +2123,12 @@ from django.shortcuts import redirect, render
 def login_checkin(request):
     erro = None
 
+    proximo = (
+        request.POST.get('next')
+        or request.GET.get('next')
+        or ''
+    )
+
     if request.method == 'POST':
         username = request.POST.get(
             'username',
@@ -2120,18 +2147,17 @@ def login_checkin(request):
         )
 
         if user is not None:
-            django_login(
+            login(
                 request,
                 user,
             )
 
-            proximo = (
-                request.POST.get('next')
-                or request.GET.get('next')
-                or 'espetaculo:lista_publica'
-            )
+            if proximo:
+                return redirect(proximo)
 
-            return redirect(proximo)
+            return redirect(
+                'espetaculo:selecionar_evento_checkin',
+            )
 
         erro = 'Usuário ou senha inválidos.'
 
@@ -2140,6 +2166,7 @@ def login_checkin(request):
         'espetaculo/login_checkin.html',
         {
             'erro': erro,
+            'next': proximo,
         },
     )
 
@@ -2153,3 +2180,25 @@ def logout_checkin(request):
     return redirect(
         'espetaculo:login_checkin',
     )
+
+@usuario_checkin_required
+def selecionar_evento_checkin(request):
+    """
+    Exibe somente os eventos que podem ser escolhidos
+    para realizar o check-in.
+    """
+    eventos = Espetaculo.objects.filter(
+        ativo=True,
+        tipo='evento',
+    ).order_by(
+        'data_apresentacao',
+    )
+
+    return render(
+        request,
+        'espetaculo/selecionar_evento_checkin.html',
+        {
+            'eventos': eventos,
+        },
+    )
+

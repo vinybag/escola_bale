@@ -30,11 +30,36 @@ urlpatterns = [
     path('ingressos/<int:ingresso_id>/baixar/', views.baixar_ingresso, name='baixar_ingresso'),
     path('ingressos/<int:ingresso_id>/baixar-qr/', views.baixar_qrcode_ingresso, name='baixar_qrcode_ingresso'),
 
-        # Check-in de ingressos
-    path('checkin/login/', views.login_checkin, name='login_checkin'),
-    path('checkin/logout/', views.logout_checkin, name='logout_checkin'),
-    path('evento/<int:pk>/checkin/', views.checkin_ingressos, name='checkin_ingressos'),
-    path('checkin/validar/', views.validar_ingresso_checkin, name='validar_ingresso_checkin'),
+        # Check-in
+path(
+    'checkin/login/',
+    views.login_checkin,
+    name='login_checkin',
+),
+
+path(
+    'checkin/logout/',
+    views.logout_checkin,
+    name='logout_checkin',
+),
+
+path(
+    'checkin/',
+    views.selecionar_evento_checkin,
+    name='selecionar_evento_checkin',
+),
+
+path(
+    'evento/<int:pk>/checkin/',
+    views.checkin_ingressos,
+    name='checkin_ingressos',
+),
+
+path(
+    'checkin/validar/',
+    views.validar_ingresso_checkin,
+    name='validar_ingresso_checkin',
+),
 
     # Detalhe público genérico do espetáculo
     path('<int:pk>/', views.espetaculo_detalhes_publico, name='detalhes_publico'),

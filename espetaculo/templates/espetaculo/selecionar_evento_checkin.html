@@ -1,0 +1,52 @@
+{% extends 'espetaculo/base_checkin.html' %}
+
+{% block title %}
+    Escolher evento
+{% endblock %}
+
+{% block checkin_content %}
+<div class="checkin-card">
+    <h2>Escolha o evento</h2>
+
+    <p>
+        Selecione o dia ou evento que será conferido.
+    </p>
+
+    {% if eventos %}
+        {% for evento in eventos %}
+            <a
+                class="evento-opcao"
+                href="{% url 'espetaculo:checkin_ingressos' evento.pk %}"
+            >
+                <strong>
+                    {{ evento.titulo }}
+                </strong>
+
+                {% if evento.data_apresentacao %}
+                    <span>
+                        {{ evento.data_apresentacao|date:"d/m/Y H:i" }}
+                    </span>
+                {% endif %}
+
+                {% if evento.local %}
+                    <br>
+                    <span>{{ evento.local }}</span>
+                {% endif %}
+            </a>
+        {% endfor %}
+    {% else %}
+        <div class="mensagem-alerta">
+            Nenhum evento disponível para check-in.
+        </div>
+    {% endif %}
+
+    <div class="acoes">
+        <a
+            class="botao botao-secundario"
+            href="{% url 'espetaculo:logout_checkin' %}"
+        >
+            Sair
+        </a>
+    </div>
+</div>
+{% endblock %}

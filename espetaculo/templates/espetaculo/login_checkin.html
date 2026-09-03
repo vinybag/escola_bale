@@ -1,18 +1,68 @@
-{% extends 'base.html' %}
+{% extends 'espetaculo/base_checkin.html' %}
 
-{% block content %}
-<div style="max-width: 400px; margin: 60px auto;">
-    <h2>Acesso ao Check-in</h2>
+{% block title %}
+    Acesso ao check-in
+{% endblock %}
+
+{% block checkin_content %}
+<div class="checkin-card">
+    <h2>Acesso ao check-in</h2>
+
+    <p>
+        Informe as credenciais da equipe de entrada.
+    </p>
 
     {% if erro %}
-        <p style="color: red;">{{ erro }}</p>
+        <div class="mensagem-erro">
+            {{ erro }}
+        </div>
     {% endif %}
 
     <form method="post">
         {% csrf_token %}
-        <input type="text" name="username" placeholder="Usuário" required style="width: 100%; padding: 10px; margin-bottom: 10px;">
-        <input type="password" name="password" placeholder="Senha" required style="width: 100%; padding: 10px; margin-bottom: 10px;">
-        <button type="submit" style="width: 100%; padding: 10px;">Entrar</button>
+
+        {% if next %}
+            <input
+                type="hidden"
+                name="next"
+                value="{{ next }}"
+            >
+        {% endif %}
+
+        <div class="campo">
+            <label for="id_username">
+                Usuário
+            </label>
+
+            <input
+                id="id_username"
+                type="text"
+                name="username"
+                autocomplete="username"
+                required
+            >
+        </div>
+
+        <div class="campo">
+            <label for="id_password">
+                Senha
+            </label>
+
+            <input
+                id="id_password"
+                type="password"
+                name="password"
+                autocomplete="current-password"
+                required
+            >
+        </div>
+
+        <button
+            type="submit"
+            class="botao"
+        >
+            Entrar no leitor
+        </button>
     </form>
 </div>
 {% endblock %}

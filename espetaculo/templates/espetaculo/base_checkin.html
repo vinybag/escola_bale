@@ -1,0 +1,200 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        {% block title %}Check-in de ingressos{% endblock %}
+    </title>
+
+    <style>
+        :root {
+            --cor-principal: #7b2cbf;
+            --cor-fundo: #f6f3f8;
+            --cor-texto: #222;
+            --cor-borda: #ddd;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: var(--cor-fundo);
+            color: var(--cor-texto);
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .checkin-topo {
+            width: 100%;
+            padding: 16px 20px;
+            background: var(--cor-principal);
+            color: white;
+            text-align: center;
+        }
+
+        .checkin-topo h1 {
+            margin: 0;
+            font-size: 1.25rem;
+        }
+
+        .checkin-conteudo {
+            width: 100%;
+            max-width: 680px;
+            margin: 0 auto;
+            padding: 24px 16px 40px;
+        }
+
+        .checkin-card {
+            width: 100%;
+            padding: 22px;
+            background: white;
+            border: 1px solid var(--cor-borda);
+            border-radius: 12px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+        }
+
+        .checkin-card h2 {
+            margin-top: 0;
+        }
+
+        .campo {
+            width: 100%;
+            margin-bottom: 14px;
+        }
+
+        .campo label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: bold;
+        }
+
+        .campo input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #bbb;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .botao {
+            display: inline-block;
+            width: 100%;
+            padding: 13px 16px;
+            border: 0;
+            border-radius: 8px;
+            background: var(--cor-principal);
+            color: white;
+            font-size: 1rem;
+            font-weight: bold;
+            text-align: center;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .botao-secundario {
+            background: #666;
+        }
+
+        .evento-opcao {
+            display: block;
+            margin-bottom: 14px;
+            padding: 16px;
+            border: 1px solid var(--cor-borda);
+            border-radius: 10px;
+            background: #fff;
+            color: var(--cor-texto);
+            text-decoration: none;
+        }
+
+        .evento-opcao:hover {
+            border-color: var(--cor-principal);
+            background: #faf7fc;
+        }
+
+        .evento-opcao strong {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 1.05rem;
+        }
+
+        .mensagem-erro {
+            margin-bottom: 16px;
+            padding: 12px;
+            border-radius: 8px;
+            background: #ffe5e5;
+            color: #a00000;
+        }
+
+        .mensagem-sucesso {
+            margin-top: 16px;
+            padding: 14px;
+            border-radius: 8px;
+            background: #e2f7e8;
+            color: #08752b;
+        }
+
+        .mensagem-alerta {
+            margin-top: 16px;
+            padding: 14px;
+            border-radius: 8px;
+            background: #fff3cd;
+            color: #7a5700;
+        }
+
+        .acoes {
+            display: flex;
+            gap: 10px;
+            margin-top: 22px;
+        }
+
+        .acoes .botao {
+            width: auto;
+            flex: 1;
+        }
+
+        #leitor {
+            width: 100%;
+            overflow: hidden;
+            border-radius: 10px;
+        }
+
+        @media (max-width: 480px) {
+            .checkin-conteudo {
+                padding: 16px 10px 30px;
+            }
+
+            .checkin-card {
+                padding: 16px;
+            }
+
+            .acoes {
+                flex-direction: column;
+            }
+
+            .acoes .botao {
+                width: 100%;
+            }
+        }
+    </style>
+
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <header class="checkin-topo">
+        <h1>Controle de entrada</h1>
+    </header>
+
+    <main class="checkin-conteudo">
+        {% block checkin_content %}{% endblock %}
+    </main>
+</body>
+</html>
