@@ -46,138 +46,215 @@
     </div>
 </div>
 
-<script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
+<script
+    src="https://unpkg.com/html5-qrcode@2.3.8/minified/html5-qrcode.min.js"
+    crossorigin="anonymous"
+></script>
 
 <script>
-function getCookie(name) {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
+document.addEventListener(
+    'DOMContentLoaded',
+    function () {
+        const leitor = document.getElementById(
+            'leitor',
+        );
 
-    if (parts.length === 2) {
-        return parts.pop().split(';').shift();
-    }
+        const resultadoDiv = document.getElementById(
+            'resultado',
+        );
 
-    return null;
-}
+        const contadorSpan = document.getElementById(
+            'contador-usados',
+        );
 
-const resultadoDiv = document.getElementById(
-    'resultado',
-);
-
-const contadorSpan = document.getElementById(
-    'contador-usados',
-);
-
-let processando = false;
-let ultimoCodigo = '';
-let ultimoMomento = 0;
-
-function mostrarResultado(
-    classe,
-    mensagem,
-) {
-    resultadoDiv.className = classe;
-    resultadoDiv.innerHTML = mensagem;
-}
-
-function onScanSuccess(decodedText) {
-    const agora = Date.now();
-
-    if (processando) {
-        return;
-    }
-
-    if (
-        decodedText === ultimoCodigo
-        && agora - ultimoMomento < 3000
-    ) {
-        return;
-    }
-
-    processando = true;
-    ultimoCodigo = decodedText;
-    ultimoMomento = agora;
-
-    fetch(
-        "{% url 'espetaculo:validar_ingresso_checkin' %}",
-        {
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: {
-                'Content-Type':
-                    'application/x-www-form-urlencoded',
-                'X-CSRFToken': getCookie('csrftoken'),
-            },
-            body: (
-                'codigo='
-                + encodeURIComponent(decodedText)
-            ),
-        },
-    )
-    .then(async function(response) {
-        const data = await response.json();
-
-        return {
-            ok: response.ok,
-            data: data,
-        };
-    })
-    .then(function(resultado) {
-        const data = resultado.data;
-
-        if (data.ok) {
-            mostrarResultado(
-                'mensagem-sucesso',
-                `
-                    <strong>Entrada liberada!</strong><br>
-                    ${data.nome || ''}<br>
-                    Assento: ${data.assento || '-'}
-                `,
-            );
-
-            contadorSpan.textContent = (
-                parseInt(contadorSpan.textContent, 10)
-                + 1
+        if (!leitor) {
+            console.error(
+                'Elemento #leitor não encontrado.',
             );
 
             return;
         }
 
-        mostrarResultado(
-            'mensagem-erro',
-            `
-                <strong>Entrada não liberada</strong><br>
-                ${data.mensagem || 'Ingresso inválido.'}<br>
-                ${data.nome || ''}
-            `,
-        );
-    })
-    .catch(function() {
-        mostrarResultado(
-            'mensagem-erro',
-            'Erro de conexão. Tente novamente.',
-        );
-    })
-    .finally(function() {
-        setTimeout(function() {
-            processando = false;
-        }, 1500);
-    });
-}
+        if (typeof Html5QrcodeScanner === 'undefined') {
+            leitor.innerHTML = `
+                <div class="mensagem-erro">
+                    Não foi possível carregar o leitor
+                    de QR Code.
+                    Verifique sua conexão com a internet
+                    e recarregue a página.
+                </div>
+            `;
 
-const html5QrcodeScanner = new Html5QrcodeScanner(
-    'leitor',
-    {
-        fps: 10,
-        qrbox: {
-            width: 250,
-            height: 250,
-        },
+            console.error(
+                'A biblioteca html5-qrcode não foi carregada.',
+            );
+
+            return;
+        }
+
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(
+                `; ${name}=`,
+            );
+
+            if (parts.length === 2) {
+                return parts
+                    .pop()
+                    .split(';')
+                    .shift();
+            }
+
+            return null;
+        }
+
+        let processando = false;
+        let ultimoCodigo = '';
+        let ultimoMomento = 0;
+
+        function mostrarResultado(
+            classe,
+            mensagem,
+        ) {
+            resultadoDiv.className = classe;
+            resultadoDiv.innerHTML = mensagem;
+        }
+
+        function escaparHtml(valor) {
+            const div = document.createElement('div');
+
+            div.textContent = valor || '';
+
+            return div.innerHTML;
+        }
+
+        function onScanSuccess(decodedText) {
+            const agora = Date.now();
+
+            if (processando) {
+                return;
+            }
+
+            if (
+                decodedText === ultimoCodigo
+                && agora - ultimoMomento < 3000
+            ) {
+                return;
+            }
+
+            processando = true;
+            ultimoCodigo = decodedText;
+            ultimoMomento = agora;
+
+            fetch(
+                "{% url 'espetaculo:validar_ingresso_checkin' %}",
+                {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Content-Type':
+                            'application/x-www-form-urlencoded',
+                        'X-CSRFToken':
+                            getCookie('csrftoken'),
+                    },
+                    body: (
+                        'codigo='
+                        + encodeURIComponent(decodedText)
+                    ),
+                },
+            )
+            .then(async function(response) {
+                const data = await response.json();
+
+                return {
+                    ok: response.ok,
+                    data: data,
+                };
+            })
+            .then(function(resultado) {
+                const data = resultado.data;
+
+                if (data.ok) {
+                    mostrarResultado(
+                        'mensagem-sucesso',
+                        `
+                            <strong>
+                                Entrada liberada!
+                            </strong><br>
+                            ${escaparHtml(data.nome)}<br>
+                            Assento:
+                            ${escaparHtml(data.assento || '-')}
+                        `,
+                    );
+
+                    contadorSpan.textContent = (
+                        parseInt(
+                            contadorSpan.textContent,
+                            10,
+                        ) + 1
+                    );
+
+                    return;
+                }
+
+                mostrarResultado(
+                    'mensagem-erro',
+                    `
+                        <strong>
+                            Entrada não liberada
+                        </strong><br>
+                        ${
+                            escaparHtml(
+                                data.mensagem
+                                || 'Ingresso inválido.',
+                            )
+                        }<br>
+                        ${escaparHtml(data.nome)}
+                    `,
+                );
+            })
+            .catch(function(erro) {
+                console.error(
+                    'Erro ao validar ingresso:',
+                    erro,
+                );
+
+                mostrarResultado(
+                    'mensagem-erro',
+                    'Erro de conexão. Tente novamente.',
+                );
+            })
+            .finally(function() {
+                setTimeout(function() {
+                    processando = false;
+                }, 1500);
+            });
+        }
+
+        function onScanFailure(errorMessage) {
+            console.debug(
+                'Aguardando QR Code:',
+                errorMessage,
+            );
+        }
+
+        const scanner = new Html5QrcodeScanner(
+            'leitor',
+            {
+                fps: 10,
+                qrbox: {
+                    width: 250,
+                    height: 250,
+                },
+            },
+            false,
+        );
+
+        scanner.render(
+            onScanSuccess,
+            onScanFailure,
+        );
     },
-);
-
-html5QrcodeScanner.render(
-    onScanSuccess,
 );
 </script>
 {% endblock %}
