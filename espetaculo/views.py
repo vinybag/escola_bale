@@ -2094,12 +2094,24 @@ def checkin_ingressos(request, pk):
     return render(request, 'espetaculo/checkin_ingressos.html', context)
 
 
+from django.contrib.auth import authenticate
+from django.contrib.auth import login as django_login
+from django.shortcuts import redirect, render
+
+
 def login_checkin(request):
     erro = None
 
     if request.method == 'POST':
-        username = request.POST.get('username', '').strip()
-        password = request.POST.get('password', '').strip()
+        username = request.POST.get(
+            'username',
+            '',
+        ).strip()
+
+        password = request.POST.get(
+            'password',
+            '',
+        )
 
         user = authenticate(
             request,
@@ -2108,9 +2120,16 @@ def login_checkin(request):
         )
 
         if user is not None:
-            django_login(request, user)
+            django_login(
+                request,
+                user,
+            )
 
-            proximo = request.GET.get('next') or 'espetaculo:selecionar_evento_checkin'
+            proximo = (
+                request.POST.get('next')
+                or request.GET.get('next')
+                or 'espetaculo:lista_publica'
+            )
 
             return redirect(proximo)
 
@@ -2119,10 +2138,7 @@ def login_checkin(request):
     return render(
         request,
         'espetaculo/login_checkin.html',
-        {'erro': erro},
+        {
+            'erro': erro,
+        },
     )
-
-
-def logout_checkin(request):
-    django_logout(request)
-    return redirect('espetaculo:login_checkin')
