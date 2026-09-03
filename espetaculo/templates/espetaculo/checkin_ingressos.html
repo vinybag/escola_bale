@@ -1,4 +1,5 @@
 {% extends 'espetaculo/base_checkin.html' %}
+{% load static %}
 
 {% block title %}
     Leitor de ingressos
@@ -46,10 +47,7 @@
     </div>
 </div>
 
-<script
-    src="https://unpkg.com/html5-qrcode@2.3.8/minified/html5-qrcode.min.js"
-    crossorigin="anonymous"
-></script>
+<script src="{% static 'js/html5-qrcode.min.js' %}"></script>
 
 <script>
 document.addEventListener(
