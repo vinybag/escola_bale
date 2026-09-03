@@ -221,7 +221,7 @@ PERMISSIONS_POLICY = {
 # confirmar que nao aparece nenhum erro navegando pelo site inteiro
 # (incluindo o leitor de QR Code), trocamos esta chave para
 # CONTENT_SECURITY_POLICY (sem o _REPORT_ONLY) para valer de verdade.
-CONTENT_SECURITY_POLICY_REPORT_ONLY = {
+CONTENT_SECURITY_POLICY = {
     'DIRECTIVES': {
         'default-src': ["'self'"],
         'script-src': ["'self'", "'unsafe-inline'"],
