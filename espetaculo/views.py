@@ -2142,3 +2142,14 @@ def login_checkin(request):
             'erro': erro,
         },
     )
+
+def logout_checkin(request):
+    """
+    Encerra somente a sessão atual do navegador
+    e retorna para a tela de login do leitor.
+    """
+    django_logout(request)
+
+    return redirect(
+        'espetaculo:login_checkin',
+    )
