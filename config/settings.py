@@ -193,8 +193,8 @@ if not DEBUG:
     CSRF_COOKIE_DOMAIN = '.bailahcorpoecia.com'
     SESSION_COOKIE_DOMAIN = '.bailahcorpoecia.com'
 
-    # HSTS - forca o navegador a SEMPRE usar HTTPS neste dominio
-    SECURE_HSTS_SECONDS = 3600  # 1 hora (aumentamos depois de confirmar que ta tudo ok)
+        # HSTS - forca o navegador a SEMPRE usar HTTPS neste dominio
+    SECURE_HSTS_SECONDS = 31536000  # 1 ano - ja confirmamos que HTTPS funciona bem
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
 
