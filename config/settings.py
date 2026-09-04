@@ -215,16 +215,14 @@ PERMISSIONS_POLICY = {
 
 
 
-# Content-Security-Policy - MODO DE TESTE (report-only)
-# Nada e bloqueado ainda, so registra no console do navegador o que
-# SERIA bloqueado se a policy estivesse ativa de verdade. Depois de
-# confirmar que nao aparece nenhum erro navegando pelo site inteiro
-# (incluindo o leitor de QR Code), trocamos esta chave para
-# CONTENT_SECURITY_POLICY (sem o _REPORT_ONLY) para valer de verdade.
+# Content-Security-Policy - ATIVO EM PRODUCAO
+# Restringe de onde o navegador pode carregar scripts, estilos,
+# imagens etc. Libera cdn.jsdelivr.net especificamente para o
+# Chart.js usado nos graficos do dashboard admin.
 CONTENT_SECURITY_POLICY = {
     'DIRECTIVES': {
         'default-src': ["'self'"],
-        'script-src': ["'self'", "'unsafe-inline'"],
+        'script-src': ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
         'style-src': ["'self'", "'unsafe-inline'"],
         'img-src': ["'self'", 'data:'],
         'font-src': ["'self'"],
