@@ -3,6 +3,7 @@ from django.core.management.base import BaseCommand
 from pagamentos.models import Mensalidade
 from pagamentos.services_whatsapp import enviar_whatsapp_template
 
+
 REGRA_ATRASO = {
     1: 'atraso_1',
     3: 'atraso_3',
@@ -95,11 +96,17 @@ class Command(BaseCommand):
 
         nome_responsavel = mensalidade.responsavel.get_full_name() or mensalidade.responsavel.username
 
+        # Ordem dos parâ�ıetros conforme template aprovado na Meta:
+        # {{1}} nome do responsável
+        # {{2}} data de vencimento
+        # {{3}} mês/ano de referência
+        # {{4}} nome da aluna
+        # {{5}} valor
         parametros = [
             nome_responsavel,
+            mensalidade.data_vencimento.strftime('%d/%m/%Y'),
             mensalidade.mes_referencia.strftime('%m/%Y'),
             mensalidade.aluna.nome,
-            mensalidade.data_vencimento.strftime('%d/%m/%Y'),
             f'{mensalidade.valor:.2f}'.replace('.', ','),
         ]
 
@@ -120,6 +127,13 @@ class Command(BaseCommand):
 
         nome_responsavel = mensalidade.responsavel.get_full_name() or mensalidade.responsavel.username
 
+        # Ordem dos parâıımetros conforme template aprovado na Meta (verifique no WhatsApp Manager):
+        # {{1}} nome do responsável
+        # {{2}} mês/ano de referência
+        # {{3}} nome da aluna
+        # {{4}} dias de atraso
+        # {{5}} data de vencimento
+        # {{6}} valor atualizado
         parametros = [
             nome_responsavel,
             mensalidade.mes_referencia.strftime('%m/%Y'),
