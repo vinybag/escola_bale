@@ -147,7 +147,7 @@
         <p style="margin: 0; color: #6f6f78;">{{ espetaculo.titulo }}</p>
     </div>
 
-    <a class="maq-voltar" href="{% url 'admin_dashboard:espetaculo_listar' %}">
+    <a class="maq-voltar" href="{% url 'admin_dashboard:espetaculos_list' %}">
         Voltar
     </a>
 </div>
@@ -242,6 +242,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const selectTurma = document.getElementById('id_turma');
     const selectAluna = document.getElementById('id_aluna');
 
+    const URL_ALUNAS_POR_TURMA_BASE = "{% url 'admin_dashboard:alunas_por_turma' 999999 %}".replace('999999', '');
+
     function getCookie(name) {
         const value = `; ${document.cookie}`;
         const parts = value.split(`; ${name}=`);
@@ -262,7 +264,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        fetch(`/admin-dashboard/ajax/alunas-por-turma/${turmaId}/`, {
+        fetch(`${URL_ALUNAS_POR_TURMA_BASE}${turmaId}/`, {
             method: 'GET',
             credentials: 'same-origin',
             headers: {
