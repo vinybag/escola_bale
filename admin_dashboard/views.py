@@ -5245,9 +5245,6 @@ def pedido_ingresso_cancelar(request, pedido_id):
         pk=pedido.evento_id,
     )
 
-
-
-
 def espetaculo_maquiagens(request, pk):
     espetaculo = get_object_or_404(Espetaculo, pk=pk)
     turmas = Turma.objects.all().order_by('nome')
@@ -5277,6 +5274,15 @@ def espetaculo_maquiagens(request, pk):
 
     maquiagens = espetaculo.maquiagens.select_related('turma', 'aluna').all()
 
+    turma_filtro = request.GET.get('turma_filtro', '')
+    aluna_filtro = request.GET.get('aluna_filtro', '')
+
+    if turma_filtro:
+        maquiagens = maquiagens.filter(turma_id=turma_filtro)
+
+    if aluna_filtro:
+        maquiagens = maquiagens.filter(aluna__nome__icontains=aluna_filtro)
+
     return render(
         request,
         'admin_dashboard/espetaculos/espetaculo_maquiagens.html',
@@ -5284,6 +5290,8 @@ def espetaculo_maquiagens(request, pk):
             'espetaculo': espetaculo,
             'turmas': turmas,
             'maquiagens': maquiagens,
+            'turma_filtro': turma_filtro,
+            'aluna_filtro': aluna_filtro,
         },
     )
 
@@ -5292,3 +5300,50 @@ def alunas_por_turma(request, turma_id):
     turma = get_object_or_404(Turma, pk=turma_id)
     alunas = turma.alunas.filter(ativa=True).order_by('nome').values('id', 'nome')
     return JsonResponse(list(alunas), safe=False)
+
+
+def maquiagem_editar(request, pk):
+    maquiagem = get_object_or_404(Maquiagem, pk=pk)
+
+    if request.method == 'POST':
+        turma_id = request.POST.get('turma')
+        aluna_id = request.POST.get('aluna')
+        horario = request.POST.get('horario')
+        maquiadora = request.POST.get('maquiadora', '').strip()
+        duracao = request.POST.get('duracao_minutos')
+
+        if not all([turma_id, aluna_id, horario, maquiadora, duracao]):
+            messages.error(request, 'Preencha todos os campos.')
+            return redirect('admin_dashboard:espetaculo_maquiagens', pk=maquiagem.espetaculo_id)
+
+        maquiagem.turma_id = turma_id
+        maquiagem.aluna_id = aluna_id
+        maquiagem.horario = horario
+        maquiagem.maquiadora = maquiadora
+        maquiagem.duracao_minutos = duracao
+        maquiagem.save()
+
+        messages.success(request, 'Maquiagem atualizada com sucesso.')
+        return redirect('admin_dashboard:espetaculo_maquiagens', pk=maquiagem.espetaculo_id)
+
+    turmas = Turma.objects.all().order_by('nome')
+    alunas_da_turma = maquiagem.turma.alunas.filter(ativa=True).order_by('nome')
+
+    return render(
+        request,
+        'admin_dashboard/espetaculos/maquiagem_editar.html',
+        {
+            'maquiagem': maquiagem,
+            'turmas': turmas,
+            'alunas_da_turma': alunas_da_turma,
+        },
+    )
+
+
+@require_POST
+def maquiagem_excluir(request, pk):
+    maquiagem = get_object_or_404(Maquiagem, pk=pk)
+    espetaculo_id = maquiagem.espetaculo_id
+    maquiagem.delete()
+    messages.success(request, 'Maquiagem excluída com sucesso.')
+    return redirect('admin_dashboard:espetaculo_maquiagens', pk=espetaculo_id)

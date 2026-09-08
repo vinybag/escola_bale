@@ -84,6 +84,79 @@
         cursor: not-allowed;
     }
 
+    .maq-filtros {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        align-items: end;
+        margin-bottom: 0;
+    }
+
+    .maq-filtros .maq-field {
+        flex: 1;
+        min-width: 160px;
+    }
+
+    .maq-filtro-btn {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.65rem 1.2rem;
+        background: #efe7f5;
+        color: #6b2d8f;
+        border: 1px solid #ddc9ea;
+        border-radius: 8px;
+        text-decoration: none;
+        font-size: 0.88rem;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .maq-filtro-limpar {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.65rem 1rem;
+        background: #f3f3f3;
+        color: #44384c;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        text-decoration: none;
+        font-size: 0.85rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .maq-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .maq-exportar-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.6rem 1.1rem;
+        background: #eaf6ea;
+        color: #206a38;
+        border: 1px solid #cfe7d4;
+        border-radius: 8px;
+        font-size: 0.88rem;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .maq-exportar-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .maq-table-wrap {
+        background: white;
+    }
+
     .maq-table {
         width: 100%;
         border-collapse: collapse;
@@ -109,6 +182,37 @@
         color: #3f3548;
     }
 
+    .maq-checkbox-col {
+        width: 36px;
+    }
+
+    .maq-acoes-col {
+        width: 130px;
+    }
+
+    .maq-acao-link {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.35rem 0.65rem;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-decoration: none;
+        margin-right: 0.35rem;
+        border: none;
+        cursor: pointer;
+    }
+
+    .maq-acao-editar {
+        background: #efe7f5;
+        color: #6b2d8f;
+    }
+
+    .maq-acao-excluir {
+        background: #fbe4e4;
+        color: #a13c3c;
+    }
+
     .maq-empty {
         text-align: center;
         color: #7b7580;
@@ -128,14 +232,26 @@
         font-weight: 600;
     }
 
+    #maq-export-area {
+        background: white;
+        padding: 1rem;
+    }
+
     @media (max-width: 640px) {
         .maq-form {
             grid-template-columns: 1fr;
         }
 
-        .maq-table {
-            display: block;
+        .maq-filtros {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .maq-table-wrap {
             overflow-x: auto;
+        }
+
+        .maq-table {
             white-space: nowrap;
         }
     }
@@ -202,40 +318,131 @@
 
     <div class="maq-card">
         <h3 style="margin: 0 0 1.25rem 0; color: #4a235f; font-size: 1.05rem;">
-            Maquiagens cadastradas
+            Filtrar
         </h3>
 
+        <form method="get" class="maq-filtros">
+            <div class="maq-field">
+                <label for="id_turma_filtro">Turma</label>
+                <select id="id_turma_filtro" name="turma_filtro">
+                    <option value="">Todas as turmas</option>
+                    {% for turma in turmas %}
+                        <option value="{{ turma.pk }}" {% if turma_filtro == turma.pk|stringformat:"s" %}selected{% endif %}>
+                            {{ turma.nome }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="maq-field">
+                <label for="id_aluna_filtro">Aluna</label>
+                <input type="text" id="id_aluna_filtro" name="aluna_filtro" placeholder="Buscar por nome" value="{{ aluna_filtro }}">
+            </div>
+
+            <button type="submit" class="maq-filtro-btn">Filtrar</button>
+
+            {% if turma_filtro or aluna_filtro %}
+                <a class="maq-filtro-limpar" href="{% url 'admin_dashboard:espetaculo_maquiagens' espetaculo.pk %}">
+                    Limpar filtros
+                </a>
+            {% endif %}
+        </form>
+    </div>
+
+    <div class="maq-card">
+        <div class="maq-toolbar">
+            <h3 style="margin: 0; color: #4a235f; font-size: 1.05rem;">
+                Maquiagens cadastradas
+            </h3>
+
+            <button type="button" id="btn-exportar-png" class="maq-exportar-btn" {% if not maquiagens %}disabled{% endif %}>
+                Exportar selecionadas (PNG)
+            </button>
+        </div>
+
         {% if maquiagens %}
-        <table class="maq-table">
-            <thead>
-                <tr>
-                    <th>Horário</th>
-                    <th>Turma</th>
-                    <th>Aluna</th>
-                    <th>Maquiadora</th>
-                    <th>Duração</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for m in maquiagens %}
-                <tr>
-                    <td>{{ m.horario|time:"H:i" }}</td>
-                    <td>{{ m.turma.nome }}</td>
-                    <td>{{ m.aluna.nome }}</td>
-                    <td>{{ m.maquiadora }}</td>
-                    <td>{{ m.duracao_minutos }} min</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="maq-table-wrap">
+            <table class="maq-table" id="tabela-maquiagens">
+                <thead>
+                    <tr>
+                        <th class="maq-checkbox-col">
+                            <input type="checkbox" id="check-todas">
+                        </th>
+                        <th>Horário</th>
+                        <th>Turma</th>
+                        <th>Aluna</th>
+                        <th>Maquiadora</th>
+                        <th>Duração</th>
+                        <th class="maq-acoes-col">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for m in maquiagens %}
+                    <tr>
+                        <td class="maq-checkbox-col">
+                            <input type="checkbox" class="maq-check-linha"
+                                   data-horario="{{ m.horario|time:'H:i' }}"
+                                   data-turma="{{ m.turma.nome }}"
+                                   data-aluna="{{ m.aluna.nome }}"
+                                   data-maquiadora="{{ m.maquiadora }}"
+                                   data-duracao="{{ m.duracao_minutos }}">
+                        </td>
+                        <td>{{ m.horario|time:"H:i" }}</td>
+                        <td>{{ m.turma.nome }}</td>
+                        <td>{{ m.aluna.nome }}</td>
+                        <td>{{ m.maquiadora }}</td>
+                        <td>{{ m.duracao_minutos }} min</td>
+                        <td class="maq-acoes-col">
+                            <a class="maq-acao-link maq-acao-editar"
+                               href="{% url 'admin_dashboard:maquiagem_editar' m.pk %}">
+                                Editar
+                            </a>
+                            <form method="post"
+                                  action="{% url 'admin_dashboard:maquiagem_excluir' m.pk %}"
+                                  style="display: inline;"
+                                  onsubmit="return confirm('Excluir esta maquiagem?');">
+                                {% csrf_token %}
+                                <button type="submit" class="maq-acao-link maq-acao-excluir">
+                                    Excluir
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
         {% else %}
         <div class="maq-empty">
-            Nenhuma maquiagem cadastrada ainda.
+            Nenhuma maquiagem encontrada.
         </div>
         {% endif %}
     </div>
 
 </div>
+
+<div id="maq-export-area" style="position: absolute; left: -9999px; top: -9999px;">
+    <h3 style="margin: 0 0 1rem 0; color: #4a235f;">{{ espetaculo.titulo }} - Maquiagens</h3>
+    <table id="maq-export-table" style="width: 100%; border-collapse: collapse; font-family: Arial, sans-serif;">
+        <thead>
+            <tr style="background: #efe7f5;">
+                <th style="padding: 8px 12px; text-align: left; border-bottom: 1px solid #ddd;">Horário</th>
+                <th style="padding: 8px 12px; text-align: left; border-bottom: 1px solid #ddd;">Turma</th>
+                <th style="padding: 8px 12px; text-align: left; border-bottom: 1px solid #ddd;">Aluna</th>
+                <th style="padding: 8px 12px; text-align: left; border-bottom: 1px solid #ddd;">Maquiadora</th>
+                <th style="padding: 8px 12px; text-align: left; border-bottom: 1px solid #ddd;">Duração</th>
+            </tr>
+        </thead>
+        <tbody id="maq-export-tbody"></tbody>
+    </table>
+</div>
+
+<script
+    src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"
+    integrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA=="
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -253,55 +460,127 @@ document.addEventListener('DOMContentLoaded', function () {
         return null;
     }
 
-    selectTurma.addEventListener('change', function () {
-        const turmaId = this.value;
+    if (selectTurma) {
+        selectTurma.addEventListener('change', function () {
+            const turmaId = this.value;
 
-        selectAluna.innerHTML = '<option value="">Carregando...</option>';
-        selectAluna.disabled = true;
+            selectAluna.innerHTML = '<option value="">Carregando...</option>';
+            selectAluna.disabled = true;
 
-        if (!turmaId) {
-            selectAluna.innerHTML = '<option value="">Selecione a turma primeiro</option>';
-            return;
-        }
-
-        fetch(`${URL_ALUNAS_POR_TURMA_BASE}${turmaId}/`, {
-            method: 'GET',
-            credentials: 'same-origin',
-            headers: {
-                'X-CSRFToken': getCookie('csrftoken'),
-            },
-        })
-        .then(function (response) {
-            return response.json();
-        })
-        .then(function (alunas) {
-            selectAluna.innerHTML = '';
-
-            if (alunas.length === 0) {
-                selectAluna.innerHTML = '<option value="">Nenhuma aluna nesta turma</option>';
-                selectAluna.disabled = true;
+            if (!turmaId) {
+                selectAluna.innerHTML = '<option value="">Selecione a turma primeiro</option>';
                 return;
             }
 
-            const opcaoPadrao = document.createElement('option');
-            opcaoPadrao.value = '';
-            opcaoPadrao.textContent = 'Selecione a aluna';
-            selectAluna.appendChild(opcaoPadrao);
+            fetch(`${URL_ALUNAS_POR_TURMA_BASE}${turmaId}/`, {
+                method: 'GET',
+                credentials: 'same-origin',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                },
+            })
+            .then(function (response) {
+                return response.json();
+            })
+            .then(function (alunas) {
+                selectAluna.innerHTML = '';
 
-            alunas.forEach(function (aluna) {
-                const opcao = document.createElement('option');
-                opcao.value = aluna.id;
-                opcao.textContent = aluna.nome;
-                selectAluna.appendChild(opcao);
+                if (alunas.length === 0) {
+                    selectAluna.innerHTML = '<option value="">Nenhuma aluna nesta turma</option>';
+                    selectAluna.disabled = true;
+                    return;
+                }
+
+                const opcaoPadrao = document.createElement('option');
+                opcaoPadrao.value = '';
+                opcaoPadrao.textContent = 'Selecione a aluna';
+                selectAluna.appendChild(opcaoPadrao);
+
+                alunas.forEach(function (aluna) {
+                    const opcao = document.createElement('option');
+                    opcao.value = aluna.id;
+                    opcao.textContent = aluna.nome;
+                    selectAluna.appendChild(opcao);
+                });
+
+                selectAluna.disabled = false;
+            })
+            .catch(function (erro) {
+                console.error('Erro ao buscar alunas:', erro);
+                selectAluna.innerHTML = '<option value="">Erro ao carregar alunas</option>';
+            });
+        });
+    }
+
+    const checkTodas = document.getElementById('check-todas');
+    const checksLinha = document.querySelectorAll('.maq-check-linha');
+
+    if (checkTodas) {
+        checkTodas.addEventListener('change', function () {
+            checksLinha.forEach(function (chk) {
+                chk.checked = checkTodas.checked;
+            });
+        });
+    }
+
+    const btnExportar = document.getElementById('btn-exportar-png');
+
+    if (btnExportar) {
+        btnExportar.addEventListener('click', function () {
+            const selecionadas = Array.from(checksLinha).filter(function (chk) {
+                return chk.checked;
             });
 
-            selectAluna.disabled = false;
-        })
-        .catch(function (erro) {
-            console.error('Erro ao buscar alunas:', erro);
-            selectAluna.innerHTML = '<option value="">Erro ao carregar alunas</option>';
+            if (selecionadas.length === 0) {
+                alert('Selecione ao menos uma maquiagem para exportar.');
+                return;
+            }
+
+            const tbody = document.getElementById('maq-export-tbody');
+            tbody.innerHTML = '';
+
+            selecionadas.forEach(function (chk) {
+                const linha = document.createElement('tr');
+                linha.innerHTML = `
+                    <td style="padding: 8px 12px; border-bottom: 1px solid #eee;">${chk.dataset.horario}</td>
+                    <td style="padding: 8px 12px; border-bottom: 1px solid #eee;">${chk.dataset.turma}</td>
+                    <td style="padding: 8px 12px; border-bottom: 1px solid #eee;">${chk.dataset.aluna}</td>
+                    <td style="padding: 8px 12px; border-bottom: 1px solid #eee;">${chk.dataset.maquiadora}</td>
+                    <td style="padding: 8px 12px; border-bottom: 1px solid #eee;">${chk.dataset.duracao} min</td>
+                `;
+                tbody.appendChild(linha);
+            });
+
+            const areaExport = document.getElementById('maq-export-area');
+
+            areaExport.style.position = 'fixed';
+            areaExport.style.left = '0';
+            areaExport.style.top = '0';
+            areaExport.style.zIndex = '-1';
+            areaExport.style.opacity = '0';
+
+            if (typeof html2canvas === 'undefined') {
+                alert('Não foi possível carregar a ferramenta de exportação. Verifique sua conexão.');
+                console.error('html2canvas não foi carregado.');
+                return;
+            }
+
+            html2canvas(areaExport, { scale: 2, backgroundColor: '#ffffff' }).then(function (canvas) {
+                areaExport.style.position = 'absolute';
+                areaExport.style.left = '-9999px';
+                areaExport.style.top = '-9999px';
+                areaExport.style.opacity = '1';
+
+                const link = document.createElement('a');
+                link.download = 'maquiagens_{{ espetaculo.pk }}.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            }).catch(function (erro) {
+                console.error('Erro ao gerar PNG:', erro);
+                alert('Erro ao gerar a imagem. Tente novamente.');
+            });
         });
-    });
+    }
 });
 </script>
 
