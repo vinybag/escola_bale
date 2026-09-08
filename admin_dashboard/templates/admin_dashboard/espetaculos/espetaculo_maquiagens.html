@@ -257,76 +257,108 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const btnExportar = document.getElementById('btn-exportar-png');
 
-    if (btnExportar) {
-        btnExportar.addEventListener('click', function () {
-            const selecionadas = Array.from(checksLinha).filter(function (chk) {
-                return chk.checked;
-            });
+   if (btnExportar) {
+       btnExportar.addEventListener('click', function () {
+           const selecionadas = Array.from(checksLinha).filter(function (chk) {
+               return chk.checked;
+           });
 
-            if (selecionadas.length === 0) {
-                alert('Selecione ao menos uma maquiagem para exportar.');
-                return;
-            }
+           if (selecionadas.length === 0) {
+               alert('Selecione ao menos uma maquiagem para exportar.');
+               return;
+           }
 
-            if (typeof html2canvas === 'undefined') {
-                alert('Não foi possível carregar a ferramenta de exportação. Verifique sua conexão.');
-                console.error('html2canvas não foi carregado.');
-                return;
-            }
+           if (typeof html2canvas === 'undefined') {
+               alert('Não foi possível carregar a ferramenta de exportação. Verifique sua conexão.');
+               console.error('html2canvas não foi carregado.');
+               return;
+           }
 
-            const tbody = document.getElementById('maq-export-tbody');
-            tbody.innerHTML = '';
+           // Cria um container temporário fora da viewport, mas renderizável
+           const container = document.createElement('div');
+           container.style.position = 'fixed';
+           container.style.left = '0';
+           container.style.top = '0';
+           container.style.zIndex = '-9999';
+           container.style.background = '#ffffff';
+           container.style.padding = '20px';
+           container.style.fontFamily = 'Arial, sans-serif';
 
-            selecionadas.forEach(function (chk) {
-                const linha = document.createElement('tr');
-                const campos = [
-                    chk.dataset.horario,
-                    chk.dataset.turma,
-                    chk.dataset.aluna,
-                    chk.dataset.maquiadora,
-                    `${chk.dataset.duracao} min`,
-                ];
+           const titulo = document.createElement('h3');
+           titulo.textContent = '{{ espetaculo.titulo }} - Maquiagens';
+           titulo.style.margin = '0 0 16px 0';
+           titulo.style.color = '#4a235f';
+           titulo.style.fontSize = '18px';
+           container.appendChild(titulo);
 
-                campos.forEach(function (texto) {
-                    const celula = document.createElement('td');
-                    celula.style.padding = '8px 12px';
-                    celula.style.borderBottom = '1px solid #eee';
-                    celula.textContent = texto;
-                    linha.appendChild(celula);
-                });
+           const tabela = document.createElement('table');
+           tabela.style.width = '100%';
+           tabela.style.borderCollapse = 'collapse';
+           tabela.style.fontSize = '14px';
 
-                tbody.appendChild(linha);
-            });
+           // Cabeçalho
+           const thead = document.createElement('thead');
+           const trHead = document.createElement('tr');
+           trHead.style.background = '#efe7f5';
 
-            const areaExport = document.getElementById('maq-export-area');
-            areaExport.style.position = 'fixed';
-            areaExport.style.left = '0';
-            areaExport.style.top = '0';
-            areaExport.style.zIndex = '-1';
-            areaExport.style.opacity = '0';
+           ['Horário', 'Turma', 'Aluna', 'Maquiadora', 'Duração'].forEach(function (texto) {
+               const th = document.createElement('th');
+               th.textContent = texto;
+               th.style.padding = '8px 12px';
+               th.style.textAlign = 'left';
+               th.style.borderBottom = '1px solid #ddd';
+               trHead.appendChild(th);
+           });
 
-            html2canvas(areaExport, {
-                scale: 2,
-                backgroundColor: '#ffffff',
-            })
-            .then(function (canvas) {
-                const link = document.createElement('a');
-                link.download = 'maquiagens_{{ espetaculo.pk }}.png';
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-            })
-            .catch(function (erro) {
-                console.error('Erro ao gerar PNG:', erro);
-                alert('Erro ao gerar a imagem. Tente novamente.');
-            })
-            .finally(function () {
-                areaExport.style.position = 'absolute';
-                areaExport.style.left = '-9999px';
-                areaExport.style.top = '-9999px';
-                areaExport.style.opacity = '1';
-            });
-        });
-    }
+           thead.appendChild(trHead);
+           tabela.appendChild(thead);
+
+           // Corpo
+           const tbody = document.createElement('tbody');
+           selecionadas.forEach(function (chk) {
+               const tr = document.createElement('tr');
+
+               [
+                   chk.dataset.horario,
+                   chk.dataset.turma,
+                   chk.dataset.aluna,
+                   chk.dataset.maquiadora,
+                   `${chk.dataset.duracao} min`,
+               ].forEach(function (texto) {
+                   const td = document.createElement('td');
+                   td.textContent = texto;
+                   td.style.padding = '8px 12px';
+                   td.style.borderBottom = '1px solid #eee';
+                   tr.appendChild(td);
+               });
+
+               tbody.appendChild(tr);
+           });
+
+           tabela.appendChild(tbody);
+           container.appendChild(tabela);
+           document.body.appendChild(container);
+
+           html2canvas(container, {
+               scale: 2,
+               backgroundColor: '#ffffff',
+               useCORS: true,
+           })
+           .then(function (canvas) {
+               const link = document.createElement('a');
+               link.download = 'maquiagens_{{ espetaculo.pk }}.png';
+               link.href = canvas.toDataURL('image/png');
+               link.click();
+           })
+           .catch(function (erro) {
+               console.error('Erro ao gerar PNG:', erro);
+               alert('Erro ao gerar a imagem. Tente novamente.');
+           })
+           .finally(function () {
+               document.body.removeChild(container);
+           });
+       });
+   }
 });
 </script>
 
