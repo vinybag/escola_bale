@@ -4,141 +4,54 @@
 
 {% block content %}
 <style>
-    .maq-shell {
-        width: 100%;
-        max-width: 700px;
-        min-width: 0;
-    }
-
-    .maq-card {
-        background: white;
-        border: 1px solid #ece3f2;
-        border-radius: 18px;
-        box-shadow: 0 4px 16px rgba(107, 45, 143, 0.07);
-        padding: 1.5rem;
-    }
-
-    .maq-form {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 1rem;
-        align-items: end;
-    }
-
-    .maq-field {
-        display: flex;
-        flex-direction: column;
-        gap: 0.35rem;
-    }
-
-    .maq-field label {
-        font-size: 0.8rem;
-        font-weight: 700;
-        color: #7a7280;
-        text-transform: uppercase;
-        letter-spacing: 0.03em;
-    }
-
-    .maq-field select,
-    .maq-field input {
-        padding: 0.65rem 0.75rem;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        font-size: 0.95rem;
-        color: #3f3548;
-        background: white;
-    }
-
-    .maq-submit {
-        grid-column: 1 / -1;
-        display: flex;
-        justify-content: flex-end;
-        gap: 0.75rem;
-    }
-
-    .maq-btn {
-        display: inline-flex;
-        align-items: center;
-        padding: 0.75rem 1.5rem;
-        background: linear-gradient(135deg, #6b2d8f 0%, #7e3aa5 100%);
-        color: white;
-        border: none;
-        border-radius: 10px;
-        font-weight: 700;
-        font-size: 0.95rem;
-        cursor: pointer;
-        box-shadow: 0 8px 18px rgba(107,45,143,0.18);
-    }
-
-    .maq-cancelar {
-        display: inline-flex;
-        align-items: center;
-        padding: 0.75rem 1.5rem;
-        background: #f3f3f3;
-        color: #44384c;
-        border: 1px solid #ddd;
-        border-radius: 10px;
-        text-decoration: none;
-        font-weight: 600;
-        font-size: 0.95rem;
-    }
-
-    @media (max-width: 640px) {
-        .maq-form {
-            grid-template-columns: 1fr;
-        }
-    }
+    .maq-shell { width: 100%; max-width: 700px; min-width: 0; }
+    .maq-card { background: white; border: 1px solid #ece3f2; border-radius: 18px; box-shadow: 0 4px 16px rgba(107, 45, 143, 0.07); padding: 1.5rem; }
+    .maq-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; align-items: end; }
+    .maq-field { display: flex; flex-direction: column; gap: 0.35rem; }
+    .maq-field label { font-size: 0.8rem; font-weight: 700; color: #7a7280; text-transform: uppercase; letter-spacing: 0.03em; }
+    .maq-field select, .maq-field input { padding: 0.65rem 0.75rem; border: 1px solid #ddd; border-radius: 8px; font-size: 0.95rem; color: #3f3548; background: white; }
+    .maq-submit { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 0.75rem; }
+    .maq-btn { display: inline-flex; align-items: center; padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #6b2d8f 0%, #7e3aa5 100%); color: white; border: none; border-radius: 10px; font-weight: 700; font-size: 0.95rem; cursor: pointer; box-shadow: 0 8px 18px rgba(107,45,143,0.18); }
+    .maq-cancelar { display: inline-flex; align-items: center; padding: 0.75rem 1.5rem; background: #f3f3f3; color: #44384c; border: 1px solid #ddd; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 0.95rem; }
+    @media (max-width: 640px) { .maq-form { grid-template-columns: 1fr; } }
 </style>
 
 <div class="maq-shell">
     <h2 style="margin: 0 0 1.25rem 0; color: #4a235f;">Editar maquiagem</h2>
-
     <div class="maq-card">
         <form method="post" class="maq-form">
             {% csrf_token %}
-
             <div class="maq-field">
                 <label for="id_turma">Turma</label>
                 <select id="id_turma" name="turma" required>
                     {% for turma in turmas %}
-                        <option value="{{ turma.pk }}" {% if turma.pk == maquiagem.turma_id %}selected{% endif %}>
-                            {{ turma.nome }}
-                        </option>
+                        <option value="{{ turma.pk }}" {% if turma.pk == maquiagem.turma_id %}selected{% endif %}>{{ turma.nome }}</option>
                     {% endfor %}
                 </select>
             </div>
-
             <div class="maq-field">
                 <label for="id_aluna">Aluna</label>
                 <select id="id_aluna" name="aluna" required>
                     {% for aluna in alunas_da_turma %}
-                        <option value="{{ aluna.pk }}" {% if aluna.pk == maquiagem.aluna_id %}selected{% endif %}>
-                            {{ aluna.nome }}
-                        </option>
+                        <option value="{{ aluna.pk }}" {% if aluna.pk == maquiagem.aluna_id %}selected{% endif %}>{{ aluna.nome }}</option>
                     {% endfor %}
                 </select>
             </div>
-
             <div class="maq-field">
-                <label for="id_horario">Horário</label>
+                <label for="id_horario">Horario</label>
                 <input type="time" id="id_horario" name="horario" value="{{ maquiagem.horario|time:'H:i' }}" required>
             </div>
-
             <div class="maq-field">
                 <label for="id_maquiadora">Maquiadora</label>
                 <input type="text" id="id_maquiadora" name="maquiadora" value="{{ maquiagem.maquiadora }}" required>
             </div>
-
             <div class="maq-field">
-                <label for="id_duracao">Duração (minutos)</label>
+                <label for="id_duracao">Duracao (minutos)</label>
                 <input type="number" id="id_duracao" name="duracao_minutos" min="1" value="{{ maquiagem.duracao_minutos }}" required>
             </div>
-
             <div class="maq-submit">
-                <a class="maq-cancelar" href="{% url 'admin_dashboard:espetaculo_maquiagens' maquiagem.espetaculo_id %}">
-                    Cancelar
-                </a>
-                <button type="submit" class="maq-btn">Salvar alterações</button>
+                <a class="maq-cancelar" href="{% url 'admin_dashboard:espetaculo_maquiagens' maquiagem.espetaculo_id %}">Cancelar</a>
+                <button type="submit" class="maq-btn">Salvar alteracoes</button>
             </div>
         </form>
     </div>
@@ -150,64 +63,58 @@ document.addEventListener('DOMContentLoaded', function () {
     const selectAluna = document.getElementById('id_aluna');
     const alunaAtualId = "{{ maquiagem.aluna_id }}";
 
-    const URL_ALUNAS_POR_TURMA_BASE = "{% url 'admin_dashboard:alunas_por_turma' 999999 %}".replace('999999', '');
+    // Mesma logica do template principal: remove "999999/" da URL gerada pelo Django
+    const URL_ALUNAS_POR_TURMA_BASE = "{% url 'admin_dashboard:alunas_por_turma' 999999 %}".replace('999999/', '');
 
-    function getCookie(name) {
-        const value = `; ${document.cookie}`;
-        const parts = value.split(`; ${name}=`);
-        if (parts.length === 2) {
-            return parts.pop().split(';').shift();
-        }
-        return null;
-    }
+    if (selectTurma && selectAluna) {
+        selectTurma.addEventListener('change', function () {
+            const turmaId = this.value;
+            selectAluna.innerHTML = '<option value="">Carregando...</option>';
+            selectAluna.disabled = true;
 
-    selectTurma.addEventListener('change', function () {
-        const turmaId = this.value;
-
-        selectAluna.innerHTML = '<option value="">Carregando...</option>';
-        selectAluna.disabled = true;
-
-        if (!turmaId) {
-            selectAluna.innerHTML = '<option value="">Selecione a turma primeiro</option>';
-            return;
-        }
-
-        fetch(`${URL_ALUNAS_POR_TURMA_BASE}${turmaId}/`, {
-            method: 'GET',
-            credentials: 'same-origin',
-            headers: {
-                'X-CSRFToken': getCookie('csrftoken'),
-            },
-        })
-        .then(function (response) {
-            return response.json();
-        })
-        .then(function (alunas) {
-            selectAluna.innerHTML = '';
-
-            if (alunas.length === 0) {
-                selectAluna.innerHTML = '<option value="">Nenhuma aluna nesta turma</option>';
-                selectAluna.disabled = true;
+            if (!turmaId) {
+                selectAluna.innerHTML = '<option value="">Selecione a turma primeiro</option>';
                 return;
             }
 
-            alunas.forEach(function (aluna) {
-                const opcao = document.createElement('option');
-                opcao.value = aluna.id;
-                opcao.textContent = aluna.nome;
-                if (String(aluna.id) === alunaAtualId) {
-                    opcao.selected = true;
+            fetch(`${URL_ALUNAS_POR_TURMA_BASE}${turmaId}/`, {
+                method: 'GET',
+                credentials: 'same-origin',
+            })
+            .then(function (response) {
+                if (!response.ok) {
+                    throw new Error(`Erro HTTP ${response.status}`);
                 }
-                selectAluna.appendChild(opcao);
-            });
+                return response.json();
+            })
+            .then(function (alunas) {
+                selectAluna.innerHTML = '';
 
-            selectAluna.disabled = false;
-        })
-        .catch(function (erro) {
-            console.error('Erro ao buscar alunas:', erro);
-            selectAluna.innerHTML = '<option value="">Erro ao carregar alunas</option>';
+                if (alunas.length === 0) {
+                    selectAluna.innerHTML = '<option value="">Nenhuma aluna nesta turma</option>';
+                    selectAluna.disabled = true;
+                    return;
+                }
+
+                alunas.forEach(function (aluna) {
+                    const opcao = document.createElement('option');
+                    opcao.value = aluna.id;
+                    opcao.textContent = aluna.nome;
+                    if (String(aluna.id) === alunaAtualId) {
+                        opcao.selected = true;
+                    }
+                    selectAluna.appendChild(opcao);
+                });
+
+                selectAluna.disabled = false;
+            })
+            .catch(function (erro) {
+                console.error('Erro ao buscar alunas:', erro);
+                selectAluna.innerHTML = '<option value="">Erro ao carregar alunas</option>';
+                selectAluna.disabled = true;
+            });
         });
-    });
+    }
 });
 </script>
 
