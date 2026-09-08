@@ -5279,7 +5279,7 @@ def espetaculo_maquiagens(request, pk):
 
     return render(
         request,
-        'admin_dashboard/espetaculo_maquiagens.html',
+        'admin_dashboard/espetaculos/espetaculo_maquiagens.html',
         {
             'espetaculo': espetaculo,
             'turmas': turmas,
