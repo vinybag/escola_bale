@@ -1,0 +1,306 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Maquiagens - {{ espetaculo.titulo }}{% endblock %}
+
+{% block content %}
+<style>
+    .maq-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 1.5rem;
+    }
+
+    .maq-shell {
+        width: 100%;
+        max-width: 1100px;
+        min-width: 0;
+    }
+
+    .maq-card {
+        background: white;
+        border: 1px solid #ece3f2;
+        border-radius: 18px;
+        box-shadow: 0 4px 16px rgba(107, 45, 143, 0.07);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .maq-form {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1rem;
+        align-items: end;
+    }
+
+    .maq-field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+    }
+
+    .maq-field label {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #7a7280;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+
+    .maq-field select,
+    .maq-field input {
+        padding: 0.65rem 0.75rem;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        color: #3f3548;
+        background: white;
+    }
+
+    .maq-submit {
+        grid-column: 1 / -1;
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .maq-btn {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.75rem 1.5rem;
+        background: linear-gradient(135deg, #6b2d8f 0%, #7e3aa5 100%);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 0.95rem;
+        cursor: pointer;
+        box-shadow: 0 8px 18px rgba(107,45,143,0.18);
+    }
+
+    .maq-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .maq-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .maq-table th,
+    .maq-table td {
+        padding: 0.75rem 1rem;
+        text-align: left;
+        border-bottom: 1px solid #f1ebf6;
+        font-size: 0.9rem;
+    }
+
+    .maq-table th {
+        color: #7a7280;
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        font-weight: 700;
+    }
+
+    .maq-table td {
+        color: #3f3548;
+    }
+
+    .maq-empty {
+        text-align: center;
+        color: #7b7580;
+        padding: 2rem 1rem;
+    }
+
+    .maq-voltar {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.6rem 1rem;
+        background: #f3f3f3;
+        color: #44384c;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        text-decoration: none;
+        font-size: 0.88rem;
+        font-weight: 600;
+    }
+
+    @media (max-width: 640px) {
+        .maq-form {
+            grid-template-columns: 1fr;
+        }
+
+        .maq-table {
+            display: block;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+    }
+</style>
+
+<div class="maq-header">
+    <div>
+        <h2 style="margin: 0 0 0.35rem 0; color: #4a235f;">Maquiagens</h2>
+        <p style="margin: 0; color: #6f6f78;">{{ espetaculo.titulo }}</p>
+    </div>
+
+    <a class="maq-voltar" href="{% url 'admin_dashboard:espetaculo_listar' %}">
+        Voltar
+    </a>
+</div>
+
+<div class="maq-shell">
+
+    <div class="maq-card">
+        <h3 style="margin: 0 0 1.25rem 0; color: #4a235f; font-size: 1.05rem;">
+            Cadastrar maquiagem
+        </h3>
+
+        <form method="post" class="maq-form">
+            {% csrf_token %}
+
+            <div class="maq-field">
+                <label for="id_turma">Turma</label>
+                <select id="id_turma" name="turma" required>
+                    <option value="">Selecione a turma</option>
+                    {% for turma in turmas %}
+                        <option value="{{ turma.pk }}">{{ turma.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="maq-field">
+                <label for="id_aluna">Aluna</label>
+                <select id="id_aluna" name="aluna" required disabled>
+                    <option value="">Selecione a turma primeiro</option>
+                </select>
+            </div>
+
+            <div class="maq-field">
+                <label for="id_horario">Horário</label>
+                <input type="time" id="id_horario" name="horario" required>
+            </div>
+
+            <div class="maq-field">
+                <label for="id_maquiadora">Maquiadora</label>
+                <input type="text" id="id_maquiadora" name="maquiadora" placeholder="Nome da maquiadora" required>
+            </div>
+
+            <div class="maq-field">
+                <label for="id_duracao">Duração (minutos)</label>
+                <input type="number" id="id_duracao" name="duracao_minutos" min="1" placeholder="Ex: 20" required>
+            </div>
+
+            <div class="maq-submit">
+                <button type="submit" class="maq-btn">Salvar maquiagem</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="maq-card">
+        <h3 style="margin: 0 0 1.25rem 0; color: #4a235f; font-size: 1.05rem;">
+            Maquiagens cadastradas
+        </h3>
+
+        {% if maquiagens %}
+        <table class="maq-table">
+            <thead>
+                <tr>
+                    <th>Horário</th>
+                    <th>Turma</th>
+                    <th>Aluna</th>
+                    <th>Maquiadora</th>
+                    <th>Duração</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in maquiagens %}
+                <tr>
+                    <td>{{ m.horario|time:"H:i" }}</td>
+                    <td>{{ m.turma.nome }}</td>
+                    <td>{{ m.aluna.nome }}</td>
+                    <td>{{ m.maquiadora }}</td>
+                    <td>{{ m.duracao_minutos }} min</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="maq-empty">
+            Nenhuma maquiagem cadastrada ainda.
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const selectTurma = document.getElementById('id_turma');
+    const selectAluna = document.getElementById('id_aluna');
+
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) {
+            return parts.pop().split(';').shift();
+        }
+        return null;
+    }
+
+    selectTurma.addEventListener('change', function () {
+        const turmaId = this.value;
+
+        selectAluna.innerHTML = '<option value="">Carregando...</option>';
+        selectAluna.disabled = true;
+
+        if (!turmaId) {
+            selectAluna.innerHTML = '<option value="">Selecione a turma primeiro</option>';
+            return;
+        }
+
+        fetch(`/admin-dashboard/ajax/alunas-por-turma/${turmaId}/`, {
+            method: 'GET',
+            credentials: 'same-origin',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+            },
+        })
+        .then(function (response) {
+            return response.json();
+        })
+        .then(function (alunas) {
+            selectAluna.innerHTML = '';
+
+            if (alunas.length === 0) {
+                selectAluna.innerHTML = '<option value="">Nenhuma aluna nesta turma</option>';
+                selectAluna.disabled = true;
+                return;
+            }
+
+            const opcaoPadrao = document.createElement('option');
+            opcaoPadrao.value = '';
+            opcaoPadrao.textContent = 'Selecione a aluna';
+            selectAluna.appendChild(opcaoPadrao);
+
+            alunas.forEach(function (aluna) {
+                const opcao = document.createElement('option');
+                opcao.value = aluna.id;
+                opcao.textContent = aluna.nome;
+                selectAluna.appendChild(opcao);
+            });
+
+            selectAluna.disabled = false;
+        })
+        .catch(function (erro) {
+            console.error('Erro ao buscar alunas:', erro);
+            selectAluna.innerHTML = '<option value="">Erro ao carregar alunas</option>';
+        });
+    });
+});
+</script>
+
+{% endblock %}

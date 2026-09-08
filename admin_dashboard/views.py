@@ -12,6 +12,9 @@ from espetaculo.models import Espetaculo, PedidoIngressoEvento
 from django.db.models import Q
 from datetime import date, timedelta
 
+from django.http import JsonResponse
+from espetaculo.models import Espetaculo, Maquiagem
+
 from django.views.decorators.http import require_POST
 
 
@@ -5241,3 +5244,51 @@ def pedido_ingresso_cancelar(request, pedido_id):
         'admin_dashboard:espetaculo_assentos_gerenciar',
         pk=pedido.evento_id,
     )
+
+
+
+
+def espetaculo_maquiagens(request, pk):
+    espetaculo = get_object_or_404(Espetaculo, pk=pk)
+    turmas = Turma.objects.all().order_by('nome')
+
+    if request.method == 'POST':
+        turma_id = request.POST.get('turma')
+        aluna_id = request.POST.get('aluna')
+        horario = request.POST.get('horario')
+        maquiadora = request.POST.get('maquiadora', '').strip()
+        duracao = request.POST.get('duracao_minutos')
+
+        if not all([turma_id, aluna_id, horario, maquiadora, duracao]):
+            messages.error(request, 'Preencha todos os campos.')
+            return redirect('admin_dashboard:espetaculo_maquiagens', pk=pk)
+
+        Maquiagem.objects.create(
+            espetaculo=espetaculo,
+            turma_id=turma_id,
+            aluna_id=aluna_id,
+            horario=horario,
+            maquiadora=maquiadora,
+            duracao_minutos=duracao,
+        )
+
+        messages.success(request, 'Maquiagem cadastrada com sucesso.')
+        return redirect('admin_dashboard:espetaculo_maquiagens', pk=pk)
+
+    maquiagens = espetaculo.maquiagens.select_related('turma', 'aluna').all()
+
+    return render(
+        request,
+        'admin_dashboard/espetaculo_maquiagens.html',
+        {
+            'espetaculo': espetaculo,
+            'turmas': turmas,
+            'maquiagens': maquiagens,
+        },
+    )
+
+
+def alunas_por_turma(request, turma_id):
+    turma = get_object_or_404(Turma, pk=turma_id)
+    alunas = turma.alunas.filter(ativa=True).order_by('nome').values('id', 'nome')
+    return JsonResponse(list(alunas), safe=False)

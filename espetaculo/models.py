@@ -1506,3 +1506,34 @@ class IngressoGratuitoAluna(models.Model):
 
     def __str__(self):
         return f'{self.aluna.nome} - {self.evento.titulo}'
+
+
+class Maquiagem(models.Model):
+    espetaculo = models.ForeignKey(
+        'espetaculo.Espetaculo',
+        on_delete=models.CASCADE,
+        related_name='maquiagens',
+    )
+    turma = models.ForeignKey(
+        'usuarios.Turma',
+        on_delete=models.CASCADE,
+        related_name='maquiagens',
+    )
+    aluna = models.ForeignKey(
+        'usuarios.Aluna',
+        on_delete=models.CASCADE,
+        related_name='maquiagens',
+    )
+    horario = models.TimeField(verbose_name='Horário')
+    maquiadora = models.CharField(max_length=120, verbose_name='Maquiadora')
+    duracao_minutos = models.PositiveIntegerField(verbose_name='Duração (minutos)')
+    criado_em = models.DateTimeField(auto_now_add=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['horario']
+        verbose_name = 'Maquiagem'
+        verbose_name_plural = 'Maquiagens'
+
+    def __str__(self):
+        return f'{self.aluna.nome} - {self.horario.strftime("%H:%M")}'
