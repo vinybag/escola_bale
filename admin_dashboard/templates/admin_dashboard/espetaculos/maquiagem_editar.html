@@ -5,15 +5,22 @@
 {% block content %}
 <style>
     .maq-shell { width: 100%; max-width: 700px; min-width: 0; }
-    .maq-card { background: white; border: 1px solid #ece3f2; border-radius: 18px; box-shadow: 0 4px 16px rgba(107, 45, 143, 0.07); padding: 1.5rem; }
-    .maq-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; align-items: end; }
+    .maq-card { background: white; border: 1px solid #ece3f2; border-radius: 18px; box-shadow: 0 4px 16px rgba(107, 45, 143, 0.07); padding: 1.25rem; }
+    .maq-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.9rem; align-items: end; }
     .maq-field { display: flex; flex-direction: column; gap: 0.35rem; }
-    .maq-field label { font-size: 0.8rem; font-weight: 700; color: #7a7280; text-transform: uppercase; letter-spacing: 0.03em; }
-    .maq-field select, .maq-field input { padding: 0.65rem 0.75rem; border: 1px solid #ddd; border-radius: 8px; font-size: 0.95rem; color: #3f3548; background: white; }
+    .maq-field label { font-size: 0.75rem; font-weight: 700; color: #7a7280; text-transform: uppercase; letter-spacing: 0.03em; }
+    .maq-field select, .maq-field input { padding: 0.6rem 0.7rem; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9rem; color: #3f3548; background: white; }
     .maq-submit { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 0.75rem; }
-    .maq-btn { display: inline-flex; align-items: center; padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #6b2d8f 0%, #7e3aa5 100%); color: white; border: none; border-radius: 10px; font-weight: 700; font-size: 0.95rem; cursor: pointer; box-shadow: 0 8px 18px rgba(107,45,143,0.18); }
-    .maq-cancelar { display: inline-flex; align-items: center; padding: 0.75rem 1.5rem; background: #f3f3f3; color: #44384c; border: 1px solid #ddd; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 0.95rem; }
-    @media (max-width: 640px) { .maq-form { grid-template-columns: 1fr; } }
+    .maq-btn { display: inline-flex; align-items: center; padding: 0.7rem 1.3rem; background: linear-gradient(135deg, #6b2d8f 0%, #7e3aa5 100%); color: white; border: none; border-radius: 10px; font-weight: 700; font-size: 0.9rem; cursor: pointer; box-shadow: 0 8px 18px rgba(107,45,143,0.18); }
+    .maq-cancelar { display: inline-flex; align-items: center; padding: 0.7rem 1.3rem; background: #f3f3f3; color: #44384c; border: 1px solid #ddd; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 0.9rem; }
+
+    @media (max-width: 640px) {
+        .maq-shell { max-width: 100%; }
+        .maq-card { padding: 1rem; }
+        .maq-form { grid-template-columns: 1fr; }
+        .maq-submit { flex-direction: column-reverse; gap: 0.6rem; }
+        .maq-btn, .maq-cancelar { width: 100%; justify-content: center; }
+    }
 </style>
 
 <div class="maq-shell">
@@ -38,7 +45,7 @@
                 </select>
             </div>
             <div class="maq-field">
-                <label for="id_horario">Horario</label>
+                <label for="id_horario">Horário</label>
                 <input type="time" id="id_horario" name="horario" value="{{ maquiagem.horario|time:'H:i' }}" required>
             </div>
             <div class="maq-field">
@@ -46,12 +53,12 @@
                 <input type="text" id="id_maquiadora" name="maquiadora" value="{{ maquiagem.maquiadora }}" required>
             </div>
             <div class="maq-field">
-                <label for="id_duracao">Duracao (minutos)</label>
+                <label for="id_duracao">Duração (minutos)</label>
                 <input type="number" id="id_duracao" name="duracao_minutos" min="1" value="{{ maquiagem.duracao_minutos }}" required>
             </div>
             <div class="maq-submit">
                 <a class="maq-cancelar" href="{% url 'admin_dashboard:espetaculo_maquiagens' maquiagem.espetaculo_id %}">Cancelar</a>
-                <button type="submit" class="maq-btn">Salvar alteracoes</button>
+                <button type="submit" class="maq-btn">Salvar alterações</button>
             </div>
         </form>
     </div>
@@ -63,7 +70,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const selectAluna = document.getElementById('id_aluna');
     const alunaAtualId = "{{ maquiagem.aluna_id }}";
 
-    // Mesma logica do template principal: remove "999999/" da URL gerada pelo Django
     const URL_ALUNAS_POR_TURMA_BASE = "{% url 'admin_dashboard:alunas_por_turma' 999999 %}".replace('999999/', '');
 
     if (selectTurma && selectAluna) {
