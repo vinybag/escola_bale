@@ -450,6 +450,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const selectAluna = document.getElementById('id_aluna');
 
     const URL_ALUNAS_POR_TURMA_BASE = "{% url 'admin_dashboard:alunas_por_turma' 999999 %}".replace('999999', '');
+    console.log('URL base:', URL_ALUNAS_POR_TURMA_BASE);
+
 
     function getCookie(name) {
         const value = `; ${document.cookie}`;
