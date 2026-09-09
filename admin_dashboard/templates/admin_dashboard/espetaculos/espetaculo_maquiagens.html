@@ -197,7 +197,7 @@
         min-width: 0;
         max-width: 100%;
 
-        height: 44px;
+        height: 48px;
 
         padding: 0.6rem 0.7rem;
 
@@ -1612,6 +1612,46 @@ document.addEventListener('DOMContentLoaded', function () {
         );
 
     }
+
+    /* =========================================================
+       CORREÇÃO UNIVERSAL DO WIDGET CORTADO
+       Funciona em QUALQUER tamanho de tela
+       ========================================================= */
+
+    const inputsFormulario =
+        document.querySelectorAll(
+            '.maq-field input, .maq-field select'
+        );
+
+    inputsFormulario.forEach(
+        function (input) {
+
+            input.addEventListener(
+                'focus',
+                function () {
+
+                    setTimeout(
+                        function () {
+
+                            input.scrollIntoView({
+                                behavior: 'smooth',
+                                block: 'center',
+                                inline: 'nearest'
+                            });
+
+                        },
+                        150
+                    );
+
+                },
+                {
+                    capture: true
+                }
+            );
+
+        }
+    );
+
 });
 </script>
 
