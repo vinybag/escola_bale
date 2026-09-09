@@ -135,23 +135,27 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
 
 
 # Media files - AGORA VIA CLOUDINARY
-# IMPORTANTE: o Railway usa containers efemeros - qualquer arquivo
-# salvo direto no filesystem local (media/) e apagado a cada novo
-# deploy. Por isso os uploads (imagens de espetaculos, mapas de
-# assentos, etc) passam a ser armazenados no Cloudinary, que e
-# externo e persistente.
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME', default=''),
     'API_KEY': config('CLOUDINARY_API_KEY', default=''),
     'API_SECRET': config('CLOUDINARY_API_SECRET', default=''),
 }
 
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+# Django 5.1+ removeu DEFAULT_FILE_STORAGE/STATICFILES_STORAGE em favor
+# do dicionario unico STORAGES. Usar a sintaxe antiga aqui era ignorado
+# silenciosamente pelo Django, e por isso os uploads continuavam indo
+# para o storage local (FileSystemStorage) em vez do Cloudinary.
+STORAGES = {
+    'default': {
+        'BACKEND': 'cloudinary_storage.storage.MediaCloudinaryStorage',
+    },
+    'staticfiles': {
+        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+    },
+}
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
