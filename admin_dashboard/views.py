@@ -8,7 +8,7 @@ from django.db.models import Sum
 from django.db import models
 from django.db.models import Case, When, Value, IntegerField
 from django.conf import settings
-from espetaculo.models import Espetaculo, PedidoIngressoEvento
+from espetaculo.models import Espetaculo, PedidoIngressoEvento, IngressoEvento
 from django.db.models import Q
 from datetime import date, timedelta
 
@@ -5108,17 +5108,13 @@ def espetaculo_assentos_gerenciar(request, pk):
 @login_required
 def espetaculo_assento_acao(request, pk, assento_id):
     """
-    Bloqueia, libera reservas temporárias ou libera bloqueios manuais.
-    Assentos vendidos só devem ser liberados pelo cancelamento do pedido.
+    Bloqueia, libera reservas temporárias, libera bloqueios manuais
+    ou cancela pedido de assento vendido.
     """
     if not request.user.is_staff:
         return redirect('home')
 
-    espetaculo = get_object_or_404(
-        Espetaculo,
-        pk=pk,
-    )
-
+    espetaculo = get_object_or_404(Espetaculo, pk=pk)
     assento = get_object_or_404(
         Assento.objects.select_related('mapa__evento'),
         pk=assento_id,
@@ -5126,80 +5122,50 @@ def espetaculo_assento_acao(request, pk, assento_id):
     )
 
     if request.method != 'POST':
-        return redirect(
-            'admin_dashboard:espetaculo_assentos_gerenciar',
-            pk=pk,
-        )
+        return redirect('admin_dashboard:espetaculo_assentos_gerenciar', pk=pk)
 
-    acao = request.POST.get(
-        'acao',
-    )
-
-    motivo = request.POST.get(
-        'motivo',
-        '',
-    ).strip()
+    acao = request.POST.get('acao', '')
+    motivo = request.POST.get('motivo', '').strip()
 
     if acao == 'bloquear':
         if assento.status != 'disponivel':
-            messages.error(
-                request,
-                (
-                    f'O assento {assento.identificador} '
-                    'não está disponível.'
-                ),
-            )
+            messages.error(request, f'O assento {assento.identificador} não está disponível.')
         else:
-            assento.bloquear_manualmente(
-                motivo=motivo,
-            )
-
-            messages.success(
-                request,
-                (
-                    f'Assento {assento.identificador} '
-                    'bloqueado manualmente.'
-                ),
-            )
+            assento.bloquear_manualmente(motivo=motivo)
+            messages.success(request, f'Assento {assento.identificador} bloqueado manualmente.')
 
     elif acao == 'liberar':
-        status_liberaveis = [
-            'bloqueado_manual',
-            'reservado_temporario',
-        ]
-
+        status_liberaveis = ['bloqueado_manual', 'reservado_temporario']
         if assento.status not in status_liberaveis:
             messages.error(
                 request,
-                (
-                    f'O assento {assento.identificador} '
-                    f'não pode ser liberado porque está com '
-                    f'status "{assento.status}". '
-                    'Assentos vendidos devem ser liberados '
-                    'cancelando o pedido correspondente.'
-                ),
+                f'O assento {assento.identificador} não pode ser liberado porque está com status "{assento.status}". '
+                'Assentos vendidos devem ser liberados cancelando o pedido correspondente.'
             )
         else:
             assento.liberar()
+            messages.success(request, f'Assento {assento.identificador} liberado e disponível novamente.')
 
+    elif acao == 'cancelar_pedido':
+        # Encontrar o ingresso e pedido associados
+        ingresso = IngressoEvento.objects.filter(
+            assento=assento,
+            pedido__status__in=['pago', 'pendente'],
+        ).first()
+
+        if not ingresso:
+            messages.error(request, f'Não foi possível encontrar o pedido associado ao assento {assento.identificador}.')
+        else:
+            pedido = ingresso.pedido
+            pedido.cancelar_e_liberar_assentos()
             messages.success(
                 request,
-                (
-                    f'Assento {assento.identificador} '
-                    'liberado e disponível novamente.'
-                ),
+                f'Pedido #{pedido.id} cancelado. O assento {assento.identificador} foi liberado.'
             )
-
     else:
-        messages.error(
-            request,
-            'Ação de assento inválida.',
-        )
+        messages.error(request, 'Ação de assento inválida.')
 
-    return redirect(
-        'admin_dashboard:espetaculo_assentos_gerenciar',
-        pk=pk,
-    )
+    return redirect('admin_dashboard:espetaculo_assentos_gerenciar', pk=pk)
 
 @login_required
 @require_POST
