@@ -16,7 +16,7 @@
 
     .cobrancas-cards {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
         gap: 1rem;
     }
 
@@ -99,40 +99,79 @@
         font-size: 0.95rem;
     }
 
-    .cobranca-card-tabela-wrapper {
-        overflow-x: auto;
-        border: 1px solid #eee7f3;
-        border-radius: 12px;
+    .cobranca-card-parcelas {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
         margin-top: 0.5rem;
     }
 
-    .cobranca-card-tabela {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.85rem;
-        min-width: 500px;
+    .cobranca-card-parcela-item {
+        display: grid;
+        grid-template-columns: 0.6fr 1fr 1.2fr 0.8fr;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        background: #f8f9fa;
+        border-radius: 10px;
+        border: 1px solid #ebe3f1;
+        align-items: center;
     }
 
-    .cobranca-card-tabela th {
-        background: #f8f9fa;
-        padding: 0.65rem 0.75rem;
-        text-align: left;
+    .cobranca-card-parcela-label {
+        font-size: 0.7rem;
         font-weight: 700;
         color: #6b2d8f;
-        font-size: 0.75rem;
         text-transform: uppercase;
         letter-spacing: 0.02em;
-        border-bottom: 1px solid #ebe3f1;
     }
 
-    .cobranca-card-tabela td {
-        padding: 0.65rem 0.75rem;
-        border-bottom: 1px solid #f5f5f5;
+    .cobranca-card-parcela-valor {
         color: #444;
+        font-weight: 600;
     }
 
-    .cobranca-card-tabela tr:last-child td {
-        border-bottom: none;
+    .cobranca-card-parcela-status {
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+
+    .cobranca-card-parcela-status.pago {
+        color: #155724;
+    }
+
+    .cobranca-card-parcela-status.pendente {
+        color: #856404;
+    }
+
+    .cobranca-card-link-pagar {
+        display: inline-block;
+        padding: 0.55rem 1rem;
+        background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+        color: white;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 0.8rem;
+        text-align: center;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .cobranca-card-link-pagar:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(39, 174, 96, 0.25);
+    }
+
+    .cobranca-card-link-boleto {
+        display: inline-block;
+        padding: 0.55rem 1rem;
+        background: #f3f3f3;
+        color: #444;
+        text-decoration: none;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.8rem;
+        text-align: center;
     }
 
     .cobranca-card-pagamento {
@@ -210,37 +249,6 @@
         margin-top: 0.25rem;
     }
 
-    .cobranca-card-link-pagar {
-        display: inline-block;
-        padding: 0.65rem 1.1rem;
-        background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
-        color: white;
-        text-decoration: none;
-        border-radius: 8px;
-        font-weight: 700;
-        font-size: 0.85rem;
-        text-align: center;
-        transition: transform 0.15s ease, box-shadow 0.15s ease;
-    }
-
-    .cobranca-card-link-pagar:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(39, 174, 96, 0.25);
-    }
-
-    .cobranca-card-link-boleto {
-        display: inline-block;
-        padding: 0.65rem 1.1rem;
-        background: #f3f3f3;
-        color: #444;
-        text-decoration: none;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        font-weight: 600;
-        font-size: 0.85rem;
-        text-align: center;
-    }
-
     .cobranca-vazio {
         background: white;
         border-radius: 18px;
@@ -284,6 +292,11 @@
 
         .cobranca-card-btn {
             width: 100%;
+        }
+
+        .cobranca-card-parcela-item {
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
         }
     }
 </style>
@@ -346,49 +359,39 @@
             {% if cobranca.parcelas.all %}
                 <div class="cobranca-card-item full">
                     <div class="cobranca-card-label">Parcelas</div>
-                    <div class="cobranca-card-tabela-wrapper">
-                        <table class="cobranca-card-tabela">
-                            <thead>
-                                <tr>
-                                    <th>Parcela</th>
-                                    <th>Valor</th>
-                                    <th>Vencimento</th>
-                                    <th>Status</th>
-                                    <th>Pagamento</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for parcela in cobranca.parcelas.all %}
-                                <tr>
-                                    <td>{{ parcela.numero_parcela }}/{{ parcela.total_parcelas }}</td>
-                                    <td>R$ {{ parcela.valor }}</td>
-                                    <td>{{ parcela.vencimento|date:"d/m/Y"|default:"-" }}</td>
-                                    <td>
-                                        {% if parcela.status == 'pago' %}
-                                            <span style="color: #155724; font-weight: bold;">Pago</span>
-                                        {% else %}
-                                            <span style="color: #856404; font-weight: bold;">Pendente</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if parcela.status == 'pago' %}
-                                            <span style="color: #155724;">Quitado</span>
-                                        {% elif parcela.asaas_invoice_url %}
-                                            <a href="{{ parcela.asaas_invoice_url }}" target="_blank" rel="noopener noreferrer" class="cobranca-card-link-pagar">
-                                                Pagar
-                                            </a>
-                                        {% elif parcela.asaas_bank_slip_url %}
-                                            <a href="{{ parcela.asaas_bank_slip_url }}" target="_blank" rel="noopener noreferrer" class="cobranca-card-link-boleto">
-                                                Ver boleto
-                                            </a>
-                                        {% else %}
-                                            <span style="color: #666;">Aguardando</span>
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                    <div class="cobranca-card-parcelas">
+                        {% for parcela in cobranca.parcelas.all %}
+                        <div class="cobranca-card-parcela-item">
+                            <div>
+                                <div class="cobranca-card-parcela-label">Parcela</div>
+                                <div class="cobranca-card-valor">{{ parcela.numero_parcela }}/{{ parcela.total_parcelas }}</div>
+                            </div>
+                            <div>
+                                <div class="cobranca-card-parcela-label">Valor</div>
+                                <div class="cobranca-card-parcela-valor">R$ {{ parcela.valor }}</div>
+                            </div>
+                            <div>
+                                <div class="cobranca-card-parcela-label">Vencimento</div>
+                                <div class="cobranca-card-valor">{{ parcela.vencimento|date:"d/m/Y"|default:"-" }}</div>
+                            </div>
+                            <div>
+                                <div class="cobranca-card-parcela-label">Pagamento</div>
+                                {% if parcela.status == 'pago' %}
+                                    <div class="cobranca-card-parcela-status pago">Pago</div>
+                                {% elif parcela.asaas_invoice_url %}
+                                    <a href="{{ parcela.asaas_invoice_url }}" target="_blank" rel="noopener noreferrer" class="cobranca-card-link-pagar">
+                                        Pagar
+                                    </a>
+                                {% elif parcela.asaas_bank_slip_url %}
+                                    <a href="{{ parcela.asaas_bank_slip_url }}" target="_blank" rel="noopener noreferrer" class="cobranca-card-link-boleto">
+                                        Ver boleto
+                                    </a>
+                                {% else %}
+                                    <div class="cobranca-card-parcela-status pendente">Pendente</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
                     </div>
                 </div>
             {% else %}
