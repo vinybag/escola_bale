@@ -1671,6 +1671,11 @@ def quantidade_gratuita_disponivel(request, evento):
     - alunas ativas que tenham o usuário como responsável;
     - uma aluna ativa vinculada diretamente ao usuário, quando existir.
 
+    Apenas alunas com participação confirmada (vai_dancar=True) no
+    espetáculo contam para a gratuidade. Alunas ativas cuja mãe/responsável
+    não tem elas participando deste espetáculo específico não geram direito
+    a ingresso gratuito.
+
     Cada aluna pode utilizar apenas uma gratuidade por evento.
     """
     if not request.user.is_authenticated:
@@ -1681,6 +1686,9 @@ def quantidade_gratuita_disponivel(request, evento):
     ).filter(
         models.Q(responsavel=request.user)
         | models.Q(usuario=request.user)
+    ).filter(
+        participacoes_espetaculo__espetaculo=evento,
+        participacoes_espetaculo__vai_dancar=True,
     ).distinct()
 
     total_beneficiarias = alunas.count()
