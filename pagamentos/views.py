@@ -6,6 +6,7 @@ from django.views.decorators.csrf import csrf_exempt
 from .models import Mensalidade
 from .asaas_helper import AsaasAPI
 from datetime import datetime
+from django.utils import timezone
 import json
 from espetaculo.services.ingressos import confirmar_pagamento_pedido
 
@@ -19,7 +20,7 @@ ASAAS_WEBHOOK_EMAIL = "vinybag@gmail.com"
 def marcar_mensalidade_como_paga(mensalidade, forma_pagamento, comprovante):
     if mensalidade.status != 'pago':
         mensalidade.status = 'pago'
-        mensalidade.data_pagamento = datetime.now()
+        mensalidade.data_pagamento = timezone.now()
         mensalidade.forma_pagamento = forma_pagamento
         mensalidade.comprovante = comprovante
         mensalidade.save()
