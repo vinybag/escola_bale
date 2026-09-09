@@ -844,43 +844,16 @@
 
                     <div class="maq-field">
 
-                        <label for="id_horario_display">
+                        <label for="id_horario">
                             Horário
                         </label>
 
                         <input
-                            type="text"
-                            id="id_horario_display"
-                            placeholder="Selecione o horário"
-                            readonly
-                            style="cursor: pointer;"
-                            required
-                        >
-
-                        <input
-                            type="hidden"
+                            type="time"
                             id="id_horario"
                             name="horario"
                             required
                         >
-
-                        <div
-                            id="time-picker-dropdown"
-                            style="
-                                display: none;
-                                position: absolute;
-                                z-index: 9999;
-                                background: white;
-                                border: 1px solid #ddd;
-                                border-radius: 8px;
-                                box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-                                padding: 0.5rem;
-                                max-height: 300px;
-                                overflow-y: auto;
-                            "
-                        >
-                            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.25rem;"></div>
-                        </div>
 
                     </div>
 
@@ -1641,120 +1614,56 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     /* =========================================================
-       SELETOR DE HORÁRIO CUSTOMIZADO
-       Substitui o widget nativo que cortava
+       CORREÇÃO DO WIDGET DE HORÁRIO CORTADO
+       Rola a página para criar espaço ANTES do widget abrir
        ========================================================= */
 
-    const inputHorarioHidden =
+    const inputHorario =
         document.getElementById('id_horario');
 
-    const inputHorarioDisplay =
-        document.getElementById('id_horario_display');
+    if (inputHorario) {
 
-    const timePickerDropdown =
-        document.getElementById('time-picker-dropdown');
+        // Detectar se é mobile/tablet
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+            navigator.userAgent
+        );
 
-    if (inputHorarioHidden && inputHorarioDisplay && timePickerDropdown) {
+        if (isMobile) {
 
-        const timeOptionsContainer =
-            timePickerDropdown.querySelector('div');
+            inputHorario.addEventListener(
+                'touchstart',
+                function () {
 
-        // Gerar opções de hora (00:00 até 23:30, de 30 em 30 minutos)
-        for (let hora = 0; hora < 24; hora++) {
-            for (let minuto = 0; minuto < 60; minuto += 30) {
+                    // Pequeno delay para permitir que o widget comece a abrir
+                    setTimeout(
+                        function () {
 
-                const horaFormatada =
-                    String(hora).padStart(2, '0');
+                            const rect =
+                                inputHorario.getBoundingClientRect();
 
-                const minutoFormatado =
-                    String(minuto).padStart(2, '0');
+                            const scrollTop =
+                                window.pageYOffset ||
+                                document.documentElement.scrollTop;
 
-                const timeValue =
-                    `${horaFormatada}:${minutoFormatado}`;
+                            // Calcular quanto rolar para deixar 250px acima do input
+                            const targetScroll =
+                                scrollTop + rect.top - 250;
 
-                const button =
-                    document.createElement('button');
+                            window.scrollTo({
+                                top: targetScroll,
+                                behavior: 'smooth'
+                            });
 
-                button.type = 'button';
-                button.textContent = timeValue;
+                        },
+                        100
+                    );
 
-                button.style.cssText = `
-                    padding: 0.5rem 0.75rem;
-                    border: 1px solid #e0e0e0;
-                    border-radius: 6px;
-                    background: white;
-                    color: #3f3548;
-                    font-size: 0.9rem;
-                    cursor: pointer;
-                    text-align: center;
-                    transition: all 0.15s ease;
-                `;
+                },
+                {
+                    passive: true
+                }
+            );
 
-                button.addEventListener('mouseover', function () {
-                    this.style.background = '#f5f3f6';
-                    this.style.borderColor = '#7e3aa5';
-                });
-
-                button.addEventListener('mouseout', function () {
-                    this.style.background = 'white';
-                    this.style.borderColor = '#e0e0e0';
-                });
-
-                button.addEventListener('click', function () {
-
-                    inputHorarioHidden.value = timeValue;
-                    inputHorarioDisplay.value = timeValue;
-
-                    timePickerDropdown.style.display = 'none';
-
-                    inputHorarioDisplay.style.borderColor = '#7e3aa5';
-                    inputHorarioDisplay.style.boxShadow =
-                        '0 0 0 3px rgba(126, 58, 165, 0.10)';
-
-                    setTimeout(function () {
-                        inputHorarioDisplay.style.borderColor = '#ddd';
-                        inputHorarioDisplay.style.boxShadow = 'none';
-                    }, 2000);
-
-                });
-
-                timeOptionsContainer.appendChild(button);
-
-            }
-        }
-
-        // Abrir dropdown ao clicar no input
-        inputHorarioDisplay.addEventListener('click', function () {
-
-            const rect =
-                inputHorarioDisplay.getBoundingClientRect();
-
-            timePickerDropdown.style.display = 'block';
-            timePickerDropdown.style.left =
-                rect.left + 'px';
-            timePickerDropdown.style.top =
-                (rect.bottom + 5) + 'px';
-            timePickerDropdown.style.width =
-                rect.width + 'px';
-
-        });
-
-        // Fechar ao clicar fora
-        document.addEventListener('click', function (event) {
-
-            if (
-                !timePickerDropdown.contains(event.target) &&
-                event.target !== inputHorarioDisplay
-            ) {
-                timePickerDropdown.style.display = 'none';
-            }
-
-        });
-
-        // Se já tiver valor (edição), exibir no display
-        if (inputHorarioHidden.value) {
-            inputHorarioDisplay.value =
-                inputHorarioHidden.value;
         }
 
     }
