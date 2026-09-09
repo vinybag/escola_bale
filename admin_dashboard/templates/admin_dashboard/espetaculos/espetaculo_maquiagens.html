@@ -853,7 +853,6 @@
                             id="id_horario"
                             name="horario"
                             required
-                            readonly
                         >
 
                     </div>
@@ -1608,100 +1607,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
 
                 });
-
-            }
-        );
-
-    }
-
-    /* =========================================================
-       WIDGET DE HORÁRIO: BLOQUEAR TECLADO + SCROLL
-       Mantém só o relógio, sem teclado
-       ========================================================= */
-
-    const inputHorario =
-        document.getElementById('id_horario');
-
-    if (inputHorario) {
-
-        // Bloquear teclado em mobile
-        inputHorario.addEventListener(
-            'keydown',
-            function (e) {
-                e.preventDefault();
-                return false;
-            }
-        );
-
-        // Impedir que o cursor apareça
-        inputHorario.addEventListener(
-            'focus',
-            function () {
-                this.blur();
-            }
-        );
-
-        // Permitir abrir o widget apenas no touch/click
-        inputHorario.addEventListener(
-            'touchstart',
-            function (e) {
-                e.preventDefault();
-
-                // Pequeno delay para permitir que o widget abra
-                setTimeout(
-                    function () {
-
-                        const rect =
-                            inputHorario.getBoundingClientRect();
-
-                        const scrollTop =
-                            window.pageYOffset ||
-                            document.documentElement.scrollTop;
-
-                        // Calcular quanto rolar para deixar 250px acima do input
-                        const targetScroll =
-                            scrollTop + rect.top - 250;
-
-                        window.scrollTo({
-                            top: targetScroll,
-                            behavior: 'smooth'
-                        });
-
-                    },
-                    100
-                );
-            },
-            {
-                passive: false
-            }
-        );
-
-        // Versão desktop (clique normal)
-        inputHorario.addEventListener(
-            'click',
-            function (e) {
-
-                setTimeout(
-                    function () {
-
-                        const rect =
-                            inputHorario.getBoundingClientRect();
-
-                        const scrollTop =
-                            window.pageYOffset ||
-                            document.documentElement.scrollTop;
-
-                        const targetScroll =
-                            scrollTop + rect.top - 250;
-
-                        window.scrollTo({
-                            top: targetScroll,
-                            behavior: 'smooth'
-                        });
-
-                    },
-                    100
-                );
 
             }
         );
