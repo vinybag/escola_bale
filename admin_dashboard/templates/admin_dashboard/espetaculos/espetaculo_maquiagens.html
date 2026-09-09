@@ -853,6 +853,7 @@
                             id="id_horario"
                             name="horario"
                             required
+                            readonly
                         >
 
                     </div>
@@ -1614,8 +1615,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     /* =========================================================
-       CORREÇÃO DO WIDGET DE HORÁRIO CORTADO
-       Rola a página para criar espaço ANTES do widget abrir
+       WIDGET DE HORÁRIO: BLOQUEAR TECLADO + SCROLL
+       Mantém só o relógio, sem teclado
        ========================================================= */
 
     const inputHorario =
@@ -1623,48 +1624,87 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (inputHorario) {
 
-        // Detectar se é mobile/tablet
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-            navigator.userAgent
+        // Bloquear teclado em mobile
+        inputHorario.addEventListener(
+            'keydown',
+            function (e) {
+                e.preventDefault();
+                return false;
+            }
         );
 
-        if (isMobile) {
+        // Impedir que o cursor apareça
+        inputHorario.addEventListener(
+            'focus',
+            function () {
+                this.blur();
+            }
+        );
 
-            inputHorario.addEventListener(
-                'touchstart',
-                function () {
+        // Permitir abrir o widget apenas no touch/click
+        inputHorario.addEventListener(
+            'touchstart',
+            function (e) {
+                e.preventDefault();
 
-                    // Pequeno delay para permitir que o widget comece a abrir
-                    setTimeout(
-                        function () {
+                // Pequeno delay para permitir que o widget abra
+                setTimeout(
+                    function () {
 
-                            const rect =
-                                inputHorario.getBoundingClientRect();
+                        const rect =
+                            inputHorario.getBoundingClientRect();
 
-                            const scrollTop =
-                                window.pageYOffset ||
-                                document.documentElement.scrollTop;
+                        const scrollTop =
+                            window.pageYOffset ||
+                            document.documentElement.scrollTop;
 
-                            // Calcular quanto rolar para deixar 250px acima do input
-                            const targetScroll =
-                                scrollTop + rect.top - 250;
+                        // Calcular quanto rolar para deixar 250px acima do input
+                        const targetScroll =
+                            scrollTop + rect.top - 250;
 
-                            window.scrollTo({
-                                top: targetScroll,
-                                behavior: 'smooth'
-                            });
+                        window.scrollTo({
+                            top: targetScroll,
+                            behavior: 'smooth'
+                        });
 
-                        },
-                        100
-                    );
+                    },
+                    100
+                );
+            },
+            {
+                passive: false
+            }
+        );
 
-                },
-                {
-                    passive: true
-                }
-            );
+        // Versão desktop (clique normal)
+        inputHorario.addEventListener(
+            'click',
+            function (e) {
 
-        }
+                setTimeout(
+                    function () {
+
+                        const rect =
+                            inputHorario.getBoundingClientRect();
+
+                        const scrollTop =
+                            window.pageYOffset ||
+                            document.documentElement.scrollTop;
+
+                        const targetScroll =
+                            scrollTop + rect.top - 250;
+
+                        window.scrollTo({
+                            top: targetScroll,
+                            behavior: 'smooth'
+                        });
+
+                    },
+                    100
+                );
+
+            }
+        );
 
     }
 
