@@ -1849,37 +1849,8 @@ def confirmar_selecao_assentos(request, pk):
             pk=pk,
         )
 
-    quantidade_beneficiarias = 0
-
-    if request.user.is_authenticated:
-        from django.db.models import Q
-
-        quantidade_beneficiarias = (
-            Aluna.objects.filter(
-                Q(responsavel=request.user)
-                | Q(usuario=request.user),
-                ativa=True,
-            )
-            .distinct()
-            .count()
-        )
-
-    gratuitas_utilizadas = (
-        IngressoEvento.objects.filter(
-            evento=evento,
-            gratuito=True,
-            pedido__status__in=[
-                'pago',
-                'pendente',
-            ],
-        ).count()
-    )
-
-    gratuitas_disponiveis = max(
-        quantidade_beneficiarias
-        - gratuitas_utilizadas,
-        0,
-    )
+    # CORREÇÃO: usa a função corrigida que filtra por participação confirmada
+    gratuitas_disponiveis = quantidade_gratuita_disponivel(request, evento)
 
     quantidade_gratuita = min(
         quantidade,
