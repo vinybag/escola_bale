@@ -30,8 +30,11 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles',
 
+    # Cloudinary - precisa vir ANTES de staticfiles
+    'cloudinary_storage',
+    'django.contrib.staticfiles',
+    'cloudinary',
 
     # Apps do projeto
     'core',
@@ -136,7 +139,20 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 
 
-# Media files
+# Media files - AGORA VIA CLOUDINARY
+# IMPORTANTE: o Railway usa containers efemeros - qualquer arquivo
+# salvo direto no filesystem local (media/) e apagado a cada novo
+# deploy. Por isso os uploads (imagens de espetaculos, mapas de
+# assentos, etc) passam a ser armazenados no Cloudinary, que e
+# externo e persistente.
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME', default=''),
+    'API_KEY': config('CLOUDINARY_API_KEY', default=''),
+    'API_SECRET': config('CLOUDINARY_API_SECRET', default=''),
+}
+
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
@@ -176,12 +192,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 # Security settings for production
-# IMPORTANTE: todas as configuracoes de cookie seguro/dominio ficam
-# aqui dentro, pois so fazem sentido em producao (HTTPS + dominio
-# proprio). Se ficarem fora deste bloco, o cookie de sessao e o
-# cookie de CSRF sao rejeitados pelo navegador em ambiente local
-# (HTTP em 127.0.0.1), o que impede o login de funcionar mesmo com
-# usuario e senha corretos.
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SECURE_SSL_REDIRECT = False  # Railway já faz isso
@@ -193,18 +203,16 @@ if not DEBUG:
     CSRF_COOKIE_DOMAIN = '.bailahcorpoecia.com'
     SESSION_COOKIE_DOMAIN = '.bailahcorpoecia.com'
 
-        # HSTS - forca o navegador a SEMPRE usar HTTPS neste dominio
-    SECURE_HSTS_SECONDS = 31536000  # 1 ano - ja confirmamos que HTTPS funciona bem
+    SECURE_HSTS_SECONDS = 31536000  # 1 ano
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
 
 
 
-# Permissions-Policy - bloqueia recursos que o site nao usa,
-# mas libera camera para o proprio site (usado no leitor de QR Code)
+# Permissions-Policy
 PERMISSIONS_POLICY = {
     "accelerometer": [],
-    "camera": ["self"],  # Libera camera apenas para o proprio dominio
+    "camera": ["self"],
     "geolocation": [],
     "gyroscope": [],
     "magnetometer": [],
@@ -215,16 +223,16 @@ PERMISSIONS_POLICY = {
 
 
 
-# Content-Security-Policy - ATIVO EM PRODUCAO
-# Restringe de onde o navegador pode carregar scripts, estilos,
-# imagens etc. Libera cdn.jsdelivr.net especificamente para o
-# Chart.js usado nos graficos do dashboard admin.
+# Content-Security-Policy
+# IMPORTANTE: agora que as imagens de upload vem do Cloudinary,
+# precisamos liberar o dominio do Cloudinary no img-src, senao
+# elas serao bloqueadas igual aconteceu com o Chart.js.
 CONTENT_SECURITY_POLICY = {
     'DIRECTIVES': {
         'default-src': ["'self'"],
         'script-src': ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
         'style-src': ["'self'", "'unsafe-inline'"],
-        'img-src': ["'self'", 'data:'],
+        'img-src': ["'self'", 'data:', 'https://res.cloudinary.com'],
         'font-src': ["'self'"],
         'connect-src': ["'self'"],
         'frame-src': ["'none'"],

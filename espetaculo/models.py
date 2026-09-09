@@ -11,6 +11,13 @@ from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.utils import timezone
 
+# Storage 'raw' do Cloudinary: usado nos campos de arquivo que podem
+# conter PDF (arquivo_divulgacao, arquivo_informacoes, arquivo_edital).
+# Imagens (ImageField) continuam usando o storage padrao (Cloudinary
+# como imagem), configurado globalmente via DEFAULT_FILE_STORAGE no
+# settings.py, entao nao precisam de nenhuma mudanca aqui.
+from cloudinary_storage.storage import RawMediaCloudinaryStorage
+
 
 class Espetaculo(models.Model):
     TIPO_CHOICES = [
@@ -58,6 +65,7 @@ class Espetaculo(models.Model):
     # Arquivo de divulgação (imagem ou PDF)
     arquivo_divulgacao = models.FileField(
         upload_to='eventos/divulgacao/',
+        storage=RawMediaCloudinaryStorage(),
         blank=True,
         null=True,
         validators=[FileExtensionValidator(['png', 'jpg', 'jpeg', 'pdf'])],
@@ -67,6 +75,7 @@ class Espetaculo(models.Model):
     # PDF com informações completas
     arquivo_informacoes = models.FileField(
         upload_to='espetaculos/pdfs/',
+        storage=RawMediaCloudinaryStorage(),
         blank=True,
         null=True,
         help_text='PDF com sinopse, personagens, audição, etc.'
@@ -75,6 +84,7 @@ class Espetaculo(models.Model):
     # Edital/Arquivo para download
     arquivo_edital = models.FileField(
         upload_to='espetaculos/editais/',
+        storage=RawMediaCloudinaryStorage(),
         blank=True,
         null=True,
         help_text='PDF com edital, regulamento ou material de apoio'
