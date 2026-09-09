@@ -10,6 +10,8 @@
         max-width: 100%;
         min-width: 0;
         box-sizing: border-box;
+
+        overflow-x: hidden;
     }
 
     .maq-header,
@@ -123,8 +125,6 @@
         padding: 1.25rem;
 
         margin-bottom: 1.25rem;
-
-        overflow: visible;
     }
 
     .maq-card-title {
@@ -140,6 +140,15 @@
     /* =========================================================
        FORMULÁRIO DE CADASTRO
        ========================================================= */
+
+    .maq-form-wrapper {
+        width: 100%;
+        min-width: 0;
+
+        overflow: visible;
+        position: relative;
+        z-index: 1;
+    }
 
     .maq-form {
         width: 100%;
@@ -163,6 +172,9 @@
         flex-direction: column;
 
         gap: 0.35rem;
+
+        position: relative;
+        z-index: 1;
     }
 
     .maq-field label {
@@ -185,7 +197,7 @@
         min-width: 0;
         max-width: 100%;
 
-        height: 42px;
+        height: 44px;
 
         padding: 0.6rem 0.7rem;
 
@@ -193,7 +205,7 @@
         border-radius: 8px;
 
         font-family: inherit;
-        font-size: 0.9rem;
+        font-size: 16px;
 
         color: #3f3548;
         background: #ffffff;
@@ -626,13 +638,15 @@
             padding: 1rem;
             border-radius: 14px;
             margin-bottom: 1rem;
-
-            overflow: visible;
         }
 
         .maq-card-title {
             font-size: 1rem;
             margin-bottom: 1rem;
+        }
+
+        .maq-form-wrapper {
+            overflow: visible;
         }
 
         .maq-form {
@@ -696,7 +710,7 @@
 
         .maq-field input,
         .maq-field select {
-            height: 44px;
+            height: 48px;
 
             font-size: 16px;
         }
@@ -719,7 +733,7 @@
 
         .maq-field input,
         .maq-field select {
-            font-size: 0.85rem;
+            font-size: 16px;
         }
 
         .maq-btn,
@@ -773,119 +787,123 @@
                 Cadastrar maquiagem
             </h3>
 
-            <form method="post" class="maq-form">
+            <div class="maq-form-wrapper">
 
-                {% csrf_token %}
+                <form method="post" class="maq-form">
 
-                <div class="maq-field">
+                    {% csrf_token %}
 
-                    <label for="id_turma">
-                        Turma
-                    </label>
+                    <div class="maq-field">
 
-                    <select
-                        id="id_turma"
-                        name="turma"
-                        required
-                    >
+                        <label for="id_turma">
+                            Turma
+                        </label>
 
-                        <option value="">
-                            Selecione a turma
-                        </option>
+                        <select
+                            id="id_turma"
+                            name="turma"
+                            required
+                        >
 
-                        {% for turma in turmas %}
-
-                            <option value="{{ turma.pk }}">
-                                {{ turma.nome }}
+                            <option value="">
+                                Selecione a turma
                             </option>
 
-                        {% endfor %}
+                            {% for turma in turmas %}
 
-                    </select>
+                                <option value="{{ turma.pk }}">
+                                    {{ turma.nome }}
+                                </option>
 
-                </div>
+                            {% endfor %}
 
-                <div class="maq-field">
+                        </select>
 
-                    <label for="id_aluna">
-                        Aluna
-                    </label>
+                    </div>
 
-                    <select
-                        id="id_aluna"
-                        name="aluna"
-                        required
-                        disabled
-                    >
+                    <div class="maq-field">
 
-                        <option value="">
-                            Selecione a turma primeiro
-                        </option>
+                        <label for="id_aluna">
+                            Aluna
+                        </label>
 
-                    </select>
+                        <select
+                            id="id_aluna"
+                            name="aluna"
+                            required
+                            disabled
+                        >
 
-                </div>
+                            <option value="">
+                                Selecione a turma primeiro
+                            </option>
 
-                <div class="maq-field">
+                        </select>
 
-                    <label for="id_horario">
-                        Horário
-                    </label>
+                    </div>
 
-                    <input
-                        type="time"
-                        id="id_horario"
-                        name="horario"
-                        required
-                    >
+                    <div class="maq-field">
 
-                </div>
+                        <label for="id_horario">
+                            Horário
+                        </label>
 
-                <div class="maq-field">
+                        <input
+                            type="time"
+                            id="id_horario"
+                            name="horario"
+                            required
+                        >
 
-                    <label for="id_maquiadora">
-                        Maquiadora
-                    </label>
+                    </div>
 
-                    <input
-                        type="text"
-                        id="id_maquiadora"
-                        name="maquiadora"
-                        placeholder="Nome da maquiadora"
-                        required
-                    >
+                    <div class="maq-field">
 
-                </div>
+                        <label for="id_maquiadora">
+                            Maquiadora
+                        </label>
 
-                <div class="maq-field">
+                        <input
+                            type="text"
+                            id="id_maquiadora"
+                            name="maquiadora"
+                            placeholder="Nome da maquiadora"
+                            required
+                        >
 
-                    <label for="id_duracao">
-                        Duração (minutos)
-                    </label>
+                    </div>
 
-                    <input
-                        type="number"
-                        id="id_duracao"
-                        name="duracao_minutos"
-                        min="1"
-                        placeholder="Ex: 20"
-                        required
-                    >
+                    <div class="maq-field">
 
-                </div>
+                        <label for="id_duracao">
+                            Duração (minutos)
+                        </label>
 
-                <div class="maq-submit">
+                        <input
+                            type="number"
+                            id="id_duracao"
+                            name="duracao_minutos"
+                            min="1"
+                            placeholder="Ex: 20"
+                            required
+                        >
 
-                    <button
-                        type="submit"
-                        class="maq-btn"
-                    >
-                        Salvar maquiagem
-                    </button>
+                    </div>
 
-                </div>
+                    <div class="maq-submit">
 
-            </form>
+                        <button
+                            type="submit"
+                            class="maq-btn"
+                        >
+                            Salvar maquiagem
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
 
         </div>
 
