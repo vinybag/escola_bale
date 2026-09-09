@@ -157,6 +157,13 @@ STORAGES = {
     },
 }
 
+# NOTA: o Django 6 nao usa mais este atributo internamente (foi
+# substituido pelo STORAGES acima), mas o pacote cloudinary_storage
+# ainda tem uma versao antiga do comando collectstatic que le esse
+# atributo diretamente. Mantemos aqui so por compatibilidade com essa
+# biblioteca de terceiros - nao afeta o funcionamento real do Django.
+STATICFILES_STORAGE = STORAGES['staticfiles']['BACKEND']
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
