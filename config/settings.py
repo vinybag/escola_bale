@@ -30,10 +30,12 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-
-    # Cloudinary - precisa vir ANTES de staticfiles
-    'cloudinary_storage',
     'django.contrib.staticfiles',
+
+    # Cloudinary - como usamos apenas para arquivos de MIDIA (uploads),
+    # staticfiles precisa vir ANTES, senao o comando collectstatic do
+    # cloudinary_storage substitui o do Django/Whitenoise e quebra.
+    'cloudinary_storage',
     'cloudinary',
 
     # Apps do projeto
