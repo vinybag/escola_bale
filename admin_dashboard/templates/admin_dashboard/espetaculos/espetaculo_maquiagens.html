@@ -32,7 +32,7 @@
 
         display: flex;
         justify-content: space-between;
-        align-items: flex-start;
+        align-items: center;
 
         gap: 1rem;
         flex-wrap: wrap;
@@ -42,11 +42,11 @@
 
     .maq-header-info {
         min-width: 0;
-        flex: 1 1 250px;
+        flex: 1 1 auto;
     }
 
     .maq-title {
-        margin: 0 0 0.35rem 0;
+        margin: 0 0 0.25rem 0;
 
         color: #4a235f;
         font-size: 1.5rem;
@@ -100,7 +100,6 @@
         max-width: 1100px;
         min-width: 0;
         
-
         margin: 0;
     }
 
@@ -125,7 +124,7 @@
 
         margin-bottom: 1.25rem;
 
-        overflow: hidden;
+        overflow: visible;
     }
 
     .maq-card-title {
@@ -202,6 +201,10 @@
         box-sizing: border-box;
 
         outline: none;
+
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
     }
 
     .maq-field input:focus,
@@ -591,16 +594,22 @@
             flex-direction: column;
             align-items: stretch;
 
+            gap: 0.75rem;
+
             margin-bottom: 1rem;
         }
 
         .maq-header-info {
             width: 100%;
             text-align: center;
+
+            margin-bottom: 0;
         }
 
         .maq-title {
             font-size: 1.3rem;
+
+            margin-bottom: 0.15rem;
         }
 
         .maq-subtitle {
@@ -609,12 +618,16 @@
 
         .maq-voltar {
             width: 100%;
+
+            text-align: center;
         }
 
         .maq-card {
             padding: 1rem;
             border-radius: 14px;
             margin-bottom: 1rem;
+
+            overflow: visible;
         }
 
         .maq-card-title {
@@ -670,10 +683,6 @@
             width: 100%;
         }
 
-        /*
-         * A tabela continua com largura própria.
-         * Apenas ela recebe scroll horizontal.
-         */
         .maq-table-wrap {
             margin-left: 0;
             margin-right: 0;
@@ -683,6 +692,13 @@
 
         .maq-table {
             min-width: 760px;
+        }
+
+        .maq-field input,
+        .maq-field select {
+            height: 44px;
+
+            font-size: 16px;
         }
     }
 
@@ -716,7 +732,6 @@
     }
 </style>
 
-
 <div class="maq-page">
 
     <!-- =====================================================
@@ -737,7 +752,6 @@
 
         </div>
 
-
         <a
             class="maq-voltar"
             href="{% url 'admin_dashboard:espetaculos_list' %}"
@@ -746,7 +760,6 @@
         </a>
 
     </div>
-
 
     <div class="maq-shell">
 
@@ -760,11 +773,9 @@
                 Cadastrar maquiagem
             </h3>
 
-
             <form method="post" class="maq-form">
 
                 {% csrf_token %}
-
 
                 <div class="maq-field">
 
@@ -794,7 +805,6 @@
 
                 </div>
 
-
                 <div class="maq-field">
 
                     <label for="id_aluna">
@@ -816,7 +826,6 @@
 
                 </div>
 
-
                 <div class="maq-field">
 
                     <label for="id_horario">
@@ -831,7 +840,6 @@
                     >
 
                 </div>
-
 
                 <div class="maq-field">
 
@@ -848,7 +856,6 @@
                     >
 
                 </div>
-
 
                 <div class="maq-field">
 
@@ -867,7 +874,6 @@
 
                 </div>
 
-
                 <div class="maq-submit">
 
                     <button
@@ -883,7 +889,6 @@
 
         </div>
 
-
         <!-- =================================================
              FILTROS
              ================================================= -->
@@ -893,7 +898,6 @@
             <h3 class="maq-card-title">
                 Filtrar
             </h3>
-
 
             <form method="get" class="maq-filtros">
 
@@ -929,7 +933,6 @@
 
                 </div>
 
-
                 <div class="maq-field">
 
                     <label for="id_aluna_filtro">
@@ -946,14 +949,12 @@
 
                 </div>
 
-
                 <button
                     type="submit"
                     class="maq-filtro-btn"
                 >
                     Filtrar
                 </button>
-
 
                 {% if turma_filtro or aluna_filtro %}
 
@@ -970,7 +971,6 @@
 
         </div>
 
-
         <!-- =================================================
              LISTAGEM
              ================================================= -->
@@ -982,7 +982,6 @@
                 <h3 class="maq-toolbar-title">
                     Maquiagens cadastradas
                 </h3>
-
 
                 <button
                     type="button"
@@ -996,7 +995,6 @@
                 </button>
 
             </div>
-
 
             {% if maquiagens %}
 
@@ -1046,7 +1044,6 @@
 
                         </thead>
 
-
                         <tbody>
 
                             {% for m in maquiagens %}
@@ -1068,31 +1065,25 @@
 
                                     </td>
 
-
                                     <td>
                                         {{ m.horario|time:"H:i" }}
                                     </td>
-
 
                                     <td>
                                         {{ m.turma.nome }}
                                     </td>
 
-
                                     <td>
                                         {{ m.aluna.nome }}
                                     </td>
-
 
                                     <td>
                                         {{ m.maquiadora }}
                                     </td>
 
-
                                     <td>
                                         {{ m.duracao_minutos }} min
                                     </td>
-
 
                                     <td class="maq-acoes-col">
 
@@ -1102,7 +1093,6 @@
                                         >
                                             Editar
                                         </a>
-
 
                                         <form
                                             method="post"
@@ -1148,7 +1138,6 @@
 
 </div>
 
-
 <!-- =========================================================
      ÁREA DE EXPORTAÇÃO
      ========================================================= -->
@@ -1170,7 +1159,6 @@
     >
         {{ espetaculo.titulo }} - Maquiagens
     </h3>
-
 
     <table
         id="maq-export-table"
@@ -1209,23 +1197,16 @@
 
         </thead>
 
-
         <tbody id="maq-export-tbody"></tbody>
 
     </table>
 
 </div>
 
-
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-
-    /* =========================================================
-       TURMA → ALUNAS
-       ========================================================= */
 
     const selectTurma =
         document.getElementById('id_turma');
@@ -1233,11 +1214,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const selectAluna =
         document.getElementById('id_aluna');
 
-
     const URL_ALUNAS_POR_TURMA_BASE =
         "{% url 'admin_dashboard:alunas_por_turma' 999999 %}"
         .replace('999999/', '');
-
 
     if (selectTurma && selectAluna) {
 
@@ -1247,12 +1226,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 const turmaId = this.value;
 
-
                 selectAluna.innerHTML =
                     '<option value="">Carregando...</option>';
 
                 selectAluna.disabled = true;
-
 
                 if (!turmaId) {
 
@@ -1261,7 +1238,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
                     return;
                 }
-
 
                 fetch(
                     `${URL_ALUNAS_POR_TURMA_BASE}${turmaId}/`,
@@ -1280,7 +1256,6 @@ document.addEventListener('DOMContentLoaded', function () {
                         );
 
                     }
-
                     return response.json();
 
                 })
@@ -1288,7 +1263,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 .then(function (alunas) {
 
                     selectAluna.innerHTML = '';
-
 
                     if (alunas.length === 0) {
 
@@ -1300,7 +1274,6 @@ document.addEventListener('DOMContentLoaded', function () {
                         return;
                     }
 
-
                     const opcaoPadrao =
                         document.createElement('option');
 
@@ -1311,7 +1284,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     selectAluna.appendChild(
                         opcaoPadrao
                     );
-
 
                     alunas.forEach(function (aluna) {
 
@@ -1326,7 +1298,6 @@ document.addEventListener('DOMContentLoaded', function () {
                         );
 
                     });
-
 
                     selectAluna.disabled = false;
 
@@ -1351,11 +1322,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     }
 
-
-    /* =========================================================
-       CHECKBOX — SELECIONAR TODAS
-       ========================================================= */
-
     const checkTodas =
         document.getElementById('check-todas');
 
@@ -1363,7 +1329,6 @@ document.addEventListener('DOMContentLoaded', function () {
         document.querySelectorAll(
             '.maq-check-linha'
         );
-
 
     if (checkTodas) {
 
@@ -1385,16 +1350,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     }
 
-
-    /* =========================================================
-       EXPORTAÇÃO PNG
-       ========================================================= */
-
     const btnExportar =
         document.getElementById(
             'btn-exportar-png'
         );
-
 
     if (btnExportar) {
 
@@ -1410,7 +1369,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
                     });
 
-
                 if (selecionadas.length === 0) {
 
                     alert(
@@ -1419,7 +1377,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
                     return;
                 }
-
 
                 if (
                     typeof html2canvas ===
@@ -1437,10 +1394,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     return;
                 }
 
-
                 const container =
                     document.createElement('div');
-
 
                 container.style.position =
                     'fixed';
@@ -1463,7 +1418,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 container.style.fontFamily =
                     'Arial, sans-serif';
 
-
                 const titulo =
                     document.createElement('h3');
 
@@ -1483,7 +1437,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     titulo
                 );
 
-
                 const tabela =
                     document.createElement('table');
 
@@ -1496,7 +1449,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 tabela.style.fontSize =
                     '14px';
 
-
                 const thead =
                     document.createElement('thead');
 
@@ -1505,7 +1457,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 trHead.style.background =
                     '#efe7f5';
-
 
                 [
                     'Horário',
@@ -1536,21 +1487,17 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                 );
 
-
                 thead.appendChild(trHead);
                 tabela.appendChild(thead);
 
-
                 const tbody =
                     document.createElement('tbody');
-
 
                 selecionadas.forEach(
                     function (chk) {
 
                         const tr =
                             document.createElement('tr');
-
 
                         [
                             chk.dataset.horario,
@@ -1578,21 +1525,16 @@ document.addEventListener('DOMContentLoaded', function () {
                             }
                         );
 
-
                         tbody.appendChild(tr);
 
                     }
                 );
 
-
                 tabela.appendChild(tbody);
-
                 container.appendChild(tabela);
-
                 document.body.appendChild(
                     container
                 );
-
 
                 html2canvas(
                     container,
@@ -1652,7 +1594,6 @@ document.addEventListener('DOMContentLoaded', function () {
         );
 
     }
-
 });
 </script>
 
