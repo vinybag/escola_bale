@@ -2237,8 +2237,82 @@ def agendar_maquiagem(request, pk):
         messages.error(request, 'Você precisa estar logada para agendar.')
         return redirect('espetaculo:evento_detalhe_publico', pk=espetaculo.pk)
 
-    aluna = get_object_or_404(Aluna, usuario=request.user)
+    # Coleta todas as alunas que este usuário pode agendar
+    alunas_possiveis = []
 
+    # 1. Se o usuário for aluna adulta (tem Aluna com seu usuario)
+    aluna_usuario = Aluna.objects.filter(usuario=request.user).first()
+    if aluna_usuario:
+        alunas_possiveis.append(aluna_usuario)
+
+    # 2. Se o usuário for responsável, pega todas as alunas vinculadas a ele
+    alunas_responsavel = Aluna.objects.filter(
+        responsavel=request.user,
+        ativa=True,
+    ).order_by('nome')
+
+    for aluna_resp in alunas_responsavel:
+        # Evita duplicar se a responsável também for aluna e já estiver na lista
+        if aluna_usuario and aluna_resp.pk == aluna_usuario.pk:
+            continue
+        alunas_possiveis.append(aluna_resp)
+
+    # Remove duplicatas (caso a mesma aluna esteja em ambas as listas)
+    alunas_possiveis = list(dict.fromkeys(alunas_possiveis))
+
+    # Se não tem nenhuma aluna, erro
+    if not alunas_possiveis:
+        messages.error(
+            request,
+            'Nenhuma aluna encontrada para agendar maquiagem.'
+        )
+        return redirect('espetaculo:evento_detalhe_publico', pk=espetaculo.pk)
+
+    # Verifica se o usuário já selecionou uma aluna via GET (?aluna_id=X)
+    aluna_id_selecionado = request.GET.get('aluna_id')
+    aluna = None
+
+    if aluna_id_selecionado:
+        try:
+            aluna_id_selecionado = int(aluna_id_selecionado)
+            # Garante que a aluna selecionada está na lista de possíveis
+            aluna = next(
+                (a for a in alunas_possiveis if a.pk == aluna_id_selecionado),
+                None
+            )
+        except (TypeError, ValueError):
+            pass
+
+    # Se não selecionou ou só tem 1 aluna, pega a primeira
+    if not aluna and len(alunas_possiveis) == 1:
+        aluna = alunas_possiveis[0]
+
+    # Se tem múltiplas alunas e nenhuma foi selecionada, usa a primeira mas avisa
+    if not aluna and len(alunas_possiveis) > 1:
+        aluna = alunas_possiveis[0]
+        messages.info(
+            request,
+            f'Você pode agendar para mais de uma aluna. Selecione qual deseja agendar agora.'
+        )
+
+    # Verifica se a aluna está participando deste espetáculo
+    try:
+        participacao = aluna.participacoes_espetaculo.filter(
+            espetaculo=espetaculo,
+            vai_dancar=True,
+        ).first()
+
+        if not participacao:
+            messages.error(
+                request,
+                f'{aluna.nome} não está participando deste espetáculo.'
+            )
+            return redirect('espetaculo:evento_detalhe_publico', pk=espetaculo.pk)
+    except AttributeError:
+        # Se o modelo não tem participacoes_espetaculo, ignora essa validação
+        pass
+
+    # Busca a agenda de maquiagem para a turma da aluna
     agenda = AgendaMaquiagemTurma.objects.filter(
         espetaculo=espetaculo,
         turma=aluna.turma,
@@ -2248,11 +2322,11 @@ def agendar_maquiagem(request, pk):
     if not agenda:
         messages.error(
             request,
-            'Ainda não há horários de maquiagem disponíveis para sua turma.'
+            f'Ainda não há horários de maquiagem disponíveis para a turma de {aluna.nome}.'
         )
         return redirect('espetaculo:evento_detalhe_publico', pk=espetaculo.pk)
 
-    # já tem agendamento pra este espetáculo?
+    # Já tem agendamento pra este espetáculo?
     agendamento_existente = AgendamentoMaquiagem.objects.filter(
         aluna=aluna,
         horario__agenda__espetaculo=espetaculo,
@@ -2282,6 +2356,8 @@ def agendar_maquiagem(request, pk):
             'agenda': agenda,
             'horarios_disponiveis': horarios_disponiveis,
             'tipos_servico': AgendamentoMaquiagem.TIPO_CHOICES,
+            'aluna': aluna,
+            'alunas_possiveis': alunas_possiveis,  # Passa todas as alunas para o select
         },
     )
 

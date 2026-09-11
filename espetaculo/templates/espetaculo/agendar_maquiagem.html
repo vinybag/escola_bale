@@ -40,7 +40,12 @@
         font-size: 1.05rem;
     }
 
-    .agmaq-field { display: flex; flex-direction: column; gap: 0.35rem; margin-bottom: 1rem; }
+    .agmaq-field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        margin-bottom: 1rem;
+    }
 
     .agmaq-field label {
         font-size: 0.75rem;
@@ -61,7 +66,11 @@
         appearance: none;
     }
 
-    .agmaq-horarios { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+    .agmaq-horarios {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+    }
 
     .agmaq-horario-btn {
         min-height: 44px;
@@ -87,12 +96,23 @@
         border-color: transparent;
     }
 
-    .agmaq-horario-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .agmaq-horario-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
 
-    .agmaq-empty { color: #7b7580; padding: 1rem 0; }
+    .agmaq-empty {
+        color: #7b7580;
+        padding: 1rem 0;
+    }
 
-    .agmaq-confirmacao { display: none; }
-    .agmaq-confirmacao.visivel { display: block; }
+    .agmaq-confirmacao {
+        display: none;
+    }
+
+    .agmaq-confirmacao.visivel {
+        display: block;
+    }
 
     .agmaq-resumo-linha {
         display: flex;
@@ -102,9 +122,20 @@
         font-size: 0.9rem;
     }
 
-    .agmaq-resumo-linha:last-child { border-bottom: none; }
-    .agmaq-resumo-label { color: #7a7280; font-weight: 600; }
-    .agmaq-resumo-valor { color: #3f3548; font-weight: 700; text-align: right; }
+    .agmaq-resumo-linha:last-child {
+        border-bottom: none;
+    }
+
+    .agmaq-resumo-label {
+        color: #7a7280;
+        font-weight: 600;
+    }
+
+    .agmaq-resumo-valor {
+        color: #3f3548;
+        font-weight: 700;
+        text-align: right;
+    }
 
     .agmaq-timer {
         margin-top: 0.75rem;
@@ -126,7 +157,10 @@
         cursor: pointer;
     }
 
-    .agmaq-btn-confirmar:disabled { opacity: 0.5; cursor: not-allowed; }
+    .agmaq-btn-confirmar:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
 
     .agmaq-erro {
         background: #fbe4e4;
@@ -138,11 +172,51 @@
         display: none;
     }
 
-    .agmaq-erro.visivel { display: block; }
+    .agmaq-erro.visivel {
+        display: block;
+    }
+
+    /* Seletor de aluna */
+    .agmaq-seletor-aluna {
+        background: #f8f5fa;
+        border: 1px solid #ddc9ea;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .agmaq-seletor-aluna label {
+        display: block;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #7a7280;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        margin-bottom: 0.5rem;
+    }
+
+    .agmaq-seletor-aluna select {
+        width: 100%;
+        max-width: 100%;
+        height: 48px;
+        padding: 0.6rem 0.7rem;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 16px;
+        color: #3f3548;
+        background: #ffffff;
+        appearance: none;
+        cursor: pointer;
+    }
 
     @media (max-width: 480px) {
-        .agmaq-horarios { flex-direction: column; }
-        .agmaq-horario-btn { width: 100%; }
+        .agmaq-horarios {
+            flex-direction: column;
+        }
+
+        .agmaq-horario-btn {
+            width: 100%;
+        }
     }
 </style>
 
@@ -150,6 +224,31 @@
 
     <h2 class="agmaq-title">Agendar Maquiagem</h2>
     <p class="agmaq-subtitle">{{ espetaculo.titulo }} · Maquiadora: {{ agenda.maquiadora }}</p>
+
+    {% if alunas_possiveis|length > 1 %}
+    <div class="agmaq-seletor-aluna">
+        <label for="id_aluna">
+            Agendar maquiagem para:
+        </label>
+        <select
+            id="id_aluna"
+            name="aluna"
+            onchange="window.location.href='?aluna_id=' + this.value"
+        >
+            {% for aluna_opcao in alunas_possiveis %}
+            <option
+                value="{{ aluna_opcao.pk }}"
+                {% if aluna.pk == aluna_opcao.pk %}selected{% endif %}
+            >
+                {{ aluna_opcao.nome }}
+                {% if aluna_opcao.turma %}
+                    - Turma {{ aluna_opcao.turma.nome }}
+                {% endif %}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+    {% endif %}
 
     <div class="agmaq-erro" id="agmaq-erro"></div>
 
