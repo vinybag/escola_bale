@@ -396,6 +396,52 @@ def comprar_ingresso(request, pk):
                 pedido_id=pedido_existente.id
             )
 
+        if evento.venda_com_assentos_numerados:
+            if not evento.tem_mapa_assentos:
+                return render(
+                    request,
+                    'espetaculo/comprar_ingresso_assentos.html',
+                    {
+                        'evento': evento,
+                        'erro': (
+                            'Este evento ainda não possui mapa '
+                            'de assentos configurado. '
+                            'Fale com a organização.'
+                        ),
+                    }
+                )
+
+            request.session[
+                f'compra_evento_{pk}_nome_completo'
+            ] = aluna.nome
+
+            request.session[
+                f'compra_evento_{pk}_email'
+            ] = request.user.email or ''
+
+            request.session[
+                f'compra_evento_{pk}_whatsapp'
+            ] = getattr(aluna, 'whatsapp', '') or '-'
+
+            request.session[
+                f'compra_evento_{pk}_cpf'
+            ] = getattr(aluna, 'cpf', '') or ''
+
+            request.session[
+                f'compra_evento_{pk}_valor_unitario'
+            ] = str(evento.preco_ingresso or Decimal('0.00'))
+
+            request.session[
+                f'compra_evento_{pk}_assentos_ids'
+            ] = []
+
+            request.session.modified = True
+
+            return redirect(
+                'espetaculo:mapa_assentos_publico',
+                pk=pk
+            )
+
         pedido = PedidoIngressoEvento.objects.create(
             evento=evento,
             nome_completo=aluna.nome,
