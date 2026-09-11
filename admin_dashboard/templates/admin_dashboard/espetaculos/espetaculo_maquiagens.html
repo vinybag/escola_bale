@@ -4,13 +4,12 @@
 
 {% block content %}
 
-<style>    
+<style>
     .maq-page {
         width: 100%;
         max-width: 100%;
         min-width: 0;
         box-sizing: border-box;
-
         overflow-x: hidden;
     }
 
@@ -20,200 +19,117 @@
     .maq-form,
     .maq-filtros,
     .maq-toolbar,
-    .maq-table-wrap {
+    .maq-table-wrap,
+    .maq-slots {
         box-sizing: border-box;
     }
-
-    /* =========================================================
-       HEADER
-       ========================================================= */
 
     .maq-header {
         width: 100%;
         min-width: 0;
-
         display: flex;
         justify-content: space-between;
         align-items: center;
-
         gap: 1rem;
         flex-wrap: wrap;
-
         margin-bottom: 1.5rem;
     }
 
-    .maq-header-info {
-        min-width: 0;
-        flex: 1 1 auto;
-    }
+    .maq-header-info { min-width: 0; flex: 1 1 auto; }
 
     .maq-title {
         margin: 0 0 0.25rem 0;
-
         color: #4a235f;
         font-size: 1.5rem;
         line-height: 1.2;
-
         word-break: break-word;
     }
 
     .maq-subtitle {
         margin: 0;
-
         color: #6f6f78;
         font-size: 0.95rem;
-
         word-break: break-word;
     }
 
     .maq-voltar {
         flex: 0 0 auto;
-
         display: inline-flex;
         align-items: center;
         justify-content: center;
-
         min-height: 40px;
-
         padding: 0.55rem 0.9rem;
-
         background: #f3f3f3;
         color: #44384c;
-
         border: 1px solid #ddd;
         border-radius: 8px;
-
         text-decoration: none;
-
         font-size: 0.83rem;
         font-weight: 600;
-
         white-space: nowrap;
-
-        box-sizing: border-box;
     }
 
-    /* =========================================================
-       SHELL
-       ========================================================= */
-
-    .maq-shell {
-        width: 100%;
-        max-width: 1100px;
-        min-width: 0;
-        
-        margin: 0;
-    }
-
-    /* =========================================================
-       CARD
-       ========================================================= */
+    .maq-shell { width: 100%; max-width: 1100px; min-width: 0; margin: 0; }
 
     .maq-card {
         width: 100%;
         max-width: 100%;
         min-width: 0;
-
         background: #ffffff;
-
         border: 1px solid #ece3f2;
         border-radius: 18px;
-
-        box-shadow:
-            0 4px 16px rgba(107, 45, 143, 0.07);
-
+        box-shadow: 0 4px 16px rgba(107, 45, 143, 0.07);
         padding: 1.25rem;
-
         margin-bottom: 1.25rem;
     }
 
     .maq-card-title {
         margin: 0 0 1.25rem 0;
-
         color: #4a235f;
         font-size: 1.05rem;
         line-height: 1.3;
-
         word-break: break-word;
     }
 
-    /* =========================================================
-       FORMULÁRIO DE CADASTRO
-       ========================================================= */
-
-    .maq-form-wrapper {
-        width: 100%;
-        min-width: 0;
-
-        overflow: visible;
-        position: relative;
-        z-index: 1;
-    }
+    .maq-form-wrapper { width: 100%; min-width: 0; overflow: visible; position: relative; z-index: 1; }
 
     .maq-form {
         width: 100%;
         min-width: 0;
-
         display: grid;
-
-        grid-template-columns:
-            repeat(5, minmax(0, 1fr));
-
+        grid-template-columns: repeat(5, minmax(0, 1fr));
         gap: 0.9rem;
-
         align-items: end;
     }
 
-    .maq-field {
-        width: 100%;
-        min-width: 0;
+    .maq-form.maq-form-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 
-        display: flex;
-        flex-direction: column;
-
-        gap: 0.35rem;
-
-        position: relative;
-        z-index: 1;
-    }
+    .maq-field { width: 100%; min-width: 0; display: flex; flex-direction: column; gap: 0.35rem; position: relative; z-index: 1; }
 
     .maq-field label {
         font-size: 0.75rem;
         font-weight: 700;
-
         color: #7a7280;
-
         text-transform: uppercase;
         letter-spacing: 0.03em;
-
         line-height: 1.2;
     }
 
     .maq-field input,
     .maq-field select {
         display: block;
-
         width: 100%;
         min-width: 0;
         max-width: 100%;
-
         height: 48px;
-
         padding: 0.6rem 0.7rem;
-
         border: 1px solid #ddd;
         border-radius: 8px;
-
         font-family: inherit;
         font-size: 16px;
-
         color: #3f3548;
         background: #ffffff;
-
-        box-sizing: border-box;
-
         outline: none;
-
         -webkit-appearance: none;
         -moz-appearance: none;
         appearance: none;
@@ -222,1003 +138,528 @@
     .maq-field input:focus,
     .maq-field select:focus {
         border-color: #7e3aa5;
-
-        box-shadow:
-            0 0 0 3px rgba(126, 58, 165, 0.10);
+        box-shadow: 0 0 0 3px rgba(126, 58, 165, 0.10);
     }
 
-    .maq-field select:disabled {
-        background: #f5f3f6;
-        color: #999;
+    .maq-field select:disabled { background: #f5f3f6; color: #999; cursor: not-allowed; }
 
-        cursor: not-allowed;
-    }
-
-    .maq-submit {
-        grid-column: 1 / -1;
-
-        width: 100%;
-        min-width: 0;
-
-        display: flex;
-        justify-content: flex-end;
-
-        margin-top: 0.1rem;
-    }
+    .maq-submit { grid-column: 1 / -1; width: 100%; min-width: 0; display: flex; justify-content: flex-end; margin-top: 0.1rem; }
 
     .maq-btn {
         min-height: 42px;
-
         display: inline-flex;
         align-items: center;
         justify-content: center;
-
         padding: 0.7rem 1.3rem;
-
-        background:
-            linear-gradient(
-                135deg,
-                #6b2d8f 0%,
-                #7e3aa5 100%
-            );
-
+        background: linear-gradient(135deg, #6b2d8f 0%, #7e3aa5 100%);
         color: #ffffff;
-
         border: none;
         border-radius: 10px;
-
         font-family: inherit;
         font-size: 0.9rem;
         font-weight: 700;
-
         cursor: pointer;
-
         white-space: nowrap;
-
-        box-shadow:
-            0 8px 18px rgba(107, 45, 143, 0.18);
-
-        box-sizing: border-box;
-
-        transition:
-            transform 0.15s ease,
-            box-shadow 0.15s ease,
-            opacity 0.15s ease;
+        box-shadow: 0 8px 18px rgba(107, 45, 143, 0.18);
+        transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
     }
 
-    .maq-btn:hover:not(:disabled) {
-        transform: translateY(-1px);
+    .maq-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 10px 22px rgba(107, 45, 143, 0.24); }
+    .maq-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        box-shadow:
-            0 10px 22px rgba(107, 45, 143, 0.24);
+    .maq-btn-small {
+        min-height: 34px;
+        padding: 0.4rem 0.8rem;
+        font-size: 0.8rem;
+        border-radius: 8px;
     }
 
-    .maq-btn:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-
-    /* =========================================================
-       FILTROS
-       ========================================================= */
-
-    .maq-filtros {
-        width: 100%;
-        min-width: 0;
-
-        display: flex;
-
-        align-items: flex-end;
-        flex-wrap: wrap;
-
-        gap: 0.75rem;
-    }
-
-    .maq-filtros .maq-field {
-        flex: 1 1 180px;
-        min-width: 0;
-    }
+    .maq-filtros { width: 100%; min-width: 0; display: flex; align-items: flex-end; flex-wrap: wrap; gap: 0.75rem; }
+    .maq-filtros .maq-field { flex: 1 1 180px; min-width: 0; }
 
     .maq-filtro-btn,
     .maq-filtro-limpar {
         min-height: 42px;
-
         display: inline-flex;
         align-items: center;
         justify-content: center;
-
-        box-sizing: border-box;
-
         padding: 0.6rem 1rem;
-
         border-radius: 8px;
-
         text-decoration: none;
-
         font-family: inherit;
         font-size: 0.85rem;
         font-weight: 700;
-
         white-space: nowrap;
-
         cursor: pointer;
     }
 
-    .maq-filtro-btn {
-        background: #efe7f5;
-        color: #6b2d8f;
-
-        border: 1px solid #ddc9ea;
-    }
-
-    .maq-filtro-limpar {
-        background: #f3f3f3;
-        color: #44384c;
-
-        border: 1px solid #ddd;
-
-        font-size: 0.8rem;
-        font-weight: 600;
-    }
-
-    /* =========================================================
-       TOOLBAR
-       ========================================================= */
+    .maq-filtro-btn { background: #efe7f5; color: #6b2d8f; border: 1px solid #ddc9ea; }
+    .maq-filtro-limpar { background: #f3f3f3; color: #44384c; border: 1px solid #ddd; font-size: 0.8rem; font-weight: 600; }
 
     .maq-toolbar {
         width: 100%;
         min-width: 0;
-
         display: flex;
-
         justify-content: space-between;
         align-items: center;
-
         flex-wrap: wrap;
-
         gap: 0.75rem;
-
         margin-bottom: 1rem;
     }
 
-    .maq-toolbar-title {
-        margin: 0;
-
-        color: #4a235f;
-        font-size: 1.05rem;
-
-        line-height: 1.3;
-
-        word-break: break-word;
-    }
+    .maq-toolbar-title { margin: 0; color: #4a235f; font-size: 1.05rem; line-height: 1.3; word-break: break-word; }
 
     .maq-exportar-btn {
         min-height: 40px;
-
         display: inline-flex;
         align-items: center;
         justify-content: center;
-
         gap: 0.4rem;
-
         padding: 0.55rem 1rem;
-
         background: #eaf6ea;
         color: #206a38;
-
         border: 1px solid #cfe7d4;
         border-radius: 8px;
-
         font-family: inherit;
         font-size: 0.83rem;
         font-weight: 700;
-
         cursor: pointer;
-
         white-space: nowrap;
-
-        box-sizing: border-box;
     }
 
-    .maq-exportar-btn:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-
-    /* =========================================================
-       TABELA
-       ========================================================= */
+    .maq-exportar-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
     .maq-table-wrap {
         width: 100%;
         max-width: 100%;
         min-width: 0;
-
         overflow-x: auto;
         overflow-y: hidden;
-
         -webkit-overflow-scrolling: touch;
-
         border: 1px solid #f1ebf6;
         border-radius: 10px;
     }
 
-    .maq-table {
-        width: 100%;
-
-        min-width: 760px;
-
-        border-collapse: collapse;
-
-        background: #ffffff;
-    }
+    .maq-table { width: 100%; min-width: 760px; border-collapse: collapse; background: #ffffff; }
 
     .maq-table th,
     .maq-table td {
         padding: 0.65rem 0.9rem;
-
         text-align: left;
-
         border-bottom: 1px solid #f1ebf6;
-
         font-size: 0.85rem;
-
         white-space: nowrap;
     }
 
     .maq-table th {
         color: #7a7280;
-
         font-size: 0.73rem;
         font-weight: 700;
-
         text-transform: uppercase;
         letter-spacing: 0.03em;
-
         background: #ffffff;
     }
 
-    .maq-table td {
-        color: #3f3548;
-    }
+    .maq-table td { color: #3f3548; }
+    .maq-table tbody tr:last-child td { border-bottom: none; }
+    .maq-table tbody tr:hover { background: #fcfaff; }
 
-    .maq-table tbody tr:last-child td {
-        border-bottom: none;
-    }
-
-    .maq-table tbody tr:hover {
-        background: #fcfaff;
-    }
-
-    .maq-checkbox-col {
-        width: 42px;
-        min-width: 42px;
-        max-width: 42px;
-
-        text-align: center !important;
-    }
-
-    .maq-acoes-col {
-        width: 135px;
-        min-width: 135px;
-    }
+    .maq-checkbox-col { width: 42px; min-width: 42px; max-width: 42px; text-align: center !important; }
+    .maq-acoes-col { width: 135px; min-width: 135px; }
 
     .maq-acao-link {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-
         min-height: 30px;
-
         padding: 0.3rem 0.55rem;
-
         border-radius: 6px;
-
         font-family: inherit;
         font-size: 0.75rem;
         font-weight: 700;
-
         text-decoration: none;
-
         margin-right: 0.3rem;
-
         border: none;
-
         cursor: pointer;
-
-        box-sizing: border-box;
     }
 
-    .maq-acao-editar {
-        background: #efe7f5;
-        color: #6b2d8f;
+    .maq-acao-editar { background: #efe7f5; color: #6b2d8f; }
+    .maq-acao-excluir { background: #fbe4e4; color: #a13c3c; }
+    .maq-acao-link:hover { opacity: 0.85; }
+
+    .maq-empty { width: 100%; text-align: center; color: #7b7580; padding: 1.75rem 1rem; }
+
+    .maq-agendas-lista { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 1.25rem; }
+
+    .maq-agenda-chip {
+        display: inline-flex;
+        flex-direction: column;
+        gap: 0.15rem;
+        padding: 0.6rem 0.9rem;
+        border-radius: 12px;
+        border: 1px solid #ddc9ea;
+        background: #faf7fc;
+        color: #4a235f;
+        text-decoration: none;
+        font-size: 0.83rem;
     }
 
-    .maq-acao-excluir {
-        background: #fbe4e4;
-        color: #a13c3c;
+    .maq-agenda-chip strong { font-size: 0.9rem; }
+
+    .maq-agenda-chip.ativo {
+        background: linear-gradient(135deg, #6b2d8f 0%, #7e3aa5 100%);
+        color: #ffffff;
+        border-color: transparent;
     }
 
-    .maq-acao-link:hover {
-        opacity: 0.85;
-    }
+    .maq-slots { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 1.25rem; }
 
-    .maq-empty {
-        width: 100%;
-        box-sizing: border-box;
-
-        text-align: center;
-
-        color: #7b7580;
-
-        padding: 1.75rem 1rem;
-    }
-
-    /* =========================================================
-       EXPORTAÇÃO
-       ========================================================= */
-
-    #maq-export-area {
+    .maq-slot {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 0.75rem;
+        border-radius: 10px;
+        border: 1px solid #ece3f2;
+        font-size: 0.83rem;
+        color: #3f3548;
         background: #ffffff;
-        padding: 1rem;
-        box-sizing: border-box;
     }
 
-    /* =========================================================
-       TABLET
-       ========================================================= */
+    .maq-slot.disponivel { border-color: #cfe7d4; background: #f3fbf3; }
+    .maq-slot.agendado { border-color: #ddc9ea; background: #faf7fc; }
+    .maq-slot.reservado_temporario { border-color: #f5dca0; background: #fffaf0; }
+
+    .maq-slot-excluir {
+        border: none;
+        background: transparent;
+        color: #a13c3c;
+        font-weight: 700;
+        cursor: pointer;
+        font-size: 0.9rem;
+        line-height: 1;
+        padding: 0;
+    }
+
+    #maq-export-area { background: #ffffff; padding: 1rem; box-sizing: border-box; }
 
     @media (max-width: 1000px) {
-
-        .maq-form {
-            grid-template-columns:
-                repeat(3, minmax(0, 1fr));
-        }
-
-        .maq-submit {
-            grid-column: 1 / -1;
-        }
+        .maq-form { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        .maq-submit { grid-column: 1 / -1; }
     }
-
-    /* =========================================================
-       TABLET PEQUENO
-       ========================================================= */
 
     @media (max-width: 760px) {
-
-        .maq-form {
-            grid-template-columns:
-                repeat(2, minmax(0, 1fr));
-        }
-
-        .maq-filtros .maq-field {
-            flex: 1 1 calc(50% - 0.75rem);
-        }
+        .maq-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .maq-filtros .maq-field { flex: 1 1 calc(50% - 0.75rem); }
     }
-
-    /* =========================================================
-       CELULAR
-       ========================================================= */
 
     @media (max-width: 640px) {
-
-        .maq-header {
-            flex-direction: column;
-            align-items: stretch;
-
-            gap: 0.75rem;
-
-            margin-bottom: 1rem;
-        }
-
-        .maq-header-info {
-            width: 100%;
-            text-align: center;
-
-            margin-bottom: 0;
-        }
-
-        .maq-title {
-            font-size: 1.3rem;
-
-            margin-bottom: 0.15rem;
-        }
-
-        .maq-subtitle {
-            font-size: 0.9rem;
-        }
-
-        .maq-voltar {
-            width: 100%;
-
-            text-align: center;
-        }
-
-        .maq-card {
-            padding: 1rem;
-            border-radius: 14px;
-            margin-bottom: 1rem;
-        }
-
-        .maq-card-title {
-            font-size: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        .maq-form-wrapper {
-            overflow: visible;
-        }
-
-        .maq-form {
-            grid-template-columns:
-                minmax(0, 1fr);
-
-            gap: 0.85rem;
-        }
-
-        .maq-submit {
-            justify-content: stretch;
-        }
-
-        .maq-btn {
-            width: 100%;
-        }
-
-        .maq-filtros {
-            flex-direction: column;
-            align-items: stretch;
-
-            gap: 0.7rem;
-        }
-
-        .maq-filtros .maq-field {
-            width: 100%;
-            min-width: 0;
-            flex: none;
-        }
-
-        .maq-filtro-btn,
-        .maq-filtro-limpar {
-            width: 100%;
-        }
-
-        .maq-toolbar {
-            flex-direction: column;
-            align-items: stretch;
-
-            text-align: center;
-        }
-
-        .maq-toolbar-title {
-            width: 100%;
-        }
-
-        .maq-exportar-btn {
-            width: 100%;
-        }
-
-        .maq-table-wrap {
-            margin-left: 0;
-            margin-right: 0;
-
-            width: 100%;
-        }
-
-        .maq-table {
-            min-width: 760px;
-        }
-
-        .maq-field input,
-        .maq-field select {
-            height: 48px;
-
-            font-size: 16px;
-        }
+        .maq-header { flex-direction: column; align-items: stretch; gap: 0.75rem; margin-bottom: 1rem; }
+        .maq-header-info { width: 100%; text-align: center; margin-bottom: 0; }
+        .maq-title { font-size: 1.3rem; margin-bottom: 0.15rem; }
+        .maq-subtitle { font-size: 0.9rem; }
+        .maq-voltar { width: 100%; text-align: center; }
+        .maq-card { padding: 1rem; border-radius: 14px; margin-bottom: 1rem; }
+        .maq-card-title { font-size: 1rem; margin-bottom: 1rem; }
+        .maq-form-wrapper { overflow: visible; }
+        .maq-form { grid-template-columns: minmax(0, 1fr); gap: 0.85rem; }
+        .maq-submit { justify-content: stretch; }
+        .maq-btn { width: 100%; }
+        .maq-filtros { flex-direction: column; align-items: stretch; gap: 0.7rem; }
+        .maq-filtros .maq-field { width: 100%; min-width: 0; flex: none; }
+        .maq-filtro-btn, .maq-filtro-limpar { width: 100%; }
+        .maq-toolbar { flex-direction: column; align-items: stretch; text-align: center; }
+        .maq-toolbar-title { width: 100%; }
+        .maq-exportar-btn { width: 100%; }
+        .maq-table-wrap { margin-left: 0; margin-right: 0; width: 100%; }
+        .maq-table { min-width: 760px; }
+        .maq-field input, .maq-field select { height: 48px; font-size: 16px; }
     }
 
-    /* =========================================================
-       CELULAR MUITO PEQUENO
-       ========================================================= */
-
     @media (max-width: 380px) {
-
-        .maq-card {
-            padding: 0.85rem;
-            border-radius: 12px;
-        }
-
-        .maq-title {
-            font-size: 1.2rem;
-        }
-
-        .maq-field input,
-        .maq-field select {
-            font-size: 16px;
-        }
-
-        .maq-btn,
-        .maq-filtro-btn,
-        .maq-filtro-limpar,
-        .maq-voltar,
-        .maq-exportar-btn {
-            font-size: 0.82rem;
-        }
+        .maq-card { padding: 0.85rem; border-radius: 12px; }
+        .maq-title { font-size: 1.2rem; }
+        .maq-field input, .maq-field select { font-size: 16px; }
+        .maq-btn, .maq-filtro-btn, .maq-filtro-limpar, .maq-voltar, .maq-exportar-btn { font-size: 0.82rem; }
     }
 </style>
 
 <div class="maq-page">
 
-    <!-- =====================================================
-         CABEÇALHO
-         ===================================================== -->
-
     <div class="maq-header">
-
         <div class="maq-header-info">
-
-            <h2 class="maq-title">
-                Maquiagens
-            </h2>
-
-            <p class="maq-subtitle">
-                {{ espetaculo.titulo }}
-            </p>
-
+            <h2 class="maq-title">Maquiagens</h2>
+            <p class="maq-subtitle">{{ espetaculo.titulo }}</p>
         </div>
-
-        <a
-            class="maq-voltar"
-            href="{% url 'admin_dashboard:espetaculos_list' %}"
-        >
-            Voltar
-        </a>
-
+        <a class="maq-voltar" href="{% url 'admin_dashboard:espetaculos_list' %}">Voltar</a>
     </div>
 
     <div class="maq-shell">
 
-        <!-- =================================================
-             CADASTRAR
-             ================================================= -->
-
+        <!-- CRIAR / EDITAR AGENDA DA TURMA -->
         <div class="maq-card">
-
-            <h3 class="maq-card-title">
-                Cadastrar maquiagem
-            </h3>
+            <h3 class="maq-card-title">Definir maquiadora da turma</h3>
 
             <div class="maq-form-wrapper">
-
-                <form method="post" class="maq-form">
-
+                <form method="post" class="maq-form maq-form-3">
                     {% csrf_token %}
+                    <input type="hidden" name="acao" value="criar_agenda">
 
                     <div class="maq-field">
-
-                        <label for="id_turma">
-                            Turma
-                        </label>
-
-                        <select
-                            id="id_turma"
-                            name="turma"
-                            required
-                        >
-
-                            <option value="">
-                                Selecione a turma
-                            </option>
-
+                        <label for="id_turma">Turma</label>
+                        <select id="id_turma" name="turma" required>
+                            <option value="">Selecione a turma</option>
                             {% for turma in turmas %}
-
-                                <option value="{{ turma.pk }}">
-                                    {{ turma.nome }}
-                                </option>
-
+                                <option value="{{ turma.pk }}">{{ turma.nome }}</option>
                             {% endfor %}
-
                         </select>
-
                     </div>
 
                     <div class="maq-field">
-
-                        <label for="id_aluna">
-                            Aluna
-                        </label>
-
-                        <select
-                            id="id_aluna"
-                            name="aluna"
-                            required
-                            disabled
-                        >
-
-                            <option value="">
-                                Selecione a turma primeiro
-                            </option>
-
-                        </select>
-
-                    </div>
-
-                    <div class="maq-field">
-
-                        <label for="id_horario">
-                            Horário
-                        </label>
-
-                        <input
-                            type="time"
-                            id="id_horario"
-                            name="horario"
-                            required
-                        >
-
-                    </div>
-
-                    <div class="maq-field">
-
-                        <label for="id_maquiadora">
-                            Maquiadora
-                        </label>
-
-                        <input
-                            type="text"
-                            id="id_maquiadora"
-                            name="maquiadora"
-                            placeholder="Nome da maquiadora"
-                            required
-                        >
-
-                    </div>
-
-                    <div class="maq-field">
-
-                        <label for="id_duracao">
-                            Duração (minutos)
-                        </label>
-
-                        <input
-                            type="number"
-                            id="id_duracao"
-                            name="duracao_minutos"
-                            min="1"
-                            placeholder="Ex: 20"
-                            required
-                        >
-
+                        <label for="id_maquiadora">Maquiadora</label>
+                        <input type="text" id="id_maquiadora" name="maquiadora" placeholder="Nome da maquiadora" required>
                     </div>
 
                     <div class="maq-submit">
-
-                        <button
-                            type="submit"
-                            class="maq-btn"
-                        >
-                            Salvar maquiagem
-                        </button>
-
+                        <button type="submit" class="maq-btn">Salvar</button>
                     </div>
-
                 </form>
-
             </div>
-
         </div>
 
-        <!-- =================================================
-             FILTROS
-             ================================================= -->
-
+        <!-- LISTA DE AGENDAS (TURMAS JÁ CONFIGURADAS) -->
         <div class="maq-card">
+            <h3 class="maq-card-title">Turmas configuradas</h3>
 
-            <h3 class="maq-card-title">
-                Filtrar
-            </h3>
-
-            <form method="get" class="maq-filtros">
-
-                <div class="maq-field">
-
-                    <label for="id_turma_filtro">
-                        Turma
-                    </label>
-
-                    <select
-                        id="id_turma_filtro"
-                        name="turma_filtro"
-                    >
-
-                        <option value="">
-                            Todas as turmas
-                        </option>
-
-                        {% for turma in turmas %}
-
-                            <option
-                                value="{{ turma.pk }}"
-                                {% if turma_filtro == turma.pk|stringformat:"s" %}
-                                    selected
-                                {% endif %}
-                            >
-                                {{ turma.nome }}
-                            </option>
-
-                        {% endfor %}
-
-                    </select>
-
+            {% if agendas %}
+                <div class="maq-agendas-lista">
+                    {% for agenda in agendas %}
+                        
+                            class="maq-agenda-chip {% if agenda_selecionada.id == agenda.id %}ativo{% endif %}"
+                            href="?agenda_id={{ agenda.id }}"
+                        >
+                            <strong>{{ agenda.turma.nome }}</strong>
+                            <span>{{ agenda.maquiadora }} · {{ agenda.total_disponiveis }} livres / {{ agenda.total_horarios }}</span>
+                        </a>
+                    {% endfor %}
                 </div>
-
-                <div class="maq-field">
-
-                    <label for="id_aluna_filtro">
-                        Aluna
-                    </label>
-
-                    <input
-                        type="text"
-                        id="id_aluna_filtro"
-                        name="aluna_filtro"
-                        placeholder="Buscar por nome"
-                        value="{{ aluna_filtro }}"
-                    >
-
-                </div>
-
-                <button
-                    type="submit"
-                    class="maq-filtro-btn"
-                >
-                    Filtrar
-                </button>
-
-                {% if turma_filtro or aluna_filtro %}
-
-                    <a
-                        class="maq-filtro-limpar"
-                        href="{% url 'admin_dashboard:espetaculo_maquiagens' espetaculo.pk %}"
-                    >
-                        Limpar filtros
-                    </a>
-
-                {% endif %}
-
-            </form>
-
+            {% else %}
+                <div class="maq-empty">Nenhuma turma configurada ainda.</div>
+            {% endif %}
         </div>
 
-        <!-- =================================================
-             LISTAGEM
-             ================================================= -->
+        {% if agenda_selecionada %}
 
-        <div class="maq-card">
-
-            <div class="maq-toolbar">
-
-                <h3 class="maq-toolbar-title">
-                    Maquiagens cadastradas
+            <!-- ADICIONAR HORÁRIO -->
+            <div class="maq-card">
+                <h3 class="maq-card-title">
+                    Horários - {{ agenda_selecionada.turma.nome }} ({{ agenda_selecionada.maquiadora }})
                 </h3>
 
-                <button
-                    type="button"
-                    id="btn-exportar-png"
-                    class="maq-exportar-btn"
-                    {% if not maquiagens %}
-                        disabled
-                    {% endif %}
+                <form
+                    method="post"
+                    action="{% url 'admin_dashboard:adicionar_horario_maquiagem' agenda_selecionada.id %}"
+                    class="maq-form maq-form-3"
+                    style="margin-bottom: 1.25rem;"
                 >
-                    Exportar selecionadas (PNG)
-                </button>
+                    {% csrf_token %}
 
+                    <div class="maq-field">
+                        <label for="id_horario">Data e horário</label>
+                        <input type="datetime-local" id="id_horario" name="horario" required>
+                    </div>
+
+                    <div class="maq-field">
+                        <label for="id_duracao">Duração (minutos)</label>
+                        <input type="number" id="id_duracao" name="duracao_minutos" min="1" value="30" required>
+                    </div>
+
+                    <div class="maq-submit">
+                        <button type="submit" class="maq-btn">Adicionar horário</button>
+                    </div>
+                </form>
+
+                {% if horarios %}
+                    <div class="maq-slots">
+                        {% for h in horarios %}
+                            <div class="maq-slot {{ h.status }}">
+                                <span>{{ h.horario|date:"d/m H:i" }} ({{ h.duracao_minutos }} min) - {{ h.get_status_display }}</span>
+                                {% if h.status == 'disponivel' %}
+                                    <form
+                                        method="post"
+                                        action="{% url 'admin_dashboard:excluir_horario_maquiagem' h.id %}"
+                                        onsubmit="return confirm('Remover este horário?');"
+                                        style="display:inline;"
+                                    >
+                                        {% csrf_token %}
+                                        <button type="submit" class="maq-slot-excluir">×</button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="maq-empty">Nenhum horário cadastrado para essa turma ainda.</div>
+                {% endif %}
             </div>
 
-            {% if maquiagens %}
+            <!-- AGENDAR MANUALMENTE -->
+            <div class="maq-card">
+                <h3 class="maq-card-title">Agendar manualmente</h3>
 
-                <div class="maq-table-wrap">
-
-                    <table
-                        class="maq-table"
-                        id="tabela-maquiagens"
+                <div class="maq-form-wrapper">
+                    <form
+                        method="post"
+                        id="form-agendar-manual"
+                        class="maq-form maq-form-3"
+                        action=""
                     >
+                        {% csrf_token %}
 
+                        <div class="maq-field">
+                            <label for="id_horario_manual">Horário disponível</label>
+                            <select id="id_horario_manual" name="horario_manual" required>
+                                <option value="">Selecione o horário</option>
+                                {% for h in horarios %}
+                                    {% if h.status == 'disponivel' %}
+                                        <option
+                                            value="{% url 'admin_dashboard:agendar_maquiagem_admin' h.id %}"
+                                        >
+                                            {{ h.horario|date:"d/m H:i" }} ({{ h.duracao_minutos }} min)
+                                        </option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="maq-field">
+                            <label for="id_aluna_manual">Aluna</label>
+                            <select id="id_aluna_manual" name="aluna" required>
+                                {% for aluna in agenda_selecionada.turma.alunas.all %}
+                                    {% if aluna.ativa %}
+                                        <option value="{{ aluna.id }}">{{ aluna.nome }}</option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="maq-field">
+                            <label for="id_tipo_manual">Tipo de serviço</label>
+                            <select id="id_tipo_manual" name="tipo_servico" required>
+                                {% for valor, rotulo in tipos_servico %}
+                                    <option value="{{ valor }}">{{ rotulo }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="maq-submit">
+                            <button type="submit" class="maq-btn">Agendar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        {% endif %}
+
+        <!-- FILTROS -->
+        <div class="maq-card">
+            <h3 class="maq-card-title">Filtrar agendamentos</h3>
+
+            <form method="get" class="maq-filtros">
+                {% if agenda_selecionada %}
+                    <input type="hidden" name="agenda_id" value="{{ agenda_selecionada.id }}">
+                {% endif %}
+
+                <div class="maq-field">
+                    <label for="id_turma_filtro">Turma</label>
+                    <select id="id_turma_filtro" name="turma_filtro">
+                        <option value="">Todas as turmas</option>
+                        {% for turma in turmas %}
+                            <option value="{{ turma.pk }}" {% if turma_filtro == turma.pk|stringformat:"s" %}selected{% endif %}>
+                                {{ turma.nome }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="maq-field">
+                    <label for="id_aluna_filtro">Aluna</label>
+                    <input type="text" id="id_aluna_filtro" name="aluna_filtro" placeholder="Buscar por nome" value="{{ aluna_filtro }}">
+                </div>
+
+                <button type="submit" class="maq-filtro-btn">Filtrar</button>
+
+                {% if turma_filtro or aluna_filtro %}
+                    <a class="maq-filtro-limpar" href="{% url 'admin_dashboard:espetaculo_maquiagens' espetaculo.pk %}">Limpar filtros</a>
+                {% endif %}
+            </form>
+        </div>
+
+        <!-- LISTAGEM DE AGENDAMENTOS -->
+        <div class="maq-card">
+            <div class="maq-toolbar">
+                <h3 class="maq-toolbar-title">Agendamentos</h3>
+                <button type="button" id="btn-exportar-png" class="maq-exportar-btn" {% if not agendamentos %}disabled{% endif %}>
+                    Exportar selecionados (PNG)
+                </button>
+            </div>
+
+            {% if agendamentos %}
+                <div class="maq-table-wrap">
+                    <table class="maq-table" id="tabela-maquiagens">
                         <thead>
-
                             <tr>
-
-                                <th class="maq-checkbox-col">
-                                    <input
-                                        type="checkbox"
-                                        id="check-todas"
-                                    >
-                                </th>
-
-                                <th>
-                                    Horário
-                                </th>
-
-                                <th>
-                                    Turma
-                                </th>
-
-                                <th>
-                                    Aluna
-                                </th>
-
-                                <th>
-                                    Maquiadora
-                                </th>
-
-                                <th>
-                                    Duração
-                                </th>
-
-                                <th class="maq-acoes-col">
-                                    Ações
-                                </th>
-
+                                <th class="maq-checkbox-col"><input type="checkbox" id="check-todas"></th>
+                                <th>Horário</th>
+                                <th>Turma</th>
+                                <th>Aluna</th>
+                                <th>Tipo</th>
+                                <th>Maquiadora</th>
+                                <th class="maq-acoes-col">Ações</th>
                             </tr>
-
                         </thead>
-
                         <tbody>
-
-                            {% for m in maquiagens %}
-
+                            {% for a in agendamentos %}
                                 <tr>
-
                                     <td class="maq-checkbox-col">
-
                                         <input
                                             type="checkbox"
                                             class="maq-check-linha"
-
-                                            data-horario="{{ m.horario|time:'H:i' }}"
-                                            data-turma="{{ m.turma.nome }}"
-                                            data-aluna="{{ m.aluna.nome }}"
-                                            data-maquiadora="{{ m.maquiadora }}"
-                                            data-duracao="{{ m.duracao_minutos }}"
+                                            data-horario="{{ a.horario.horario|date:'d/m H:i' }}"
+                                            data-turma="{{ a.turma.nome }}"
+                                            data-aluna="{{ a.aluna.nome }}"
+                                            data-tipo="{{ a.get_tipo_servico_display }}"
+                                            data-maquiadora="{{ a.maquiadora }}"
                                         >
-
                                     </td>
-
-                                    <td>
-                                        {{ m.horario|time:"H:i" }}
-                                    </td>
-
-                                    <td>
-                                        {{ m.turma.nome }}
-                                    </td>
-
-                                    <td>
-                                        {{ m.aluna.nome }}
-                                    </td>
-
-                                    <td>
-                                        {{ m.maquiadora }}
-                                    </td>
-
-                                    <td>
-                                        {{ m.duracao_minutos }} min
-                                    </td>
-
+                                    <td>{{ a.horario.horario|date:"d/m H:i" }}</td>
+                                    <td>{{ a.turma.nome }}</td>
+                                    <td>{{ a.aluna.nome }}</td>
+                                    <td>{{ a.get_tipo_servico_display }}</td>
+                                    <td>{{ a.maquiadora }}</td>
                                     <td class="maq-acoes-col">
-
-                                        <a
-                                            class="maq-acao-link maq-acao-editar"
-                                            href="{% url 'admin_dashboard:maquiagem_editar' m.pk %}"
-                                        >
-                                            Editar
-                                        </a>
-
+                                        <a class="maq-acao-link maq-acao-editar" href="{% url 'admin_dashboard:maquiagem_editar' a.pk %}">Editar</a>
                                         <form
                                             method="post"
-                                            action="{% url 'admin_dashboard:maquiagem_excluir' m.pk %}"
+                                            action="{% url 'admin_dashboard:maquiagem_excluir' a.pk %}"
                                             style="display: inline;"
-                                            onsubmit="return confirm('Excluir esta maquiagem?');"
+                                            onsubmit="return confirm('Excluir este agendamento?');"
                                         >
-
                                             {% csrf_token %}
-
-                                            <button
-                                                type="submit"
-                                                class="maq-acao-link maq-acao-excluir"
-                                            >
-                                                Excluir
-                                            </button>
-
+                                            <button type="submit" class="maq-acao-link maq-acao-excluir">Excluir</button>
                                         </form>
-
                                     </td>
-
                                 </tr>
-
                             {% endfor %}
-
                         </tbody>
-
                     </table>
-
                 </div>
-
             {% else %}
-
-                <div class="maq-empty">
-                    Nenhuma maquiagem encontrada.
-                </div>
-
+                <div class="maq-empty">Nenhum agendamento encontrado.</div>
             {% endif %}
-
         </div>
 
     </div>
-
-</div>
-
-<!-- =========================================================
-     ÁREA DE EXPORTAÇÃO
-     ========================================================= -->
-
-<div
-    id="maq-export-area"
-    style="
-        position: absolute;
-        left: -9999px;
-        top: -9999px;
-    "
->
-
-    <h3
-        style="
-            margin: 0 0 1rem 0;
-            color: #4a235f;
-        "
-    >
-        {{ espetaculo.titulo }} - Maquiagens
-    </h3>
-
-    <table
-        id="maq-export-table"
-        style="
-            width: 100%;
-            border-collapse: collapse;
-            font-family: Arial, sans-serif;
-        "
-    >
-
-        <thead>
-
-            <tr style="background: #efe7f5;">
-
-                <th style="padding: 8px 12px; text-align: left; border-bottom: 1px solid #ddd;">
-                    Horário
-                </th>
-
-                <th style="padding: 8px 12px; text-align: left; border-bottom: 1px solid #ddd;">
-                    Turma
-                </th>
-
-                <th style="padding: 8px 12px; text-align: left; border-bottom: 1px solid #ddd;">
-                    Aluna
-                </th>
-
-                <th style="padding: 8px 12px; text-align: left; border-bottom: 1px solid #ddd;">
-                    Maquiadora
-                </th>
-
-                <th style="padding: 8px 12px; text-align: left; border-bottom: 1px solid #ddd;">
-                    Duração
-                </th>
-
-            </tr>
-
-        </thead>
-
-        <tbody id="maq-export-tbody"></tbody>
-
-    </table>
-
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
@@ -1226,391 +667,131 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
-    const selectTurma =
-        document.getElementById('id_turma');
+    // Envia o form de "agendar manualmente" pra URL escolhida no select de horário
+    const formAgendarManual = document.getElementById('form-agendar-manual');
+    const selectHorarioManual = document.getElementById('id_horario_manual');
 
-    const selectAluna =
-        document.getElementById('id_aluna');
-
-    const URL_ALUNAS_POR_TURMA_BASE =
-        "{% url 'admin_dashboard:alunas_por_turma' 999999 %}"
-        .replace('999999/', '');
-
-    if (selectTurma && selectAluna) {
-
-        selectTurma.addEventListener(
-            'change',
-            function () {
-
-                const turmaId = this.value;
-
-                selectAluna.innerHTML =
-                    '<option value="">Carregando...</option>';
-
-                selectAluna.disabled = true;
-
-                if (!turmaId) {
-
-                    selectAluna.innerHTML =
-                        '<option value="">Selecione a turma primeiro</option>';
-
-                    return;
-                }
-
-                fetch(
-                    `${URL_ALUNAS_POR_TURMA_BASE}${turmaId}/`,
-                    {
-                        method: 'GET',
-                        credentials: 'same-origin',
-                    }
-                )
-
-                .then(function (response) {
-
-                    if (!response.ok) {
-
-                        throw new Error(
-                            `Erro HTTP ${response.status}`
-                        );
-
-                    }
-                    return response.json();
-
-                })
-
-                .then(function (alunas) {
-
-                    selectAluna.innerHTML = '';
-
-                    if (alunas.length === 0) {
-
-                        selectAluna.innerHTML =
-                            '<option value="">Nenhuma aluna nesta turma</option>';
-
-                        selectAluna.disabled = true;
-
-                        return;
-                    }
-
-                    const opcaoPadrao =
-                        document.createElement('option');
-
-                    opcaoPadrao.value = '';
-                    opcaoPadrao.textContent =
-                        'Selecione a aluna';
-
-                    selectAluna.appendChild(
-                        opcaoPadrao
-                    );
-
-                    alunas.forEach(function (aluna) {
-
-                        const opcao =
-                            document.createElement('option');
-
-                        opcao.value = aluna.id;
-                        opcao.textContent = aluna.nome;
-
-                        selectAluna.appendChild(
-                            opcao
-                        );
-
-                    });
-
-                    selectAluna.disabled = false;
-
-                })
-
-                .catch(function (erro) {
-
-                    console.error(
-                        'Erro ao buscar alunas:',
-                        erro
-                    );
-
-                    selectAluna.innerHTML =
-                        '<option value="">Erro ao carregar alunas</option>';
-
-                    selectAluna.disabled = true;
-
-                });
-
+    if (formAgendarManual && selectHorarioManual) {
+        formAgendarManual.addEventListener('submit', function (event) {
+            if (!selectHorarioManual.value) {
+                event.preventDefault();
+                alert('Selecione um horário.');
+                return;
             }
-        );
-
+            formAgendarManual.action = selectHorarioManual.value;
+        });
     }
 
-    const checkTodas =
-        document.getElementById('check-todas');
-
-    const checksLinha =
-        document.querySelectorAll(
-            '.maq-check-linha'
-        );
+    const checkTodas = document.getElementById('check-todas');
+    const checksLinha = document.querySelectorAll('.maq-check-linha');
 
     if (checkTodas) {
-
-        checkTodas.addEventListener(
-            'change',
-            function () {
-
-                checksLinha.forEach(
-                    function (chk) {
-
-                        chk.checked =
-                            checkTodas.checked;
-
-                    }
-                );
-
-            }
-        );
-
+        checkTodas.addEventListener('change', function () {
+            checksLinha.forEach(function (chk) {
+                chk.checked = checkTodas.checked;
+            });
+        });
     }
 
-    const btnExportar =
-        document.getElementById(
-            'btn-exportar-png'
-        );
+    const btnExportar = document.getElementById('btn-exportar-png');
 
     if (btnExportar) {
+        btnExportar.addEventListener('click', function () {
+            const selecionadas = Array.from(checksLinha).filter(function (chk) {
+                return chk.checked;
+            });
 
-        btnExportar.addEventListener(
-            'click',
-            function () {
+            if (selecionadas.length === 0) {
+                alert('Selecione ao menos um agendamento para exportar.');
+                return;
+            }
 
-                const selecionadas =
-                    Array.from(checksLinha)
-                    .filter(function (chk) {
+            if (typeof html2canvas === 'undefined') {
+                alert('Não foi possível carregar a ferramenta de exportação. Verifique sua conexão.');
+                console.error('html2canvas não foi carregado.');
+                return;
+            }
 
-                        return chk.checked;
+            const container = document.createElement('div');
+            container.style.position = 'fixed';
+            container.style.left = '0';
+            container.style.top = '0';
+            container.style.zIndex = '-9999';
+            container.style.background = '#ffffff';
+            container.style.padding = '20px';
+            container.style.fontFamily = 'Arial, sans-serif';
 
-                    });
+            const titulo = document.createElement('h3');
+            titulo.textContent = '{{ espetaculo.titulo }} - Maquiagens';
+            titulo.style.margin = '0 0 16px 0';
+            titulo.style.color = '#4a235f';
+            titulo.style.fontSize = '18px';
+            container.appendChild(titulo);
 
-                if (selecionadas.length === 0) {
+            const tabela = document.createElement('table');
+            tabela.style.width = '100%';
+            tabela.style.borderCollapse = 'collapse';
+            tabela.style.fontSize = '14px';
 
-                    alert(
-                        'Selecione ao menos uma maquiagem para exportar.'
-                    );
+            const thead = document.createElement('thead');
+            const trHead = document.createElement('tr');
+            trHead.style.background = '#efe7f5';
 
-                    return;
-                }
+            ['Horário', 'Turma', 'Aluna', 'Tipo', 'Maquiadora'].forEach(function (texto) {
+                const th = document.createElement('th');
+                th.textContent = texto;
+                th.style.padding = '8px 12px';
+                th.style.textAlign = 'left';
+                th.style.borderBottom = '1px solid #ddd';
+                trHead.appendChild(th);
+            });
 
-                if (
-                    typeof html2canvas ===
-                    'undefined'
-                ) {
+            thead.appendChild(trHead);
+            tabela.appendChild(thead);
 
-                    alert(
-                        'Não foi possível carregar a ferramenta de exportação. Verifique sua conexão.'
-                    );
+            const tbody = document.createElement('tbody');
 
-                    console.error(
-                        'html2canvas não foi carregado.'
-                    );
-
-                    return;
-                }
-
-                const container =
-                    document.createElement('div');
-
-                container.style.position =
-                    'fixed';
-
-                container.style.left =
-                    '0';
-
-                container.style.top =
-                    '0';
-
-                container.style.zIndex =
-                    '-9999';
-
-                container.style.background =
-                    '#ffffff';
-
-                container.style.padding =
-                    '20px';
-
-                container.style.fontFamily =
-                    'Arial, sans-serif';
-
-                const titulo =
-                    document.createElement('h3');
-
-                titulo.textContent =
-                    '{{ espetaculo.titulo }} - Maquiagens';
-
-                titulo.style.margin =
-                    '0 0 16px 0';
-
-                titulo.style.color =
-                    '#4a235f';
-
-                titulo.style.fontSize =
-                    '18px';
-
-                container.appendChild(
-                    titulo
-                );
-
-                const tabela =
-                    document.createElement('table');
-
-                tabela.style.width =
-                    '100%';
-
-                tabela.style.borderCollapse =
-                    'collapse';
-
-                tabela.style.fontSize =
-                    '14px';
-
-                const thead =
-                    document.createElement('thead');
-
-                const trHead =
-                    document.createElement('tr');
-
-                trHead.style.background =
-                    '#efe7f5';
+            selecionadas.forEach(function (chk) {
+                const tr = document.createElement('tr');
 
                 [
-                    'Horário',
-                    'Turma',
-                    'Aluna',
-                    'Maquiadora',
-                    'Duração'
-                ].forEach(
-                    function (texto) {
-
-                        const th =
-                            document.createElement('th');
-
-                        th.textContent =
-                            texto;
-
-                        th.style.padding =
-                            '8px 12px';
-
-                        th.style.textAlign =
-                            'left';
-
-                        th.style.borderBottom =
-                            '1px solid #ddd';
-
-                        trHead.appendChild(th);
-
-                    }
-                );
-
-                thead.appendChild(trHead);
-                tabela.appendChild(thead);
-
-                const tbody =
-                    document.createElement('tbody');
-
-                selecionadas.forEach(
-                    function (chk) {
-
-                        const tr =
-                            document.createElement('tr');
-
-                        [
-                            chk.dataset.horario,
-                            chk.dataset.turma,
-                            chk.dataset.aluna,
-                            chk.dataset.maquiadora,
-                            `${chk.dataset.duracao} min`,
-                        ].forEach(
-                            function (texto) {
-
-                                const td =
-                                    document.createElement('td');
-
-                                td.textContent =
-                                    texto;
-
-                                td.style.padding =
-                                    '8px 12px';
-
-                                td.style.borderBottom =
-                                    '1px solid #eee';
-
-                                tr.appendChild(td);
-
-                            }
-                        );
-
-                        tbody.appendChild(tr);
-
-                    }
-                );
-
-                tabela.appendChild(tbody);
-                container.appendChild(tabela);
-                document.body.appendChild(
-                    container
-                );
-
-                html2canvas(
-                    container,
-                    {
-                        scale: 2,
-                        backgroundColor:
-                            '#ffffff',
-                        useCORS: true,
-                    }
-                )
-
-                .then(function (canvas) {
-
-                    const link =
-                        document.createElement('a');
-
-                    link.download =
-                        'maquiagens_{{ espetaculo.pk }}.png';
-
-                    link.href =
-                        canvas.toDataURL(
-                            'image/png'
-                        );
-
-                    link.click();
-
-                })
-
-                .catch(function (erro) {
-
-                    console.error(
-                        'Erro ao gerar PNG:',
-                        erro
-                    );
-
-                    alert(
-                        'Erro ao gerar a imagem. Tente novamente.'
-                    );
-
-                })
-
-                .finally(function () {
-
-                    if (
-                        container.parentNode
-                    ) {
-
-                        document.body.removeChild(
-                            container
-                        );
-
-                    }
-
+                    chk.dataset.horario,
+                    chk.dataset.turma,
+                    chk.dataset.aluna,
+                    chk.dataset.tipo,
+                    chk.dataset.maquiadora,
+                ].forEach(function (texto) {
+                    const td = document.createElement('td');
+                    td.textContent = texto;
+                    td.style.padding = '8px 12px';
+                    td.style.borderBottom = '1px solid #eee';
+                    tr.appendChild(td);
                 });
 
-            }
-        );
+                tbody.appendChild(tr);
+            });
 
+            tabela.appendChild(tbody);
+            container.appendChild(tabela);
+            document.body.appendChild(container);
+
+            html2canvas(container, { scale: 2, backgroundColor: '#ffffff', useCORS: true })
+                .then(function (canvas) {
+                    const link = document.createElement('a');
+                    link.download = 'maquiagens_{{ espetaculo.pk }}.png';
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                })
+                .catch(function (erro) {
+                    console.error('Erro ao gerar PNG:', erro);
+                    alert('Erro ao gerar a imagem. Tente novamente.');
+                })
+                .finally(function () {
+                    if (container.parentNode) {
+                        document.body.removeChild(container);
+                    }
+                });
+        });
     }
 
 });

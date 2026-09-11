@@ -5,6 +5,8 @@ from datetime import datetime
 from decimal import Decimal
 from django.utils import timezone
 from django.db.models import Sum
+from django.db import IntegrityError
+from django.urls import reverse
 from django.db import models
 from django.db.models import Case, When, Value, IntegerField
 from django.conf import settings
@@ -26,6 +28,7 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Sum
 from django.shortcuts import redirect, render
 from django.utils import timezone
+from django.utils.dateparse import parse_datetime
 
 from pagamentos.models import Mensalidade
 from usuarios.models import Aluna, Turma
@@ -33,6 +36,10 @@ from usuarios.models import Aluna, Turma
 from espetaculo.models import (
     Assento,
     Espetaculo,
+    AgendaMaquiagemTurma,
+    HorarioMaquiagem,
+    AgendamentoMaquiagem,
+    
 )
 
 
@@ -5215,39 +5222,55 @@ def espetaculo_maquiagens(request, pk):
     espetaculo = get_object_or_404(Espetaculo, pk=pk)
     turmas = Turma.objects.all().order_by('nome')
 
-    if request.method == 'POST':
+    if request.method == 'POST' and request.POST.get('acao') == 'criar_agenda':
         turma_id = request.POST.get('turma')
-        aluna_id = request.POST.get('aluna')
-        horario = request.POST.get('horario')
         maquiadora = request.POST.get('maquiadora', '').strip()
-        duracao = request.POST.get('duracao_minutos')
 
-        if not all([turma_id, aluna_id, horario, maquiadora, duracao]):
-            messages.error(request, 'Preencha todos os campos.')
-            return redirect('admin_dashboard:espetaculo_maquiagens', pk=pk)
+        if not turma_id or not maquiadora:
+            messages.error(request, 'Selecione a turma e informe a maquiadora.')
+        else:
+            agenda, criada = AgendaMaquiagemTurma.objects.get_or_create(
+                espetaculo=espetaculo,
+                turma_id=turma_id,
+                defaults={'maquiadora': maquiadora},
+            )
+            if not criada:
+                agenda.maquiadora = maquiadora
+                agenda.ativo = True
+                agenda.save(update_fields=['maquiadora', 'ativo'])
+            messages.success(request, 'Agenda da turma salva com sucesso.')
 
-        Maquiagem.objects.create(
-            espetaculo=espetaculo,
-            turma_id=turma_id,
-            aluna_id=aluna_id,
-            horario=horario,
-            maquiadora=maquiadora,
-            duracao_minutos=duracao,
-        )
-
-        messages.success(request, 'Maquiagem cadastrada com sucesso.')
         return redirect('admin_dashboard:espetaculo_maquiagens', pk=pk)
 
-    maquiagens = espetaculo.maquiagens.select_related('turma', 'aluna').all()
+    agendas = AgendaMaquiagemTurma.objects.filter(
+        espetaculo=espetaculo
+    ).select_related('turma').order_by('turma__nome')
+
+    agenda_id = request.GET.get('agenda_id', '')
+    agenda_selecionada = None
+    horarios = HorarioMaquiagem.objects.none()
+
+    if agenda_id:
+        agenda_selecionada = get_object_or_404(
+            AgendaMaquiagemTurma, pk=agenda_id, espetaculo=espetaculo
+        )
+        HorarioMaquiagem.liberar_expirados(agenda=agenda_selecionada)
+        horarios = agenda_selecionada.horarios.all().order_by('horario')
+
+    agendamentos = AgendamentoMaquiagem.objects.filter(
+        horario__agenda__espetaculo=espetaculo
+    ).select_related(
+        'horario', 'horario__agenda', 'horario__agenda__turma', 'aluna'
+    ).order_by('horario__horario')
 
     turma_filtro = request.GET.get('turma_filtro', '')
     aluna_filtro = request.GET.get('aluna_filtro', '')
 
     if turma_filtro:
-        maquiagens = maquiagens.filter(turma_id=turma_filtro)
+        agendamentos = agendamentos.filter(horario__agenda__turma_id=turma_filtro)
 
     if aluna_filtro:
-        maquiagens = maquiagens.filter(aluna__nome__icontains=aluna_filtro)
+        agendamentos = agendamentos.filter(aluna__nome__icontains=aluna_filtro)
 
     return render(
         request,
@@ -5255,10 +5278,189 @@ def espetaculo_maquiagens(request, pk):
         {
             'espetaculo': espetaculo,
             'turmas': turmas,
-            'maquiagens': maquiagens,
+            'agendas': agendas,
+            'agenda_selecionada': agenda_selecionada,
+            'horarios': horarios,
+            'agendamentos': agendamentos,
             'turma_filtro': turma_filtro,
             'aluna_filtro': aluna_filtro,
+            'tipos_servico': AgendamentoMaquiagem.TIPO_CHOICES,
         },
+    )
+
+
+@require_POST
+def adicionar_horario_maquiagem(request, agenda_id):
+    agenda = get_object_or_404(AgendaMaquiagemTurma, pk=agenda_id)
+    horario_str = request.POST.get('horario', '')
+    duracao = request.POST.get('duracao_minutos', '30')
+
+    if not horario_str:
+        messages.error(request, 'Informe a data e o horário.')
+        return redirect(
+            f"{reverse('admin_dashboard:espetaculo_maquiagens', args=[agenda.espetaculo_id])}?agenda_id={agenda.id}"
+        )
+
+    horario_dt = parse_datetime(horario_str)
+    if horario_dt is None:
+        messages.error(request, 'Data/horário inválido.')
+        return redirect(
+            f"{reverse('admin_dashboard:espetaculo_maquiagens', args=[agenda.espetaculo_id])}?agenda_id={agenda.id}"
+        )
+
+    if timezone.is_naive(horario_dt):
+        horario_dt = timezone.make_aware(horario_dt)
+
+    try:
+        HorarioMaquiagem.objects.create(
+            agenda=agenda,
+            horario=horario_dt,
+            duracao_minutos=int(duracao) if duracao else 30,
+        )
+        messages.success(request, 'Horário adicionado.')
+    except IntegrityError:
+        messages.error(request, 'Já existe um horário cadastrado nesse exato dia/hora para essa turma.')
+
+    return redirect(
+        f"{reverse('admin_dashboard:espetaculo_maquiagens', args=[agenda.espetaculo_id])}?agenda_id={agenda.id}"
+    )
+
+
+@require_POST
+def excluir_horario_maquiagem(request, horario_id):
+    horario = get_object_or_404(HorarioMaquiagem, pk=horario_id)
+    agenda = horario.agenda
+    espetaculo_id = agenda.espetaculo_id
+
+    if horario.status == 'agendado':
+        messages.error(
+            request,
+            'Esse horário já está agendado. Cancele o agendamento antes de excluir o horário.'
+        )
+    else:
+        horario.delete()
+        messages.success(request, 'Horário removido.')
+
+    return redirect(
+        f"{reverse('admin_dashboard:espetaculo_maquiagens', args=[espetaculo_id])}?agenda_id={agenda.id}"
+    )
+
+
+@require_POST
+def agendar_maquiagem_admin(request, horario_id):
+    horario = get_object_or_404(HorarioMaquiagem, pk=horario_id)
+    agenda = horario.agenda
+    aluna_id = request.POST.get('aluna')
+    tipo_servico = request.POST.get('tipo_servico')
+
+    redirect_url = (
+        f"{reverse('admin_dashboard:espetaculo_maquiagens', args=[agenda.espetaculo_id])}"
+        f"?agenda_id={agenda.id}"
+    )
+
+    if not aluna_id or tipo_servico not in dict(AgendamentoMaquiagem.TIPO_CHOICES):
+        messages.error(request, 'Selecione a aluna e o tipo de serviço.')
+        return redirect(redirect_url)
+
+    HorarioMaquiagem.liberar_expirados(agenda=agenda)
+    horario.refresh_from_db()
+
+    if horario.status != 'disponivel':
+        messages.error(request, 'Esse horário não está mais disponível.')
+        return redirect(redirect_url)
+
+    AgendamentoMaquiagem.objects.create(
+        horario=horario,
+        aluna_id=aluna_id,
+        tipo_servico=tipo_servico,
+        criado_por_admin=True,
+    )
+    horario.marcar_como_agendado()
+
+    messages.success(request, 'Agendamento criado com sucesso.')
+    return redirect(redirect_url)
+
+
+def maquiagem_editar(request, pk):
+    agendamento = get_object_or_404(
+        AgendamentoMaquiagem.objects.select_related(
+            'horario', 'horario__agenda', 'horario__agenda__turma'
+        ),
+        pk=pk,
+    )
+    agenda = agendamento.horario.agenda
+
+    horarios_disponiveis_para_troca = agenda.horarios.filter(
+        Q(status='disponivel') | Q(pk=agendamento.horario_id)
+    ).order_by('horario')
+
+    alunas_da_turma = Aluna.objects.filter(
+        turma=agenda.turma, ativa=True
+    ).order_by('nome')
+
+    if request.method == 'POST':
+        aluna_id = request.POST.get('aluna')
+        tipo_servico = request.POST.get('tipo_servico')
+        novo_horario_id = request.POST.get('horario')
+
+        if not all([aluna_id, tipo_servico, novo_horario_id]):
+            messages.error(request, 'Preencha todos os campos.')
+            return redirect('admin_dashboard:maquiagem_editar', pk=pk)
+
+        if tipo_servico not in dict(AgendamentoMaquiagem.TIPO_CHOICES):
+            messages.error(request, 'Tipo de serviço inválido.')
+            return redirect('admin_dashboard:maquiagem_editar', pk=pk)
+
+        novo_horario_id = int(novo_horario_id)
+
+        if novo_horario_id != agendamento.horario_id:
+            novo_horario = get_object_or_404(
+                HorarioMaquiagem, pk=novo_horario_id, agenda=agenda
+            )
+            if novo_horario.status != 'disponivel':
+                messages.error(request, 'O novo horário escolhido não está mais disponível.')
+                return redirect('admin_dashboard:maquiagem_editar', pk=pk)
+
+            horario_antigo = agendamento.horario
+            agendamento.horario = novo_horario
+            agendamento.save(update_fields=['horario'])
+
+            novo_horario.marcar_como_agendado()
+            horario_antigo.liberar()
+
+        agendamento.aluna_id = aluna_id
+        agendamento.tipo_servico = tipo_servico
+        agendamento.save(update_fields=['aluna', 'tipo_servico'])
+
+        messages.success(request, 'Agendamento atualizado com sucesso.')
+        return redirect(
+            f"{reverse('admin_dashboard:espetaculo_maquiagens', args=[agenda.espetaculo_id])}?agenda_id={agenda.id}"
+        )
+
+    return render(
+        request,
+        'admin_dashboard/espetaculos/maquiagem_editar.html',
+        {
+            'agendamento': agendamento,
+            'horarios_disponiveis_para_troca': horarios_disponiveis_para_troca,
+            'alunas_da_turma': alunas_da_turma,
+            'tipos_servico': AgendamentoMaquiagem.TIPO_CHOICES,
+        },
+    )
+
+
+@require_POST
+def maquiagem_excluir(request, pk):
+    agendamento = get_object_or_404(AgendamentoMaquiagem, pk=pk)
+    horario = agendamento.horario
+    espetaculo_id = horario.agenda.espetaculo_id
+
+    agendamento.delete()
+    horario.liberar()
+
+    messages.success(request, 'Agendamento excluído com sucesso.')
+    return redirect(
+        f"{reverse('admin_dashboard:espetaculo_maquiagens', args=[espetaculo_id])}?agenda_id={horario.agenda_id}"
     )
 
 
@@ -5266,50 +5468,3 @@ def alunas_por_turma(request, turma_id):
     turma = get_object_or_404(Turma, pk=turma_id)
     alunas = turma.alunas.filter(ativa=True).order_by('nome').values('id', 'nome')
     return JsonResponse(list(alunas), safe=False)
-
-
-def maquiagem_editar(request, pk):
-    maquiagem = get_object_or_404(Maquiagem, pk=pk)
-
-    if request.method == 'POST':
-        turma_id = request.POST.get('turma')
-        aluna_id = request.POST.get('aluna')
-        horario = request.POST.get('horario')
-        maquiadora = request.POST.get('maquiadora', '').strip()
-        duracao = request.POST.get('duracao_minutos')
-
-        if not all([turma_id, aluna_id, horario, maquiadora, duracao]):
-            messages.error(request, 'Preencha todos os campos.')
-            return redirect('admin_dashboard:espetaculo_maquiagens', pk=maquiagem.espetaculo_id)
-
-        maquiagem.turma_id = turma_id
-        maquiagem.aluna_id = aluna_id
-        maquiagem.horario = horario
-        maquiagem.maquiadora = maquiadora
-        maquiagem.duracao_minutos = duracao
-        maquiagem.save()
-
-        messages.success(request, 'Maquiagem atualizada com sucesso.')
-        return redirect('admin_dashboard:espetaculo_maquiagens', pk=maquiagem.espetaculo_id)
-
-    turmas = Turma.objects.all().order_by('nome')
-    alunas_da_turma = maquiagem.turma.alunas.filter(ativa=True).order_by('nome')
-
-    return render(
-        request,
-        'admin_dashboard/espetaculos/maquiagem_editar.html',
-        {
-            'maquiagem': maquiagem,
-            'turmas': turmas,
-            'alunas_da_turma': alunas_da_turma,
-        },
-    )
-
-
-@require_POST
-def maquiagem_excluir(request, pk):
-    maquiagem = get_object_or_404(Maquiagem, pk=pk)
-    espetaculo_id = maquiagem.espetaculo_id
-    maquiagem.delete()
-    messages.success(request, 'Maquiagem excluída com sucesso.')
-    return redirect('admin_dashboard:espetaculo_maquiagens', pk=espetaculo_id)

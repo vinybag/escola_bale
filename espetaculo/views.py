@@ -34,6 +34,9 @@ from .models import (
     InscricaoAudicao,
     MapaAssentos,
     PedidoIngressoEvento,
+    AgendamentoMaquiagem,
+    HorarioMaquiagem,
+    AgendaMaquiagemTurma,
 )
 
 
@@ -2227,3 +2230,149 @@ def selecionar_evento_checkin(request):
         },
     )
 
+def agendar_maquiagem(request, pk):
+    espetaculo = get_object_or_404(Espetaculo, pk=pk, ativo=True)
+
+    if not request.user.is_authenticated:
+        messages.error(request, 'Você precisa estar logada para agendar.')
+        return redirect('espetaculo:evento_detalhe_publico', pk=espetaculo.pk)
+
+    aluna = get_object_or_404(Aluna, usuario=request.user)
+
+    agenda = AgendaMaquiagemTurma.objects.filter(
+        espetaculo=espetaculo,
+        turma=aluna.turma,
+        ativo=True,
+    ).first()
+
+    if not agenda:
+        messages.error(
+            request,
+            'Ainda não há horários de maquiagem disponíveis para sua turma.'
+        )
+        return redirect('espetaculo:evento_detalhe_publico', pk=espetaculo.pk)
+
+    # já tem agendamento pra este espetáculo?
+    agendamento_existente = AgendamentoMaquiagem.objects.filter(
+        aluna=aluna,
+        horario__agenda__espetaculo=espetaculo,
+    ).select_related('horario').first()
+
+    if agendamento_existente:
+        return redirect(
+            'espetaculo:agendamento_maquiagem_sucesso',
+            agendamento_id=agendamento_existente.id,
+        )
+
+    HorarioMaquiagem.liberar_expirados(agenda=agenda)
+
+    if not request.session.session_key:
+        request.session.create()
+    sessao_id = request.session.session_key
+
+    horarios_disponiveis = agenda.horarios.filter(
+        status='disponivel'
+    ).order_by('horario')
+
+    return render(
+        request,
+        'espetaculo/agendar_maquiagem.html',
+        {
+            'espetaculo': espetaculo,
+            'agenda': agenda,
+            'horarios_disponiveis': horarios_disponiveis,
+            'tipos_servico': AgendamentoMaquiagem.TIPO_CHOICES,
+        },
+    )
+
+
+@require_POST
+def reservar_horario_maquiagem(request, pk, horario_id):
+    """Chamado via AJAX/fetch quando a aluna clica no botão do horário."""
+    espetaculo = get_object_or_404(Espetaculo, pk=pk, ativo=True)
+    aluna = get_object_or_404(Aluna, usuario=request.user)
+    horario = get_object_or_404(
+        HorarioMaquiagem,
+        pk=horario_id,
+        agenda__espetaculo=espetaculo,
+        agenda__turma=aluna.turma,
+    )
+
+    if not request.session.session_key:
+        request.session.create()
+    sessao_id = request.session.session_key
+
+    HorarioMaquiagem.liberar_expirados(agenda=horario.agenda)
+    horario.refresh_from_db()
+
+    # já é minha própria reserva? deixa passar (ex: recarregou a página)
+    ja_e_minha = (
+        horario.status == 'reservado_temporario'
+        and horario.reservado_por_sessao == sessao_id
+    )
+
+    if not horario.esta_disponivel and not ja_e_minha:
+        return JsonResponse(
+            {'ok': False, 'erro': 'Esse horário acabou de ser reservado por outra pessoa.'},
+            status=409,
+        )
+
+    if not ja_e_minha:
+        horario.reservar_temporariamente(sessao_id)
+
+    return JsonResponse({
+        'ok': True,
+        'horario_id': horario.id,
+        'horario_formatado': horario.horario.strftime('%d/%m/%Y às %H:%M'),
+        'duracao_minutos': horario.duracao_minutos,
+        'maquiadora': horario.agenda.maquiadora,
+        'expira_em_segundos': 15 * 60,
+    })
+
+
+@require_POST
+def confirmar_agendamento_maquiagem(request, pk, horario_id):
+    espetaculo = get_object_or_404(Espetaculo, pk=pk, ativo=True)
+    aluna = get_object_or_404(Aluna, usuario=request.user)
+    tipo_servico = request.POST.get('tipo_servico')
+
+    if tipo_servico not in dict(AgendamentoMaquiagem.TIPO_CHOICES):
+        messages.error(request, 'Selecione um tipo de serviço válido.')
+        return redirect('espetaculo:agendar_maquiagem', pk=pk)
+
+    sessao_id = request.session.session_key
+
+    horario = get_object_or_404(
+        HorarioMaquiagem,
+        pk=horario_id,
+        agenda__espetaculo=espetaculo,
+        agenda__turma=aluna.turma,
+    )
+
+    if horario.status != 'reservado_temporario' or horario.reservado_por_sessao != sessao_id:
+        messages.error(
+            request,
+            'Sua reserva expirou ou o horário não é mais seu. Escolha novamente.'
+        )
+        return redirect('espetaculo:agendar_maquiagem', pk=pk)
+
+    agendamento = AgendamentoMaquiagem.objects.create(
+        horario=horario,
+        aluna=aluna,
+        tipo_servico=tipo_servico,
+    )
+    horario.marcar_como_agendado()
+
+    return redirect(
+        'espetaculo:agendamento_maquiagem_sucesso',
+        agendamento_id=agendamento.id,
+    )
+
+
+def agendamento_maquiagem_sucesso(request, agendamento_id):
+    agendamento = get_object_or_404(AgendamentoMaquiagem, pk=agendamento_id)
+    return render(
+        request,
+        'espetaculo/agendamento_maquiagem_sucesso.html',
+        {'agendamento': agendamento},
+    )

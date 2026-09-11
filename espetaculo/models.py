@@ -1518,32 +1518,188 @@ class IngressoGratuitoAluna(models.Model):
         return f'{self.aluna.nome} - {self.evento.titulo}'
 
 
-class Maquiagem(models.Model):
+class AgendaMaquiagemTurma(models.Model):
+    """
+    Configuração feita pelo admin: define quem é a maquiadora
+    responsável pela turma dentro de um espetáculo específico.
+    Os horários disponíveis penduram nela.
+    """
     espetaculo = models.ForeignKey(
         'espetaculo.Espetaculo',
         on_delete=models.CASCADE,
-        related_name='maquiagens',
+        related_name='agendas_maquiagem',
     )
     turma = models.ForeignKey(
         'usuarios.Turma',
         on_delete=models.CASCADE,
-        related_name='maquiagens',
+        related_name='agendas_maquiagem',
     )
-    aluna = models.ForeignKey(
-        'usuarios.Aluna',
-        on_delete=models.CASCADE,
-        related_name='maquiagens',
-    )
-    horario = models.TimeField(verbose_name='Horário')
     maquiadora = models.CharField(max_length=120, verbose_name='Maquiadora')
-    duracao_minutos = models.PositiveIntegerField(verbose_name='Duração (minutos)')
+    ativo = models.BooleanField(
+        default=True,
+        help_text='Desmarque para esconder o botão de agendamento dessa turma.',
+    )
     criado_em = models.DateTimeField(auto_now_add=True)
     atualizado_em = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['horario']
-        verbose_name = 'Maquiagem'
-        verbose_name_plural = 'Maquiagens'
+        verbose_name = 'Agenda de maquiagem da turma'
+        verbose_name_plural = 'Agendas de maquiagem das turmas'
+        unique_together = ('espetaculo', 'turma')
 
     def __str__(self):
-        return f'{self.aluna.nome} - {self.horario.strftime("%H:%M")}'
+        return f'{self.turma.nome} - {self.espetaculo.titulo} ({self.maquiadora})'
+
+    @property
+    def total_horarios(self):
+        return self.horarios.count()
+
+    @property
+    def total_disponiveis(self):
+        return self.horarios.filter(status='disponivel').count()
+
+    @property
+    def total_agendados(self):
+        return self.horarios.filter(status='agendado').count()
+
+
+class HorarioMaquiagem(models.Model):
+    """
+    Um horário específico dentro da agenda de uma turma.
+    Segue o mesmo ciclo de vida dos assentos: disponível ->
+    reservado temporariamente -> agendado (ou volta a disponível
+    se a reserva expirar / for cancelada).
+    """
+    STATUS_CHOICES = [
+        ('disponivel', 'Disponível'),
+        ('reservado_temporario', 'Reservado temporariamente'),
+        ('agendado', 'Agendado'),
+        ('bloqueado_manual', 'Bloqueado manualmente'),
+    ]
+
+    agenda = models.ForeignKey(
+        AgendaMaquiagemTurma,
+        on_delete=models.CASCADE,
+        related_name='horarios',
+    )
+    horario = models.DateTimeField(verbose_name='Data e horário')
+    duracao_minutos = models.PositiveIntegerField(
+        default=30,
+        verbose_name='Duração (minutos)',
+    )
+    status = models.CharField(
+        max_length=25,
+        choices=STATUS_CHOICES,
+        default='disponivel',
+    )
+    reservado_em = models.DateTimeField(blank=True, null=True)
+    reservado_por_sessao = models.CharField(
+        max_length=100, blank=True, null=True,
+    )
+    bloqueado_motivo = models.CharField(max_length=200, blank=True)
+
+    criado_em = models.DateTimeField(auto_now_add=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Horário de maquiagem'
+        verbose_name_plural = 'Horários de maquiagem'
+        ordering = ['horario']
+        unique_together = ('agenda', 'horario')
+
+    def __str__(self):
+        return f'{self.agenda.turma.nome} - {self.horario.strftime("%d/%m %H:%M")} ({self.get_status_display()})'
+
+    @property
+    def esta_disponivel(self):
+        return self.status == 'disponivel'
+
+    @property
+    def esta_reservado_expirado(self):
+        if self.status != 'reservado_temporario' or not self.reservado_em:
+            return False
+        limite = self.reservado_em + timezone.timedelta(minutes=15)
+        return timezone.now() > limite
+
+    def reservar_temporariamente(self, identificador_sessao):
+        self.status = 'reservado_temporario'
+        self.reservado_em = timezone.now()
+        self.reservado_por_sessao = identificador_sessao
+        self.save(update_fields=[
+            'status', 'reservado_em', 'reservado_por_sessao', 'atualizado_em',
+        ])
+
+    def marcar_como_agendado(self):
+        self.status = 'agendado'
+        self.reservado_em = None
+        self.reservado_por_sessao = None
+        self.save(update_fields=[
+            'status', 'reservado_em', 'reservado_por_sessao', 'atualizado_em',
+        ])
+
+    def liberar(self):
+        self.status = 'disponivel'
+        self.reservado_em = None
+        self.reservado_por_sessao = None
+        self.bloqueado_motivo = ''
+        self.save(update_fields=[
+            'status', 'reservado_em', 'reservado_por_sessao',
+            'bloqueado_motivo', 'atualizado_em',
+        ])
+
+    @classmethod
+    def liberar_expirados(cls, agenda=None):
+        """Chame isso sempre antes de listar horários disponíveis."""
+        qs = cls.objects.filter(status='reservado_temporario')
+        if agenda:
+            qs = qs.filter(agenda=agenda)
+
+        limite = timezone.now() - timezone.timedelta(minutes=15)
+        expirados = qs.filter(reservado_em__lt=limite)
+        for horario in expirados:
+            horario.liberar()
+
+
+class AgendamentoMaquiagem(models.Model):
+    TIPO_CHOICES = [
+        ('maquiagem', 'Maquiagem'),
+        ('cabelo', 'Cabelo'),
+        ('cabelo_e_maquiagem', 'Cabelo e Maquiagem'),
+    ]
+
+    horario = models.OneToOneField(
+        HorarioMaquiagem,
+        on_delete=models.CASCADE,
+        related_name='agendamento',
+    )
+    aluna = models.ForeignKey(
+        'usuarios.Aluna',
+        on_delete=models.CASCADE,
+        related_name='agendamentos_maquiagem',
+    )
+    tipo_servico = models.CharField(max_length=25, choices=TIPO_CHOICES)
+    criado_por_admin = models.BooleanField(
+        default=False,
+        help_text='True quando o agendamento foi feito pelo admin em nome da aluna.',
+    )
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Agendamento de maquiagem'
+        verbose_name_plural = 'Agendamentos de maquiagem'
+        ordering = ['horario__horario']
+
+    def __str__(self):
+        return f'{self.aluna.nome} - {self.horario.horario.strftime("%d/%m %H:%M")}'
+
+    @property
+    def espetaculo(self):
+        return self.horario.agenda.espetaculo
+
+    @property
+    def turma(self):
+        return self.horario.agenda.turma
+
+    @property
+    def maquiadora(self):
+        return self.horario.agenda.maquiadora

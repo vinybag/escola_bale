@@ -1,0 +1,351 @@
+{% extends 'base.html' %}
+
+{% block title %}Agendar Maquiagem - {{ espetaculo.titulo }}{% endblock %}
+
+{% block content %}
+
+<style>
+    .agmaq-page {
+        max-width: 700px;
+        margin: 0 auto;
+        padding: 1.5rem 1rem 3rem;
+        box-sizing: border-box;
+    }
+
+    .agmaq-title {
+        color: #4a235f;
+        font-size: 1.6rem;
+        margin: 0 0 0.25rem 0;
+    }
+
+    .agmaq-subtitle {
+        color: #6f6f78;
+        font-size: 0.95rem;
+        margin: 0 0 1.5rem 0;
+    }
+
+    .agmaq-card {
+        background: #ffffff;
+        border: 1px solid #ece3f2;
+        border-radius: 18px;
+        box-shadow: 0 4px 16px rgba(107, 45, 143, 0.07);
+        padding: 1.25rem;
+        margin-bottom: 1.25rem;
+        box-sizing: border-box;
+    }
+
+    .agmaq-card-title {
+        margin: 0 0 1rem 0;
+        color: #4a235f;
+        font-size: 1.05rem;
+    }
+
+    .agmaq-field { display: flex; flex-direction: column; gap: 0.35rem; margin-bottom: 1rem; }
+
+    .agmaq-field label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #7a7280;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+
+    .agmaq-field select {
+        height: 48px;
+        padding: 0.6rem 0.7rem;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 16px;
+        color: #3f3548;
+        background: #ffffff;
+        appearance: none;
+    }
+
+    .agmaq-horarios { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+
+    .agmaq-horario-btn {
+        min-height: 44px;
+        padding: 0.6rem 1rem;
+        border-radius: 10px;
+        border: 1px solid #ddc9ea;
+        background: #faf7fc;
+        color: #6b2d8f;
+        font-weight: 700;
+        font-size: 0.88rem;
+        cursor: pointer;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .agmaq-horario-btn:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(107, 45, 143, 0.15);
+    }
+
+    .agmaq-horario-btn.selecionado {
+        background: linear-gradient(135deg, #6b2d8f 0%, #7e3aa5 100%);
+        color: #ffffff;
+        border-color: transparent;
+    }
+
+    .agmaq-horario-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .agmaq-empty { color: #7b7580; padding: 1rem 0; }
+
+    .agmaq-confirmacao { display: none; }
+    .agmaq-confirmacao.visivel { display: block; }
+
+    .agmaq-resumo-linha {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #f1ebf6;
+        font-size: 0.9rem;
+    }
+
+    .agmaq-resumo-linha:last-child { border-bottom: none; }
+    .agmaq-resumo-label { color: #7a7280; font-weight: 600; }
+    .agmaq-resumo-valor { color: #3f3548; font-weight: 700; text-align: right; }
+
+    .agmaq-timer {
+        margin-top: 0.75rem;
+        font-size: 0.8rem;
+        color: #a66a00;
+        text-align: center;
+    }
+
+    .agmaq-btn-confirmar {
+        width: 100%;
+        min-height: 48px;
+        margin-top: 1.25rem;
+        background: linear-gradient(135deg, #6b2d8f 0%, #7e3aa5 100%);
+        color: #ffffff;
+        border: none;
+        border-radius: 10px;
+        font-size: 0.95rem;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .agmaq-btn-confirmar:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .agmaq-erro {
+        background: #fbe4e4;
+        color: #a13c3c;
+        padding: 0.7rem 1rem;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        margin-bottom: 1rem;
+        display: none;
+    }
+
+    .agmaq-erro.visivel { display: block; }
+
+    @media (max-width: 480px) {
+        .agmaq-horarios { flex-direction: column; }
+        .agmaq-horario-btn { width: 100%; }
+    }
+</style>
+
+<div class="agmaq-page">
+
+    <h2 class="agmaq-title">Agendar Maquiagem</h2>
+    <p class="agmaq-subtitle">{{ espetaculo.titulo }} · Maquiadora: {{ agenda.maquiadora }}</p>
+
+    <div class="agmaq-erro" id="agmaq-erro"></div>
+
+    <div class="agmaq-card">
+        <h3 class="agmaq-card-title">1. Escolha o serviço</h3>
+
+        <div class="agmaq-field">
+            <label for="agmaq-tipo">Tipo de serviço</label>
+            <select id="agmaq-tipo">
+                {% for valor, rotulo in tipos_servico %}
+                    <option value="{{ valor }}">{{ rotulo }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <div class="agmaq-card">
+        <h3 class="agmaq-card-title">2. Escolha o horário</h3>
+
+        {% if horarios_disponiveis %}
+            <div class="agmaq-horarios" id="agmaq-horarios">
+                {% for h in horarios_disponiveis %}
+                    <button
+                        type="button"
+                        class="agmaq-horario-btn"
+                        data-horario-id="{{ h.id }}"
+                        data-reservar-url="{% url 'espetaculo:reservar_horario_maquiagem' espetaculo.pk h.id %}"
+                        data-horario-texto="{{ h.horario|date:'d/m/Y \à\s H:i' }}"
+                        data-duracao="{{ h.duracao_minutos }}"
+                    >
+                        {{ h.horario|date:"d/m H:i" }}
+                    </button>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="agmaq-empty">Não há horários disponíveis no momento. Fale com a organização.</div>
+        {% endif %}
+    </div>
+
+    <div class="agmaq-card agmaq-confirmacao" id="agmaq-confirmacao">
+        <h3 class="agmaq-card-title">3. Confirme seu agendamento</h3>
+
+        <div class="agmaq-resumo-linha">
+            <span class="agmaq-resumo-label">Horário</span>
+            <span class="agmaq-resumo-valor" id="agmaq-resumo-horario"></span>
+        </div>
+        <div class="agmaq-resumo-linha">
+            <span class="agmaq-resumo-label">Serviço</span>
+            <span class="agmaq-resumo-valor" id="agmaq-resumo-tipo"></span>
+        </div>
+        <div class="agmaq-resumo-linha">
+            <span class="agmaq-resumo-label">Maquiadora</span>
+            <span class="agmaq-resumo-valor" id="agmaq-resumo-maquiadora"></span>
+        </div>
+        <div class="agmaq-resumo-linha">
+            <span class="agmaq-resumo-label">Duração estimada</span>
+            <span class="agmaq-resumo-valor" id="agmaq-resumo-duracao"></span>
+        </div>
+
+        <form
+            method="post"
+            id="agmaq-form-confirmar"
+            action=""
+        >
+            {% csrf_token %}
+            <input type="hidden" name="tipo_servico" id="agmaq-input-tipo">
+            <button type="submit" class="agmaq-btn-confirmar" id="agmaq-btn-confirmar">
+                Confirmar agendamento
+            </button>
+        </form>
+
+        <p class="agmaq-timer" id="agmaq-timer"></p>
+    </div>
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    const botoesHorario = document.querySelectorAll('.agmaq-horario-btn');
+    const selectTipo = document.getElementById('agmaq-tipo');
+    const caixaConfirmacao = document.getElementById('agmaq-confirmacao');
+    const caixaErro = document.getElementById('agmaq-erro');
+    const form = document.getElementById('agmaq-form-confirmar');
+    const inputTipo = document.getElementById('agmaq-input-tipo');
+    const timerEl = document.getElementById('agmaq-timer');
+
+    let contadorId = null;
+    let horarioAtualId = null;
+
+    function mostrarErro(mensagem) {
+        caixaErro.textContent = mensagem;
+        caixaErro.classList.add('visivel');
+    }
+
+    function limparErro() {
+        caixaErro.textContent = '';
+        caixaErro.classList.remove('visivel');
+    }
+
+    function iniciarContador(segundos) {
+        if (contadorId) clearInterval(contadorId);
+
+        let restante = segundos;
+
+        function atualizar() {
+            const min = Math.floor(restante / 60);
+            const seg = restante % 60;
+            timerEl.textContent =
+                `Reserva válida por mais ${min}:${seg.toString().padStart(2, '0')}`;
+
+            if (restante <= 0) {
+                clearInterval(contadorId);
+                timerEl.textContent = 'Sua reserva expirou. Escolha o horário novamente.';
+                caixaConfirmacao.classList.remove('visivel');
+                if (horarioAtualId) {
+                    const btn = document.querySelector(
+                        `.agmaq-horario-btn[data-horario-id="${horarioAtualId}"]`
+                    );
+                    if (btn) btn.classList.remove('selecionado');
+                }
+            }
+
+            restante -= 1;
+        }
+
+        atualizar();
+        contadorId = setInterval(atualizar, 1000);
+    }
+
+    botoesHorario.forEach(function (botao) {
+        botao.addEventListener('click', function () {
+            limparErro();
+
+            const url = botao.dataset.reservarUrl;
+
+            fetch(url, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                },
+            })
+                .then(function (response) {
+                    return response.json().then(function (dados) {
+                        return { status: response.status, dados: dados };
+                    });
+                })
+                .then(function (resultado) {
+                    if (!resultado.dados.ok) {
+                        mostrarErro(resultado.dados.erro || 'Não foi possível reservar esse horário.');
+                        botao.disabled = true;
+                        botao.textContent = 'Indisponível';
+                        return;
+                    }
+
+                    botoesHorario.forEach(function (b) {
+                        b.classList.remove('selecionado');
+                    });
+                    botao.classList.add('selecionado');
+
+                    horarioAtualId = resultado.dados.horario_id;
+
+                    document.getElementById('agmaq-resumo-horario').textContent =
+                        resultado.dados.horario_formatado;
+                    document.getElementById('agmaq-resumo-maquiadora').textContent =
+                        resultado.dados.maquiadora;
+                    document.getElementById('agmaq-resumo-duracao').textContent =
+                        `${resultado.dados.duracao_minutos} minutos`;
+                    document.getElementById('agmaq-resumo-tipo').textContent =
+                        selectTipo.options[selectTipo.selectedIndex].text;
+
+                    inputTipo.value = selectTipo.value;
+                    form.action = `{% url 'espetaculo:confirmar_agendamento_maquiagem' espetaculo.pk 0 %}`.replace('/0/', `/${horarioAtualId}/`);
+
+                    caixaConfirmacao.classList.add('visivel');
+                    caixaConfirmacao.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+                    iniciarContador(resultado.dados.expira_em_segundos);
+                })
+                .catch(function (erro) {
+                    console.error('Erro ao reservar horário:', erro);
+                    mostrarErro('Erro ao reservar o horário. Tente novamente.');
+                });
+        });
+    });
+
+    selectTipo.addEventListener('change', function () {
+        if (caixaConfirmacao.classList.contains('visivel')) {
+            document.getElementById('agmaq-resumo-tipo').textContent =
+                selectTipo.options[selectTipo.selectedIndex].text;
+            inputTipo.value = selectTipo.value;
+        }
+    });
+
+});
+</script>
+
+{% endblock %}
