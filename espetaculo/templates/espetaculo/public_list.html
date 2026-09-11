@@ -79,7 +79,14 @@
                            style="display: inline-block; background: #b07a84; color: white; padding: 0.75rem 1.2rem; border-radius: 5px; text-decoration: none; font-weight: 600;">
                             Saiba mais
                         </a>
-
+                      
+                        {% if user.is_authenticated %}
+                            <a href="{% url 'espetaculo:agendar_maquiagem' espetaculo.pk %}"
+                               style="display: inline-block; background: #fdeef5; color: #a63d7a; border: 1px solid #f3cfe0; padding: 0.75rem 1.2rem; border-radius: 5px; text-decoration: none; font-weight: 600;">
+                                Agendar Maquiagem
+                            </a>
+                        {% endif %}
+                        
                         {% if espetaculo.tipo == 'evento' %}
                             <a href="{% url 'espetaculo:evento_detalhe_publico' espetaculo.pk %}"
                                style="display: inline-block; background: #fff; color: #9a5b16; border: 1px solid #e2c8a8; padding: 0.75rem 1.2rem; border-radius: 5px; text-decoration: none; font-weight: 600;">
