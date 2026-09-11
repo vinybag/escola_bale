@@ -15,7 +15,7 @@ from django.db.models import Q
 from datetime import date, timedelta
 
 from django.http import JsonResponse
-from espetaculo.models import Espetaculo, Maquiagem
+from espetaculo.models import Espetaculo, AgendaMaquiagemTurma, HorarioMaquiagem, AgendamentoMaquiagem 
 
 from django.views.decorators.http import require_POST
 
