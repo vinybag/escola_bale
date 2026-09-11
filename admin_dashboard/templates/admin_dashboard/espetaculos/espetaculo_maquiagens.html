@@ -435,7 +435,7 @@
                 <div class="maq-agendas-lista">
                     {% for agenda in agendas %}
                         
-                            class="maq-agenda-chip {% if agenda_selecionada.id == agenda.id %}ativo{% endif %}"
+                        <a class="maq-agenda-chip {% if agenda_selecionada.id == agenda.id %}ativo{% endif %}"
                             href="?agenda_id={{ agenda.id }}"
                         >
                             <strong>{{ agenda.turma.nome }}</strong>
