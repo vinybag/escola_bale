@@ -698,7 +698,7 @@
                                 name="preco_ingresso"
                                 step="0.01"
                                 min="0"
-                                value="{{ espetaculo.preco_ingresso }}"
+                                value="{{ espetaculo.preco_ingresso|default:0|stringformat:'0.2f' }}"
                                 class="esp-input"
                             >
                         </div>
