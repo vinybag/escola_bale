@@ -2241,21 +2241,27 @@ def agendar_maquiagem(request, pk):
     alunas_possiveis = []
 
     # 1. Se o usuário for aluna adulta (tem Aluna com seu usuario)
-    aluna_usuario = Aluna.objects.filter(usuario=request.user).first()
-    if aluna_usuario:
-        alunas_possiveis.append(aluna_usuario)
+    try:
+        aluna_usuario = Aluna.objects.filter(usuario=request.user).first()
+        if aluna_usuario:
+            alunas_possiveis.append(aluna_usuario)
+    except Exception:
+        aluna_usuario = None
 
     # 2. Se o usuário for responsável, pega todas as alunas vinculadas a ele
-    alunas_responsavel = Aluna.objects.filter(
-        responsavel=request.user,
-        ativa=True,
-    ).order_by('nome')
+    try:
+        alunas_responsavel = Aluna.objects.filter(
+            responsavel=request.user,
+            ativa=True,
+        ).order_by('nome')
 
-    for aluna_resp in alunas_responsavel:
-        # Evita duplicar se a responsável também for aluna e já estiver na lista
-        if aluna_usuario and aluna_resp.pk == aluna_usuario.pk:
-            continue
-        alunas_possiveis.append(aluna_resp)
+        for aluna_resp in alunas_responsavel:
+            # Evita duplicar se a responsável também for aluna e já estiver na lista
+            if aluna_usuario and aluna_resp.pk == aluna_usuario.pk:
+                continue
+            alunas_possiveis.append(aluna_resp)
+    except Exception:
+        pass
 
     # Remove duplicatas (caso a mesma aluna esteja em ambas as listas)
     alunas_possiveis = list(dict.fromkeys(alunas_possiveis))
@@ -2295,29 +2301,15 @@ def agendar_maquiagem(request, pk):
             f'Você pode agendar para mais de uma aluna. Selecione qual deseja agendar agora.'
         )
 
-    # Verifica se a aluna está participando deste espetáculo
-    try:
-        participacao = aluna.participacoes_espetaculo.filter(
-            espetaculo=espetaculo,
-            vai_dancar=True,
-        ).first()
-
-        if not participacao:
-            messages.error(
-                request,
-                f'{aluna.nome} não está participando deste espetáculo.'
-            )
-            return redirect('espetaculo:evento_detalhe_publico', pk=espetaculo.pk)
-    except AttributeError:
-        # Se o modelo não tem participacoes_espetaculo, ignora essa validação
-        pass
-
     # Busca a agenda de maquiagem para a turma da aluna
-    agenda = AgendaMaquiagemTurma.objects.filter(
-        espetaculo=espetaculo,
-        turma=aluna.turma,
-        ativo=True,
-    ).first()
+    try:
+        agenda = AgendaMaquiagemTurma.objects.filter(
+            espetaculo=espetaculo,
+            turma=aluna.turma,
+            ativo=True,
+        ).first()
+    except Exception:
+        agenda = None
 
     if not agenda:
         messages.error(
@@ -2327,10 +2319,13 @@ def agendar_maquiagem(request, pk):
         return redirect('espetaculo:evento_detalhe_publico', pk=espetaculo.pk)
 
     # Já tem agendamento pra este espetáculo?
-    agendamento_existente = AgendamentoMaquiagem.objects.filter(
-        aluna=aluna,
-        horario__agenda__espetaculo=espetaculo,
-    ).select_related('horario').first()
+    try:
+        agendamento_existente = AgendamentoMaquiagem.objects.filter(
+            aluna=aluna,
+            horario__agenda__espetaculo=espetaculo,
+        ).select_related('horario').first()
+    except Exception:
+        agendamento_existente = None
 
     if agendamento_existente:
         return redirect(
@@ -2338,15 +2333,21 @@ def agendar_maquiagem(request, pk):
             agendamento_id=agendamento_existente.id,
         )
 
-    HorarioMaquiagem.liberar_expirados(agenda=agenda)
+    try:
+        HorarioMaquiagem.liberar_expirados(agenda=agenda)
+    except Exception:
+        pass
 
     if not request.session.session_key:
         request.session.create()
     sessao_id = request.session.session_key
 
-    horarios_disponiveis = agenda.horarios.filter(
-        status='disponivel'
-    ).order_by('horario')
+    try:
+        horarios_disponiveis = agenda.horarios.filter(
+            status='disponivel'
+        ).order_by('horario')
+    except Exception:
+        horarios_disponiveis = []
 
     return render(
         request,
@@ -2357,7 +2358,7 @@ def agendar_maquiagem(request, pk):
             'horarios_disponiveis': horarios_disponiveis,
             'tipos_servico': AgendamentoMaquiagem.TIPO_CHOICES,
             'aluna': aluna,
-            'alunas_possiveis': alunas_possiveis,  # Passa todas as alunas para o select
+            'alunas_possiveis': alunas_possiveis,
         },
     )
 
