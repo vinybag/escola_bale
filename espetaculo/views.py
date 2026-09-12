@@ -2230,6 +2230,32 @@ def selecionar_evento_checkin(request):
         },
     )
 
+def _buscar_aluna_para_maquiagem(request, espetaculo=None):
+    """
+    Função auxiliar para buscar a aluna correta.
+    Retorna (aluna, erro_msg).
+    Se erro_msg não for None, houve erro.
+    """
+    aluna = None
+
+    # 1. Tenta encontrar aluna direta (usuário é aluna adulta)
+    aluna = Aluna.objects.filter(usuario=request.user).first()
+
+    # 2. Se não encontrou e tem espetaculo, tenta responsável
+    if not aluna and espetaculo:
+        alunas_responsavel = Aluna.objects.filter(
+            responsavel=request.user,
+            ativa=True,
+        ).order_by('nome').first()
+        if alunas_responsavel:
+            aluna = alunas_responsavel
+
+    if not aluna:
+        return None, 'Nenhuma aluna encontrada.'
+
+    return aluna, None
+
+
 def agendar_maquiagem(request, pk):
     espetaculo = get_object_or_404(Espetaculo, pk=pk, ativo=True)
 
@@ -2367,7 +2393,12 @@ def agendar_maquiagem(request, pk):
 def reservar_horario_maquiagem(request, pk, horario_id):
     """Chamado via AJAX/fetch quando a aluna clica no botão do horário."""
     espetaculo = get_object_or_404(Espetaculo, pk=pk, ativo=True)
-    aluna = get_object_or_404(Aluna, usuario=request.user)
+
+    # Busca a aluna (suporta aluna adulta ou responsável)
+    aluna, erro = _buscar_aluna_para_maquiagem(request, espetaculo)
+    if erro:
+        return JsonResponse({'ok': False, 'erro': erro}, status=403)
+
     horario = get_object_or_404(
         HorarioMaquiagem,
         pk=horario_id,
@@ -2410,7 +2441,13 @@ def reservar_horario_maquiagem(request, pk, horario_id):
 @require_POST
 def confirmar_agendamento_maquiagem(request, pk, horario_id):
     espetaculo = get_object_or_404(Espetaculo, pk=pk, ativo=True)
-    aluna = get_object_or_404(Aluna, usuario=request.user)
+
+    # Busca a aluna (suporta aluna adulta ou responsável)
+    aluna, erro = _buscar_aluna_para_maquiagem(request, espetaculo)
+    if erro:
+        messages.error(request, erro)
+        return redirect('espetaculo:agendar_maquiagem', pk=pk)
+
     tipo_servico = request.POST.get('tipo_servico')
 
     if tipo_servico not in dict(AgendamentoMaquiagem.TIPO_CHOICES):
@@ -2443,13 +2480,4 @@ def confirmar_agendamento_maquiagem(request, pk, horario_id):
     return redirect(
         'espetaculo:agendamento_maquiagem_sucesso',
         agendamento_id=agendamento.id,
-    )
-
-
-def agendamento_maquiagem_sucesso(request, agendamento_id):
-    agendamento = get_object_or_404(AgendamentoMaquiagem, pk=agendamento_id)
-    return render(
-        request,
-        'espetaculo/agendamento_maquiagem_sucesso.html',
-        {'agendamento': agendamento},
     )
