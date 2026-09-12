@@ -66,9 +66,9 @@
                     {% endif %}
 
                     <p style="color: #666; margin: 0 0 0.5rem 0;">
-                        📅 {{ espetaculo.data_apresentacao|date:"d/m/Y" }} às {{ espetaculo.data_apresentacao|date:"H:i" }}
+                        {{ espetaculo.data_apresentacao|date:"d/m/Y" }} às {{ espetaculo.data_apresentacao|date:"H:i" }}
                     </p>
-                    <p style="color: #666; margin: 0 0 1rem 0;">📍 {{ espetaculo.local }}</p>
+                    <p style="color: #666; margin: 0 0 1rem 0;"> {{ espetaculo.local }}</p>
 
                     <p style="color: #555; margin: 0 0 1.5rem 0; line-height: 1.6; flex: 1;">
                         {{ espetaculo.descricao|truncatechars:150 }}
