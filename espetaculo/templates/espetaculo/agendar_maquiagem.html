@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load tz %}
 
 {% block title %}Agendar Maquiagem - {{ espetaculo.titulo }}{% endblock %}
 
@@ -241,8 +242,8 @@
                 {% if aluna.pk == aluna_opcao.pk %}selected{% endif %}
             >
                 {{ aluna_opcao.nome }}
-                {% if aluna_opcao.turma %}
-                    - Turma {{ aluna_opcao.turma.nome }}
+                {% if aluna_opcao.turmas.first %}
+                    - Turma {{ aluna_opcao.turmas.first.nome }}
                 {% endif %}
             </option>
             {% endfor %}
@@ -276,10 +277,10 @@
                         class="agmaq-horario-btn"
                         data-horario-id="{{ h.id }}"
                         data-reservar-url="{% url 'espetaculo:reservar_horario_maquiagem' espetaculo.pk h.id %}"
-                        data-horario-texto="{{ h.horario|date:'d/m/Y \à\s H:i' }}"
+                        data-horario-texto="{{ h.horario|timezone:"America/Sao_Paulo"|date:'d/m/Y \à\s H:i' }}"
                         data-duracao="{{ h.duracao_minutos }}"
                     >
-                        {{ h.horario|date:"d/m H:i" }}
+                        {{ h.horario|timezone:"America/Sao_Paulo"|date:"d/m H:i" }}
                     </button>
                 {% endfor %}
             </div>

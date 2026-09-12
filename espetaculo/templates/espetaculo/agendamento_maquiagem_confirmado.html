@@ -1,15 +1,16 @@
 {% extends 'base.html' %}
+{% load tz %}
 
 {% block title %}Agendamento confirmado{% endblock %}
 
 {% block content %}
 <div style="max-width: 600px; margin: 2rem auto; padding: 0 1rem; text-align: center; box-sizing: border-box;">
 
-    <h2 style="color: #4a235f;">Agendamento confirmado! 💄</h2>
+    <h2 style="color: #4a235f;">Agendamento confirmado!</h2>
 
     <div style="background: #ffffff; border: 1px solid #ece3f2; border-radius: 18px; box-shadow: 0 4px 16px rgba(107,45,143,0.07); padding: 1.5rem; margin-top: 1.5rem; text-align: left;">
         <p><strong>Espetáculo:</strong> {{ agendamento.espetaculo.titulo }}</p>
-        <p><strong>Horário:</strong> {{ agendamento.horario.horario|date:"d/m/Y \à\s H:i" }}</p>
+        <p><strong>Horário:</strong> {{ agendamento.horario.horario|timezone:"America/Sao_Paulo"|date:"d/m/Y \à\s H:i" }}</p>
         <p><strong>Serviço:</strong> {{ agendamento.get_tipo_servico_display }}</p>
         <p><strong>Maquiadora:</strong> {{ agendamento.maquiadora }}</p>
     </div>
