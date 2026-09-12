@@ -14,22 +14,21 @@
     }
 
     .agmaq-title {
-        color: #4a235f;
+        color: #2c3e50;
         font-size: 1.6rem;
         margin: 0 0 0.25rem 0;
     }
 
     .agmaq-subtitle {
-        color: #6f6f78;
+        color: #777;
         font-size: 0.95rem;
         margin: 0 0 1.5rem 0;
     }
 
     .agmaq-card {
         background: #ffffff;
-        border: 1px solid #ece3f2;
-        border-radius: 18px;
-        box-shadow: 0 4px 16px rgba(107, 45, 143, 0.07);
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         padding: 1.25rem;
         margin-bottom: 1.25rem;
         box-sizing: border-box;
@@ -37,7 +36,7 @@
 
     .agmaq-card-title {
         margin: 0 0 1rem 0;
-        color: #4a235f;
+        color: #2c3e50;
         font-size: 1.05rem;
     }
 
@@ -51,7 +50,7 @@
     .agmaq-field label {
         font-size: 0.75rem;
         font-weight: 700;
-        color: #7a7280;
+        color: #777;
         text-transform: uppercase;
         letter-spacing: 0.03em;
     }
@@ -60,11 +59,16 @@
         height: 48px;
         padding: 0.6rem 0.7rem;
         border: 1px solid #ddd;
-        border-radius: 8px;
+        border-radius: 5px;
         font-size: 16px;
-        color: #3f3548;
+        color: #2c3e50;
         background: #ffffff;
         appearance: none;
+    }
+
+    .agmaq-field select:focus {
+        outline: none;
+        border-color: #b07a84;
     }
 
     .agmaq-horarios {
@@ -76,10 +80,10 @@
     .agmaq-horario-btn {
         min-height: 44px;
         padding: 0.6rem 1rem;
-        border-radius: 10px;
-        border: 1px solid #ddc9ea;
-        background: #faf7fc;
-        color: #6b2d8f;
+        border-radius: 5px;
+        border: 1px solid #e8c8d2;
+        background: #f7eef1;
+        color: #b07a84;
         font-weight: 700;
         font-size: 0.88rem;
         cursor: pointer;
@@ -88,11 +92,11 @@
 
     .agmaq-horario-btn:hover:not(:disabled) {
         transform: translateY(-1px);
-        box-shadow: 0 6px 16px rgba(107, 45, 143, 0.15);
+        box-shadow: 0 4px 10px rgba(176, 122, 132, 0.2);
     }
 
     .agmaq-horario-btn.selecionado {
-        background: linear-gradient(135deg, #6b2d8f 0%, #7e3aa5 100%);
+        background: #b07a84;
         color: #ffffff;
         border-color: transparent;
     }
@@ -103,7 +107,7 @@
     }
 
     .agmaq-empty {
-        color: #7b7580;
+        color: #999;
         padding: 1rem 0;
     }
 
@@ -128,12 +132,12 @@
     }
 
     .agmaq-resumo-label {
-        color: #7a7280;
+        color: #777;
         font-weight: 600;
     }
 
     .agmaq-resumo-valor {
-        color: #3f3548;
+        color: #2c3e50;
         font-weight: 700;
         text-align: right;
     }
@@ -141,7 +145,7 @@
     .agmaq-timer {
         margin-top: 0.75rem;
         font-size: 0.8rem;
-        color: #a66a00;
+        color: #9a5b16;
         text-align: center;
     }
 
@@ -149,13 +153,18 @@
         width: 100%;
         min-height: 48px;
         margin-top: 1.25rem;
-        background: linear-gradient(135deg, #6b2d8f 0%, #7e3aa5 100%);
+        background: #b07a84;
         color: #ffffff;
         border: none;
-        border-radius: 10px;
+        border-radius: 5px;
         font-size: 0.95rem;
         font-weight: 700;
         cursor: pointer;
+        transition: background 0.15s ease;
+    }
+
+    .agmaq-btn-confirmar:hover:not(:disabled) {
+        background: #9a636d;
     }
 
     .agmaq-btn-confirmar:disabled {
@@ -167,7 +176,7 @@
         background: #fbe4e4;
         color: #a13c3c;
         padding: 0.7rem 1rem;
-        border-radius: 8px;
+        border-radius: 5px;
         font-size: 0.85rem;
         margin-bottom: 1rem;
         display: none;
@@ -179,8 +188,8 @@
 
     /* Seletor de aluna */
     .agmaq-seletor-aluna {
-        background: #f8f5fa;
-        border: 1px solid #ddc9ea;
+        background: #f7eef1;
+        border: 1px solid #e8c8d2;
         border-radius: 10px;
         padding: 1rem;
         margin-bottom: 1.5rem;
@@ -190,7 +199,7 @@
         display: block;
         font-size: 0.8rem;
         font-weight: 700;
-        color: #7a7280;
+        color: #777;
         text-transform: uppercase;
         letter-spacing: 0.03em;
         margin-bottom: 0.5rem;
@@ -202,9 +211,9 @@
         height: 48px;
         padding: 0.6rem 0.7rem;
         border: 1px solid #ddd;
-        border-radius: 8px;
+        border-radius: 5px;
         font-size: 16px;
-        color: #3f3548;
+        color: #2c3e50;
         background: #ffffff;
         appearance: none;
         cursor: pointer;
