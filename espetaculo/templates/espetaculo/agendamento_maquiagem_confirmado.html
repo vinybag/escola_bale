@@ -4,18 +4,169 @@
 {% block title %}Agendamento confirmado{% endblock %}
 
 {% block content %}
-<div style="max-width: 600px; margin: 2rem auto; padding: 0 1rem; text-align: center; box-sizing: border-box;">
 
-    <h2 style="color: #4a235f;">Agendamento confirmado!</h2>
+<style>
+    .agconf-page {
+        max-width: 700px;
+        margin: 0 auto;
+        padding: 1.5rem 1rem 3rem;
+        box-sizing: border-box;
+        text-align: center;
+    }
 
-    <div style="background: #ffffff; border: 1px solid #ece3f2; border-radius: 18px; box-shadow: 0 4px 16px rgba(107,45,143,0.07); padding: 1.5rem; margin-top: 1.5rem; text-align: left;">
-        <p><strong>Espetáculo:</strong> {{ agendamento.espetaculo.titulo }}</p>
-        <p><strong>Horário:</strong> {{ agendamento.horario.horario|timezone:"America/Sao_Paulo"|date:"d/m/Y \à\s H:i" }}</p>
-        <p><strong>Serviço:</strong> {{ agendamento.get_tipo_servico_display }}</p>
-        <p><strong>Maquiadora:</strong> {{ agendamento.maquiadora }}</p>
-    </div>
+    .agconf-title {
+        color: #2c3e50;
+        font-size: 1.6rem;
+        margin: 0 0 0.5rem 0;
+    }
 
-    <a href="{% url 'espetaculo:lista_publica' %}" style="display: inline-block; margin-top: 1.5rem; color: #6b2d8f; font-weight: 700; text-decoration: none;">
+    .agconf-subtitle {
+        color: #777;
+        font-size: 0.95rem;
+        margin: 0 0 1.5rem 0;
+    }
+
+    .agconf-lista {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        text-align: left;
+    }
+
+    .agconf-card {
+        background: #ffffff;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        padding: 1.25rem;
+        box-sizing: border-box;
+        max-width: 100%;
+    }
+
+    .agconf-card.atual {
+        border: 2px solid #b07a84;
+    }
+
+    .agconf-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 0.85rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid #f1ebf6;
+    }
+
+    .agconf-aluna-nome {
+        color: #2c3e50;
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin: 0;
+        word-break: break-word;
+    }
+
+    .agconf-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.65rem;
+        border-radius: 999px;
+        background: #f7eef1;
+        color: #b07a84;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        white-space: nowrap;
+    }
+
+    .agconf-linha {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding: 0.4rem 0;
+        font-size: 0.92rem;
+        flex-wrap: wrap;
+    }
+
+    .agconf-label {
+        color: #777;
+        font-weight: 600;
+    }
+
+    .agconf-valor {
+        color: #2c3e50;
+        font-weight: 500;
+        text-align: right;
+    }
+
+    .agconf-empty {
+        color: #999;
+        padding: 2rem 1rem;
+        background: #ffffff;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .agconf-voltar {
+        display: inline-block;
+        margin-top: 1.75rem;
+        color: #b07a84;
+        font-weight: 700;
+        text-decoration: none;
+    }
+
+    .agconf-voltar:hover {
+        text-decoration: underline;
+    }
+
+    @media (max-width: 480px) {
+        .agconf-linha {
+            flex-direction: column;
+            gap: 0.15rem;
+        }
+
+        .agconf-valor {
+            text-align: left;
+        }
+    }
+</style>
+
+<div class="agconf-page">
+
+    <h2 class="agconf-title">Agendamento confirmado!</h2>
+    <p class="agconf-subtitle">{{ espetaculo.titulo }}</p>
+
+    {% if agendamentos %}
+        <div class="agconf-lista">
+            {% for ag in agendamentos %}
+                <div class="agconf-card {% if ag.pk == agendamento_atual.pk %}atual{% endif %}">
+                    <div class="agconf-card-header">
+                        <p class="agconf-aluna-nome">{{ ag.aluna.nome }}</p>
+                        {% if ag.pk == agendamento_atual.pk and ag.criado_em >= limite_recente %}
+                            <span class="agconf-badge">Confirmado agora</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="agconf-linha">
+                        <span class="agconf-label">Horário</span>
+                        <span class="agconf-valor">{{ ag.horario.horario|timezone:"America/Sao_Paulo"|date:"d/m/Y \à\s H:i" }}</span>
+                    </div>
+                    <div class="agconf-linha">
+                        <span class="agconf-label">Serviço</span>
+                        <span class="agconf-valor">{{ ag.get_tipo_servico_display }}</span>
+                    </div>
+                    <div class="agconf-linha">
+                        <span class="agconf-label">Maquiadora</span>
+                        <span class="agconf-valor">{{ ag.maquiadora }}</span>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="agconf-empty">Nenhum agendamento encontrado.</div>
+    {% endif %}
+
+    <a href="{% url 'espetaculo:lista_publica' %}" class="agconf-voltar">
         Voltar aos espetáculos
     </a>
 </div>

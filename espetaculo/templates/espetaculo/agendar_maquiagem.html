@@ -285,6 +285,7 @@
                         type="button"
                         class="agmaq-horario-btn"
                         data-horario-id="{{ h.id }}"
+                        data-aluna-id="{{ aluna.pk }}"
                         data-reservar-url="{% url 'espetaculo:reservar_horario_maquiagem' espetaculo.pk h.id %}"
                         data-horario-texto="{{ h.horario|timezone:"America/Sao_Paulo"|date:'d/m/Y \à\s H:i' }}"
                         data-duracao="{{ h.duracao_minutos }}"
@@ -325,6 +326,7 @@
         >
             {% csrf_token %}
             <input type="hidden" name="tipo_servico" id="agmaq-input-tipo">
+            <input type="hidden" name="aluna_id" value="{{ aluna.pk }}">
             <button type="submit" class="agmaq-btn-confirmar" id="agmaq-btn-confirmar">
                 Confirmar agendamento
             </button>
@@ -394,6 +396,10 @@ document.addEventListener('DOMContentLoaded', function () {
             limparErro();
 
             const url = botao.dataset.reservarUrl;
+            const alunaId = botao.dataset.alunaId;
+
+            const formData = new FormData();
+            formData.append('aluna_id', alunaId);
 
             fetch(url, {
                 method: 'POST',
@@ -401,6 +407,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 headers: {
                     'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
                 },
+                body: formData,
             })
                 .then(function (response) {
                     return response.json().then(function (dados) {

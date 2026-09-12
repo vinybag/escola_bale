@@ -2230,31 +2230,48 @@ def selecionar_evento_checkin(request):
         },
     )
 
-def _buscar_aluna_para_maquiagem(request, espetaculo=None):
+def _buscar_aluna_para_maquiagem(request, espetaculo=None, aluna_id=None):
     """
     Função auxiliar para buscar a aluna correta.
+    Se aluna_id for informado, valida que essa aluna pertence
+    ao usuário logado (como aluna adulta ou como responsável).
     Retorna (aluna, turma_aluna, erro_msg).
-    Se erro_msg não for None, houve erro.
     """
-    aluna = None
-    turma_aluna = None
+    alunas_possiveis = []
 
-    # 1. Tenta encontrar aluna direta (usuário é aluna adulta)
-    aluna = Aluna.objects.filter(usuario=request.user).first()
+    aluna_usuario = Aluna.objects.filter(usuario=request.user).first()
+    if aluna_usuario:
+        alunas_possiveis.append(aluna_usuario)
 
-    # 2. Se não encontrou e tem espetaculo, tenta responsável
-    if not aluna and espetaculo:
-        alunas_responsavel = Aluna.objects.filter(
-            responsavel=request.user,
-            ativa=True,
-        ).order_by('nome').first()
-        if alunas_responsavel:
-            aluna = alunas_responsavel
+    alunas_responsavel = Aluna.objects.filter(
+        responsavel=request.user,
+        ativa=True,
+    ).order_by('nome')
 
-    if not aluna:
+    for aluna_resp in alunas_responsavel:
+        if aluna_usuario and aluna_resp.pk == aluna_usuario.pk:
+            continue
+        alunas_possiveis.append(aluna_resp)
+
+    alunas_possiveis = list(dict.fromkeys(alunas_possiveis))
+
+    if not alunas_possiveis:
         return None, None, 'Nenhuma aluna encontrada.'
 
-    # Pega a primeira turma da aluna (já que é ManyToMany)
+    aluna = None
+
+    if aluna_id:
+        try:
+            aluna_id = int(aluna_id)
+            aluna = next((a for a in alunas_possiveis if a.pk == aluna_id), None)
+        except (TypeError, ValueError):
+            aluna = None
+
+        if not aluna:
+            return None, None, 'Aluna inválida para este usuário.'
+    else:
+        aluna = alunas_possiveis[0]
+
     if aluna.turmas.exists():
         turma_aluna = aluna.turmas.first()
     else:
@@ -2270,135 +2287,69 @@ def agendar_maquiagem(request, pk):
         messages.error(request, 'Você precisa estar logada para agendar.')
         return redirect('espetaculo:evento_detalhe_publico', pk=espetaculo.pk)
 
-    # Coleta todas as alunas que este usuário pode agendar
     alunas_possiveis = []
 
-    # 1. Se o usuário for aluna adulta (tem Aluna com seu usuario)
-    try:
-        aluna_usuario = Aluna.objects.filter(usuario=request.user).first()
-        if aluna_usuario:
-            alunas_possiveis.append(aluna_usuario)
-    except Exception:
-        aluna_usuario = None
+    aluna_usuario = Aluna.objects.filter(usuario=request.user).first()
+    if aluna_usuario:
+        alunas_possiveis.append(aluna_usuario)
 
-    # 2. Se o usuário for responsável, pega todas as alunas vinculadas a ele
-    try:
-        alunas_responsavel = Aluna.objects.filter(
-            responsavel=request.user,
-            ativa=True,
-        ).order_by('nome')
+    alunas_responsavel = Aluna.objects.filter(
+        responsavel=request.user,
+        ativa=True,
+    ).order_by('nome')
 
-        for aluna_resp in alunas_responsavel:
-            # Evita duplicar se a responsável também for aluna e já estiver na lista
-            if aluna_usuario and aluna_resp.pk == aluna_usuario.pk:
-                continue
-            alunas_possiveis.append(aluna_resp)
-    except Exception:
-        pass
+    for aluna_resp in alunas_responsavel:
+        if aluna_usuario and aluna_resp.pk == aluna_usuario.pk:
+            continue
+        alunas_possiveis.append(aluna_resp)
 
-    # Remove duplicatas (caso a mesma aluna esteja em ambas as listas)
     alunas_possiveis = list(dict.fromkeys(alunas_possiveis))
 
-    # Se não tem nenhuma aluna, erro
     if not alunas_possiveis:
-        messages.error(
-            request,
-            'Nenhuma aluna encontrada para agendar maquiagem.'
-        )
+        messages.error(request, 'Nenhuma aluna encontrada para agendar maquiagem.')
         return redirect('espetaculo:evento_detalhe_publico', pk=espetaculo.pk)
 
-    # Verifica se o usuário já selecionou uma aluna via GET (?aluna_id=X)
+    agendamentos_por_aluna = {
+        a.aluna_id: a
+        for a in AgendamentoMaquiagem.objects.filter(
+            aluna__in=alunas_possiveis,
+            horario__agenda__espetaculo=espetaculo,
+        ).select_related('horario')
+    }
+
     aluna_id_selecionado = request.GET.get('aluna_id')
     aluna = None
+    selecao_explicita = False
 
     if aluna_id_selecionado:
         try:
             aluna_id_selecionado = int(aluna_id_selecionado)
-            # Garante que a aluna selecionada está na lista de possíveis
             aluna = next(
                 (a for a in alunas_possiveis if a.pk == aluna_id_selecionado),
                 None
             )
+            if aluna:
+                selecao_explicita = True
         except (TypeError, ValueError):
             pass
 
-    # Se não selecionou ou só tem 1 aluna, pega a primeira
-    if not aluna and len(alunas_possiveis) == 1:
-        aluna = alunas_possiveis[0]
-
-    # Se tem múltiplas alunas e nenhuma foi selecionada, usa a primeira mas avisa
-    if not aluna and len(alunas_possiveis) > 1:
-        aluna = alunas_possiveis[0]
-        messages.info(
-            request,
-            f'Você pode agendar para mais de uma aluna. Selecione qual deseja agendar agora.'
+    if not aluna:
+        aluna = next(
+            (a for a in alunas_possiveis if a.pk not in agendamentos_por_aluna),
+            alunas_possiveis[0],
         )
 
-    # Pega a primeira turma da aluna (já que é ManyToMany)
     turma_aluna = aluna.turmas.first() if aluna.turmas.exists() else None
 
-    # DEBUG: imprime informações no terminal
-    print(f"\n=== DEBUG AGENDAMENTO MAQUIAGEM ===")
-    print(f"Aluna selecionada: {aluna.nome}")
-    print(f"Aluna turmas: {list(aluna.turmas.all())}")
-    print(f"Aluna turma principal: {turma_aluna}")
-    print(f"Aluna turma ID: {turma_aluna.id if turma_aluna else None}")
-    print(f"Espetáculo: {espetaculo.titulo}")
-    print(f"Espetáculo ID: {espetaculo.id}")
+    if not turma_aluna:
+        messages.error(request, f'{aluna.nome} não tem nenhuma turma vinculada.')
+        return redirect('espetaculo:evento_detalhe_publico', pk=espetaculo.pk)
 
-    # Busca a agenda de maquiagem para a turma da aluna
-    try:
-        if not turma_aluna:
-            print(f"Aluna não tem nenhuma turma vinculada!")
-            agenda = None
-        else:
-            agenda = AgendaMaquiagemTurma.objects.filter(
-                espetaculo=espetaculo,
-                turma=turma_aluna,
-                ativo=True,
-            ).first()
-            
-            print(f"Agenda encontrada: {agenda}")
-            
-            if agenda:
-                print(f"Agenda ID: {agenda.id}")
-                print(f"Agenda.turma: {agenda.turma}")
-                print(f"Agenda.espetaculo: {agenda.espetaculo}")
-                print(f"Agenda.ativo: {agenda.ativo}")
-                print(f"Agenda.maquiadora: {agenda.maquiadora}")
-                
-                total_horarios = agenda.horarios.count()
-                print(f"Total horários (todos): {total_horarios}")
-                
-                horarios_disponiveis_query = agenda.horarios.filter(status='disponivel')
-                print(f"Horários disponíveis (query): {horarios_disponiveis_query.count()}")
-                
-                # Lista os horários disponíveis
-                for h in horarios_disponiveis_query:
-                    print(f"  - Horário ID {h.id}: {h.horario} (status: {h.status})")
-                
-                # Se não tem horários disponíveis, mostra todos os horários
-                if horarios_disponiveis_query.count() == 0 and total_horarios > 0:
-                    print(f"Nenhum horário disponível, mas existem {total_horarios} horários no total:")
-                    for h in agenda.horarios.all():
-                        print(f"  - Horário ID {h.id}: {h.horario} (status: {h.status})")
-                
-            else:
-                # Tenta encontrar qualquer agenda para este espetáculo
-                agendas_do_espetaculo = AgendaMaquiagemTurma.objects.filter(
-                    espetaculo=espetaculo
-                )
-                print(f"Outras agendas neste espetáculo:")
-                for a in agendas_do_espetaculo:
-                    print(f"  - Agenda ID {a.id}: turma={a.turma.nome}, ativo={a.ativo}")
-            
-    except Exception as e:
-        print(f"ERRO ao buscar agenda: {e}")
-        import traceback
-        traceback.print_exc()
-        agenda = None
-
-    print(f"=====================================\n")
+    agenda = AgendaMaquiagemTurma.objects.filter(
+        espetaculo=espetaculo,
+        turma=turma_aluna,
+        ativo=True,
+    ).first()
 
     if not agenda:
         messages.error(
@@ -2407,14 +2358,7 @@ def agendar_maquiagem(request, pk):
         )
         return redirect('espetaculo:evento_detalhe_publico', pk=espetaculo.pk)
 
-    # Já tem agendamento pra este espetáculo?
-    try:
-        agendamento_existente = AgendamentoMaquiagem.objects.filter(
-            aluna=aluna,
-            horario__agenda__espetaculo=espetaculo,
-        ).select_related('horario').first()
-    except Exception:
-        agendamento_existente = None
+    agendamento_existente = agendamentos_por_aluna.get(aluna.pk)
 
     if agendamento_existente:
         return redirect(
@@ -2422,21 +2366,22 @@ def agendar_maquiagem(request, pk):
             agendamento_id=agendamento_existente.id,
         )
 
-    try:
-        HorarioMaquiagem.liberar_expirados(agenda=agenda)
-    except Exception:
-        pass
+    # Só chegamos aqui se vamos MOSTRAR o formulário de verdade —
+    # aí sim faz sentido avisar sobre múltiplas alunas.
+    if len(alunas_possiveis) > 1 and not selecao_explicita:
+        messages.info(
+            request,
+            'Você pode agendar para mais de uma aluna. Selecione qual deseja agendar acima.'
+        )
+
+    HorarioMaquiagem.liberar_expirados(agenda=agenda)
 
     if not request.session.session_key:
         request.session.create()
-    sessao_id = request.session.session_key
 
-    try:
-        horarios_disponiveis = agenda.horarios.filter(
-            status='disponivel'
-        ).order_by('horario')
-    except Exception:
-        horarios_disponiveis = []
+    horarios_disponiveis = agenda.horarios.filter(
+        status='disponivel'
+    ).order_by('horario')
 
     return render(
         request,
@@ -2454,14 +2399,12 @@ def agendar_maquiagem(request, pk):
 
 @require_POST
 def reservar_horario_maquiagem(request, pk, horario_id):
-    """Chamado via AJAX/fetch quando a aluna clica no botão do horário."""
     from django.utils import timezone as django_timezone
-    import pytz
-    
+
     espetaculo = get_object_or_404(Espetaculo, pk=pk, ativo=True)
 
-    # Busca a aluna (suporta aluna adulta ou responsável)
-    aluna, turma_aluna, erro = _buscar_aluna_para_maquiagem(request, espetaculo)
+    aluna_id = request.POST.get('aluna_id') or request.GET.get('aluna_id')
+    aluna, turma_aluna, erro = _buscar_aluna_para_maquiagem(request, espetaculo, aluna_id=aluna_id)
     if erro:
         return JsonResponse({'ok': False, 'erro': erro}, status=403)
 
@@ -2479,7 +2422,6 @@ def reservar_horario_maquiagem(request, pk, horario_id):
     HorarioMaquiagem.liberar_expirados(agenda=horario.agenda)
     horario.refresh_from_db()
 
-    # já é minha própria reserva? deixa passar (ex: recarregou a página)
     ja_e_minha = (
         horario.status == 'reservado_temporario'
         and horario.reservado_por_sessao == sessao_id
@@ -2494,14 +2436,12 @@ def reservar_horario_maquiagem(request, pk, horario_id):
     if not ja_e_minha:
         horario.reservar_temporariamente(sessao_id)
 
-    # Converte para o fuso de Brasília antes de formatar
     horario_local = django_timezone.localtime(horario.horario)
-    horario_formatado = horario_local.strftime('%d/%m/%Y às %H:%M')
 
     return JsonResponse({
         'ok': True,
         'horario_id': horario.id,
-        'horario_formatado': horario_formatado,
+        'horario_formatado': horario_local.strftime('%d/%m/%Y às %H:%M'),
         'duracao_minutos': horario.duracao_minutos,
         'maquiadora': horario.agenda.maquiadora,
         'expira_em_segundos': 15 * 60,
@@ -2512,8 +2452,8 @@ def reservar_horario_maquiagem(request, pk, horario_id):
 def confirmar_agendamento_maquiagem(request, pk, horario_id):
     espetaculo = get_object_or_404(Espetaculo, pk=pk, ativo=True)
 
-    # Busca a aluna (suporta aluna adulta ou responsável)
-    aluna, turma_aluna, erro = _buscar_aluna_para_maquiagem(request, espetaculo)
+    aluna_id = request.POST.get('aluna_id')
+    aluna, turma_aluna, erro = _buscar_aluna_para_maquiagem(request, espetaculo, aluna_id=aluna_id)
     if erro:
         messages.error(request, erro)
         return redirect('espetaculo:agendar_maquiagem', pk=pk)
@@ -2553,9 +2493,58 @@ def confirmar_agendamento_maquiagem(request, pk, horario_id):
     )
 
 def agendamento_maquiagem_sucesso(request, agendamento_id):
-    agendamento = get_object_or_404(AgendamentoMaquiagem, pk=agendamento_id)
+    agendamento = get_object_or_404(
+        AgendamentoMaquiagem.objects.select_related(
+            'horario', 'horario__agenda', 'aluna'
+        ),
+        pk=agendamento_id,
+    )
+
+    espetaculo = agendamento.espetaculo
+
+    agendamentos = [agendamento]
+
+    if request.user.is_authenticated:
+        alunas_possiveis = []
+
+        aluna_usuario = Aluna.objects.filter(usuario=request.user).first()
+        if aluna_usuario:
+            alunas_possiveis.append(aluna_usuario)
+
+        alunas_responsavel = Aluna.objects.filter(
+            responsavel=request.user,
+            ativa=True,
+        )
+        for aluna_resp in alunas_responsavel:
+            if aluna_usuario and aluna_resp.pk == aluna_usuario.pk:
+                continue
+            alunas_possiveis.append(aluna_resp)
+
+        alunas_possiveis = list(dict.fromkeys(alunas_possiveis))
+
+        if alunas_possiveis:
+            agendamentos = list(
+                AgendamentoMaquiagem.objects.filter(
+                    aluna__in=alunas_possiveis,
+                    horario__agenda__espetaculo=espetaculo,
+                )
+                .select_related('horario', 'horario__agenda', 'aluna')
+                .order_by('horario__horario')
+            )
+
+            if agendamento not in agendamentos:
+                agendamentos.append(agendamento)
+                agendamentos.sort(key=lambda a: a.horario.horario)
+
+    limite_recente = timezone.now() - timezone.timedelta(minutes=5)
+
     return render(
         request,
-        'espetaculo/agendamento_maquiagem_confirmado.html',  # ← nome correto
-        {'agendamento': agendamento},
+        'espetaculo/agendamento_maquiagem_confirmado.html',
+        {
+            'espetaculo': espetaculo,
+            'agendamento_atual': agendamento,
+            'agendamentos': agendamentos,
+            'limite_recente': limite_recente,
+        },
     )
