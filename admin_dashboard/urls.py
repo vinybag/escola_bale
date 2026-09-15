@@ -54,6 +54,7 @@ urlpatterns = [
     path('pedidos-ingresso/<int:pedido_id>/cancelar/',views.pedido_ingresso_cancelar,name='pedido_ingresso_cancelar',),
     path('espetaculos/<int:pk>/mapa-assentos/',views.espetaculo_mapa_assentos,name='espetaculo_mapa_assentos'),
     path('espetaculos/<int:pk>/assentos/',views.espetaculo_assentos_gerenciar,name='espetaculo_assentos_gerenciar'),
+    path('espetaculos/<int:pk>/gerar-ingresso-manual/',views.espetaculo_gerar_ingresso_manual,name='espetaculo_gerar_ingresso_manual',),
     path('espetaculos/<int:pk>/assentos/<int:assento_id>/acao/',views.espetaculo_assento_acao,name='espetaculo_assento_acao'),
     path('espetaculos/participacoes/<int:pk>/cobrancas/', views.participacao_cobrancas, name='participacao_cobrancas'),
     path('espetaculos/cobrancas/<int:pk>/enviar-asaas/', views.cobranca_espetaculo_enviar_asaas, name='cobranca_espetaculo_enviar_asaas'),

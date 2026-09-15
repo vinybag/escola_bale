@@ -1,0 +1,438 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Gerar Ingresso Manual - {{ espetaculo.titulo }}{% endblock %}
+
+{% block content %}
+<style>
+    .ger-ing-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 2rem;
+    }
+
+    .ger-ing-shell {
+        width: 100%;
+        max-width: 780px;
+    }
+
+    .ger-ing-main {
+        overflow: hidden;
+        border: 1px solid #ebe3f1;
+        border-radius: 18px;
+        background: #fff;
+        box-shadow: 0 8px 24px rgba(107, 45, 143, 0.08);
+    }
+
+    .ger-ing-top {
+        padding: 1.5rem 2rem;
+        border-bottom: 1px solid #ece3f2;
+        background: linear-gradient(135deg, #fff 0%, #f5eff9 100%);
+    }
+
+    .ger-ing-body {
+        display: grid;
+        gap: 1.5rem;
+        padding: 2rem;
+        background: #fcfbfd;
+    }
+
+    .ger-ing-section {
+        padding: 1.5rem;
+        border: 1px solid #ece3f2;
+        border-radius: 16px;
+        background: #fff;
+    }
+
+    .ger-ing-section h3 {
+        margin: 0 0 0.35rem;
+        color: #4a235f;
+        font-size: 1rem;
+        font-weight: 700;
+    }
+
+    .ger-ing-section p.ger-ing-help {
+        margin: 0 0 1rem;
+        color: #7b7580;
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+
+    .ger-ing-field {
+        margin-bottom: 1rem;
+    }
+
+    .ger-ing-field:last-child {
+        margin-bottom: 0;
+    }
+
+    .ger-ing-field label {
+        display: block;
+        margin-bottom: 0.45rem;
+        color: #44384c;
+        font-weight: 600;
+        font-size: 0.92rem;
+    }
+
+    .ger-ing-input {
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        padding: 0.82rem 0.95rem;
+        border: 1px solid #d9cbe4;
+        border-radius: 10px;
+        font-size: 0.95rem;
+        background: #fff;
+        color: #2f2438;
+        font-family: inherit;
+    }
+
+    .ger-ing-input:focus {
+        outline: none;
+        border-color: #6b2d8f;
+        box-shadow: 0 0 0 3px rgba(107, 45, 143, 0.08);
+    }
+
+    .ger-ing-row {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+    }
+
+    .ger-ing-tipo-registro {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+    }
+
+    .ger-ing-tipo-card {
+        position: relative;
+        padding: 1rem 1.1rem;
+        border: 1.5px solid #e0d4ea;
+        border-radius: 12px;
+        background: #fcfbfd;
+        cursor: pointer;
+        transition: 0.15s ease;
+    }
+
+    .ger-ing-tipo-card:hover {
+        border-color: #b98fd0;
+    }
+
+    .ger-ing-tipo-card input {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        accent-color: #6b2d8f;
+        width: 18px;
+        height: 18px;
+    }
+
+    .ger-ing-tipo-card strong {
+        display: block;
+        margin-bottom: 0.25rem;
+        color: #4a235f;
+        font-size: 0.95rem;
+    }
+
+    .ger-ing-tipo-card span {
+        display: block;
+        color: #7b7580;
+        font-size: 0.85rem;
+        line-height: 1.4;
+    }
+
+    .ger-ing-tipo-card.is-selected {
+        border-color: #6b2d8f;
+        background: #f6effa;
+    }
+
+    .ger-ing-assentos {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 0.6rem;
+        max-height: 320px;
+        overflow-y: auto;
+        padding: 0.25rem;
+    }
+
+    .ger-ing-assento-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.7rem 0.8rem;
+        border: 1px solid #e0d4ea;
+        border-radius: 10px;
+        background: #fcfbfd;
+        font-size: 0.88rem;
+        color: #44384c;
+        cursor: pointer;
+    }
+
+    .ger-ing-assento-item:has(input:checked) {
+        border-color: #6b2d8f;
+        background: #f6effa;
+        font-weight: 700;
+    }
+
+    .ger-ing-assento-item input {
+        accent-color: #6b2d8f;
+        width: 16px;
+        height: 16px;
+        flex-shrink: 0;
+    }
+
+    .ger-ing-assento-badge {
+        display: inline-block;
+        margin-left: auto;
+        padding: 0.1rem 0.5rem;
+        border-radius: 999px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+    }
+
+    .ger-ing-badge-disponivel {
+        background: #eafaf1;
+        color: #1e8449;
+    }
+
+    .ger-ing-badge-bloqueado {
+        background: #f4eafa;
+        color: #6c3483;
+    }
+
+    .ger-ing-vazio {
+        padding: 1rem;
+        border: 1px dashed #d9cbe4;
+        border-radius: 12px;
+        color: #7b7580;
+        font-size: 0.9rem;
+        text-align: center;
+    }
+
+    .ger-ing-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .ger-ing-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.85rem 1.5rem;
+        border: none;
+        border-radius: 10px;
+        font-weight: 700;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .ger-ing-btn-primary {
+        background: linear-gradient(135deg, #6b2d8f 0%, #7e3aa5 100%);
+        color: #fff;
+        box-shadow: 0 8px 18px rgba(107, 45, 143, 0.18);
+    }
+
+    .ger-ing-btn-light {
+        border: 1px solid #ddd;
+        background: #f3f3f3;
+        color: #444;
+    }
+
+    @media (max-width: 640px) {
+        .ger-ing-header { align-items: stretch; }
+        .ger-ing-header > div, .ger-ing-header > a { width: 100%; box-sizing: border-box; text-align: center; }
+        .ger-ing-top, .ger-ing-body, .ger-ing-section { padding: 1.2rem; }
+        .ger-ing-row, .ger-ing-tipo-registro { grid-template-columns: 1fr; }
+        .ger-ing-footer a, .ger-ing-footer button { width: 100%; box-sizing: border-box; text-align: center; }
+    }
+</style>
+
+<div class="ger-ing-header">
+    <div>
+        <h2 style="margin: 0 0 0.35rem; color: #4a235f;">Gerar ingresso manual</h2>
+        <p style="margin: 0; color: #6f6f78;">{{ espetaculo.titulo }}</p>
+    </div>
+
+    {% if espetaculo.venda_com_assentos_numerados %}
+        <a href="{% url 'admin_dashboard:espetaculo_assentos_gerenciar' espetaculo.pk %}" class="ger-ing-btn ger-ing-btn-light">
+            ← Voltar para assentos
+        </a>
+    {% else %}
+        <a href="{% url 'admin_dashboard:espetaculo_editar' espetaculo.pk %}" class="ger-ing-btn ger-ing-btn-light">
+            ← Voltar para o evento
+        </a>
+    {% endif %}
+</div>
+
+<div class="ger-ing-shell">
+    <div class="ger-ing-main">
+        <div class="ger-ing-top">
+            <h3 style="margin: 0 0 0.35rem; color: #4a235f; font-size: 1.15rem;">Dados do ingresso</h3>
+            <p style="margin: 0; color: #7a7280; font-size: 0.95rem;">
+                Use quando a pessoa não conseguiu comprar pelo site. O ingresso é gerado
+                imediatamente, sem passar pelo Asaas.
+            </p>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="ger-ing-body">
+                <section class="ger-ing-section">
+                    <h3>Dados do comprador</h3>
+
+                    <div class="ger-ing-field">
+                        <label for="nome_completo">Nome completo *</label>
+                        <input type="text" id="nome_completo" name="nome_completo" class="ger-ing-input" required>
+                    </div>
+
+                    <div class="ger-ing-row">
+                        <div class="ger-ing-field">
+                            <label for="whatsapp">WhatsApp *</label>
+                            <input type="text" id="whatsapp" name="whatsapp" class="ger-ing-input" required>
+                        </div>
+
+                        <div class="ger-ing-field">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" name="email" class="ger-ing-input">
+                        </div>
+                    </div>
+
+                    <div class="ger-ing-field">
+                        <label for="cpf">CPF</label>
+                        <input type="text" id="cpf" name="cpf" class="ger-ing-input" placeholder="Opcional">
+                    </div>
+                </section>
+
+                <section class="ger-ing-section">
+                    <h3>Tipo de registro</h3>
+                    <p class="ger-ing-help">
+                        Define se o ingresso fica registrado como pago por outro meio
+                        (dinheiro, transferência, PIX manual) ou como cortesia.
+                    </p>
+
+                    <div class="ger-ing-tipo-registro">
+                        <label class="ger-ing-tipo-card" id="cardPagoManual">
+                            <input type="radio" name="tipo_registro" value="pago_manual" checked>
+                            <strong>Já pagou</strong>
+                            <span>Registra o valor recebido por outro meio de pagamento.</span>
+                        </label>
+
+                        <label class="ger-ing-tipo-card" id="cardCortesia">
+                            <input type="radio" name="tipo_registro" value="cortesia">
+                            <strong>Cortesia</strong>
+                            <span>Ingresso gratuito, sem cobrança.</span>
+                        </label>
+                    </div>
+
+                    <div class="ger-ing-field" id="valorUnitarioContainer" style="margin-top: 1rem;">
+                        <label for="valor_unitario">Valor unitário (R$)</label>
+                        <input
+                            type="number"
+                            id="valor_unitario"
+                            name="valor_unitario"
+                            class="ger-ing-input"
+                            step="0.01"
+                            min="0"
+                            placeholder="{{ espetaculo.preco_ingresso|default:'0.00' }}"
+                        >
+                        <small style="display:block; margin-top:0.4rem; color:#8a8390; font-size:0.85rem;">
+                            Deixe em branco para usar o valor padrão do ingresso
+                            (R$ {{ espetaculo.preco_ingresso|floatformat:2 }}).
+                        </small>
+                    </div>
+                </section>
+
+                {% if espetaculo.venda_com_assentos_numerados %}
+                    <section class="ger-ing-section">
+                        <h3>Assentos</h3>
+                        <p class="ger-ing-help">
+                            Selecione um ou mais assentos disponíveis ou já bloqueados
+                            manualmente por você. A quantidade de ingressos gerados
+                            corresponde à quantidade de assentos selecionados.
+                        </p>
+
+                        {% if assentos_selecionaveis %}
+                            <div class="ger-ing-assentos">
+                                {% for assento in assentos_selecionaveis %}
+                                    <label class="ger-ing-assento-item">
+                                        <input type="checkbox" name="assento_id" value="{{ assento.id }}">
+                                        {{ assento.identificador }}
+                                        <span class="ger-ing-assento-badge {% if assento.status == 'disponivel' %}ger-ing-badge-disponivel{% else %}ger-ing-badge-bloqueado{% endif %}">
+                                            {% if assento.status == 'disponivel' %}Livre{% else %}Bloqueado{% endif %}
+                                        </span>
+                                    </label>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="ger-ing-vazio">
+                                Não há assentos disponíveis ou bloqueados manualmente
+                                para gerar um ingresso neste momento.
+                            </div>
+                        {% endif %}
+                    </section>
+                {% else %}
+                    <section class="ger-ing-section">
+                        <h3>Quantidade</h3>
+
+                        <div class="ger-ing-field">
+                            <label for="quantidade">Quantidade de ingressos *</label>
+                            <input type="number" id="quantidade" name="quantidade" class="ger-ing-input" min="1" value="1" required>
+                        </div>
+                    </section>
+                {% endif %}
+
+                <div class="ger-ing-footer">
+                    {% if espetaculo.venda_com_assentos_numerados %}
+                        <a href="{% url 'admin_dashboard:espetaculo_assentos_gerenciar' espetaculo.pk %}" class="ger-ing-btn ger-ing-btn-light">
+                            Cancelar
+                        </a>
+                    {% else %}
+                        <a href="{% url 'admin_dashboard:espetaculo_editar' espetaculo.pk %}" class="ger-ing-btn ger-ing-btn-light">
+                            Cancelar
+                        </a>
+                    {% endif %}
+
+                    <button type="submit" class="ger-ing-btn ger-ing-btn-primary">
+                        Gerar ingresso
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+(function () {
+    const cardPagoManual = document.getElementById('cardPagoManual');
+    const cardCortesia = document.getElementById('cardCortesia');
+    const valorContainer = document.getElementById('valorUnitarioContainer');
+    const valorInput = document.getElementById('valor_unitario');
+
+    function atualizarSelecao() {
+        const cortesiaMarcada = cardCortesia.querySelector('input').checked;
+
+        cardPagoManual.classList.toggle('is-selected', !cortesiaMarcada);
+        cardCortesia.classList.toggle('is-selected', cortesiaMarcada);
+
+        valorContainer.style.display = cortesiaMarcada ? 'none' : 'block';
+
+        if (cortesiaMarcada) {
+            valorInput.value = '';
+        }
+    }
+
+    cardPagoManual.querySelector('input').addEventListener('change', atualizarSelecao);
+    cardCortesia.querySelector('input').addEventListener('change', atualizarSelecao);
+
+    atualizarSelecao();
+})();
+</script>
+{% endblock %}

@@ -5218,6 +5218,236 @@ def pedido_ingresso_cancelar(request, pedido_id):
         pk=pedido.evento_id,
     )
 
+@login_required
+def espetaculo_gerar_ingresso_manual(request, pk):
+    """
+    Gera um ingresso manualmente pelo admin, para quando a pessoa não
+    conseguiu comprar pelo site (sem login, dificuldade com o site, etc.).
+
+    Não passa pelo Asaas: o pedido já nasce como 'pago'.
+
+    IMPORTANTE: quantidade_gratuita do pedido é sempre 0 aqui, de propósito.
+    O campo `gratuito` do IngressoEvento é usado por
+    quantidade_gratuita_disponivel() (em espetaculo/views.py) para contar
+    quantas gratuidades de aluna ainda restam. Se marcássemos ingressos
+    manuais como gratuito=True, isso reduziria indevidamente a cota de
+    gratuidade das alunas. A natureza "cortesia" de um ingresso manual
+    fica registrada apenas pelo valor_total=0 e pelo external_reference
+    do pedido, nunca pelo campo `gratuito`.
+    """
+    if not request.user.is_staff:
+        return redirect('home')
+
+    from decimal import Decimal, InvalidOperation
+
+    from django.contrib import messages
+    from django.db import transaction
+    from django.shortcuts import get_object_or_404, redirect, render
+    from django.utils import timezone
+
+    from espetaculo.models import (
+        Assento,
+        Espetaculo,
+        MapaAssentos,
+        PedidoIngressoEvento,
+    )
+    from espetaculo.views import gerar_ingressos_do_pedido
+
+    espetaculo = get_object_or_404(Espetaculo, pk=pk)
+
+    mapa = None
+    assentos_selecionaveis = []
+
+    if espetaculo.venda_com_assentos_numerados:
+        mapa = (
+            MapaAssentos.objects
+            .filter(evento=espetaculo)
+            .prefetch_related('assentos')
+            .first()
+        )
+
+        if mapa:
+            assentos_selecionaveis = list(
+                mapa.assentos.filter(
+                    status__in=['disponivel', 'bloqueado_manual']
+                ).order_by('fileira', 'numero')
+            )
+
+    if request.method == 'POST':
+        nome_completo = request.POST.get('nome_completo', '').strip()
+        whatsapp = request.POST.get('whatsapp', '').strip()
+        email = request.POST.get('email', '').strip()
+        cpf = request.POST.get('cpf', '').strip()
+        tipo_registro = request.POST.get('tipo_registro', '')  # 'pago_manual' ou 'cortesia'
+
+        if not nome_completo or not whatsapp:
+            messages.error(request, 'Preencha nome completo e WhatsApp.')
+            return redirect(
+                'admin_dashboard:espetaculo_gerar_ingresso_manual', pk=pk
+            )
+
+        if tipo_registro not in ('pago_manual', 'cortesia'):
+            messages.error(request, 'Selecione o tipo de registro do ingresso.')
+            return redirect(
+                'admin_dashboard:espetaculo_gerar_ingresso_manual', pk=pk
+            )
+
+        assentos_ids_selecionados = []
+        quantidade = 0
+
+        if espetaculo.venda_com_assentos_numerados:
+            assentos_ids_raw = request.POST.getlist('assento_id')
+
+            try:
+                assentos_ids_selecionados = [
+                    int(valor) for valor in assentos_ids_raw
+                ]
+            except (TypeError, ValueError):
+                messages.error(request, 'Assento inválido selecionado.')
+                return redirect(
+                    'admin_dashboard:espetaculo_gerar_ingresso_manual', pk=pk
+                )
+
+            if not assentos_ids_selecionados:
+                messages.error(request, 'Selecione pelo menos um assento.')
+                return redirect(
+                    'admin_dashboard:espetaculo_gerar_ingresso_manual', pk=pk
+                )
+
+            quantidade = len(assentos_ids_selecionados)
+        else:
+            try:
+                quantidade = int(request.POST.get('quantidade', '1'))
+            except (TypeError, ValueError):
+                quantidade = 1
+
+            if quantidade < 1:
+                quantidade = 1
+
+        if tipo_registro == 'cortesia':
+            valor_unitario = Decimal('0.00')
+        else:
+            valor_unitario_raw = request.POST.get('valor_unitario', '').strip()
+
+            try:
+                valor_unitario = (
+                    Decimal(valor_unitario_raw)
+                    if valor_unitario_raw
+                    else (espetaculo.preco_ingresso or Decimal('0.00'))
+                )
+            except InvalidOperation:
+                messages.error(request, 'Valor unitário inválido.')
+                return redirect(
+                    'admin_dashboard:espetaculo_gerar_ingresso_manual', pk=pk
+                )
+
+            if valor_unitario < Decimal('0.00'):
+                messages.error(request, 'O valor unitário não pode ser negativo.')
+                return redirect(
+                    'admin_dashboard:espetaculo_gerar_ingresso_manual', pk=pk
+                )
+
+        valor_total = valor_unitario * quantidade
+        pedido = None
+
+        try:
+            with transaction.atomic():
+                assentos_ids_confirmados = []
+
+                if espetaculo.venda_com_assentos_numerados:
+                    assentos_trava = list(
+                        Assento.objects.select_for_update().filter(
+                            id__in=assentos_ids_selecionados,
+                            mapa__evento=espetaculo,
+                        )
+                    )
+
+                    if len(assentos_trava) != len(assentos_ids_selecionados):
+                        raise ValueError(
+                            'Um ou mais assentos selecionados não existem mais.'
+                        )
+
+                    for assento in assentos_trava:
+                        if assento.status not in ('disponivel', 'bloqueado_manual'):
+                            raise ValueError(
+                                f'O assento {assento.identificador} não está mais '
+                                f'disponível (status atual: '
+                                f'{assento.get_status_display()}). Atualize a '
+                                'página e tente novamente.'
+                            )
+
+                    assentos_ids_confirmados = [
+                        assento.id for assento in assentos_trava
+                    ]
+
+                pedido = PedidoIngressoEvento.objects.create(
+                    evento=espetaculo,
+                    nome_completo=nome_completo,
+                    email=email,
+                    whatsapp=whatsapp,
+                    cpf=cpf,
+                    quantidade=quantidade,
+                    quantidade_gratuita=0,
+                    assentos_ids=assentos_ids_confirmados,
+                    valor_unitario=valor_unitario,
+                    valor_total=valor_total,
+                    status='pago',
+                )
+
+                pedido.data_pagamento = timezone.now()
+                pedido.external_reference = (
+                    f'ingresso_manual_{tipo_registro}_admin:{pedido.id}'
+                )
+                pedido.save(
+                    update_fields=[
+                        'data_pagamento',
+                        'external_reference',
+                        'atualizado_em',
+                    ]
+                )
+
+                gerar_ingressos_do_pedido(
+                    pedido,
+                    assentos_ids=assentos_ids_confirmados,
+                    quantidade_gratuita=0,
+                )
+
+        except ValueError as erro:
+            messages.error(request, str(erro))
+            return redirect(
+                'admin_dashboard:espetaculo_gerar_ingresso_manual', pk=pk
+            )
+        except Exception as erro:
+            import traceback
+            traceback.print_exc()
+            messages.error(request, f'Erro ao gerar ingresso: {erro}')
+            return redirect(
+                'admin_dashboard:espetaculo_gerar_ingresso_manual', pk=pk
+            )
+
+        messages.success(
+            request,
+            f'Ingresso gerado com sucesso para {nome_completo} '
+            f'({quantidade} unidade(s)). Pedido #{pedido.id}.'
+        )
+
+        if espetaculo.venda_com_assentos_numerados:
+            return redirect('admin_dashboard:espetaculo_assentos_gerenciar', pk=pk)
+
+        return redirect('admin_dashboard:espetaculo_gerar_ingresso_manual', pk=pk)
+
+    context = {
+        'espetaculo': espetaculo,
+        'mapa': mapa,
+        'assentos_selecionaveis': assentos_selecionaveis,
+    }
+
+    return render(
+        request,
+        'admin_dashboard/espetaculos/gerar_ingresso_manual.html',
+        context,
+    )
+
 def espetaculo_maquiagens(request, pk):
     espetaculo = get_object_or_404(Espetaculo, pk=pk)
     turmas = Turma.objects.all().order_by('nome')
