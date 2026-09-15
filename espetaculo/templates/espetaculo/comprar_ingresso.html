@@ -26,47 +26,63 @@
             </div>
         {% endif %}
 
+        {% if usuario_logado %}
+            <div style="background: #f3f7f4; border: 1px solid #dcebe0; border-radius: 12px; padding: 1rem 1.1rem; margin-bottom: 1.5rem;">
+                <p style="margin: 0 0 0.3rem 0; color: #2e6b45; font-weight: 700;">
+                    Comprando como {{ nome_completo }}
+                </p>
+                <p style="margin: 0; color: #4f7a5c; font-size: 0.9rem;">
+                    {% if email %}
+                        {{ email }} ·
+                    {% endif %}
+                    Seus dados já cadastrados serão usados no ingresso.
+                </p>
+            </div>
+        {% endif %}
+
         <form method="post">
             {% csrf_token %}
 
             <div style="display: grid; gap: 1rem;">
-                <div>
-                    <label for="nome_completo" style="display: block; margin-bottom: 0.45rem;"><strong>Nome completo *</strong></label>
-                    <input type="text"
-                           name="nome_completo"
-                           id="nome_completo"
-                           required
-                           value="{{ request.POST.nome_completo|default:'' }}"
-                           style="width: 100%; box-sizing: border-box; padding: 0.9rem; border: 1px solid #ddd; border-radius: 8px;">
-                </div>
+                {% if not usuario_logado %}
+                    <div>
+                        <label for="nome_completo" style="display: block; margin-bottom: 0.45rem;"><strong>Nome completo *</strong></label>
+                        <input type="text"
+                               name="nome_completo"
+                               id="nome_completo"
+                               required
+                               value="{{ request.POST.nome_completo|default:'' }}"
+                               style="width: 100%; box-sizing: border-box; padding: 0.9rem; border: 1px solid #ddd; border-radius: 8px;">
+                    </div>
 
-                <div>
-                    <label for="email" style="display: block; margin-bottom: 0.45rem;"><strong>E-mail</strong></label>
-                    <input type="email"
-                           name="email"
-                           id="email"
-                           value="{{ request.POST.email|default:'' }}"
-                           style="width: 100%; box-sizing: border-box; padding: 0.9rem; border: 1px solid #ddd; border-radius: 8px;">
-                </div>
+                    <div>
+                        <label for="email" style="display: block; margin-bottom: 0.45rem;"><strong>E-mail</strong></label>
+                        <input type="email"
+                               name="email"
+                               id="email"
+                               value="{{ request.POST.email|default:'' }}"
+                               style="width: 100%; box-sizing: border-box; padding: 0.9rem; border: 1px solid #ddd; border-radius: 8px;">
+                    </div>
 
-                <div>
-                    <label for="whatsapp" style="display: block; margin-bottom: 0.45rem;"><strong>WhatsApp *</strong></label>
-                    <input type="text"
-                           name="whatsapp"
-                           id="whatsapp"
-                           required
-                           value="{{ request.POST.whatsapp|default:'' }}"
-                           style="width: 100%; box-sizing: border-box; padding: 0.9rem; border: 1px solid #ddd; border-radius: 8px;">
-                </div>
+                    <div>
+                        <label for="whatsapp" style="display: block; margin-bottom: 0.45rem;"><strong>WhatsApp *</strong></label>
+                        <input type="text"
+                               name="whatsapp"
+                               id="whatsapp"
+                               required
+                               value="{{ request.POST.whatsapp|default:'' }}"
+                               style="width: 100%; box-sizing: border-box; padding: 0.9rem; border: 1px solid #ddd; border-radius: 8px;">
+                    </div>
 
-                <div>
-                    <label for="cpf" style="display: block; margin-bottom: 0.45rem;"><strong>CPF</strong></label>
-                    <input type="text"
-                           name="cpf"
-                           id="cpf"
-                           value="{{ request.POST.cpf|default:'' }}"
-                           style="width: 100%; box-sizing: border-box; padding: 0.9rem; border: 1px solid #ddd; border-radius: 8px;">
-                </div>
+                    <div>
+                        <label for="cpf" style="display: block; margin-bottom: 0.45rem;"><strong>CPF</strong></label>
+                        <input type="text"
+                               name="cpf"
+                               id="cpf"
+                               value="{{ request.POST.cpf|default:'' }}"
+                               style="width: 100%; box-sizing: border-box; padding: 0.9rem; border: 1px solid #ddd; border-radius: 8px;">
+                    </div>
+                {% endif %}
 
                 <div>
                     <label for="quantidade" style="display: block; margin-bottom: 0.45rem;"><strong>Quantidade *</strong></label>

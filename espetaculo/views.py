@@ -357,34 +357,24 @@ def comprar_ingresso(request, pk):
         return redirect('espetaculo:lista_publica')
 
     if evento.tipo != 'evento':
-        return redirect(
-            'espetaculo:detalhes_publico',
-            pk=evento.pk
-        )
+        return redirect('espetaculo:detalhes_publico', pk=evento.pk)
 
     if not evento.venda_aberta:
-        return redirect(
-            'espetaculo:evento_detalhe_publico',
-            pk=evento.pk
-        )
+        return redirect('espetaculo:evento_detalhe_publico', pk=evento.pk)
 
     if evento.exige_login_para_compra and not request.user.is_authenticated:
         messages.error(
             request,
             'Você precisa estar logado para comprar ingresso para este evento.'
         )
-        return redirect(
-            'espetaculo:evento_detalhe_publico',
-            pk=evento.pk
-        )
+        return redirect('espetaculo:evento_detalhe_publico', pk=evento.pk)
 
     aluna = None
 
     if request.user.is_authenticated:
-        aluna = Aluna.objects.filter(
-            usuario=request.user
-        ).first()
+        aluna = Aluna.objects.filter(usuario=request.user).first()
 
+    # ---------- Fluxo gratuito de aluna (lógica igual, dados de contato corrigidos) ----------
     if evento.permite_ingresso_gratuito_aluna and aluna:
         pedido_existente = PedidoIngressoEvento.objects.filter(
             evento=evento,
@@ -398,6 +388,11 @@ def comprar_ingresso(request, pk):
                 'espetaculo:ingresso_sucesso',
                 pedido_id=pedido_existente.id
             )
+
+        # CORREÇÃO: Aluna não tem whatsapp/cpf; esses dados ficam em Perfil.
+        perfil = getattr(request.user, 'perfil', None)
+        whatsapp_usuario = getattr(perfil, 'telefone', '') or '-'
+        cpf_usuario = getattr(perfil, 'cpf', '') or ''
 
         if evento.venda_com_assentos_numerados:
             if not evento.tem_mapa_assentos:
@@ -414,43 +409,24 @@ def comprar_ingresso(request, pk):
                     }
                 )
 
-            request.session[
-                f'compra_evento_{pk}_nome_completo'
-            ] = aluna.nome
-
-            request.session[
-                f'compra_evento_{pk}_email'
-            ] = request.user.email or ''
-
-            request.session[
-                f'compra_evento_{pk}_whatsapp'
-            ] = getattr(aluna, 'whatsapp', '') or '-'
-
-            request.session[
-                f'compra_evento_{pk}_cpf'
-            ] = getattr(aluna, 'cpf', '') or ''
-
-            request.session[
-                f'compra_evento_{pk}_valor_unitario'
-            ] = str(evento.preco_ingresso or Decimal('0.00'))
-
-            request.session[
-                f'compra_evento_{pk}_assentos_ids'
-            ] = []
-
+            request.session[f'compra_evento_{pk}_nome_completo'] = aluna.nome
+            request.session[f'compra_evento_{pk}_email'] = request.user.email or ''
+            request.session[f'compra_evento_{pk}_whatsapp'] = whatsapp_usuario
+            request.session[f'compra_evento_{pk}_cpf'] = cpf_usuario
+            request.session[f'compra_evento_{pk}_valor_unitario'] = str(
+                evento.preco_ingresso or Decimal('0.00')
+            )
+            request.session[f'compra_evento_{pk}_assentos_ids'] = []
             request.session.modified = True
 
-            return redirect(
-                'espetaculo:mapa_assentos_publico',
-                pk=pk
-            )
+            return redirect('espetaculo:mapa_assentos_publico', pk=pk)
 
         pedido = PedidoIngressoEvento.objects.create(
             evento=evento,
             nome_completo=aluna.nome,
             email=request.user.email or '',
-            whatsapp=getattr(aluna, 'whatsapp', '') or '-',
-            cpf=getattr(aluna, 'cpf', '') or '',
+            whatsapp=whatsapp_usuario,
+            cpf=cpf_usuario,
             quantidade=1,
             valor_unitario=Decimal('0.00'),
             valor_total=Decimal('0.00'),
@@ -458,43 +434,102 @@ def comprar_ingresso(request, pk):
         )
 
         pedido.data_pagamento = timezone.now()
-        pedido.external_reference = (
-            f'ingresso_gratuito_aluna:{pedido.id}'
-        )
-        pedido.save(
-            update_fields=[
-                'data_pagamento',
-                'external_reference',
-            ]
-        )
+        pedido.external_reference = f'ingresso_gratuito_aluna:{pedido.id}'
+        pedido.save(update_fields=['data_pagamento', 'external_reference'])
 
         gerar_ingressos_do_pedido(pedido)
 
-        return redirect(
-            'espetaculo:ingresso_sucesso',
-            pedido_id=pedido.id
+        return redirect('espetaculo:ingresso_sucesso', pedido_id=pedido.id)
+
+    # ---------- NOVO: qualquer outro usuário logado pula o formulário de dados pessoais ----------
+    if request.user.is_authenticated:
+        perfil = getattr(request.user, 'perfil', None)
+
+        nome_completo = (
+            aluna.nome if aluna
+            else (request.user.get_full_name() or request.user.username)
+        )
+        email = request.user.email or ''
+        whatsapp = getattr(perfil, 'telefone', '') or '-'
+        cpf = getattr(perfil, 'cpf', '') or ''
+
+        if evento.venda_com_assentos_numerados:
+            if not evento.tem_mapa_assentos:
+                return render(
+                    request,
+                    'espetaculo/comprar_ingresso_assentos.html',
+                    {
+                        'evento': evento,
+                        'erro': (
+                            'Este evento ainda não possui mapa '
+                            'de assentos configurado. '
+                            'Fale com a organização.'
+                        ),
+                    }
+                )
+
+            # Não precisa de formulário: quantidade vem da escolha de assentos.
+            request.session[f'compra_evento_{pk}_nome_completo'] = nome_completo
+            request.session[f'compra_evento_{pk}_email'] = email
+            request.session[f'compra_evento_{pk}_whatsapp'] = whatsapp
+            request.session[f'compra_evento_{pk}_cpf'] = cpf
+            request.session[f'compra_evento_{pk}_valor_unitario'] = str(
+                evento.preco_ingresso or Decimal('0.00')
+            )
+            request.session[f'compra_evento_{pk}_assentos_ids'] = []
+            request.session.modified = True
+
+            return redirect('espetaculo:mapa_assentos_publico', pk=pk)
+
+        # Evento sem assentos numerados: só falta saber a quantidade.
+        if request.method == 'POST':
+            quantidade = request.POST.get('quantidade', '1').strip()
+
+            try:
+                quantidade = int(quantidade)
+            except (TypeError, ValueError):
+                quantidade = 1
+
+            if quantidade < 1:
+                quantidade = 1
+
+            valor_unitario = evento.preco_ingresso or Decimal('0.00')
+            valor_total = valor_unitario * quantidade
+
+            pedido = PedidoIngressoEvento.objects.create(
+                evento=evento,
+                nome_completo=nome_completo,
+                email=email,
+                whatsapp=whatsapp,
+                cpf=cpf,
+                quantidade=quantidade,
+                valor_unitario=valor_unitario,
+                valor_total=valor_total,
+                status='pendente',
+            )
+
+            pedido.external_reference = f'ingresso_evento:{pedido.id}'
+            pedido.save(update_fields=['external_reference'])
+
+            return redirect('espetaculo:pagar_ingresso_pix', pedido_id=pedido.id)
+
+        return render(
+            request,
+            'espetaculo/comprar_ingresso.html',
+            {
+                'evento': evento,
+                'usuario_logado': True,
+                'nome_completo': nome_completo,
+                'email': email,
+            }
         )
 
+    # ---------- Fluxo anônimo (sem login): formulário completo, inalterado ----------
     if request.method == 'POST':
-        nome_completo = request.POST.get(
-            'nome_completo',
-            ''
-        ).strip()
-
-        email = request.POST.get(
-            'email',
-            ''
-        ).strip()
-
-        whatsapp = request.POST.get(
-            'whatsapp',
-            ''
-        ).strip()
-
-        cpf = request.POST.get(
-            'cpf',
-            ''
-        ).strip()
+        nome_completo = request.POST.get('nome_completo', '').strip()
+        email = request.POST.get('email', '').strip()
+        whatsapp = request.POST.get('whatsapp', '').strip()
+        cpf = request.POST.get('cpf', '').strip()
 
         if not nome_completo or not whatsapp:
             if evento.venda_com_assentos_numerados:
@@ -503,9 +538,7 @@ def comprar_ingresso(request, pk):
                     'espetaculo/comprar_ingresso_assentos.html',
                     {
                         'evento': evento,
-                        'erro': (
-                            'Preencha nome completo e WhatsApp.'
-                        ),
+                        'erro': 'Preencha nome completo e WhatsApp.',
                     }
                 )
 
@@ -514,9 +547,7 @@ def comprar_ingresso(request, pk):
                 'espetaculo/comprar_ingresso.html',
                 {
                     'evento': evento,
-                    'erro': (
-                        'Preencha os campos obrigatórios.'
-                    ),
+                    'erro': 'Preencha os campos obrigatórios.',
                 }
             )
 
@@ -537,41 +568,17 @@ def comprar_ingresso(request, pk):
                     }
                 )
 
-            request.session[
-                f'compra_evento_{pk}_nome_completo'
-            ] = nome_completo
-
-            request.session[
-                f'compra_evento_{pk}_email'
-            ] = email
-
-            request.session[
-                f'compra_evento_{pk}_whatsapp'
-            ] = whatsapp
-
-            request.session[
-                f'compra_evento_{pk}_cpf'
-            ] = cpf
-
-            request.session[
-                f'compra_evento_{pk}_valor_unitario'
-            ] = str(valor_unitario)
-
-            request.session[
-                f'compra_evento_{pk}_assentos_ids'
-            ] = []
-
+            request.session[f'compra_evento_{pk}_nome_completo'] = nome_completo
+            request.session[f'compra_evento_{pk}_email'] = email
+            request.session[f'compra_evento_{pk}_whatsapp'] = whatsapp
+            request.session[f'compra_evento_{pk}_cpf'] = cpf
+            request.session[f'compra_evento_{pk}_valor_unitario'] = str(valor_unitario)
+            request.session[f'compra_evento_{pk}_assentos_ids'] = []
             request.session.modified = True
 
-            return redirect(
-                'espetaculo:mapa_assentos_publico',
-                pk=pk
-            )
+            return redirect('espetaculo:mapa_assentos_publico', pk=pk)
 
-        quantidade = request.POST.get(
-            'quantidade',
-            '1'
-        ).strip()
+        quantidade = request.POST.get('quantidade', '1').strip()
 
         try:
             quantidade = int(quantidade)
@@ -595,35 +602,22 @@ def comprar_ingresso(request, pk):
             status='pendente',
         )
 
-        pedido.external_reference = (
-            f'ingresso_evento:{pedido.id}'
-        )
-        pedido.save(
-            update_fields=[
-                'external_reference',
-            ]
-        )
+        pedido.external_reference = f'ingresso_evento:{pedido.id}'
+        pedido.save(update_fields=['external_reference'])
 
-        return redirect(
-            'espetaculo:pagar_ingresso_pix',
-            pedido_id=pedido.id
-        )
+        return redirect('espetaculo:pagar_ingresso_pix', pedido_id=pedido.id)
 
     if evento.venda_com_assentos_numerados:
         return render(
             request,
             'espetaculo/comprar_ingresso_assentos.html',
-            {
-                'evento': evento,
-            }
+            {'evento': evento}
         )
 
     return render(
         request,
         'espetaculo/comprar_ingresso.html',
-        {
-            'evento': evento,
-        }
+        {'evento': evento}
     )
 
 
