@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block title %}Configuração inicial - {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div style="max-width: 500px; margin: 4rem auto; padding: 2rem;">
+    <div style="background: white; padding: 3rem 2rem; border-radius: 15px; box-shadow: 0 2px 20px rgba(0,0,0,0.1);">
+
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <h2 style="color: #2c3e50; margin-bottom: 0.5rem;">Bem-vindo(a) à {{ SITE_NAME }}</h2>
+            <p style="color: #666;">Crie o seu acesso de administrador(a). Essa tela só pode ser usada uma vez.</p>
+        </div>
+
+        {% if erro %}
+            <div style="background: #f8d7da; color: #721c24; padding: 1rem; border-radius: 5px;
+                        margin-bottom: 1.5rem; border-left: 4px solid #dc3545;">
+                {{ erro }}
+            </div>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                    Nome de usuário
+                </label>
+                <input type="text"
+                       name="username"
+                       required
+                       placeholder="ex: maria.silva"
+                       style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                    Seu e-mail
+                </label>
+                <input type="email"
+                       name="email"
+                       required
+                       placeholder="seu@email.com"
+                       style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                    Senha
+                </label>
+                <input type="password"
+                       name="password"
+                       required
+                       minlength="8"
+                       placeholder="mínimo 8 caracteres"
+                       style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #333;">
+                    Confirme a senha
+                </label>
+                <input type="password"
+                       name="password_confirmacao"
+                       required
+                       minlength="8"
+                       placeholder="digite a senha novamente"
+                       style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+            </div>
+
+            <button type="submit"
+                    style="width: 100%; padding: 0.75rem; background: linear-gradient(135deg, #2c3e50, #b07a84); color: white; border: none; border-radius: 5px; font-size: 1rem; font-weight: 600; cursor: pointer;">
+                Criar minha conta de administrador(a)
+            </button>
+        </form>
+
+    </div>
+</div>
+{% endblock %}

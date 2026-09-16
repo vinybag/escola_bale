@@ -34,6 +34,14 @@ ALLOWED_HOSTS = config(
 SITE_NAME = config('SITE_NAME', default='BAILAH - Corpo e Cia')
 COOKIE_DOMAIN = config('COOKIE_DOMAIN', default='.bailahcorpoecia.com')
 
+# Token único usado para proteger a tela de configuração inicial
+# (/setup-inicial/<token>/), que cria o primeiro usuário administrador
+# de uma instância recém-implantada. Cada cliente/deploy deve ter o
+# seu próprio valor, gerado uma vez (ex: com `python -c "import secrets;
+# print(secrets.token_urlsafe(32))"`) e configurado no .env daquele
+# deploy. Sem essa variável configurada, a tela fica desativada.
+SETUP_TOKEN = config('SETUP_TOKEN', default='')
+
 
 
 # Application definition
