@@ -26,7 +26,7 @@ def _api_key():
 def _headers():
     return {
         'Content-Type': 'application/json',
-        'User-Agent': 'bailah-corpo-e-cia',
+        'User-Agent': getattr(settings, 'ASAAS_USER_AGENT', 'bailah-corpo-e-cia'),
         'access_token': _api_key(),
     }
 

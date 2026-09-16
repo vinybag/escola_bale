@@ -83,7 +83,7 @@ class Agendamento(models.Model):
         null=True,
         blank=True,
         related_name="agendamentos_experimentais",
-        verbose_name="Aluna vinculada (se já for aluna Bailah)",
+        verbose_name="Aluna vinculada (se já for aluna da escola)",
     )
 
     status_pagamento = models.CharField(

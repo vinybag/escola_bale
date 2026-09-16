@@ -8,7 +8,7 @@
     >
 
     <title>
-        {% block title %}BAILAH - Corpo e Cia{% endblock %}
+        {% block title %}{{ SITE_NAME }}{% endblock %}
     </title>
 
     {% load static %}
@@ -40,7 +40,7 @@
             >
                 <img
                     src="{% static 'img/logo.png' %}"
-                    alt="BAILAH - Corpo e Cia"
+                    alt="{{ SITE_NAME }}"
                 >
             </a>
 
@@ -159,7 +159,7 @@
 
     <footer>
         <p>
-            &copy; 2026 BAILAH - Corpo e Cia -
+            &copy; 2026 {{ SITE_NAME }} -
             Todos os direitos reservados
         </p>
     </footer>

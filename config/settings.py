@@ -23,6 +23,19 @@ ALLOWED_HOSTS = config(
 
 
 
+# =========================
+# MARCA / WHITE LABEL
+# =========================
+# Estas variáveis permitem "clonar" o sistema para outra escola apenas
+# configurando o .env do novo deploy, sem tocar no código.
+# Os defaults abaixo reproduzem exatamente o comportamento atual (BAILAH),
+# então nenhum ambiente existente muda de comportamento até que alguém
+# defina essas variáveis explicitamente.
+SITE_NAME = config('SITE_NAME', default='BAILAH - Corpo e Cia')
+COOKIE_DOMAIN = config('COOKIE_DOMAIN', default='.bailahcorpoecia.com')
+
+
+
 # Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -84,6 +97,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'core.context_processors.marca',
             ],
         },
     },
@@ -196,6 +210,7 @@ ASAAS_API_KEY = config('ASAAS_API_KEY', default='')
 ASAAS_SANDBOX = config('ASAAS_SANDBOX', default='True') == 'True'
 ASAAS_BASE_URL = 'https://api.asaas.com/v3'
 ASAAS_WEBHOOK_TOKEN = config('ASAAS_WEBHOOK_TOKEN', default='')
+ASAAS_USER_AGENT = config('ASAAS_USER_AGENT', default='bailah-corpo-e-cia')
 
 
 
@@ -213,8 +228,8 @@ if not DEBUG:
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
     X_FRAME_OPTIONS = 'DENY'
-    CSRF_COOKIE_DOMAIN = '.bailahcorpoecia.com'
-    SESSION_COOKIE_DOMAIN = '.bailahcorpoecia.com'
+    CSRF_COOKIE_DOMAIN = COOKIE_DOMAIN
+    SESSION_COOKIE_DOMAIN = COOKIE_DOMAIN
 
     SECURE_HSTS_SECONDS = 31536000  # 1 ano
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
@@ -275,16 +290,15 @@ DEFAULT_FROM_EMAIL = config(
 
 
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
-EMAIL_SUBJECT_PREFIX = '[BAILAH] '
+EMAIL_SUBJECT_PREFIX = config('EMAIL_SUBJECT_PREFIX', default='[BAILAH] ')
 
 
 
 # CSRF e Security settings
-CSRF_TRUSTED_ORIGINS = [
-    'https://bailahcorpoecia.com',
-    'https://www.bailahcorpoecia.com',
-    'https://web-production-4389a.up.railway.app',
-]
+CSRF_TRUSTED_ORIGINS = config(
+    'CSRF_TRUSTED_ORIGINS',
+    default='https://bailahcorpoecia.com,https://www.bailahcorpoecia.com,https://web-production-4389a.up.railway.app'
+).split(',')
 
 
 # WhatsApp Business API (Meta)

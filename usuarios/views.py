@@ -136,7 +136,7 @@ def esqueci_senha(request):
 
             try:
                 send_mail(
-                    subject='Recuperacao de Senha - BAILAH',
+                    subject=f'Recuperacao de Senha - {settings.SITE_NAME}',
                     message=f'''Ola {user.get_full_name() or user.username},
 
 Recebemos uma solicitacao para redefinir sua senha.
@@ -149,7 +149,7 @@ Este link expira em 24 horas.
 Se voce nao solicitou esta alteracao, ignore este email.
 
 Atenciosamente,
-Equipe BAILAH
+Equipe {settings.SITE_NAME}
 ''',
                     from_email=settings.DEFAULT_FROM_EMAIL,
                     recipient_list=[user.email],

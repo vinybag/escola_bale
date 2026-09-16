@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
 
-{% block title %}Bem-vindo - BAILAH - Corpo e Cia{% endblock %}
+{% block title %}Bem-vindo - {{ SITE_NAME }}{% endblock %}
 
 {% block content %}
 <div class="hero">
     <div class="container">
-        <h1>Bem-vindo à BAILAH - Corpo e Cia</h1>
+        <h1>Bem-vindo à {{ SITE_NAME }}</h1>
         <p>Transformando sonhos em movimento</p>
         <div class="cta-buttons">
             <a href="{% url 'agendar' %}" class="btn btn-primary">Agendar Aula Experimental</a>
