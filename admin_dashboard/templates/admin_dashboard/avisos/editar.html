@@ -25,9 +25,7 @@
         color: #4a235f;
     }
 
-    .aviso-input,
-    .aviso-select,
-    .aviso-textarea {
+    .aviso-input, .aviso-select, .aviso-textarea {
         width: 100%;
         padding: 0.85rem 0.9rem;
         border: 1px solid #d8c7e3;
@@ -38,9 +36,7 @@
         transition: border-color 0.3s, box-shadow 0.3s;
     }
 
-    .aviso-input:focus,
-    .aviso-select:focus,
-    .aviso-textarea:focus {
+    .aviso-input:focus, .aviso-select:focus, .aviso-textarea:focus {
         outline: none;
         border-color: #6b2d8f;
         box-shadow: 0 0 0 3px rgba(107, 45, 143, 0.12);
@@ -54,6 +50,43 @@
 
     .aviso-required {
         color: #dc3545;
+    }
+
+    .aviso-help {
+        display: block;
+        margin-top: 0.4rem;
+        font-size: 0.8rem;
+        color: #8a8a8a;
+    }
+
+    .aviso-destinatarios {
+        background: #f9f5fb;
+        border: 1px solid #ece3f2;
+        border-radius: 10px;
+        padding: 1.25rem;
+    }
+
+    .aviso-destinatarios-titulo {
+        margin: 0 0 0.25rem 0;
+        color: #4a235f;
+        font-weight: 700;
+        font-size: 0.95rem;
+    }
+
+    .aviso-destinatarios-sub {
+        margin: 0 0 1rem 0;
+        color: #7a7280;
+        font-size: 0.85rem;
+    }
+
+    .aviso-destinatarios-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1rem;
+    }
+
+    select[multiple].aviso-select {
+        min-height: 160px;
     }
 
     .aviso-actions {
@@ -89,8 +122,11 @@
             flex-direction: column;
         }
 
-        .aviso-actions .btn,
-        .btn-cancelar {
+        .aviso-destinatarios-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .aviso-actions .btn, .btn-cancelar {
             width: 100%;
             text-align: center;
         }
@@ -107,63 +143,164 @@
 <div class="aviso-form-card">
     <form method="post">
         {% csrf_token %}
-        
+
         <div class="aviso-form-grid">
-            
+
             <div>
-                <label class="aviso-label">
-                    Título <span class="aviso-required">*</span>
-                </label>
-                <input type="text"
-                       name="titulo"
-                       value="{{ aviso.titulo }}"
-                       required
-                       class="aviso-input">
+                <label class="aviso-label">Título <span class="aviso-required">*</span></label>
+                <input type="text" name="titulo" value="{{ aviso.titulo }}" required class="aviso-input">
             </div>
-            
+
             <div>
-                <label class="aviso-label">
-                    Descrição <span class="aviso-required">*</span>
-                </label>
-                <textarea name="descricao"
-                          rows="6"
-                          required
-                          class="aviso-textarea">{{ aviso.descricao }}</textarea>
+                <label class="aviso-label">Descrição <span class="aviso-required">*</span></label>
+                <textarea name="descricao" rows="6" required class="aviso-textarea">{{ aviso.descricao }}</textarea>
             </div>
-            
+
             <div>
-                <label class="aviso-label">
-                    Data do Evento <span class="aviso-required">*</span>
-                </label>
-                <input type="date"
-                       name="data_evento"
-                       value="{{ aviso.data_evento|date:'Y-m-d' }}"
-                       required
-                       class="aviso-input">
+                <label class="aviso-label">Data do Evento <span class="aviso-required">*</span></label>
+                <input type="date" name="data_evento" value="{{ aviso.data_evento|date:'Y-m-d' }}" required class="aviso-input">
             </div>
-            
+
             <div>
-                <label class="aviso-label">
-                    Tipo
-                </label>
+                <label class="aviso-label">Tipo</label>
                 <select name="tipo" class="aviso-select">
                     <option value="geral" {% if aviso.tipo == 'geral' %}selected{% endif %}>Geral</option>
                     <option value="evento" {% if aviso.tipo == 'evento' %}selected{% endif %}>Evento</option>
-                    <option value="aula" {% if aviso.tipo == 'aula' %}selected{% endif %}>Aula</option>
-                    <option value="importante" {% if aviso.tipo == 'importante' %}selected{% endif %}>Importante</option>
+                    <option value="feriado" {% if aviso.tipo == 'feriado' %}selected{% endif %}>Feriado</option>
+                    <option value="reposicao" {% if aviso.tipo == 'reposicao' %}selected{% endif %}>Reposição</option>
+                    <option value="apresentacao" {% if aviso.tipo == 'apresentacao' %}selected{% endif %}>Apresentação</option>
                 </select>
             </div>
-            
-            <div class="aviso-actions">
-                <button type="submit" class="btn btn-primary">
-                    Salvar Alterações
-                </button>
-                <a href="{% url 'admin_dashboard:avisos_list' %}" class="btn-cancelar">
-                    Cancelar
-                </a>
+
+            <div class="aviso-destinatarios">
+                <p class="aviso-destinatarios-titulo">Para quem é este aviso?</p>
+                <p class="aviso-destinatarios-sub">
+                    Não selecione nada para exibir para todas. Selecionando turmas, alunas
+                    e/ou professoras, o aviso só aparece para quem estiver marcado.
+                </p>
+
+                <div class="aviso-destinatarios-grid">
+
+                    <div>
+                        <label class="aviso-label" for="id_turmas">Turmas</label>
+                        <select id="id_turmas" name="turmas" class="aviso-select" multiple>
+                            {% for turma in turmas %}
+                                <option
+                                    value="{{ turma.pk }}"
+                                    {% if turma.pk in turmas_selecionadas_ids %}selected{% endif %}
+                                >
+                                    {{ turma.nome }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <span class="aviso-help">Ctrl/Cmd + clique para selecionar mais de uma.</span>
+                    </div>
+
+                    <div>
+                        <label class="aviso-label" for="id_alunas">Alunas específicas</label>
+                        <select id="id_alunas" name="alunas" class="aviso-select" multiple>
+                            {% for aluna in alunas_das_turmas %}
+                                <option
+                                    value="{{ aluna.pk }}"
+                                    {% if aluna.pk in alunas_selecionadas_ids %}selected{% endif %}
+                                >
+                                    {{ aluna.nome }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <span class="aviso-help">Opcional: restringe ainda mais dentro das turmas escolhidas.</span>
+                    </div>
+
+                    <div>
+                        <label class="aviso-label" for="id_professoras">Professoras</label>
+                        <select id="id_professoras" name="professoras" class="aviso-select" multiple>
+                            {% for professora in professoras %}
+                                <option
+                                    value="{{ professora.pk }}"
+                                    {% if professora.pk in professoras_selecionadas_ids %}selected{% endif %}
+                                >
+                                    {{ professora.get_full_name|default:professora.username }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <span class="aviso-help">Professoras que devem ver o aviso mesmo sem serem alunas.</span>
+                    </div>
+
+                </div>
             </div>
-            
+
+            <div class="aviso-actions">
+                <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                <a href="{% url 'admin_dashboard:avisos_list' %}" class="btn-cancelar">Cancelar</a>
+            </div>
+
         </div>
     </form>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    const selectTurmas = document.getElementById('id_turmas');
+    const selectAlunas = document.getElementById('id_alunas');
+
+    const URL_ALUNAS_POR_TURMAS = "{% url 'admin_dashboard:alunas_por_turmas_multiplas' %}";
+
+    if (!selectTurmas || !selectAlunas) {
+        return;
+    }
+
+    const alunasSelecionadasIds = {{ alunas_selecionadas_ids|default:"[]" }}.map(String);
+
+    selectTurmas.addEventListener('change', function () {
+
+        const turmasSelecionadas = Array.from(selectTurmas.selectedOptions).map(function (opt) {
+            return opt.value;
+        });
+
+        if (turmasSelecionadas.length === 0) {
+            selectAlunas.innerHTML = '<option value="" disabled>Selecione uma turma para listar as alunas</option>';
+            return;
+        }
+
+        const params = new URLSearchParams();
+        turmasSelecionadas.forEach(function (id) {
+            params.append('turmas', id);
+        });
+
+        fetch(`${URL_ALUNAS_POR_TURMAS}?${params.toString()}`, {
+            method: 'GET',
+            credentials: 'same-origin',
+        })
+            .then(function (response) {
+                return response.json();
+            })
+            .then(function (alunas) {
+                selectAlunas.innerHTML = '';
+
+                if (alunas.length === 0) {
+                    selectAlunas.innerHTML = '<option value="" disabled>Nenhuma aluna ativa nessas turmas</option>';
+                    return;
+                }
+
+                alunas.forEach(function (aluna) {
+                    const opcao = document.createElement('option');
+                    opcao.value = aluna.id;
+                    opcao.textContent = aluna.nome;
+
+                    if (alunasSelecionadasIds.includes(String(aluna.id))) {
+                        opcao.selected = true;
+                    }
+
+                    selectAlunas.appendChild(opcao);
+                });
+            })
+            .catch(function (erro) {
+                console.error('Erro ao buscar alunas das turmas:', erro);
+                selectAlunas.innerHTML = '<option value="" disabled>Erro ao carregar alunas</option>';
+            });
+    });
+
+});
+</script>
 {% endblock %}

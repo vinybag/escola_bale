@@ -1149,7 +1149,9 @@ def avisos_list(request):
         tipo = request.GET.get('tipo', '').strip()
         tipo_data = request.GET.get('tipo_data', 'proximos')
 
-        avisos = Aviso.objects.all()
+        avisos = Aviso.objects.all().prefetch_related(
+            'turmas', 'alunas', 'professoras'
+        )
 
         if busca:
             avisos = avisos.filter(
@@ -1195,37 +1197,56 @@ def avisos_list(request):
 @login_required
 def aviso_criar(request):
     """Criar novo aviso"""
-    
+
     if not request.user.is_staff:
         return redirect('home')
-    
+
+    from django.contrib.auth.models import User
+    from usuarios.models import Turma, Aluna
+    from calendario_avisos.models import Aviso
+
     if request.method == 'POST':
         try:
-            from calendario_avisos.models import Aviso
             from django.contrib import messages
-            
+
             # Pega dados do form
             titulo = request.POST.get('titulo')
             descricao = request.POST.get('descricao')
             data_evento = request.POST.get('data_evento')
             tipo = request.POST.get('tipo', 'geral')
-            
+
+            turmas_ids = request.POST.getlist('turmas')
+            alunas_ids = request.POST.getlist('alunas')
+            professoras_ids = request.POST.getlist('professoras')
+
             # Validacao
             if not all([titulo, descricao, data_evento]):
                 messages.error(request, 'Preencha todos os campos obrigatorios!')
                 return redirect('admin_dashboard:aviso_criar')
-            
+
             # Cria aviso
             aviso = Aviso.objects.create(
                 titulo=titulo,
                 descricao=descricao,
                 data_evento=data_evento,
-                tipo=tipo
+                tipo=tipo,
+                autor=request.user,
             )
-            
+
+            if turmas_ids:
+                aviso.turmas.set(Turma.objects.filter(id__in=turmas_ids))
+
+            if alunas_ids:
+                aviso.alunas.set(Aluna.objects.filter(id__in=alunas_ids))
+
+            if professoras_ids:
+                aviso.professoras.set(
+                    User.objects.filter(id__in=professoras_ids, groups__name='Professores')
+                )
+
             messages.success(request, f'Aviso "{titulo}" criado com sucesso!')
             return redirect('admin_dashboard:avisos_list')
-            
+
         except Exception as e:
             from django.contrib import messages
             messages.error(request, f'Erro ao criar aviso: {e}')
@@ -1233,19 +1254,27 @@ def aviso_criar(request):
             import traceback
             traceback.print_exc()
             return redirect('admin_dashboard:aviso_criar')
-    
+
     # GET - mostra form
-    context = {}
+    context = {
+        'turmas': Turma.objects.filter(ativa=True).order_by('nome'),
+        'professoras': User.objects.filter(
+            groups__name='Professores'
+        ).order_by('first_name', 'last_name', 'username'),
+    }
     return render(request, 'admin_dashboard/avisos/criar.html', context)
 
 
 @login_required
 def aviso_editar(request, pk):
     """Editar aviso existente"""
-    
+
     if not request.user.is_staff:
         return redirect('home')
-    
+
+    from django.contrib.auth.models import User
+    from usuarios.models import Turma, Aluna
+
     try:
         from calendario_avisos.models import Aviso
         aviso = Aviso.objects.get(pk=pk)
@@ -1253,57 +1282,111 @@ def aviso_editar(request, pk):
         from django.contrib import messages
         messages.error(request, f'Aviso nao encontrado: {e}')
         return redirect('admin_dashboard:avisos_list')
-    
+
     if request.method == 'POST':
         try:
             from django.contrib import messages
-            
+
             # Atualiza dados
             aviso.titulo = request.POST.get('titulo')
             aviso.descricao = request.POST.get('descricao')
             aviso.data_evento = request.POST.get('data_evento')
             aviso.tipo = request.POST.get('tipo', 'geral')
-            
+
             aviso.save()
-            
+
+            turmas_ids = request.POST.getlist('turmas')
+            alunas_ids = request.POST.getlist('alunas')
+            professoras_ids = request.POST.getlist('professoras')
+
+            aviso.turmas.set(Turma.objects.filter(id__in=turmas_ids)) if turmas_ids else aviso.turmas.clear()
+            aviso.alunas.set(Aluna.objects.filter(id__in=alunas_ids)) if alunas_ids else aviso.alunas.clear()
+
+            if professoras_ids:
+                aviso.professoras.set(
+                    User.objects.filter(id__in=professoras_ids, groups__name='Professores')
+                )
+            else:
+                aviso.professoras.clear()
+
             messages.success(request, f'Aviso "{aviso.titulo}" atualizado com sucesso!')
             return redirect('admin_dashboard:avisos_list')
-            
+
         except Exception as e:
             from django.contrib import messages
             messages.error(request, f'Erro ao atualizar aviso: {e}')
             return redirect('admin_dashboard:aviso_editar', pk=pk)
-    
+
     # GET - mostra form preenchido
+    turmas_selecionadas_ids = list(aviso.turmas.values_list('id', flat=True))
+    alunas_selecionadas_ids = list(aviso.alunas.values_list('id', flat=True))
+    professoras_selecionadas_ids = list(aviso.professoras.values_list('id', flat=True))
+
+    # Alunas das turmas já selecionadas (para popular o segundo select ao carregar a página)
+    alunas_das_turmas = Aluna.objects.filter(
+        turmas__id__in=turmas_selecionadas_ids,
+        ativa=True,
+    ).distinct().order_by('nome') if turmas_selecionadas_ids else Aluna.objects.none()
+
     context = {
         'aviso': aviso,
+        'turmas': Turma.objects.filter(ativa=True).order_by('nome'),
+        'professoras': User.objects.filter(
+            groups__name='Professores'
+        ).order_by('first_name', 'last_name', 'username'),
+        'alunas_das_turmas': alunas_das_turmas,
+        'turmas_selecionadas_ids': turmas_selecionadas_ids,
+        'alunas_selecionadas_ids': alunas_selecionadas_ids,
+        'professoras_selecionadas_ids': professoras_selecionadas_ids,
     }
-    
+
     return render(request, 'admin_dashboard/avisos/editar.html', context)
 
 
 @login_required
 def aviso_excluir(request, pk):
     """Excluir aviso"""
-    
+
     if not request.user.is_staff:
         return redirect('home')
-    
+
     if request.method == 'POST':
         try:
             from calendario_avisos.models import Aviso
             from django.contrib import messages
-            
+
             aviso = Aviso.objects.get(pk=pk)
             titulo = aviso.titulo
             aviso.delete()
-            
+
             messages.success(request, f'Aviso "{titulo}" excluido com sucesso!')
-            
+
         except Exception as e:
             messages.error(request, f'Erro ao excluir aviso: {e}')
-    
+
     return redirect('admin_dashboard:avisos_list')
+
+
+def alunas_por_turmas_multiplas(request):
+    """
+    Endpoint AJAX usado no formulário de avisos: recebe uma lista de IDs de
+    turma (?turmas=1&turmas=2...) e retorna todas as alunas ativas dessas
+    turmas, sem duplicar quem estiver em mais de uma.
+    """
+    from usuarios.models import Aluna
+    from django.http import JsonResponse
+
+    turmas_ids = request.GET.getlist('turmas')
+
+    if not turmas_ids:
+        return JsonResponse([], safe=False)
+
+    alunas = Aluna.objects.filter(
+        turmas__id__in=turmas_ids,
+        ativa=True,
+    ).distinct().order_by('nome').values('id', 'nome')
+
+    return JsonResponse(list(alunas), safe=False)
 
 @login_required
 def aluna_excluir(request, pk):
