@@ -9,7 +9,7 @@ def home(request):
     from usuarios.models import Turma
     from core.models import ConfiguracaoEscola
 
-    turmas = Turma.objects.filter(ativa=True).order_by('dia_semana', 'horario')
+    turmas = Turma.objects.filter(ativa=True).order_by('nome')
     config = ConfiguracaoEscola.obter()
 
     return render(request, 'core/home.html', {
