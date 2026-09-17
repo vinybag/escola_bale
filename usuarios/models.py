@@ -51,6 +51,11 @@ class Turma(models.Model):
     
     nome = models.CharField(max_length=100, unique=True)
     descricao = models.TextField(blank=True)
+    faixa_etaria = models.CharField(
+        max_length=50,
+        blank=True,
+        help_text="Ex: 3 a 5 anos (aparece no card da turma no site)",
+    )
     horario = models.CharField(max_length=100, blank=True, help_text="Ex: Segunda e Quarta 14h-15h")
     professor = models.CharField(max_length=100, blank=True)
     capacidade_maxima = models.IntegerField(default=20, help_text="Número máximo de alunas")

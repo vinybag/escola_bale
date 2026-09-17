@@ -6,7 +6,16 @@ from django.http import Http404
 from django.contrib import messages
 
 def home(request):
-    return render(request, 'core/home.html')
+    from usuarios.models import Turma
+    from core.models import ConfiguracaoEscola
+
+    turmas = Turma.objects.filter(ativa=True).order_by('dia_semana', 'horario')
+    config = ConfiguracaoEscola.obter()
+
+    return render(request, 'core/home.html', {
+        'turmas': turmas,
+        'config': config,
+    })
 
 def sobre(request):
     return render(request, 'core/sobre.html')

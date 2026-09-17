@@ -1,0 +1,169 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Configurações do Site{% endblock %}
+
+{% block content %}
+<style>
+    .config-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 2rem;
+    }
+
+    .config-shell {
+        width: 100%;
+        max-width: 780px;
+    }
+
+    .config-main {
+        background: white;
+        border: 1px solid #ebe3f1;
+        border-radius: 18px;
+        box-shadow: 0 8px 24px rgba(107, 45, 143, 0.08);
+        padding: 2rem;
+    }
+
+    .config-input,
+    .config-textarea {
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        padding: 0.82rem 0.95rem;
+        border: 1px solid #d9cbe4;
+        border-radius: 10px;
+        font-size: 1rem;
+        background: #fff;
+        color: #2f2438;
+    }
+
+    .config-input:focus,
+    .config-textarea:focus {
+        outline: none;
+        border-color: #b895cd;
+        box-shadow: 0 0 0 4px rgba(107, 45, 143, 0.10);
+    }
+
+    .config-field {
+        margin-bottom: 1.5rem;
+    }
+
+    .config-field label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: #44384c;
+    }
+
+    .config-field small {
+        display: block;
+        margin-top: 0.4rem;
+        color: #8a8390;
+    }
+
+    .config-msg-success {
+        background: #dff3e4;
+        color: #155724;
+        padding: 1rem;
+        border-radius: 10px;
+        margin-bottom: 1.5rem;
+        border: 1px solid #b7dfbf;
+    }
+
+    .config-msg-error {
+        background: #f8d7da;
+        color: #721c24;
+        padding: 1rem;
+        border-radius: 10px;
+        margin-bottom: 1.5rem;
+        border: 1px solid #f1aeb5;
+    }
+
+    .config-note {
+        background: #f5eff9;
+        border: 1px solid #ece3f2;
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+        margin-bottom: 1.5rem;
+        color: #5a4f66;
+        font-size: 0.92rem;
+    }
+</style>
+
+<div class="config-header">
+    <div>
+        <h2 style="margin: 0 0 0.35rem 0; color: #4a235f;">Configurações do Site</h2>
+        <p style="margin: 0; color: #6f6f78;">Conteúdo exibido na página inicial pública, para quem visita o site.</p>
+    </div>
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="{% if message.tags == 'success' %}config-msg-success{% else %}config-msg-error{% endif %}">
+            {{ message }}
+        </div>
+    {% endfor %}
+{% endif %}
+
+<div class="config-shell">
+    <div class="config-note">
+        As turmas que aparecem no site vêm direto do cadastro de
+        <strong>Turmas</strong> (as que estiverem marcadas como "ativa").
+        Aqui você edita só o restante da página: frase de destaque, texto
+        sobre a escola, endereço, telefone e e-mail de contato.
+    </div>
+
+    <div class="config-main">
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="config-field">
+                <label>Frase de destaque (logo abaixo do nome da escola)</label>
+                <input type="text"
+                       name="subtitulo_hero"
+                       value="{{ config.subtitulo_hero }}"
+                       class="config-input">
+            </div>
+
+            <div class="config-field">
+                <label>Texto da seção "Sobre"</label>
+                <textarea name="texto_sobre" rows="4" class="config-textarea">{{ config.texto_sobre }}</textarea>
+            </div>
+
+            <div class="config-field">
+                <label>Endereço</label>
+                <input type="text"
+                       name="endereco"
+                       value="{{ config.endereco }}"
+                       placeholder="Ex: Rua Exemplo, 123 - Centro"
+                       class="config-input">
+            </div>
+
+            <div class="config-field">
+                <label>Telefone</label>
+                <input type="text"
+                       name="telefone"
+                       value="{{ config.telefone }}"
+                       placeholder="Ex: (15) 99999-9999"
+                       class="config-input">
+            </div>
+
+            <div class="config-field">
+                <label>E-mail de contato exibido no site</label>
+                <input type="email"
+                       name="email_contato"
+                       value="{{ config.email_contato }}"
+                       placeholder="contato@suaescola.com"
+                       class="config-input">
+            </div>
+
+            <button type="submit"
+                    style="background: linear-gradient(135deg, #6b2d8f 0%, #7e3aa5 100%); color: white; border: none; padding: 0.85rem 1.6rem; border-radius: 10px; cursor: pointer; font-weight: 700; box-shadow: 0 8px 18px rgba(107, 45, 143, 0.18);">
+                Salvar alterações
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

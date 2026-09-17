@@ -282,6 +282,14 @@
                         </div>
                     </div>
 
+                    <div class="turma-grid-2">
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Faixa etária</label>
+                            <input type="text" name="faixa_etaria" value="{{ turma.faixa_etaria }}" placeholder="Ex: 3 a 5 anos" class="turma-input">
+                            <small style="color: #8a8390;">Aparece no card dessa turma no site público.</small>
+                        </div>
+                    </div>
+
                     <div style="margin-bottom: 1rem;">
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Descrição</label>
                         <textarea name="descricao" rows="3" class="turma-textarea">{{ turma.descricao }}</textarea>

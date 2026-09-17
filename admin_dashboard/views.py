@@ -2183,6 +2183,7 @@ def turma_criar(request):
 
             nome = request.POST.get('nome')
             descricao = request.POST.get('descricao', '')
+            faixa_etaria = request.POST.get('faixa_etaria', '')
             horario = request.POST.get('horario', '')
             professor = request.POST.get('professor', '')
             capacidade_maxima = request.POST.get('capacidade_maxima', 20)
@@ -2197,6 +2198,7 @@ def turma_criar(request):
             turma = Turma.objects.create(
                 nome=nome,
                 descricao=descricao,
+                faixa_etaria=faixa_etaria,
                 horario=horario,
                 professor=professor,
                 capacidade_maxima=int(capacidade_maxima),
@@ -2239,6 +2241,7 @@ def turma_editar(request, pk):
 
             turma.nome = request.POST.get('nome')
             turma.descricao = request.POST.get('descricao', '')
+            turma.faixa_etaria = request.POST.get('faixa_etaria', '')
             turma.horario = request.POST.get('horario', '')
             turma.professor = request.POST.get('professor', '')
             turma.capacidade_maxima = int(request.POST.get('capacidade_maxima', 20))
@@ -5781,3 +5784,32 @@ def alunas_por_turma(request, turma_id):
     turma = get_object_or_404(Turma, pk=turma_id)
     alunas = turma.alunas.filter(ativa=True).order_by('nome').values('id', 'nome')
     return JsonResponse(list(alunas), safe=False)
+
+
+@login_required
+def configuracoes_site(request):
+    """
+    Tela onde a escola edita o conteúdo da home pública (frase de
+    destaque, texto "sobre", endereço, telefone, e-mail de contato).
+    As turmas exibidas na home vêm direto do cadastro de Turmas — não
+    são editadas aqui.
+    """
+    if not request.user.is_staff:
+        return redirect('home')
+
+    from core.models import ConfiguracaoEscola
+
+    config = ConfiguracaoEscola.obter()
+
+    if request.method == 'POST':
+        config.subtitulo_hero = request.POST.get('subtitulo_hero', '').strip()
+        config.texto_sobre = request.POST.get('texto_sobre', '').strip()
+        config.endereco = request.POST.get('endereco', '').strip()
+        config.telefone = request.POST.get('telefone', '').strip()
+        config.email_contato = request.POST.get('email_contato', '').strip()
+        config.save()
+
+        messages.success(request, 'Configurações do site atualizadas com sucesso!')
+        return redirect('admin_dashboard:configuracoes_site')
+
+    return render(request, 'admin_dashboard/configuracoes/site.html', {'config': config})

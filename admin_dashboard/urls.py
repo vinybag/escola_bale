@@ -50,6 +50,9 @@ urlpatterns = [
     path('maquiagens/horario/<int:horario_id>/agendar/', views.agendar_maquiagem_admin, name='agendar_maquiagem_admin'),
     path('maquiagens/<int:pk>/editar/', views.maquiagem_editar, name='maquiagem_editar'),
     path('maquiagens/<int:pk>/excluir/', views.maquiagem_excluir, name='maquiagem_excluir'),
+    # Configurações do site público
+    path('configuracoes/site/', views.configuracoes_site, name='configuracoes_site'),
+
     path('turmas/<int:turma_id>/alunas/', views.alunas_por_turma, name='alunas_por_turma'),
     path('ajax/alunas-por-turma/<int:turma_id>/',views.alunas_por_turma,name='alunas_por_turma',),
     path('pedidos-ingresso/<int:pedido_id>/cancelar/',views.pedido_ingresso_cancelar,name='pedido_ingresso_cancelar',),
