@@ -130,7 +130,7 @@
                         
                         {% if aviso.data_evento %}
                             <p class="aviso-data">
-                                Data do evento: {{ aviso.data_evento|date:"d/m/Y" }}
+                                Data do evento: {{ aviso.data_evento|date:"d/m/Y" }}{% if aviso.horario %} às {{ aviso.horario }}{% endif %}
                             </p>
                         {% endif %}
                         

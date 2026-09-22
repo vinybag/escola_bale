@@ -157,7 +157,6 @@ class InscricaoAudicao(models.Model):
     PERSONAGENS_CHOICES = [
         ('thessalia', 'Thessália'),
         ('zyara', 'Zyara'),
-        ('zyar', 'Zyar'),
         ('astela_nur', 'Astela Nur'),
         ('kai_ignus', 'Kai Ignus'),
         ('eldrick_felicius', 'Eldrick Felicius'),
@@ -165,8 +164,9 @@ class InscricaoAudicao(models.Model):
         ('odessa', 'Odessa'),
         ('aurelia', 'Aurélia'),
         ('cora_del_amour', 'Cora del Amour'),
+        ('dora_del_amour', 'Dora del Amour'),
         ('3_marias', '3 Marias'),
-        ('rosa_branca', 'Rosa Branca'),
+        ('quarteto_das_rosas', 'Quarteto das Rosas'),
     ]
 
     nome_completo = models.CharField(max_length=200, verbose_name='Nome completo')
@@ -190,6 +190,73 @@ class InscricaoAudicao(models.Model):
         verbose_name = 'Inscrição para Audição'
         verbose_name_plural = 'Inscrições para Audição'
         ordering = ['-data_inscricao']
+
+
+class Personagem(models.Model):
+    """
+    Lista oficial de personagens de um espetáculo, com o número de
+    vagas de cada um (a maioria tem 1, mas pode ter mais — ex: "3
+    Marias" tem 3 vagas, "Quarteto das Rosas" tem 4).
+
+    Isso é independente da inscrição de audição: nem todo personagem
+    passa por audição pública (alguns são escolhidos diretamente pela
+    escola), então o elenco final vive aqui, não em InscricaoAudicao.
+    """
+
+    espetaculo = models.ForeignKey(
+        'Espetaculo',
+        on_delete=models.CASCADE,
+        related_name='personagens',
+    )
+    nome = models.CharField(max_length=100)
+    numero_vagas = models.PositiveSmallIntegerField(
+        default=1,
+        verbose_name='Número de vagas',
+        help_text='Quantas alunas/alunos interpretam esse personagem (normalmente 1).',
+    )
+    ativo = models.BooleanField(default=True)
+    ordem = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        verbose_name = 'Personagem'
+        verbose_name_plural = 'Personagens'
+        ordering = ['ordem', 'nome']
+        unique_together = ('espetaculo', 'nome')
+
+    def __str__(self):
+        return f'{self.nome} ({self.espetaculo.titulo})'
+
+    @property
+    def vagas_preenchidas(self):
+        return self.elenco.count()
+
+    @property
+    def vagas_disponiveis(self):
+        return max(self.numero_vagas - self.vagas_preenchidas, 0)
+
+
+class ElencoPersonagem(models.Model):
+    """Uma vaga preenchida: esta aluna/aluno interpreta este personagem."""
+
+    personagem = models.ForeignKey(
+        Personagem,
+        on_delete=models.CASCADE,
+        related_name='elenco',
+    )
+    aluna = models.ForeignKey(
+        'usuarios.Aluna',
+        on_delete=models.CASCADE,
+        related_name='personagens_elenco',
+    )
+    data_atribuicao = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Elenco do personagem'
+        verbose_name_plural = 'Elenco dos personagens'
+        unique_together = ('personagem', 'aluna')
+
+    def __str__(self):
+        return f'{self.aluna.nome} - {self.personagem.nome}'
 
 
 class AvaliacaoAudicao(models.Model):

@@ -1,0 +1,152 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Elenco{% endblock %}
+
+{% block content %}
+<style>
+    .elenco-header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+    .elenco-select-espetaculo { padding: 0.6rem 0.9rem; border: 1px solid #d8c7e3; border-radius: 8px; font-size: 0.95rem; }
+
+    .elenco-card {
+        background: white; border: 1px solid #ece3f2; border-radius: 14px;
+        padding: 1.25rem 1.5rem; margin-bottom: 1rem; box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+    }
+    .elenco-card-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem; }
+    .elenco-nome { font-weight: 700; color: #4a235f; font-size: 1.1rem; margin: 0; }
+    .elenco-vagas-badge { font-size: 0.8rem; padding: 0.2rem 0.6rem; border-radius: 20px; background: #f0e6f7; color: #6b2d8f; font-weight: 600; }
+    .elenco-vagas-badge.completo { background: #dff3e4; color: #1e7c34; }
+
+    .elenco-membro {
+        display: flex; justify-content: space-between; align-items: center;
+        background: #f9f5fb; border-radius: 8px; padding: 0.5rem 0.9rem; margin-bottom: 0.5rem;
+    }
+    .elenco-membro-remover { color: #dc3545; text-decoration: none; font-size: 0.85rem; font-weight: 600; }
+
+    .elenco-add-form { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.6rem; }
+    .elenco-add-form select { flex: 1; min-width: 160px; padding: 0.55rem 0.7rem; border: 1px solid #d8c7e3; border-radius: 8px; }
+    .elenco-add-form button { padding: 0.55rem 1.1rem; border: none; border-radius: 8px; background: #6b2d8f; color: white; font-weight: 600; cursor: pointer; }
+
+    .novo-personagem-card {
+        background: #f9f5fb; border: 1px dashed #d8c7e3; border-radius: 14px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem;
+    }
+    .novo-personagem-form { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: flex-end; }
+    .novo-personagem-form label { display: block; font-size: 0.8rem; color: #6c757d; margin-bottom: 0.3rem; }
+    .novo-personagem-form input { padding: 0.6rem 0.8rem; border: 1px solid #d8c7e3; border-radius: 8px; }
+</style>
+
+<div class="elenco-header">
+    <div>
+        <h2 style="color: #4a235f; margin-bottom: 0.25rem;">Elenco</h2>
+        <p style="color: #6c757d; margin: 0;">Escale quem ganhou cada personagem — isso já habilita você a mandar avisos só pra eles.</p>
+    </div>
+
+    {% if espetaculos %}
+        <form method="get">
+            <select name="espetaculo" class="elenco-select-espetaculo" onchange="this.form.submit()">
+                {% for esp in espetaculos %}
+                    <option value="{{ esp.pk }}" {% if espetaculo_selecionado.pk == esp.pk %}selected{% endif %}>{{ esp.titulo }}</option>
+                {% endfor %}
+            </select>
+        </form>
+    {% endif %}
+</div>
+
+{% if not espetaculo_selecionado %}
+    <p>Cadastre um espetáculo primeiro, na aba de Espetáculos.</p>
+{% else %}
+
+    <div class="novo-personagem-card">
+        <p style="margin: 0 0 0.75rem 0; font-weight: 600; color: #4a235f;">Adicionar personagem</p>
+        <form method="post" action="{% url 'admin_dashboard:personagem_criar' %}" class="novo-personagem-form">
+            {% csrf_token %}
+            <input type="hidden" name="espetaculo" value="{{ espetaculo_selecionado.pk }}">
+            <div>
+                <label>Nome do personagem</label>
+                <input type="text" name="nome" required placeholder="Ex: Dora del Amour">
+            </div>
+            <div>
+                <label>Nº de vagas</label>
+                <input type="number" name="numero_vagas" value="1" min="1" style="width: 80px;">
+            </div>
+            <button type="submit" style="padding: 0.6rem 1.1rem; border: none; border-radius: 8px; background: #6b2d8f; color: white; font-weight: 600; cursor: pointer;">Adicionar</button>
+        </form>
+    </div>
+
+    {% for personagem in personagens %}
+        <div class="elenco-card">
+            <div class="elenco-card-header">
+                <p class="elenco-nome">{{ personagem.nome }}</p>
+                <span class="elenco-vagas-badge {% if personagem.vagas_disponiveis == 0 %}completo{% endif %}">
+                    {{ personagem.vagas_preenchidas }}/{{ personagem.numero_vagas }} vaga{{ personagem.numero_vagas|pluralize }}
+                </span>
+                <form method="post" action="{% url 'admin_dashboard:personagem_excluir' personagem.pk %}" onsubmit="return confirm('Excluir {{ personagem.nome }}?');" style="margin-left: auto;">
+                    {% csrf_token %}
+                    <button type="submit" style="background: none; border: none; color: #dc3545; cursor: pointer; font-size: 0.85rem;">Excluir personagem</button>
+                </form>
+            </div>
+
+            {% for membro in personagem.elenco.all %}
+                <div class="elenco-membro">
+                    <span>{{ membro.aluna.nome }}</span>
+                    <form method="post" action="{% url 'admin_dashboard:elenco_remover' membro.pk %}" onsubmit="return confirm('Remover {{ membro.aluna.nome }} de {{ personagem.nome }}?');">
+                        {% csrf_token %}
+                        <button type="submit" class="elenco-membro-remover" style="background: none; border: none; cursor: pointer;">Remover</button>
+                    </form>
+                </div>
+            {% endfor %}
+
+            {% if personagem.vagas_disponiveis > 0 %}
+                <form method="post" action="{% url 'admin_dashboard:elenco_atribuir' personagem.pk %}" class="elenco-add-form elenco-atribuir-form">
+                    {% csrf_token %}
+                    <select class="elenco-select-turma">
+                        <option value="">Escolha a turma...</option>
+                        {% for turma in turmas %}
+                            <option value="{{ turma.pk }}">{{ turma.nome }}</option>
+                        {% endfor %}
+                    </select>
+                    <select name="aluna" class="elenco-select-aluna" required>
+                        <option value="" disabled selected>Selecione a turma primeiro</option>
+                    </select>
+                    <button type="submit">Escalar</button>
+                </form>
+            {% endif %}
+        </div>
+    {% empty %}
+        <p>Nenhum personagem cadastrado ainda pra esse espetáculo.</p>
+    {% endfor %}
+
+{% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const URL_TEMPLATE = "{% url 'admin_dashboard:alunas_por_turma' 0 %}";
+
+    document.querySelectorAll('.elenco-atribuir-form').forEach(function (form) {
+        const selectTurma = form.querySelector('.elenco-select-turma');
+        const selectAluna = form.querySelector('.elenco-select-aluna');
+
+        selectTurma.addEventListener('change', function () {
+            const turmaId = selectTurma.value;
+            if (!turmaId) {
+                selectAluna.innerHTML = '<option value="" disabled selected>Selecione a turma primeiro</option>';
+                return;
+            }
+            const url = URL_TEMPLATE.replace('/0/', `/${turmaId}/`);
+            fetch(url, { credentials: 'same-origin' })
+                .then(function (r) { return r.json(); })
+                .then(function (alunas) {
+                    if (alunas.length === 0) {
+                        selectAluna.innerHTML = '<option value="" disabled selected>Nenhuma aluna ativa nessa turma</option>';
+                        return;
+                    }
+                    selectAluna.innerHTML = '<option value="" disabled selected>Selecione...</option>' +
+                        alunas.map(function (a) { return `<option value="${a.id}">${a.nome}</option>`; }).join('');
+                })
+                .catch(function () {
+                    selectAluna.innerHTML = '<option value="" disabled selected>Erro ao carregar</option>';
+                });
+        });
+    });
+});
+</script>
+{% endblock %}

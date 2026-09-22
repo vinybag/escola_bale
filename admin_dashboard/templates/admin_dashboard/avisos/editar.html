@@ -162,6 +162,11 @@
             </div>
 
             <div>
+                <label class="aviso-label">Horário</label>
+                <input type="text" name="horario" value="{{ aviso.horario }}" placeholder="Ex: 14h às 16h" class="aviso-input">
+            </div>
+
+            <div>
                 <label class="aviso-label">Tipo</label>
                 <select name="tipo" class="aviso-select">
                     <option value="geral" {% if aviso.tipo == 'geral' %}selected{% endif %}>Geral</option>
@@ -169,14 +174,23 @@
                     <option value="feriado" {% if aviso.tipo == 'feriado' %}selected{% endif %}>Feriado</option>
                     <option value="reposicao" {% if aviso.tipo == 'reposicao' %}selected{% endif %}>Reposição</option>
                     <option value="apresentacao" {% if aviso.tipo == 'apresentacao' %}selected{% endif %}>Apresentação</option>
+                    <option value="ensaio" {% if aviso.tipo == 'ensaio' %}selected{% endif %}>Ensaio</option>
                 </select>
+            </div>
+
+            <div>
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 600; color: #4a235f; cursor: pointer;">
+                    <input type="checkbox" name="enviar_whatsapp" {% if aviso.enviar_whatsapp %}checked{% endif %} style="width: 1.1rem; height: 1.1rem;">
+                    Enviar por WhatsApp também
+                </label>
+                <span class="aviso-help">Além de aparecer no site, dispara mensagem de WhatsApp pros destinatários (início da semana e no dia).</span>
             </div>
 
             <div class="aviso-destinatarios">
                 <p class="aviso-destinatarios-titulo">Para quem é este aviso?</p>
                 <p class="aviso-destinatarios-sub">
-                    Não selecione nada para exibir para todas. Selecionando turmas, alunas
-                    e/ou professoras, o aviso só aparece para quem estiver marcado.
+                    Não selecione nada para exibir para todas. Selecionando turmas, alunas,
+                    personagens e/ou professoras, o aviso só aparece para quem estiver marcado.
                 </p>
 
                 <div class="aviso-destinatarios-grid">
@@ -224,6 +238,21 @@
                             {% endfor %}
                         </select>
                         <span class="aviso-help">Professoras que devem ver o aviso mesmo sem serem alunas.</span>
+                    </div>
+
+                    <div>
+                        <label class="aviso-label" for="id_personagens">Personagens</label>
+                        <select id="id_personagens" name="personagens" class="aviso-select" multiple>
+                            {% for personagem in personagens %}
+                                <option
+                                    value="{{ personagem.pk }}"
+                                    {% if personagem.pk in personagens_selecionados_ids %}selected{% endif %}
+                                >
+                                    {{ personagem.nome }} ({{ personagem.espetaculo.titulo }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <span class="aviso-help">Ex: ensaio só de quem está escalado nesses personagens.</span>
                     </div>
 
                 </div>

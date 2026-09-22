@@ -53,6 +53,13 @@ urlpatterns = [
     # Configurações do site público
     path('configuracoes/site/', views.configuracoes_site, name='configuracoes_site'),
 
+    # Personagens e Elenco
+    path('personagens/', views.personagens_list, name='personagens_list'),
+    path('personagens/criar/', views.personagem_criar, name='personagem_criar'),
+    path('personagens/<int:pk>/excluir/', views.personagem_excluir, name='personagem_excluir'),
+    path('personagens/<int:personagem_id>/elenco/atribuir/', views.elenco_atribuir, name='elenco_atribuir'),
+    path('elenco/<int:pk>/remover/', views.elenco_remover, name='elenco_remover'),
+
     path('turmas/<int:turma_id>/alunas/', views.alunas_por_turma, name='alunas_por_turma'),
     path('ajax/alunas-por-turma/<int:turma_id>/',views.alunas_por_turma,name='alunas_por_turma',),
     path('pedidos-ingresso/<int:pedido_id>/cancelar/',views.pedido_ingresso_cancelar,name='pedido_ingresso_cancelar',),

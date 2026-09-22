@@ -1213,11 +1213,14 @@ def aviso_criar(request):
             titulo = request.POST.get('titulo')
             descricao = request.POST.get('descricao')
             data_evento = request.POST.get('data_evento')
+            horario = request.POST.get('horario', '').strip()
             tipo = request.POST.get('tipo', 'geral')
 
             turmas_ids = request.POST.getlist('turmas')
             alunas_ids = request.POST.getlist('alunas')
             professoras_ids = request.POST.getlist('professoras')
+            personagens_ids = request.POST.getlist('personagens')
+            enviar_whatsapp = request.POST.get('enviar_whatsapp') == 'on'
 
             # Validacao
             if not all([titulo, descricao, data_evento]):
@@ -1229,8 +1232,10 @@ def aviso_criar(request):
                 titulo=titulo,
                 descricao=descricao,
                 data_evento=data_evento,
+                horario=horario,
                 tipo=tipo,
                 autor=request.user,
+                enviar_whatsapp=enviar_whatsapp,
             )
 
             if turmas_ids:
@@ -1244,6 +1249,10 @@ def aviso_criar(request):
                     User.objects.filter(id__in=professoras_ids, groups__name='Professores')
                 )
 
+            if personagens_ids:
+                from espetaculo.models import Personagem
+                aviso.personagens.set(Personagem.objects.filter(id__in=personagens_ids))
+
             messages.success(request, f'Aviso "{titulo}" criado com sucesso!')
             return redirect('admin_dashboard:avisos_list')
 
@@ -1256,11 +1265,13 @@ def aviso_criar(request):
             return redirect('admin_dashboard:aviso_criar')
 
     # GET - mostra form
+    from espetaculo.models import Personagem
     context = {
         'turmas': Turma.objects.filter(ativa=True).order_by('nome'),
         'professoras': User.objects.filter(
             groups__name='Professores'
         ).order_by('first_name', 'last_name', 'username'),
+        'personagens': Personagem.objects.filter(ativo=True).select_related('espetaculo').order_by('espetaculo__titulo', 'ordem', 'nome'),
     }
     return render(request, 'admin_dashboard/avisos/criar.html', context)
 
@@ -1291,13 +1302,16 @@ def aviso_editar(request, pk):
             aviso.titulo = request.POST.get('titulo')
             aviso.descricao = request.POST.get('descricao')
             aviso.data_evento = request.POST.get('data_evento')
+            aviso.horario = request.POST.get('horario', '').strip()
             aviso.tipo = request.POST.get('tipo', 'geral')
+            aviso.enviar_whatsapp = request.POST.get('enviar_whatsapp') == 'on'
 
             aviso.save()
 
             turmas_ids = request.POST.getlist('turmas')
             alunas_ids = request.POST.getlist('alunas')
             professoras_ids = request.POST.getlist('professoras')
+            personagens_ids = request.POST.getlist('personagens')
 
             aviso.turmas.set(Turma.objects.filter(id__in=turmas_ids)) if turmas_ids else aviso.turmas.clear()
             aviso.alunas.set(Aluna.objects.filter(id__in=alunas_ids)) if alunas_ids else aviso.alunas.clear()
@@ -1309,6 +1323,12 @@ def aviso_editar(request, pk):
             else:
                 aviso.professoras.clear()
 
+            if personagens_ids:
+                from espetaculo.models import Personagem
+                aviso.personagens.set(Personagem.objects.filter(id__in=personagens_ids))
+            else:
+                aviso.personagens.clear()
+
             messages.success(request, f'Aviso "{aviso.titulo}" atualizado com sucesso!')
             return redirect('admin_dashboard:avisos_list')
 
@@ -1318,9 +1338,12 @@ def aviso_editar(request, pk):
             return redirect('admin_dashboard:aviso_editar', pk=pk)
 
     # GET - mostra form preenchido
+    from espetaculo.models import Personagem
+
     turmas_selecionadas_ids = list(aviso.turmas.values_list('id', flat=True))
     alunas_selecionadas_ids = list(aviso.alunas.values_list('id', flat=True))
     professoras_selecionadas_ids = list(aviso.professoras.values_list('id', flat=True))
+    personagens_selecionados_ids = list(aviso.personagens.values_list('id', flat=True))
 
     # Alunas das turmas já selecionadas (para popular o segundo select ao carregar a página)
     alunas_das_turmas = Aluna.objects.filter(
@@ -1334,10 +1357,12 @@ def aviso_editar(request, pk):
         'professoras': User.objects.filter(
             groups__name='Professores'
         ).order_by('first_name', 'last_name', 'username'),
+        'personagens': Personagem.objects.filter(ativo=True).select_related('espetaculo').order_by('espetaculo__titulo', 'ordem', 'nome'),
         'alunas_das_turmas': alunas_das_turmas,
         'turmas_selecionadas_ids': turmas_selecionadas_ids,
         'alunas_selecionadas_ids': alunas_selecionadas_ids,
         'professoras_selecionadas_ids': professoras_selecionadas_ids,
+        'personagens_selecionados_ids': personagens_selecionados_ids,
     }
 
     return render(request, 'admin_dashboard/avisos/editar.html', context)
@@ -3267,7 +3292,7 @@ def ficha_audicao(request, pk):
     personagens_dict = {
         'thessalia': 'Thessália',
         'zyara': 'Zyara',
-        'zyar': 'Zyar',
+        'zyar': 'Zyar',  # mantido só para exibir inscrições antigas corretamente
         'astela_nur': 'Astela Nur',
         'kai_ignus': 'Kai Ignus',
         'eldrick_felicius': 'Eldrick Felicius',
@@ -3275,7 +3300,10 @@ def ficha_audicao(request, pk):
         'odessa': 'Odessa',
         'aurelia': 'Aurélia',
         'cora_del_amour': 'Cora del Amour',
+        'dora_del_amour': 'Dora del Amour',
         '3_marias': '3 Marias',
+        'rosa_branca': 'Rosa Branca',  # mantido só para exibir inscrições antigas corretamente
+        'quarteto_das_rosas': 'Quarteto das Rosas',
     }
     
     # Converte os nomes dos personagens para exibição legível
@@ -5813,3 +5841,120 @@ def configuracoes_site(request):
         return redirect('admin_dashboard:configuracoes_site')
 
     return render(request, 'admin_dashboard/configuracoes/site.html', {'config': config})
+
+
+@login_required
+def personagens_list(request):
+    """Lista os espetáculos com personagens, e o elenco (vagas preenchidas/vazias) de cada um."""
+    if not request.user.is_staff:
+        return redirect('home')
+
+    from espetaculo.models import Personagem
+
+    espetaculo_id = request.GET.get('espetaculo')
+    espetaculos = Espetaculo.objects.all().order_by('-id')
+
+    espetaculo_selecionado = None
+    if espetaculo_id:
+        espetaculo_selecionado = Espetaculo.objects.filter(pk=espetaculo_id).first()
+    if not espetaculo_selecionado:
+        espetaculo_selecionado = espetaculos.first()
+
+    personagens = Personagem.objects.filter(
+        espetaculo=espetaculo_selecionado
+    ).prefetch_related('elenco__aluna') if espetaculo_selecionado else Personagem.objects.none()
+
+    from usuarios.models import Turma
+    context = {
+        'espetaculos': espetaculos,
+        'espetaculo_selecionado': espetaculo_selecionado,
+        'personagens': personagens,
+        'turmas': Turma.objects.filter(ativa=True).order_by('nome'),
+    }
+    return render(request, 'admin_dashboard/personagens/list.html', context)
+
+
+@login_required
+def personagem_criar(request):
+    if not request.user.is_staff:
+        return redirect('home')
+
+    from espetaculo.models import Personagem
+
+    if request.method == 'POST':
+        espetaculo_id = request.POST.get('espetaculo')
+        nome = request.POST.get('nome', '').strip()
+        numero_vagas = request.POST.get('numero_vagas', '1')
+
+        if not espetaculo_id or not nome:
+            messages.error(request, 'Preencha o espetáculo e o nome do personagem.')
+            return redirect('admin_dashboard:personagens_list')
+
+        try:
+            Personagem.objects.create(
+                espetaculo_id=espetaculo_id,
+                nome=nome,
+                numero_vagas=int(numero_vagas) if numero_vagas else 1,
+            )
+            messages.success(request, f'Personagem "{nome}" criado com sucesso!')
+        except IntegrityError:
+            messages.error(request, f'Já existe um personagem chamado "{nome}" nesse espetáculo.')
+
+    return redirect(f"{reverse('admin_dashboard:personagens_list')}?espetaculo={request.POST.get('espetaculo')}")
+
+
+@login_required
+@require_POST
+def personagem_excluir(request, pk):
+    if not request.user.is_staff:
+        return redirect('home')
+
+    from espetaculo.models import Personagem
+    personagem = get_object_or_404(Personagem, pk=pk)
+    espetaculo_id = personagem.espetaculo_id
+    nome = personagem.nome
+    personagem.delete()
+    messages.success(request, f'Personagem "{nome}" excluído.')
+    return redirect(f"{reverse('admin_dashboard:personagens_list')}?espetaculo={espetaculo_id}")
+
+
+@login_required
+@require_POST
+def elenco_atribuir(request, personagem_id):
+    """Preenche uma vaga do personagem com uma aluna/aluno."""
+    if not request.user.is_staff:
+        return redirect('home')
+
+    from espetaculo.models import Personagem, ElencoPersonagem
+    from usuarios.models import Aluna
+
+    personagem = get_object_or_404(Personagem, pk=personagem_id)
+    aluna_id = request.POST.get('aluna')
+
+    if not aluna_id:
+        messages.error(request, 'Selecione uma aluna/aluno.')
+        return redirect(f"{reverse('admin_dashboard:personagens_list')}?espetaculo={personagem.espetaculo_id}")
+
+    if personagem.vagas_disponiveis <= 0:
+        messages.error(request, f'"{personagem.nome}" já tem todas as vagas preenchidas.')
+        return redirect(f"{reverse('admin_dashboard:personagens_list')}?espetaculo={personagem.espetaculo_id}")
+
+    aluna = get_object_or_404(Aluna, pk=aluna_id)
+    ElencoPersonagem.objects.get_or_create(personagem=personagem, aluna=aluna)
+    messages.success(request, f'{aluna.nome} foi escalada(o) para "{personagem.nome}"!')
+    return redirect(f"{reverse('admin_dashboard:personagens_list')}?espetaculo={personagem.espetaculo_id}")
+
+
+@login_required
+@require_POST
+def elenco_remover(request, pk):
+    """Remove uma aluna/aluno de um personagem (a vaga volta a ficar livre)."""
+    if not request.user.is_staff:
+        return redirect('home')
+
+    from espetaculo.models import ElencoPersonagem
+    elenco = get_object_or_404(ElencoPersonagem, pk=pk)
+    espetaculo_id = elenco.personagem.espetaculo_id
+    elenco.delete()
+    messages.success(request, 'Removido do elenco.')
+    return redirect(f"{reverse('admin_dashboard:personagens_list')}?espetaculo={espetaculo_id}")

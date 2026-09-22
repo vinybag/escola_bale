@@ -38,13 +38,20 @@ def calendario(request):
 
     # Staff/admin sempre vê todos os avisos, sem filtro de destinatário.
     if not request.user.is_staff:
+        from espetaculo.models import Personagem
+
         turmas_ids, alunas_ids = _turmas_ids_do_usuario(request)
+        personagens_ids = set(
+            Personagem.objects.filter(elenco__aluna__id__in=alunas_ids)
+            .values_list('id', flat=True)
+        ) if alunas_ids else set()
 
         avisos = avisos.filter(
-            Q(turmas__isnull=True, alunas__isnull=True, professoras__isnull=True)
+            Q(turmas__isnull=True, alunas__isnull=True, professoras__isnull=True, personagens__isnull=True)
             | Q(turmas__id__in=turmas_ids)
             | Q(alunas__id__in=alunas_ids)
             | Q(professoras=request.user)
+            | Q(personagens__id__in=personagens_ids)
         ).distinct()
 
     if busca:
