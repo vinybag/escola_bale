@@ -57,18 +57,6 @@
             </div>
         {% endif %}
 
-        {% if avisos_banner %}
-            <div style="max-width: 900px; margin: 1rem auto 0; padding: 0 1rem;">
-                {% for aviso in avisos_banner %}
-                    <div style="background: #fff8e6; border: 1px solid #f0d98c; border-left: 5px solid #d4a017; border-radius: 8px; padding: 0.9rem 1.1rem; margin-bottom: 0.6rem;">
-                        <strong style="color: #6b4f00;">📅 {{ aviso.titulo }}</strong>
-                        {% if aviso.data_evento %}<span style="color: #6b4f00;"> — {{ aviso.data_evento|date:"d/m" }}{% if aviso.horario %} às {{ aviso.horario }}{% endif %}</span>{% endif %}
-                        <div style="color: #7a6320; font-size: 0.92rem; margin-top: 0.2rem;">{{ aviso.descricao|truncatechars:140 }}</div>
-                    </div>
-                {% endfor %}
-            </div>
-        {% endif %}
-
         {% block content %}{% endblock %}
     </main>
 

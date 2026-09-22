@@ -106,7 +106,6 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'core.context_processors.marca',
-                'calendario_avisos.context_processors.avisos_banner',
             ],
         },
     },

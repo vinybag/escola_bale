@@ -1,0 +1,109 @@
+diff --git a/admin_dashboard/templates/admin_dashboard/base.html b/admin_dashboard/templates/admin_dashboard/base.html
+index 08d2362..d266b93 100644
+--- a/admin_dashboard/templates/admin_dashboard/base.html
++++ b/admin_dashboard/templates/admin_dashboard/base.html
+@@ -1457,20 +1457,6 @@
+ 
+ 
+ 
+-            {% if avisos_banner %}
+-                <div style="margin-bottom: 1.25rem;">
+-                    {% for aviso in avisos_banner %}
+-                        <div style="background: #fff8e6; border: 1px solid #f0d98c; border-left: 5px solid #d4a017; border-radius: 8px; padding: 0.9rem 1.1rem; margin-bottom: 0.6rem;">
+-                            <strong style="color: #6b4f00;">📅 {{ aviso.titulo }}</strong>
+-                            {% if aviso.data_evento %}<span style="color: #6b4f00;"> — {{ aviso.data_evento|date:"d/m" }}{% if aviso.horario %} às {{ aviso.horario }}{% endif %}</span>{% endif %}
+-                            <div style="color: #7a6320; font-size: 0.92rem; margin-top: 0.2rem;">{{ aviso.descricao|truncatechars:140 }}</div>
+-                        </div>
+-                    {% endfor %}
+-                </div>
+-            {% endif %}
+-
+-
+-
+             {% block content %}{% endblock %}
+ 
+ 
+diff --git a/calendario_avisos/context_processors.py b/calendario_avisos/context_processors.py
+deleted file mode 100644
+index 8bee90b..0000000
+--- a/calendario_avisos/context_processors.py
++++ /dev/null
+@@ -1,43 +0,0 @@
+-from django.utils import timezone
+-
+-
+-def avisos_banner(request):
+-    """
+-    Deixa disponível, em toda página (para quem está logado), os
+-    avisos ativos com data futura (ou de hoje) que sejam relevantes
+-    para o usuário — reaproveitando a mesma lógica de destinatário
+-    usada na página de calendário.
+-
+-    Isso é o que faz o aviso "aparecer assim que a pessoa loga ou
+-    entra no site", sem precisar navegar até uma página específica.
+-    """
+-    if not request.user.is_authenticated:
+-        return {}
+-
+-    from django.db.models import Q
+-    from .models import Aviso
+-    from .views import _turmas_ids_do_usuario
+-
+-    hoje = timezone.localdate()
+-    avisos = Aviso.objects.filter(ativo=True, data_evento__gte=hoje)
+-
+-    if not request.user.is_staff:
+-        from espetaculo.models import Personagem
+-
+-        turmas_ids, alunas_ids = _turmas_ids_do_usuario(request)
+-        personagens_ids = set(
+-            Personagem.objects.filter(elenco__aluna__id__in=alunas_ids)
+-            .values_list('id', flat=True)
+-        ) if alunas_ids else set()
+-
+-        avisos = avisos.filter(
+-            Q(turmas__isnull=True, alunas__isnull=True, professoras__isnull=True, personagens__isnull=True)
+-            | Q(turmas__id__in=turmas_ids)
+-            | Q(alunas__id__in=alunas_ids)
+-            | Q(professoras=request.user)
+-            | Q(personagens__id__in=personagens_ids)
+-        ).distinct()
+-
+-    avisos = avisos.order_by('data_evento')[:3]
+-
+-    return {'avisos_banner': avisos}
+diff --git a/config/settings.py b/config/settings.py
+index fb90db9..aae67af 100644
+--- a/config/settings.py
++++ b/config/settings.py
+@@ -106,7 +106,6 @@ TEMPLATES = [
+                 'django.contrib.auth.context_processors.auth',
+                 'django.contrib.messages.context_processors.messages',
+                 'core.context_processors.marca',
+-                'calendario_avisos.context_processors.avisos_banner',
+             ],
+         },
+     },
+diff --git a/templates/base.html b/templates/base.html
+index e3b38a6..5b7ad35 100644
+--- a/templates/base.html
++++ b/templates/base.html
+@@ -57,18 +57,6 @@
+             </div>
+         {% endif %}
+ 
+-        {% if avisos_banner %}
+-            <div style="max-width: 900px; margin: 1rem auto 0; padding: 0 1rem;">
+-                {% for aviso in avisos_banner %}
+-                    <div style="background: #fff8e6; border: 1px solid #f0d98c; border-left: 5px solid #d4a017; border-radius: 8px; padding: 0.9rem 1.1rem; margin-bottom: 0.6rem;">
+-                        <strong style="color: #6b4f00;">📅 {{ aviso.titulo }}</strong>
+-                        {% if aviso.data_evento %}<span style="color: #6b4f00;"> — {{ aviso.data_evento|date:"d/m" }}{% if aviso.horario %} às {{ aviso.horario }}{% endif %}</span>{% endif %}
+-                        <div style="color: #7a6320; font-size: 0.92rem; margin-top: 0.2rem;">{{ aviso.descricao|truncatechars:140 }}</div>
+-                    </div>
+-                {% endfor %}
+-            </div>
+-        {% endif %}
+-
+         {% block content %}{% endblock %}
+     </main>
+ 
