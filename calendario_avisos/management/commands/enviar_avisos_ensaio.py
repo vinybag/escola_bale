@@ -77,8 +77,8 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         hoje = timezone.localdate()
-        inicio_semana = hoje - timedelta(days=hoje.weekday())  # segunda-feira desta semana
-        fim_semana = inicio_semana + timedelta(days=6)  # domingo
+        inicio_semana = hoje + timedelta(days=1)  # segunda-feira da semana que vem
+        fim_semana = inicio_semana + timedelta(days=6)  # domingo seguinte
 
         enviados = 0
         erros = 0
@@ -90,13 +90,16 @@ class Command(BaseCommand):
             data_evento__isnull=False,
         )
 
-        # Resumo da semana: só roda às segundas-feiras.
-        if hoje.weekday() == 0:
+        # Resumo da semana: só roda às segundas-feiras. Se o ensaio for
+        # justamente hoje, pula o resumo — a pessoa já vai receber o
+        # lembrete do dia logo abaixo, e mandar os dois seria repetir
+        # a mesma informação duas vezes.
+        if hoje.weekday() == 6:
             avisos_da_semana = avisos.filter(
                 data_evento__gte=inicio_semana,
                 data_evento__lte=fim_semana,
                 notificacao_semana_enviada=False,
-            )
+            ).exclude(data_evento=hoje)
             for aviso in avisos_da_semana:
                 ok, falhas = self._enviar(aviso, 'aviso_ensaio_semana')
                 enviados += ok
@@ -104,13 +107,21 @@ class Command(BaseCommand):
                 aviso.notificacao_semana_enviada = True
                 aviso.save(update_fields=['notificacao_semana_enviada'])
 
+            # Os que caem hoje não recebem o resumo (só o lembrete do dia,
+            # mais abaixo), mas marcamos como "tratados" mesmo assim, pra
+            # manter o registro consistente.
+            avisos.filter(
+                data_evento=hoje,
+                notificacao_semana_enviada=False,
+            ).update(notificacao_semana_enviada=True)
+
         # Lembrete do dia: avisos cujo ensaio é hoje.
         avisos_de_hoje = avisos.filter(
             data_evento=hoje,
             notificacao_dia_enviada=False,
         )
         for aviso in avisos_de_hoje:
-            ok, falhas = self._enviar(aviso, 'aviso_ensaio_dia')
+            ok, falhas = self._enviar(aviso, 'aviso_ensaio_dia_certo')
             enviados += ok
             erros += falhas
             aviso.notificacao_dia_enviada = True

@@ -1,0 +1,72 @@
+diff --git a/.github/workflows/enviar-avisos-ensaio.yml b/.github/workflows/enviar-avisos-ensaio.yml
+new file mode 100644
+index 0000000..4b54b9e
+--- /dev/null
++++ b/.github/workflows/enviar-avisos-ensaio.yml
+@@ -0,0 +1,28 @@
++name: Enviar avisos de ensaio
++
++on:
++  schedule:
++    - cron: '0 11 * * *'
++  workflow_dispatch:
++
++jobs:
++  enviar-avisos-ensaio:
++    runs-on: ubuntu-latest
++    env:
++      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
++      RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
++      RAILWAY_PROJECT_ID: de264516-835b-4bc9-9bd9-11055c649742
++      RAILWAY_ENVIRONMENT_ID: a69e8f02-c043-4cd8-88f2-0fb359ba64ef
++
++    steps:
++      - name: Baixar código
++        uses: actions/checkout@v4
++
++      - name: Instalar Railway CLI via npm
++        run: npm install -g @railway/cli@latest
++
++      - name: Verificar instalação
++        run: railway --version
++
++      - name: Rodar disparo de avisos de ensaio no Railway
++        run: railway run --service 736065af-4959-4b0f-8af3-7985d8d0fc33 python manage.py enviar_avisos_ensaio
+diff --git a/calendario_avisos/management/commands/enviar_avisos_ensaio.py b/calendario_avisos/management/commands/enviar_avisos_ensaio.py
+index 224aece..340213b 100644
+--- a/calendario_avisos/management/commands/enviar_avisos_ensaio.py
++++ b/calendario_avisos/management/commands/enviar_avisos_ensaio.py
+@@ -90,13 +90,16 @@ class Command(BaseCommand):
+             data_evento__isnull=False,
+         )
+ 
+-        # Resumo da semana: só roda às segundas-feiras.
++        # Resumo da semana: só roda às segundas-feiras. Se o ensaio for
++        # justamente hoje, pula o resumo — a pessoa já vai receber o
++        # lembrete do dia logo abaixo, e mandar os dois seria repetir
++        # a mesma informação duas vezes.
+         if hoje.weekday() == 0:
+             avisos_da_semana = avisos.filter(
+                 data_evento__gte=inicio_semana,
+                 data_evento__lte=fim_semana,
+                 notificacao_semana_enviada=False,
+-            )
++            ).exclude(data_evento=hoje)
+             for aviso in avisos_da_semana:
+                 ok, falhas = self._enviar(aviso, 'aviso_ensaio_semana')
+                 enviados += ok
+@@ -104,6 +107,14 @@ class Command(BaseCommand):
+                 aviso.notificacao_semana_enviada = True
+                 aviso.save(update_fields=['notificacao_semana_enviada'])
+ 
++            # Os que caem hoje não recebem o resumo (só o lembrete do dia,
++            # mais abaixo), mas marcamos como "tratados" mesmo assim, pra
++            # manter o registro consistente.
++            avisos.filter(
++                data_evento=hoje,
++                notificacao_semana_enviada=False,
++            ).update(notificacao_semana_enviada=True)
++
+         # Lembrete do dia: avisos cujo ensaio é hoje.
+         avisos_de_hoje = avisos.filter(
+             data_evento=hoje,
