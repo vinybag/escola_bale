@@ -124,8 +124,9 @@ class Command(BaseCommand):
             ok, falhas = self._enviar(aviso, 'aviso_ensaio_dia_certo')
             enviados += ok
             erros += falhas
-            aviso.notificacao_dia_enviada = True
-            aviso.save(update_fields=['notificacao_dia_enviada'])
+            if falhas == 0:
+                aviso.notificacao_dia_enviada = True
+                aviso.save(update_fields=['notificacao_dia_enviada'])
 
         self.stdout.write(f'Avisos de ensaio enviados: {enviados} | Erros: {erros}')
 
@@ -146,11 +147,14 @@ class Command(BaseCommand):
 
         for numero, nome_contato, nome_aluna in _destinatarios_do_aviso(aviso):
             parametros = [nome_contato] + parametros_base
-            status, _ = enviar_whatsapp_template(numero, nome_template, parametros)
+            status, resposta_json = enviar_whatsapp_template(numero, nome_template, parametros)
 
             if status == 200:
                 enviados += 1
             else:
                 erros += 1
+                self.stdout.write(self.style.ERROR(
+                    f'Falha ao enviar para {numero} ({nome_contato}): {status} - {resposta_json}'
+                ))
 
         return enviados, erros
