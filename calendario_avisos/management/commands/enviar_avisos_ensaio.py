@@ -136,14 +136,16 @@ class Command(BaseCommand):
         data_formatada = aviso.data_evento.strftime('%d/%m/%Y')
         horario = aviso.horario or 'horário a confirmar'
 
-        for numero, nome_contato, nome_aluna in _destinatarios_do_aviso(aviso):
-            # Ordem dos parâmetros conforme o template aprovado na Meta:
-            # {{1}} nome do contato
-            # {{2}} título do aviso
-            # {{3}} data do ensaio
-            # {{4}} horário do ensaio
-            parametros = [nome_contato, aviso.titulo, data_formatada, horario]
+        if nome_template == 'aviso_ensaio_dia_certo':
+            # {{1}} nome do contato, {{2}} título do aviso, {{3}} horário
+            parametros_base = [aviso.titulo, horario]
 
+        else:
+            # aviso_ensaio_semana: {{1}} nome, {{2}} título, {{3}} data, {{4}} horário
+            parametros_base = [aviso.titulo, data_formatada, horario]
+
+        for numero, nome_contato, nome_aluna in _destinatarios_do_aviso(aviso):
+            parametros = [nome_contato] + parametros_base
             status, _ = enviar_whatsapp_template(numero, nome_template, parametros)
 
             if status == 200:
