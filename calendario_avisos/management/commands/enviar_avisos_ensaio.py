@@ -11,7 +11,7 @@ pelos campos notificacao_semana_enviada / notificacao_dia_enviada),
 então rodar o comando mais de uma vez no mesmo dia não duplica
 mensagem.
 
-Pré-requisito: os templates 'aviso_ensaio_semana' e 'aviso_ensaio_dia'
+Pré-requisito: os templates 'aviso_ensaio_semana' e 'aviso_ensaio_dia_certo'
 precisam existir e estar aprovados na conta de WhatsApp Business
 (Meta) usada por essa instância.
 """

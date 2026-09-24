@@ -89,16 +89,67 @@ class Aviso(models.Model):
     def alunas_destinatarias(self):
         """
         Une, sem repetir, todas as alunas que devem ver/receber este
-        aviso: as diretas, as das turmas selecionadas, e as escaladas
-        nos personagens selecionados.
+        aviso: as diretas, as das turmas selecionadas (respeitando o
+        recorte feito em "alunas específicas"), e as escaladas nos
+        personagens selecionados.
+
+        Regra de recorte por turma (é o que o campo "Alunas
+        específicas" promete no formulário: "restringe ainda mais
+        dentro das turmas escolhidas"):
+        - Se uma turma foi selecionada e NENHUMA aluna dela foi
+          marcada em "alunas", o aviso vai para a turma inteira.
+        - Se uma turma foi selecionada e uma ou mais alunas dela
+          também foram marcadas em "alunas", o aviso vai SOMENTE para
+          essas alunas marcadas (não para a turma toda).
+        - Alunas marcadas em "alunas" que não pertencem a nenhuma das
+          turmas selecionadas continuam sendo adicionadas normalmente
+          (uso do campo para gente fora das turmas escolhidas).
         """
+        from collections import defaultdict
+
         from usuarios.models import Aluna
 
-        ids = set(self.alunas.values_list('id', flat=True))
-        ids |= set(
-            Aluna.objects.filter(turmas__in=self.turmas.all(), ativa=True)
-            .values_list('id', flat=True)
-        )
+        ids = set()
+
+        turmas = list(self.turmas.all())
+        alunas_diretas_ids = set(self.alunas.values_list('id', flat=True))
+
+        if turmas:
+            turma_ids = [t.id for t in turmas]
+
+            # De quais turmas (dentre as selecionadas) cada aluna
+            # marcada diretamente faz parte.
+            aluna_id_para_turmas = defaultdict(set)
+            for aluna_id, turma_id in Aluna.objects.filter(
+                id__in=alunas_diretas_ids, turmas__id__in=turma_ids
+            ).values_list('id', 'turmas__id'):
+                aluna_id_para_turmas[aluna_id].add(turma_id)
+                ids.add(aluna_id)
+
+            turmas_com_recorte_ids = {
+                turma_id
+                for turmas_da_aluna in aluna_id_para_turmas.values()
+                for turma_id in turmas_da_aluna
+            }
+            turmas_sem_recorte_ids = [
+                t.id for t in turmas if t.id not in turmas_com_recorte_ids
+            ]
+
+            if turmas_sem_recorte_ids:
+                ids |= set(
+                    Aluna.objects.filter(
+                        turmas__id__in=turmas_sem_recorte_ids, ativa=True
+                    ).values_list('id', flat=True)
+                )
+
+            # Alunas marcadas que não pertencem a nenhuma turma
+            # selecionada: são adições, não recorte.
+            ids |= alunas_diretas_ids - set(aluna_id_para_turmas.keys())
+        else:
+            # Nenhuma turma selecionada: "alunas" funciona sozinho,
+            # como antes.
+            ids |= alunas_diretas_ids
+
         ids |= set(
             Aluna.objects.filter(personagens_elenco__personagem__in=self.personagens.all(), ativa=True)
             .values_list('id', flat=True)
