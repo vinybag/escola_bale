@@ -1,0 +1,46 @@
+diff --git a/espetaculo/views.py b/espetaculo/views.py
+index 5096791..0f7aa26 100644
+--- a/espetaculo/views.py
++++ b/espetaculo/views.py
+@@ -1720,6 +1720,12 @@ def quantidade_gratuita_disponivel(request, evento):
+     a ingresso gratuito.
+ 
+     Cada aluna pode utilizar apenas uma gratuidade por evento.
++
++    IMPORTANTE: a contagem de gratuidades já utilizadas é feita POR FAMÍLIA
++    (a partir do e-mail do usuário logado), e não sobre o total de
++    gratuidades já emitidas no evento inteiro. Sem esse recorte por família,
++    a cota de uma responsável seria consumida pelas gratuidades usadas por
++    outras famílias, zerando o direito dela mesmo sem ela ter usado nada.
+     """
+     if not request.user.is_authenticated:
+         return 0
+@@ -1739,11 +1745,26 @@ def quantidade_gratuita_disponivel(request, evento):
+     if total_beneficiarias == 0:
+         return 0
+ 
+-    gratuitas_usadas = IngressoEvento.objects.filter(
++    email_usuario = (request.user.email or '').strip()
++
++    gratuitas_usadas_qs = IngressoEvento.objects.filter(
+         evento=evento,
+         pedido__status__in=['pago', 'pendente'],
+         gratuito=True,
+-    ).count()
++    )
++
++    if email_usuario:
++        # Recorta apenas as gratuidades já usadas por esta mesma família
++        # (mesmo e-mail de cadastro), para este mesmo evento/dia.
++        gratuitas_usadas_qs = gratuitas_usadas_qs.filter(
++            pedido__email__iexact=email_usuario,
++        )
++    else:
++        # Sem e-mail cadastrado não há como isolar a família com segurança;
++        # nesse caso, não descontamos gratuidades de outras famílias.
++        gratuitas_usadas_qs = gratuitas_usadas_qs.none()
++
++    gratuitas_usadas = gratuitas_usadas_qs.count()
+ 
+     return max(
+         total_beneficiarias - gratuitas_usadas,
