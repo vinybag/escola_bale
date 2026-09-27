@@ -5,7 +5,7 @@ import re
 
 from decimal import Decimal, InvalidOperation
 
-from django.db import models
+from django.db import models, transaction
 
 from django.conf import settings
 from django.contrib import messages
@@ -31,6 +31,7 @@ from .models import (
     Assento,
     Espetaculo,
     IngressoEvento,
+    IngressoGratuitoAluna,
     InscricaoAudicao,
     MapaAssentos,
     PedidoIngressoEvento,
@@ -705,6 +706,7 @@ def pagar_ingresso_pix(request, pedido_id):
 
     if reserva_expirada:
         pedido.status = 'expirado'
+        liberar_gratuidade_reservada_do_pedido(pedido)
 
         pedido.save(
             update_fields=[
@@ -1041,6 +1043,7 @@ def voltar_do_pagamento_ingresso(request, pedido_id):
 
     if pedido.status != 'cancelado':
         pedido.status = 'cancelado'
+        liberar_gratuidade_reservada_do_pedido(pedido)
         pedido.save(
             update_fields=[
                 'status',
@@ -1097,6 +1100,7 @@ def liberar_reservas_expiradas_do_pedido(pedido):
 
     if houve_liberacao:
         pedido.status = 'expirado'
+        liberar_gratuidade_reservada_do_pedido(pedido)
         pedido.save(
             update_fields=[
                 'status',
@@ -1215,6 +1219,7 @@ def verificar_pagamento_ingresso_pix(request, payment_id):
 
         if reserva_expirada:
             pedido.status = 'expirado'
+            liberar_gratuidade_reservada_do_pedido(pedido)
 
             pedido.save(
                 update_fields=[
@@ -1585,12 +1590,6 @@ def assento_selecionar_api(request, pk):
             status=400,
         )
 
-    assento = get_object_or_404(
-        Assento,
-        pk=assento_id,
-        mapa=mapa,
-    )
-
     selecionados = request.session.get(
         f'compra_evento_{pk}_assentos_ids',
         [],
@@ -1599,7 +1598,7 @@ def assento_selecionar_api(request, pk):
     selecionados = list(selecionados)
 
     if acao == 'selecionar':
-        if assento.id in selecionados:
+        if assento_id in selecionados:
             return JsonResponse(
                 {
                     'ok': True,
@@ -1608,43 +1607,36 @@ def assento_selecionar_api(request, pk):
                 }
             )
 
-        if assento.esta_reservado_expirado:
-            assento.liberar()
-
-        if assento.status != 'disponivel':
-            return JsonResponse(
-                {
-                    'ok': False,
-                    'erro': (
-                        'Este assento não está mais disponível.'
-                    ),
-                },
-                status=409,
+        # CORREÇÃO (concorrência): select_for_update() dentro de uma
+        # transação trava esta linha do assento no banco. Se duas pessoas
+        # clicarem no mesmo assento ao mesmo tempo, a segunda requisição
+        # fica esperando a primeira terminar e só então lê o status —
+        # já atualizado para 'reservado_temporario' — evitando que as
+        # duas consigam reservar o mesmo lugar.
+        with transaction.atomic():
+            assento = get_object_or_404(
+                Assento.objects.select_for_update(),
+                pk=assento_id,
+                mapa=mapa,
             )
-
-        try:
-            assento.reservar_temporariamente(
-                identificador_sessao
-            )
-        except Exception:
-            assento.refresh_from_db()
 
             if assento.esta_reservado_expirado:
                 assento.liberar()
-                assento.reservar_temporariamente(
-                    identificador_sessao
-                )
-            else:
+
+            if assento.status != 'disponivel':
                 return JsonResponse(
                     {
                         'ok': False,
                         'erro': (
-                            'Não foi possível reservar este assento. '
-                            'Tente novamente.'
+                            'Este assento não está mais disponível.'
                         ),
                     },
                     status=409,
                 )
+
+            assento.reservar_temporariamente(
+                identificador_sessao
+            )
 
         if assento.id not in selecionados:
             selecionados.append(assento.id)
@@ -1662,6 +1654,12 @@ def assento_selecionar_api(request, pk):
                 'total_selecionados': len(selecionados),
             }
         )
+
+    assento = get_object_or_404(
+        Assento,
+        pk=assento_id,
+        mapa=mapa,
+    )
 
     if assento.status != 'reservado_temporario':
         return JsonResponse(
@@ -1705,30 +1703,34 @@ def assento_selecionar_api(request, pk):
         }
     )
 
-def quantidade_gratuita_disponivel(request, evento):
+def alunas_disponiveis_para_gratuidade(request, evento, lock=False):
     """
-    Retorna quantos ingressos gratuitos o usuário pode utilizar
-    para este evento.
+    Retorna o queryset de alunas do usuário logado que dão direito a
+    ingresso gratuito NESTE evento (dia do espetáculo) e que AINDA NÃO
+    tiveram essa gratuidade utilizada.
 
-    A quantidade é formada por:
+    Elegibilidade:
     - alunas ativas que tenham o usuário como responsável;
-    - uma aluna ativa vinculada diretamente ao usuário, quando existir.
+    - a própria aluna, quando o usuário logado for uma aluna com login
+      próprio;
+    - apenas alunas com participação confirmada (vai_dancar=True) neste
+      espetáculo específico.
 
-    Apenas alunas com participação confirmada (vai_dancar=True) no
-    espetáculo contam para a gratuidade. Alunas ativas cuja mãe/responsável
-    não tem elas participando deste espetáculo específico não geram direito
-    a ingresso gratuito.
+    "Já utilizada" é controlado pelo modelo IngressoGratuitoAluna, que tem
+    uma restrição única (aluna, evento): 1 gratuidade por aluna por dia,
+    não importa se ela foi gerada pela própria responsável comprando pelo
+    site OU pelo admin gerando um ingresso de cortesia manualmente. Isso
+    garante que a mesma aluna nunca gere gratuidade em duplicidade, e
+    substitui o recorte por e-mail usado anteriormente (que não cobria o
+    caso de cortesias geradas manualmente pelo admin).
 
-    Cada aluna pode utilizar apenas uma gratuidade por evento.
-
-    IMPORTANTE: a contagem de gratuidades já utilizadas é feita POR FAMÍLIA
-    (a partir do e-mail do usuário logado), e não sobre o total de
-    gratuidades já emitidas no evento inteiro. Sem esse recorte por família,
-    a cota de uma responsável seria consumida pelas gratuidades usadas por
-    outras famílias, zerando o direito dela mesmo sem ela ter usado nada.
+    `lock=True` aplica select_for_update(), usado quando esta lista vai
+    ser usada para reservar gratuidade dentro de uma transação atômica
+    (evita que duas requisições concorrentes deem a mesma gratuidade duas
+    vezes).
     """
     if not request.user.is_authenticated:
-        return 0
+        return Aluna.objects.none()
 
     alunas = Aluna.objects.filter(
         ativa=True,
@@ -1738,38 +1740,38 @@ def quantidade_gratuita_disponivel(request, evento):
     ).filter(
         participacoes_espetaculo__espetaculo=evento,
         participacoes_espetaculo__vai_dancar=True,
-    ).distinct()
+    ).exclude(
+        ingressos_gratuitos__evento=evento,
+    ).distinct().order_by('id')
 
-    total_beneficiarias = alunas.count()
+    if lock:
+        alunas = alunas.select_for_update()
 
-    if total_beneficiarias == 0:
-        return 0
+    return alunas
 
-    email_usuario = (request.user.email or '').strip()
 
-    gratuitas_usadas_qs = IngressoEvento.objects.filter(
-        evento=evento,
-        pedido__status__in=['pago', 'pendente'],
-        gratuito=True,
-    )
+def quantidade_gratuita_disponivel(request, evento):
+    """
+    Retorna quantos ingressos gratuitos o usuário pode utilizar
+    para este evento (dia do espetáculo) agora.
 
-    if email_usuario:
-        # Recorta apenas as gratuidades já usadas por esta mesma família
-        # (mesmo e-mail de cadastro), para este mesmo evento/dia.
-        gratuitas_usadas_qs = gratuitas_usadas_qs.filter(
-            pedido__email__iexact=email_usuario,
-        )
-    else:
-        # Sem e-mail cadastrado não há como isolar a família com segurança;
-        # nesse caso, não descontamos gratuidades de outras famílias.
-        gratuitas_usadas_qs = gratuitas_usadas_qs.none()
+    Ver `alunas_disponiveis_para_gratuidade` para a regra de elegibilidade.
+    """
+    return alunas_disponiveis_para_gratuidade(request, evento).count()
 
-    gratuitas_usadas = gratuitas_usadas_qs.count()
 
-    return max(
-        total_beneficiarias - gratuitas_usadas,
-        0,
-    )
+def liberar_gratuidade_reservada_do_pedido(pedido):
+    """
+    Remove os registros de IngressoGratuitoAluna vinculados a um pedido
+    que expirou ou foi cancelado antes de ser pago, devolvendo a
+    gratuidade daquelas alunas para o evento.
+
+    Necessário porque a gratuidade é reservada (via IngressoGratuitoAluna)
+    no momento da criação do pedido, antes da confirmação do pagamento.
+    Se o pedido nunca for pago (reserva de assento expira, cliente
+    cancela, etc.), essa reserva de gratuidade precisa ser desfeita.
+    """
+    pedido.ingressos_gratuitos_aluna.all().delete()
 
 def confirmar_selecao_assentos(request, pk):
     """
@@ -1832,14 +1834,19 @@ def confirmar_selecao_assentos(request, pk):
 
     identificador_sessao = request.session.session_key
 
-    assentos = Assento.objects.filter(
-        id__in=selecionados_ids,
-        mapa__evento=evento,
-        status='reservado_temporario',
-        reservado_por_sessao=identificador_sessao,
-    )
+    # CORREÇÃO (concorrência): trava as linhas dos assentos durante a
+    # checagem final, mesma lógica aplicada em assento_selecionar_api.
+    with transaction.atomic():
+        assentos = list(
+            Assento.objects.select_for_update().filter(
+                id__in=selecionados_ids,
+                mapa__evento=evento,
+                status='reservado_temporario',
+                reservado_por_sessao=identificador_sessao,
+            )
+        )
 
-    if assentos.count() != quantidade:
+    if len(assentos) != quantidade:
         messages.error(
             request,
             (
@@ -1913,41 +1920,56 @@ def confirmar_selecao_assentos(request, pk):
             pk=pk,
         )
 
-    # CORREÇÃO: usa a função corrigida que filtra por participação confirmada
-    gratuitas_disponiveis = quantidade_gratuita_disponivel(request, evento)
+    # CORREÇÃO: a contagem e a reserva da gratuidade (por aluna, via
+    # IngressoGratuitoAluna) acontecem dentro da mesma transação, com as
+    # alunas travadas (select_for_update), para que duas requisições da
+    # mesma família não consigam "gastar" a mesma gratuidade duas vezes.
+    with transaction.atomic():
+        alunas_para_gratuidade = list(
+            alunas_disponiveis_para_gratuidade(request, evento, lock=True)
+        )
 
-    quantidade_gratuita = min(
-        quantidade,
-        gratuitas_disponiveis,
-    )
+        gratuitas_disponiveis = len(alunas_para_gratuidade)
 
-    quantidade_paga = (
-        quantidade - quantidade_gratuita
-    )
+        quantidade_gratuita = min(
+            quantidade,
+            gratuitas_disponiveis,
+        )
 
-    valor_total = (
-        valor_unitario * quantidade_paga
-    )
+        quantidade_paga = (
+            quantidade - quantidade_gratuita
+        )
 
-    status_pedido = (
-        'pago'
-        if valor_total == Decimal('0.00')
-        else 'pendente'
-    )
+        valor_total = (
+            valor_unitario * quantidade_paga
+        )
 
-    pedido = PedidoIngressoEvento.objects.create(
-        evento=evento,
-        nome_completo=nome_completo,
-        email=email,
-        whatsapp=whatsapp,
-        cpf=cpf,
-        quantidade=quantidade,
-        quantidade_gratuita=quantidade_gratuita,
-        assentos_ids=selecionados_ids,
-        valor_unitario=valor_unitario,
-        valor_total=valor_total,
-        status=status_pedido,
-    )
+        status_pedido = (
+            'pago'
+            if valor_total == Decimal('0.00')
+            else 'pendente'
+        )
+
+        pedido = PedidoIngressoEvento.objects.create(
+            evento=evento,
+            nome_completo=nome_completo,
+            email=email,
+            whatsapp=whatsapp,
+            cpf=cpf,
+            quantidade=quantidade,
+            quantidade_gratuita=quantidade_gratuita,
+            assentos_ids=selecionados_ids,
+            valor_unitario=valor_unitario,
+            valor_total=valor_total,
+            status=status_pedido,
+        )
+
+        for aluna in alunas_para_gratuidade[:quantidade_gratuita]:
+            IngressoGratuitoAluna.objects.create(
+                aluna=aluna,
+                evento=evento,
+                pedido=pedido,
+            )
 
     pedido.external_reference = (
         f'ingresso_evento:{pedido.id}'
@@ -1975,12 +1997,9 @@ def confirmar_selecao_assentos(request, pk):
             ],
         )
 
-    assentos_ids_confirmados = list(
-        assentos.values_list(
-            'id',
-            flat=True,
-        )
-    )
+    assentos_ids_confirmados = [
+        assento.id for assento in assentos
+    ]
 
     for assento in assentos:
         assento.reservado_por_sessao = (

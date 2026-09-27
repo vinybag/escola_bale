@@ -5340,14 +5340,14 @@ def espetaculo_gerar_ingresso_manual(request, pk):
 
     Não passa pelo Asaas: o pedido já nasce como 'pago'.
 
-    IMPORTANTE: quantidade_gratuita do pedido é sempre 0 aqui, de propósito.
-    O campo `gratuito` do IngressoEvento é usado por
-    quantidade_gratuita_disponivel() (em espetaculo/views.py) para contar
-    quantas gratuidades de aluna ainda restam. Se marcássemos ingressos
-    manuais como gratuito=True, isso reduziria indevidamente a cota de
-    gratuidade das alunas. A natureza "cortesia" de um ingresso manual
-    fica registrada apenas pelo valor_total=0 e pelo external_reference
-    do pedido, nunca pelo campo `gratuito`.
+    IMPORTANTE: quantidade_gratuita do pedido continua sempre 0 aqui, e o
+    campo `gratuito` do IngressoEvento também não é usado para cortesias
+    manuais — quem controla a gratuidade de fato é o modelo
+    IngressoGratuitoAluna (aluna + evento, único). Quando a cortesia é
+    vinculada a uma aluna específica no formulário, criamos esse registro
+    aqui; assim, se a responsável dessa aluna tentar comprar (ou pegar a
+    gratuidade) pelo site depois, o sistema já vai saber que a gratuidade
+    daquela aluna, para este dia, já foi usada.
     """
     if not request.user.is_staff:
         return redirect('home')
@@ -5355,17 +5355,19 @@ def espetaculo_gerar_ingresso_manual(request, pk):
     from decimal import Decimal, InvalidOperation
 
     from django.contrib import messages
-    from django.db import transaction
+    from django.db import IntegrityError, transaction
     from django.shortcuts import get_object_or_404, redirect, render
     from django.utils import timezone
 
     from espetaculo.models import (
         Assento,
         Espetaculo,
+        IngressoGratuitoAluna,
         MapaAssentos,
         PedidoIngressoEvento,
     )
     from espetaculo.views import gerar_ingressos_do_pedido
+    from usuarios.models import Aluna
 
     espetaculo = get_object_or_404(Espetaculo, pk=pk)
 
@@ -5387,12 +5389,40 @@ def espetaculo_gerar_ingresso_manual(request, pk):
                 ).order_by('fileira', 'numero')
             )
 
+    # Alunas que participam deste espetáculo e que ainda não usaram a
+    # gratuidade deste dia (mesma regra usada no site), agrupadas por
+    # turma para preencher o dropdown do formulário.
+    alunas_elegiveis = (
+        Aluna.objects
+        .filter(
+            ativa=True,
+            participacoes_espetaculo__espetaculo=espetaculo,
+            participacoes_espetaculo__vai_dancar=True,
+        )
+        .exclude(
+            ingressos_gratuitos__evento=espetaculo,
+        )
+        .prefetch_related('turmas')
+        .distinct()
+        .order_by('nome')
+    )
+
+    turmas_com_alunas = {}
+    for aluna in alunas_elegiveis:
+        turmas_da_aluna = list(aluna.turmas.all()) or [None]
+        for turma in turmas_da_aluna:
+            nome_turma = turma.nome if turma else 'Sem turma definida'
+            turmas_com_alunas.setdefault(nome_turma, []).append(aluna)
+
+    turmas_com_alunas = dict(sorted(turmas_com_alunas.items()))
+
     if request.method == 'POST':
         nome_completo = request.POST.get('nome_completo', '').strip()
         whatsapp = request.POST.get('whatsapp', '').strip()
         email = request.POST.get('email', '').strip()
         cpf = request.POST.get('cpf', '').strip()
         tipo_registro = request.POST.get('tipo_registro', '')  # 'pago_manual' ou 'cortesia'
+        aluna_gratuidade_id = request.POST.get('aluna_gratuidade_id', '').strip()
 
         if not nome_completo or not whatsapp:
             messages.error(request, 'Preencha nome completo e WhatsApp.')
@@ -5461,6 +5491,22 @@ def espetaculo_gerar_ingresso_manual(request, pk):
                     'admin_dashboard:espetaculo_gerar_ingresso_manual', pk=pk
                 )
 
+        aluna_gratuidade = None
+
+        if tipo_registro == 'cortesia' and aluna_gratuidade_id:
+            try:
+                aluna_gratuidade = Aluna.objects.get(
+                    pk=int(aluna_gratuidade_id),
+                )
+            except (Aluna.DoesNotExist, TypeError, ValueError):
+                messages.error(
+                    request,
+                    'Aluna selecionada para vincular a gratuidade é inválida.',
+                )
+                return redirect(
+                    'admin_dashboard:espetaculo_gerar_ingresso_manual', pk=pk
+                )
+
         valor_total = valor_unitario * quantidade
         pedido = None
 
@@ -5520,6 +5566,22 @@ def espetaculo_gerar_ingresso_manual(request, pk):
                     ]
                 )
 
+                if aluna_gratuidade is not None:
+                    try:
+                        IngressoGratuitoAluna.objects.create(
+                            aluna=aluna_gratuidade,
+                            evento=espetaculo,
+                            pedido=pedido,
+                        )
+                    except IntegrityError:
+                        raise ValueError(
+                            f'{aluna_gratuidade.nome} já teve a '
+                            'gratuidade deste dia utilizada (pelo site '
+                            'ou por outro ingresso manual). Gere este '
+                            'ingresso como "Já pagou" ou desmarque a '
+                            'vinculação com a aluna.'
+                        )
+
                 gerar_ingressos_do_pedido(
                     pedido,
                     assentos_ids=assentos_ids_confirmados,
@@ -5554,6 +5616,7 @@ def espetaculo_gerar_ingresso_manual(request, pk):
         'espetaculo': espetaculo,
         'mapa': mapa,
         'assentos_selecionaveis': assentos_selecionaveis,
+        'turmas_com_alunas': turmas_com_alunas,
     }
 
     return render(

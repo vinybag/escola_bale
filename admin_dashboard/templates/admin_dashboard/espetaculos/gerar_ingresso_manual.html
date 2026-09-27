@@ -348,6 +348,28 @@
                             (R$ {{ espetaculo.preco_ingresso|floatformat:2 }}).
                         </small>
                     </div>
+
+                    <div class="ger-ing-field" id="alunaGratuidadeContainer" style="margin-top: 1rem;">
+                        <label for="aluna_gratuidade_id">Vincular a uma aluna (bloqueia a gratuidade dela)</label>
+                        <select id="aluna_gratuidade_id" name="aluna_gratuidade_id" class="ger-ing-input">
+                            <option value="">Não vincular (cortesia avulsa)</option>
+                            {% for turma_nome, alunas in turmas_com_alunas.items %}
+                                <optgroup label="{{ turma_nome }}">
+                                    {% for aluna in alunas %}
+                                        <option value="{{ aluna.id }}">{{ aluna.nome }}</option>
+                                    {% endfor %}
+                                </optgroup>
+                            {% endfor %}
+                        </select>
+                        <small style="display:block; margin-top:0.4rem; color:#8a8390; font-size:0.85rem;">
+                            Se esta cortesia é a gratuidade de uma aluna (ex: mãe que não
+                            conseguiu comprar pelo site), selecione a aluna aqui. Assim, se a
+                            responsável tentar pegar o ingresso grátis dela no site depois,
+                            o sistema já vai saber que essa gratuidade foi usada e não vai
+                            gerar em duplicidade. A lista só mostra alunas confirmadas neste
+                            espetáculo que ainda não usaram a gratuidade deste dia.
+                        </small>
+                    </div>
                 </section>
 
                 {% if espetaculo.venda_com_assentos_numerados %}
@@ -415,6 +437,8 @@
     const cardCortesia = document.getElementById('cardCortesia');
     const valorContainer = document.getElementById('valorUnitarioContainer');
     const valorInput = document.getElementById('valor_unitario');
+    const alunaGratuidadeContainer = document.getElementById('alunaGratuidadeContainer');
+    const alunaGratuidadeSelect = document.getElementById('aluna_gratuidade_id');
 
     function atualizarSelecao() {
         const cortesiaMarcada = cardCortesia.querySelector('input').checked;
@@ -423,9 +447,12 @@
         cardCortesia.classList.toggle('is-selected', cortesiaMarcada);
 
         valorContainer.style.display = cortesiaMarcada ? 'none' : 'block';
+        alunaGratuidadeContainer.style.display = cortesiaMarcada ? 'block' : 'none';
 
         if (cortesiaMarcada) {
             valorInput.value = '';
+        } else {
+            alunaGratuidadeSelect.value = '';
         }
     }
 
