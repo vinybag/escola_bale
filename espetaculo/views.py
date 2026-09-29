@@ -1805,7 +1805,7 @@ def alunas_disponiveis_para_gratuidade(request, evento, lock=False):
         participacoes_espetaculo__vai_dancar=True,
     ).exclude(
         ingressos_gratuitos__evento=evento,
-    ).distinct().order_by('id')
+    ).order_by('id')
 
     if lock:
         alunas = alunas.select_for_update()
