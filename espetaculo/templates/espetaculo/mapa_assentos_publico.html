@@ -615,19 +615,19 @@
             <span class="mapa-publico-apoio-label">Apoio</span>
 
             {% for patrocinador in patrocinadores_maximo %}
-                {% with altura="26px" %}
+                {% with altura="40px" %}
                     {% include 'espetaculo/_patrocinador_logo.html' with patrocinador=patrocinador altura=altura %}
                 {% endwith %}
             {% endfor %}
 
             {% for patrocinador in patrocinadores_medio %}
-                {% with altura="20px" %}
+                {% with altura="30px" %}
                     {% include 'espetaculo/_patrocinador_logo.html' with patrocinador=patrocinador altura=altura %}
                 {% endwith %}
             {% endfor %}
 
             {% for patrocinador in patrocinadores_rodape %}
-                {% with altura="15px" %}
+                {% with altura="20px" %}
                     {% include 'espetaculo/_patrocinador_logo.html' with patrocinador=patrocinador altura=altura %}
                 {% endwith %}
             {% endfor %}
