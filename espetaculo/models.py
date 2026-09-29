@@ -1770,3 +1770,79 @@ class AgendamentoMaquiagem(models.Model):
     @property
     def maquiadora(self):
         return self.horario.agenda.maquiadora
+
+
+class Patrocinador(models.Model):
+    """
+    Logo de um patrocinador/apoiador, exibida em pontos do site
+    (listagem pública de espetáculos e/ou mapa de assentos).
+
+    O "nível" define o TAMANHO/destaque visual da logo (de acordo com a
+    cota do patrocinador), enquanto "exibir_na_listagem" e
+    "exibir_no_mapa_assentos" definem ONDE ela aparece — um mesmo
+    patrocinador pode aparecer nos dois lugares, só em um, ou em nenhum
+    (deixando ele "pausado" sem excluir o cadastro).
+
+    Pode haver vários patrocinadores no mesmo nível (o form de admin
+    permite adicionar quantas logos forem necessárias por nível).
+    """
+
+    NIVEL_RODAPE = 'rodape'
+    NIVEL_MEDIO = 'medio'
+    NIVEL_MAXIMO = 'maximo'
+
+    NIVEL_CHOICES = [
+        (NIVEL_RODAPE, 'Logo no rodapé do mapa de assentos'),
+        (NIVEL_MEDIO, 'Logo em destaque médio'),
+        (NIVEL_MAXIMO, 'Logo em destaque máximo'),
+    ]
+
+    nome = models.CharField(
+        max_length=150,
+        blank=True,
+        help_text=(
+            'Nome do patrocinador/marca. Usado como texto alternativo '
+            'da imagem (acessibilidade e SEO); não é exibido como texto '
+            'visível ao lado da logo.'
+        ),
+    )
+    logo = models.ImageField(
+        upload_to='patrocinadores/',
+        help_text='Recomendado: PNG com fundo transparente.',
+    )
+    nivel = models.CharField(
+        max_length=20,
+        choices=NIVEL_CHOICES,
+        verbose_name='Posição/destaque da logo',
+    )
+    site_url = models.URLField(
+        blank=True,
+        verbose_name='Link do patrocinador (opcional)',
+        help_text='Se preenchido, a logo vira um link clicável para este site.',
+    )
+    exibir_na_listagem = models.BooleanField(
+        default=True,
+        verbose_name='Exibir na listagem de espetáculos',
+    )
+    exibir_no_mapa_assentos = models.BooleanField(
+        default=True,
+        verbose_name='Exibir no mapa de assentos',
+    )
+    ativo = models.BooleanField(
+        default=True,
+        verbose_name='Ativo',
+        help_text='Desmarque para ocultar temporariamente sem excluir o cadastro.',
+    )
+    ordem = models.PositiveSmallIntegerField(
+        default=0,
+        help_text='Logos com número menor aparecem primeiro dentro do mesmo nível.',
+    )
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Patrocinador'
+        verbose_name_plural = 'Patrocinadores'
+        ordering = ['nivel', 'ordem', 'id']
+
+    def __str__(self):
+        return self.nome or f'Patrocinador #{self.pk} ({self.get_nivel_display()})'

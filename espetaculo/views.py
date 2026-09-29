@@ -34,11 +34,49 @@ from .models import (
     IngressoGratuitoAluna,
     InscricaoAudicao,
     MapaAssentos,
+    Patrocinador,
     PedidoIngressoEvento,
     AgendamentoMaquiagem,
     HorarioMaquiagem,
     AgendaMaquiagemTurma,
 )
+
+
+def patrocinadores_para(local):
+    """
+    Retorna as logos de patrocinadores ativas para um local do site,
+    já ordenadas do maior para o menor destaque (máximo > médio > rodapé)
+    e, dentro do mesmo nível, pela ordem cadastrada no admin.
+
+    `local` pode ser 'listagem' (listagem pública de espetáculos) ou
+    'mapa' (mapa de assentos).
+
+    Se algo falhar (ex.: a migração ainda não foi aplicada no banco),
+    devolve lista vazia em vez de derrubar a página pública.
+    """
+    campo = {
+        'listagem': 'exibir_na_listagem',
+        'mapa': 'exibir_no_mapa_assentos',
+    }[local]
+
+    prioridade = {
+        Patrocinador.NIVEL_MAXIMO: 0,
+        Patrocinador.NIVEL_MEDIO: 1,
+        Patrocinador.NIVEL_RODAPE: 2,
+    }
+
+    try:
+        patrocinadores = list(
+            Patrocinador.objects.filter(ativo=True, **{campo: True})
+        )
+    except Exception:
+        return []
+
+    patrocinadores.sort(
+        key=lambda p: (prioridade.get(p.nivel, 99), p.ordem, p.id)
+    )
+
+    return patrocinadores
 
 
 def espetaculo_home(request):
@@ -65,7 +103,14 @@ def espetaculos_lista_publica(request):
     else:
         espetaculos = Espetaculo.objects.filter(ativo=True, publico=True).order_by('-data_apresentacao')
 
-    return render(request, 'espetaculo/public_list.html', {'espetaculos': espetaculos})
+    return render(
+        request,
+        'espetaculo/public_list.html',
+        {
+            'espetaculos': espetaculos,
+            'patrocinadores': patrocinadores_para('listagem'),
+        },
+    )
 
 
 def espetaculo_detalhes_publico(request, pk):
@@ -1499,7 +1544,25 @@ def mapa_assentos_publico(request, pk):
         'identificador_sessao': identificador_sessao,
         'ja_selecionados': ja_selecionados,
         'total_selecionados': len(ja_selecionados),
+        'patrocinadores_rodape': [
+            p for p in patrocinadores_para('mapa')
+            if p.nivel == Patrocinador.NIVEL_RODAPE
+        ],
+        'patrocinadores_medio': [
+            p for p in patrocinadores_para('mapa')
+            if p.nivel == Patrocinador.NIVEL_MEDIO
+        ],
+        'patrocinadores_maximo': [
+            p for p in patrocinadores_para('mapa')
+            if p.nivel == Patrocinador.NIVEL_MAXIMO
+        ],
     }
+
+    context['tem_apoio_mapa'] = bool(
+        context['patrocinadores_rodape']
+        or context['patrocinadores_medio']
+        or context['patrocinadores_maximo']
+    )
 
     return render(
         request,

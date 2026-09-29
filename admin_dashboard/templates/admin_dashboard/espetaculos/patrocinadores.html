@@ -1,0 +1,440 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Patrocinadores - {{ espetaculo.titulo }}{% endblock %}
+
+{% block content %}
+<style>
+    .patro-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 2rem;
+    }
+
+    .patro-shell {
+        width: 100%;
+        max-width: 900px;
+    }
+
+    .patro-btn {
+        display: inline-block;
+        padding: 0.7rem 1.3rem;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.92rem;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .patro-btn-light {
+        border: 1px solid #ddd;
+        background: #f3f3f3;
+        color: #444;
+    }
+
+    .patro-btn-primary {
+        background: #6b2d8f;
+        color: #fff;
+    }
+
+    .patro-nivel {
+        margin-bottom: 2rem;
+        overflow: hidden;
+        border: 1px solid #ebe3f1;
+        border-radius: 18px;
+        background: #fff;
+        box-shadow: 0 8px 24px rgba(107, 45, 143, 0.08);
+    }
+
+    .patro-nivel-top {
+        padding: 1.3rem 1.8rem;
+        border-bottom: 1px solid #ece3f2;
+        background: linear-gradient(135deg, #fff 0%, #f5eff9 100%);
+    }
+
+    .patro-nivel-top h3 {
+        margin: 0 0 0.3rem;
+        color: #4a235f;
+        font-size: 1.05rem;
+        font-weight: 700;
+    }
+
+    .patro-nivel-top p {
+        margin: 0;
+        color: #7b7580;
+        font-size: 0.88rem;
+    }
+
+    .patro-nivel-body {
+        padding: 1.5rem 1.8rem;
+        background: #fcfbfd;
+    }
+
+    .patro-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border: 1px solid #ece3f2;
+        border-radius: 12px;
+        background: #fff;
+    }
+
+    .patro-item.inativo {
+        opacity: 0.55;
+    }
+
+    .patro-thumb {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        width: 76px;
+        height: 76px;
+        border: 1px solid #eee;
+        border-radius: 10px;
+        background: repeating-conic-gradient(#f2f2f2 0% 25%, #fff 0% 50%) 0 0 / 14px 14px;
+        overflow: hidden;
+    }
+
+    .patro-thumb img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+    }
+
+    .patro-item-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .patro-item-info strong {
+        display: block;
+        color: #44384c;
+        font-size: 0.95rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .patro-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        margin-top: 0.35rem;
+    }
+
+    .patro-tag {
+        display: inline-block;
+        padding: 0.2rem 0.55rem;
+        border-radius: 999px;
+        font-size: 0.72rem;
+        font-weight: 700;
+    }
+
+    .patro-tag-on {
+        background: #edf8ef;
+        color: #2e7d32;
+    }
+
+    .patro-tag-off {
+        background: #f4f4f4;
+        color: #999;
+    }
+
+    .patro-item-acoes {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+        flex-shrink: 0;
+    }
+
+    .patro-item-acoes button,
+    .patro-item-acoes summary {
+        display: block;
+        padding: 0.4rem 0.8rem;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        background: #f7f7f7;
+        color: #444;
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: pointer;
+        text-align: center;
+        list-style: none;
+    }
+
+    .patro-item-acoes summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .patro-item-acoes .patro-btn-excluir {
+        border-color: #f0c7c7;
+        background: #fdecec;
+        color: #b3261e;
+    }
+
+    .patro-edit-form {
+        margin-top: 0.75rem;
+        padding-top: 0.9rem;
+        border-top: 1px dashed #eadff0;
+    }
+
+    .patro-add-form {
+        padding: 1.1rem;
+        border: 1px dashed #d9c7e6;
+        border-radius: 12px;
+        background: #faf6fd;
+    }
+
+    .patro-add-form summary {
+        cursor: pointer;
+        color: #6b2d8f;
+        font-weight: 700;
+        font-size: 0.9rem;
+        list-style: none;
+    }
+
+    .patro-add-form summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .patro-add-form summary::before {
+        content: "+ ";
+    }
+
+    .patro-add-form[open] summary::before {
+        content: "– ";
+    }
+
+    .patro-field {
+        margin-bottom: 0.9rem;
+    }
+
+    .patro-field:last-child {
+        margin-bottom: 0;
+    }
+
+    .patro-field label {
+        display: block;
+        margin-bottom: 0.4rem;
+        color: #44384c;
+        font-weight: 600;
+        font-size: 0.88rem;
+    }
+
+    .patro-input {
+        width: 100%;
+        padding: 0.6rem 0.75rem;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        box-sizing: border-box;
+    }
+
+    .patro-check {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+        font-size: 0.88rem;
+        color: #44384c;
+        cursor: pointer;
+    }
+
+    .patro-check input {
+        width: 16px;
+        height: 16px;
+        accent-color: #6b2d8f;
+    }
+
+    .patro-vazio {
+        padding: 1rem;
+        margin-bottom: 1rem;
+        color: #999;
+        font-size: 0.88rem;
+        text-align: center;
+        border: 1px dashed #e2d8ea;
+        border-radius: 10px;
+    }
+
+    @media (max-width: 640px) {
+        .patro-header { align-items: stretch; }
+        .patro-header > div, .patro-header > a { width: 100%; box-sizing: border-box; text-align: center; }
+        .patro-nivel-top, .patro-nivel-body { padding: 1.1rem; }
+        .patro-item { flex-wrap: wrap; }
+        .patro-item-acoes { flex-direction: row; width: 100%; }
+        .patro-item-acoes button, .patro-item-acoes summary { flex: 1; }
+    }
+</style>
+
+<div class="patro-header">
+    <div>
+        <h2 style="margin: 0 0 0.35rem; color: #4a235f;">Patrocinadores / Apoiadores</h2>
+        <p style="margin: 0; color: #6f6f78;">
+            {{ espetaculo.titulo }} — as logos aparecem em todos os espetáculos, não só neste
+        </p>
+    </div>
+
+    <a href="{% url 'admin_dashboard:espetaculo_editar' espetaculo.pk %}" class="patro-btn patro-btn-light">
+        ← Voltar para o evento
+    </a>
+</div>
+
+<div class="patro-shell">
+    {% for nivel in niveis_com_patrocinadores %}
+        <div class="patro-nivel">
+            <div class="patro-nivel-top">
+                <h3>{{ nivel.label }}</h3>
+                <p>
+                    {{ nivel.descricao }}
+                    Pode haver quantas logos forem necessárias neste nível.
+                </p>
+            </div>
+
+            <div class="patro-nivel-body">
+                {% for patrocinador in nivel.itens %}
+                    <div class="patro-item {% if not patrocinador.ativo %}inativo{% endif %}">
+                        <div class="patro-thumb">
+                            <img src="{{ patrocinador.logo.url }}" alt="{{ patrocinador.nome }}">
+                        </div>
+
+                        <div class="patro-item-info">
+                            <strong>{{ patrocinador.nome|default:"(sem nome cadastrado)" }}</strong>
+
+                            <div class="patro-tags">
+                                {% if patrocinador.exibir_na_listagem %}
+                                    <span class="patro-tag patro-tag-on">Listagem de espetáculos</span>
+                                {% else %}
+                                    <span class="patro-tag patro-tag-off">Listagem de espetáculos</span>
+                                {% endif %}
+
+                                {% if patrocinador.exibir_no_mapa_assentos %}
+                                    <span class="patro-tag patro-tag-on">Mapa de assentos</span>
+                                {% else %}
+                                    <span class="patro-tag patro-tag-off">Mapa de assentos</span>
+                                {% endif %}
+
+                                {% if not patrocinador.ativo %}
+                                    <span class="patro-tag patro-tag-off">Inativa</span>
+                                {% endif %}
+                            </div>
+
+                            <details class="patro-edit-form">
+                                <summary style="display: inline-block; border: none; background: none; color: #6b2d8f; font-weight: 700; font-size: 0.82rem; padding: 0; cursor: pointer;">
+                                    Editar
+                                </summary>
+
+                                <form method="post" enctype="multipart/form-data" style="margin-top: 0.75rem;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="acao" value="editar">
+                                    <input type="hidden" name="patrocinador_id" value="{{ patrocinador.id }}">
+
+                                    <div class="patro-field">
+                                        <label>Nome do patrocinador</label>
+                                        <input type="text" name="nome" class="patro-input" value="{{ patrocinador.nome }}">
+                                    </div>
+
+                                    <div class="patro-field">
+                                        <label>Link do site (opcional)</label>
+                                        <input type="url" name="site_url" class="patro-input" value="{{ patrocinador.site_url }}" placeholder="https://">
+                                    </div>
+
+                                    <div class="patro-field">
+                                        <label>Trocar imagem (opcional)</label>
+                                        <input type="file" name="logo" class="patro-input" accept="image/*">
+                                    </div>
+
+                                    <div class="patro-field">
+                                        <label>Onde essa logo vai aparecer?</label>
+
+                                        <label class="patro-check">
+                                            <input type="checkbox" name="exibir_na_listagem" {% if patrocinador.exibir_na_listagem %}checked{% endif %}>
+                                            Listagem de espetáculos
+                                        </label>
+
+                                        <label class="patro-check">
+                                            <input type="checkbox" name="exibir_no_mapa_assentos" {% if patrocinador.exibir_no_mapa_assentos %}checked{% endif %}>
+                                            Mapa de assentos
+                                        </label>
+                                    </div>
+
+                                    <button type="submit" class="patro-btn patro-btn-primary" style="width: 100%;">
+                                        Salvar alterações
+                                    </button>
+                                </form>
+                            </details>
+                        </div>
+
+                        <div class="patro-item-acoes">
+                            <form method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="acao" value="toggle_ativo">
+                                <input type="hidden" name="patrocinador_id" value="{{ patrocinador.id }}">
+                                <button type="submit">
+                                    {% if patrocinador.ativo %}Desativar{% else %}Ativar{% endif %}
+                                </button>
+                            </form>
+
+                            <form method="post" onsubmit="return confirm('Remover esta logo definitivamente?');">
+                                {% csrf_token %}
+                                <input type="hidden" name="acao" value="excluir">
+                                <input type="hidden" name="patrocinador_id" value="{{ patrocinador.id }}">
+                                <button type="submit" class="patro-btn-excluir">Excluir</button>
+                            </form>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="patro-vazio">Nenhuma logo cadastrada neste nível ainda.</div>
+                {% endfor %}
+
+                {# --- formulário para adicionar mais uma logo neste nível --- #}
+                <details class="patro-add-form" open>
+                    <summary>Adicionar nova logo neste nível</summary>
+
+                    <form method="post" enctype="multipart/form-data" style="margin-top: 1rem;">
+                        {% csrf_token %}
+                        <input type="hidden" name="acao" value="adicionar">
+                        <input type="hidden" name="nivel" value="{{ nivel.valor }}">
+
+                        <div class="patro-field">
+                            <label>Nome do patrocinador</label>
+                            <input type="text" name="nome" class="patro-input" placeholder="Ex: Padaria Doce Sabor">
+                        </div>
+
+                        <div class="patro-field">
+                            <label>Imagem da logo *</label>
+                            <input type="file" name="logo" class="patro-input" accept="image/*" required>
+                        </div>
+
+                        <div class="patro-field">
+                            <label>Link do site (opcional)</label>
+                            <input type="url" name="site_url" class="patro-input" placeholder="https://">
+                        </div>
+
+                        <div class="patro-field">
+                            <label>Onde essa logo vai aparecer?</label>
+
+                            <label class="patro-check">
+                                <input type="checkbox" name="exibir_na_listagem" checked>
+                                Listagem de espetáculos
+                            </label>
+
+                            <label class="patro-check">
+                                <input type="checkbox" name="exibir_no_mapa_assentos" checked>
+                                Mapa de assentos
+                            </label>
+                        </div>
+
+                        <button type="submit" class="patro-btn patro-btn-primary" style="width: 100%;">
+                            Adicionar logo
+                        </button>
+                    </form>
+                </details>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}

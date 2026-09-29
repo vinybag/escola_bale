@@ -5625,6 +5625,158 @@ def espetaculo_gerar_ingresso_manual(request, pk):
         context,
     )
 
+
+def espetaculo_patrocinadores(request, pk):
+    """
+    Gerencia as logos de patrocinadores/apoiadores exibidas no site.
+
+    Acessada a partir da tela de edição de um espetáculo específico, mas
+    a lista de patrocinadores é COMPARTILHADA entre todos os espetáculos
+    (não é um cadastro por dia) — assim, o mesmo patrocinador aparece
+    automaticamente nos dois dias do evento, sem precisar cadastrar duas
+    vezes. O parâmetro `pk` serve apenas para saber para onde voltar.
+
+    Cada logo tem um nível (rodapé / destaque médio / destaque máximo,
+    que define o TAMANHO/destaque visual dela) e dois interruptores
+    independentes que definem ONDE ela aparece: na listagem pública de
+    espetáculos e/ou no mapa de assentos. Pode haver quantas logos forem
+    necessárias em cada nível.
+    """
+    if not request.user.is_staff:
+        return redirect('home')
+
+    from espetaculo.models import Espetaculo, Patrocinador
+
+    espetaculo = get_object_or_404(Espetaculo, pk=pk)
+
+    if request.method == 'POST':
+        acao = request.POST.get('acao', 'adicionar')
+
+        if acao == 'adicionar':
+            nivel = request.POST.get('nivel', '')
+            logo = request.FILES.get('logo')
+
+            if nivel not in dict(Patrocinador.NIVEL_CHOICES):
+                messages.error(request, 'Selecione um nível de destaque válido.')
+            elif not logo:
+                messages.error(request, 'Selecione uma imagem para a logo.')
+            else:
+                maior_ordem = (
+                    Patrocinador.objects
+                    .filter(nivel=nivel)
+                    .order_by('-ordem')
+                    .values_list('ordem', flat=True)
+                    .first()
+                ) or 0
+
+                Patrocinador.objects.create(
+                    nome=request.POST.get('nome', '').strip(),
+                    logo=logo,
+                    nivel=nivel,
+                    site_url=request.POST.get('site_url', '').strip(),
+                    exibir_na_listagem=bool(
+                        request.POST.get('exibir_na_listagem')
+                    ),
+                    exibir_no_mapa_assentos=bool(
+                        request.POST.get('exibir_no_mapa_assentos')
+                    ),
+                    ordem=maior_ordem + 1,
+                )
+                messages.success(
+                    request,
+                    'Logo adicionada com sucesso.',
+                )
+
+        elif acao == 'editar':
+            patrocinador = get_object_or_404(
+                Patrocinador,
+                pk=request.POST.get('patrocinador_id'),
+            )
+
+            patrocinador.nome = request.POST.get('nome', '').strip()
+            patrocinador.site_url = request.POST.get('site_url', '').strip()
+            patrocinador.exibir_na_listagem = bool(
+                request.POST.get('exibir_na_listagem')
+            )
+            patrocinador.exibir_no_mapa_assentos = bool(
+                request.POST.get('exibir_no_mapa_assentos')
+            )
+
+            nova_logo = request.FILES.get('logo')
+            if nova_logo:
+                if patrocinador.logo:
+                    patrocinador.logo.delete(save=False)
+                patrocinador.logo = nova_logo
+
+            patrocinador.save()
+            messages.success(request, 'Logo atualizada.')
+
+        elif acao == 'toggle_ativo':
+            patrocinador = get_object_or_404(
+                Patrocinador,
+                pk=request.POST.get('patrocinador_id'),
+            )
+            patrocinador.ativo = not patrocinador.ativo
+            patrocinador.save(update_fields=['ativo'])
+            messages.success(
+                request,
+                'Logo "{}" agora está {}.'.format(
+                    patrocinador,
+                    'ativa' if patrocinador.ativo else 'inativa (oculta do site)',
+                ),
+            )
+
+        elif acao == 'excluir':
+            patrocinador = get_object_or_404(
+                Patrocinador,
+                pk=request.POST.get('patrocinador_id'),
+            )
+            if patrocinador.logo:
+                patrocinador.logo.delete(save=False)
+            patrocinador.delete()
+            messages.success(request, 'Logo removida.')
+
+        return redirect(
+            'admin_dashboard:espetaculo_patrocinadores',
+            pk=pk,
+        )
+
+    NIVEL_DESCRICOES = {
+        Patrocinador.NIVEL_RODAPE: (
+            'Logo pequena, exibida em faixa no rodapé do mapa de assentos.'
+        ),
+        Patrocinador.NIVEL_MEDIO: (
+            'Logo em tamanho médio, com mais destaque que o rodapé.'
+        ),
+        Patrocinador.NIVEL_MAXIMO: (
+            'Logo em tamanho máximo — maior destaque disponível.'
+        ),
+    }
+
+    niveis_com_patrocinadores = [
+        {
+            'valor': nivel_valor,
+            'label': nivel_label,
+            'descricao': NIVEL_DESCRICOES.get(nivel_valor, ''),
+            'itens': Patrocinador.objects.filter(
+                nivel=nivel_valor,
+            ).order_by('ordem', 'id'),
+        }
+        for nivel_valor, nivel_label in Patrocinador.NIVEL_CHOICES
+    ]
+
+    context = {
+        'espetaculo': espetaculo,
+        'niveis_com_patrocinadores': niveis_com_patrocinadores,
+    }
+
+    return render(
+        request,
+        'admin_dashboard/espetaculos/patrocinadores.html',
+        context,
+    )
+
+
 def espetaculo_maquiagens(request, pk):
     espetaculo = get_object_or_404(Espetaculo, pk=pk)
     turmas = Turma.objects.all().order_by('nome')

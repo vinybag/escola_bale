@@ -752,6 +752,28 @@
                         </div>
                     </div>
 
+                    <!-- Patrocinadores -->
+                    <div class="esp-check-box">
+                        <span style="font-weight: 600; color: #4a235f; display: block; margin-bottom: 0.4rem;">
+                            Patrocinadores / Apoiadores
+                        </span>
+
+                        <small class="esp-help">
+                            Gerencie as logos exibidas na listagem pública de espetáculos e no
+                            mapa de assentos. A lista é compartilhada entre todos os espetáculos
+                            (não precisa cadastrar de novo para cada dia).
+                        </small>
+
+                        <div class="esp-map-actions">
+                            <a
+                                href="{% url 'admin_dashboard:espetaculo_patrocinadores' espetaculo.pk %}"
+                                class="esp-map-button esp-map-button-secondary"
+                            >
+                                Gerenciar patrocinadores
+                            </a>
+                        </div>
+                    </div>
+
                     <!-- Login obrigatório -->
                     <div class="esp-check-box" style="margin-bottom: 0;">
                         <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer;">

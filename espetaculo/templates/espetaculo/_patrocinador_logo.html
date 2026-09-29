@@ -1,0 +1,24 @@
+{% if patrocinador.site_url %}
+    <a
+        href="{{ patrocinador.site_url }}"
+        target="_blank"
+        rel="noopener noreferrer sponsored"
+        title="{{ patrocinador.nome }}"
+        style="display: inline-flex; align-items: center; line-height: 0;"
+    >
+        <img
+            src="{{ patrocinador.logo.url }}"
+            alt="{{ patrocinador.nome|default:'Patrocinador' }}"
+            loading="lazy"
+            style="height: {{ altura }}; max-width: 160px; width: auto; object-fit: contain; display: block;"
+        >
+    </a>
+{% else %}
+    <img
+        src="{{ patrocinador.logo.url }}"
+        alt="{{ patrocinador.nome|default:'Patrocinador' }}"
+        loading="lazy"
+        title="{{ patrocinador.nome }}"
+        style="height: {{ altura }}; max-width: 160px; width: auto; object-fit: contain; display: block;"
+    >
+{% endif %}

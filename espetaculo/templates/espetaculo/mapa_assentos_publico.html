@@ -119,6 +119,59 @@
         cursor: grabbing;
     }
 
+    .mapa-publico-apoio {
+        z-index: 5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: nowrap;
+        gap: 1.1rem;
+        flex: 0 0 auto;
+        min-height: 36px;
+        padding: 0.35rem 0.75rem;
+        background: #1c1522;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+
+    .mapa-publico-apoio::-webkit-scrollbar {
+        display: none;
+    }
+
+    .mapa-publico-apoio-label {
+        flex: 0 0 auto;
+        color: #8a7d94;
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding-right: 0.4rem;
+        border-right: 1px solid #3a2f45;
+    }
+
+    .mapa-publico-apoio img {
+        display: block;
+        width: auto;
+        object-fit: contain;
+        background: #fff;
+        border-radius: 4px;
+        padding: 2px 5px;
+    }
+
+    @media (max-width: 640px) {
+        .mapa-publico-apoio {
+            min-height: 32px;
+            gap: 0.8rem;
+            padding: 0.3rem 0.6rem;
+        }
+
+        .mapa-publico-apoio-label {
+            font-size: 0.56rem;
+        }
+    }
+
     .mapa-publico-canvas {
         position: absolute;
         top: 50%;
@@ -141,6 +194,7 @@
                     58px -
                     34px -
                     72px
+                    {% if tem_apoio_mapa %}- 36px{% endif %}
                 ) *
                 {{ mapa.largura_original|unlocalize }} /
                 {{ mapa.altura_original|unlocalize }}
@@ -157,7 +211,7 @@
             {{ mapa.altura_original|unlocalize }};
         max-height: min(
             94%,
-            calc(100vh - 58px - 34px - 72px)
+            calc(100vh - 58px - 34px - 72px {% if tem_apoio_mapa %}- 36px{% endif %})
         );
         overflow: hidden;
         border-radius: 10px;
@@ -555,6 +609,30 @@
             </button>
         </div>
     </div>
+
+    {% if tem_apoio_mapa %}
+        <div class="mapa-publico-apoio">
+            <span class="mapa-publico-apoio-label">Apoio</span>
+
+            {% for patrocinador in patrocinadores_maximo %}
+                {% with altura="26px" %}
+                    {% include 'espetaculo/_patrocinador_logo.html' with patrocinador=patrocinador altura=altura %}
+                {% endwith %}
+            {% endfor %}
+
+            {% for patrocinador in patrocinadores_medio %}
+                {% with altura="20px" %}
+                    {% include 'espetaculo/_patrocinador_logo.html' with patrocinador=patrocinador altura=altura %}
+                {% endwith %}
+            {% endfor %}
+
+            {% for patrocinador in patrocinadores_rodape %}
+                {% with altura="15px" %}
+                    {% include 'espetaculo/_patrocinador_logo.html' with patrocinador=patrocinador altura=altura %}
+                {% endwith %}
+            {% endfor %}
+        </div>
+    {% endif %}
 
     <div class="mapa-publico-footer">
         <div class="mapa-publico-contador">
