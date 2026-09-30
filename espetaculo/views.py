@@ -1983,97 +1983,134 @@ def confirmar_selecao_assentos(request, pk):
             pk=pk,
         )
 
-    # CORREÇÃO: a contagem e a reserva da gratuidade (por aluna, via
-    # IngressoGratuitoAluna) acontecem dentro da mesma transação, com as
-    # alunas travadas (select_for_update), para que duas requisições da
-    # mesma família não consigam "gastar" a mesma gratuidade duas vezes.
-    with transaction.atomic():
-        alunas_para_gratuidade = list(
-            alunas_disponiveis_para_gratuidade(request, evento, lock=True)
-        )
-
-        gratuitas_disponiveis = len(alunas_para_gratuidade)
-
-        quantidade_gratuita = min(
-            quantidade,
-            gratuitas_disponiveis,
-        )
-
-        quantidade_paga = (
-            quantidade - quantidade_gratuita
-        )
-
-        valor_total = (
-            valor_unitario * quantidade_paga
-        )
-
-        status_pedido = (
-            'pago'
-            if valor_total == Decimal('0.00')
-            else 'pendente'
-        )
-
-        pedido = PedidoIngressoEvento.objects.create(
-            evento=evento,
-            nome_completo=nome_completo,
-            email=email,
-            whatsapp=whatsapp,
-            cpf=cpf,
-            quantidade=quantidade,
-            quantidade_gratuita=quantidade_gratuita,
-            assentos_ids=selecionados_ids,
-            valor_unitario=valor_unitario,
-            valor_total=valor_total,
-            status=status_pedido,
-        )
-
-        for aluna in alunas_para_gratuidade[:quantidade_gratuita]:
-            IngressoGratuitoAluna.objects.create(
-                aluna=aluna,
-                evento=evento,
-                pedido=pedido,
+    # CORREÇÃO CRÍTICA: antes, a reserva de gratuidade (IngressoGratuitoAluna)
+    # era gravada numa transação que fechava ANTES da geração do ingresso
+    # de verdade (imagem, QR code, upload). Se a geração do ingresso
+    # falhasse por qualquer motivo técnico depois disso, a gratuidade já
+    # tinha sido marcada como "usada" no banco, sem o ingresso ter sido
+    # gerado — a família perdia o direito sem nunca ter recebido nada.
+    #
+    # Agora TUDO (reserva de gratuidade + pedido + assentos + geração do
+    # ingresso) acontece dentro de uma ÚNICA transação atômica. Se
+    # qualquer parte falhar, o banco desfaz tudo automaticamente — a
+    # gratuidade nunca é consumida sem o ingresso ser gerado de verdade.
+    try:
+        with transaction.atomic():
+            alunas_para_gratuidade = list(
+                alunas_disponiveis_para_gratuidade(request, evento, lock=True)
             )
 
-    pedido.external_reference = (
-        f'ingresso_evento:{pedido.id}'
-    )
+            gratuitas_disponiveis = len(alunas_para_gratuidade)
 
-    if status_pedido == 'pago':
-        pedido.data_pagamento = timezone.now()
-        pedido.external_reference = (
-            f'ingresso_gratuito_aluna:{pedido.id}'
+            quantidade_gratuita = min(
+                quantidade,
+                gratuitas_disponiveis,
+            )
+
+            quantidade_paga = (
+                quantidade - quantidade_gratuita
+            )
+
+            valor_total = (
+                valor_unitario * quantidade_paga
+            )
+
+            status_pedido = (
+                'pago'
+                if valor_total == Decimal('0.00')
+                else 'pendente'
+            )
+
+            pedido = PedidoIngressoEvento.objects.create(
+                evento=evento,
+                nome_completo=nome_completo,
+                email=email,
+                whatsapp=whatsapp,
+                cpf=cpf,
+                quantidade=quantidade,
+                quantidade_gratuita=quantidade_gratuita,
+                assentos_ids=selecionados_ids,
+                valor_unitario=valor_unitario,
+                valor_total=valor_total,
+                status=status_pedido,
+            )
+
+            for aluna in alunas_para_gratuidade[:quantidade_gratuita]:
+                IngressoGratuitoAluna.objects.create(
+                    aluna=aluna,
+                    evento=evento,
+                    pedido=pedido,
+                )
+
+            pedido.external_reference = (
+                f'ingresso_evento:{pedido.id}'
+            )
+
+            if status_pedido == 'pago':
+                pedido.data_pagamento = timezone.now()
+                pedido.external_reference = (
+                    f'ingresso_gratuito_aluna:{pedido.id}'
+                )
+
+                pedido.save(
+                    update_fields=[
+                        'status',
+                        'data_pagamento',
+                        'external_reference',
+                        'atualizado_em',
+                    ],
+                )
+            else:
+                pedido.save(
+                    update_fields=[
+                        'external_reference',
+                        'atualizado_em',
+                    ],
+                )
+
+            assentos_ids_confirmados = [
+                assento.id for assento in assentos
+            ]
+
+            for assento in assentos:
+                assento.reservado_por_sessao = (
+                    f'pedido:{pedido.id}'
+                )
+
+                assento.save(
+                    update_fields=[
+                        'reservado_por_sessao',
+                        'atualizado_em',
+                    ],
+                )
+
+            # A geração do ingresso (incluindo upload da imagem) agora
+            # roda DENTRO da mesma transação. Se falhar, tudo acima é
+            # revertido junto.
+            if status_pedido == 'pago':
+                gerar_ingressos_do_pedido(
+                    pedido,
+                    assentos_ids=assentos_ids_confirmados,
+                    quantidade_gratuita=quantidade_gratuita,
+                )
+    except Exception:
+        import traceback
+
+        traceback.print_exc()
+
+        messages.error(
+            request,
+            (
+                'Não foi possível confirmar sua reserva agora por um '
+                'erro técnico. Nada foi cobrado e sua gratuidade NÃO '
+                'foi usada — os assentos seguem reservados só para '
+                'você por alguns minutos. Tente novamente.'
+            ),
         )
 
-        pedido.save(
-            update_fields=[
-                'status',
-                'data_pagamento',
-                'external_reference',
-                'atualizado_em',
-            ],
-        )
-    else:
-        pedido.save(
-            update_fields=[
-                'external_reference',
-                'atualizado_em',
-            ],
-        )
-
-    assentos_ids_confirmados = [
-        assento.id for assento in assentos
-    ]
-
-    for assento in assentos:
-        assento.reservado_por_sessao = (
-            f'pedido:{pedido.id}'
-        )
-
-        assento.save(
-            update_fields=[
-                'reservado_por_sessao',
-                'atualizado_em',
-            ],
+        return redirect(
+            'espetaculo:mapa_assentos_publico',
+            pk=pk,
         )
 
     data_expiracao = (
@@ -2109,12 +2146,6 @@ def confirmar_selecao_assentos(request, pk):
     request.session.modified = True
 
     if status_pedido == 'pago':
-        gerar_ingressos_do_pedido(
-            pedido,
-            assentos_ids=assentos_ids_confirmados,
-            quantidade_gratuita=quantidade_gratuita,
-        )
-
         request.session.pop(
             f'pedido_{pedido.id}_reserva_expira_em',
             None,
