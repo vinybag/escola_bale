@@ -1148,9 +1148,11 @@ class IngressoEvento(models.Model):
 
         draw = ImageDraw.Draw(canvas)
 
-        fonte_titulo = ImageFont.load_default()
-        fonte_texto = ImageFont.load_default()
-        fonte_codigo = ImageFont.load_default()
+        from espetaculo.fontes import carregar_fonte
+
+        fonte_titulo = carregar_fonte(34, negrito=True)
+        fonte_texto = carregar_fonte(22)
+        fonte_codigo = carregar_fonte(24, negrito=True)
 
         imagem_evento = None
 
@@ -1202,15 +1204,20 @@ class IngressoEvento(models.Model):
                 fill='white',
             )
 
+        # CORREÇÃO: espaçamento vertical recalculado (44px entre linhas)
+        # para caber uma fonte de verdade sem sobrepor texto. O espaçamento
+        # antigo (30px) foi pensado para a fonte minúscula de debug do
+        # Pillow (ImageFont.load_default()), que não tem mais relação com
+        # o tamanho real das fontes usadas agora.
         draw.text(
-            (60, 760),
+            (60, 750),
             self.evento.titulo or 'Evento',
             fill='black',
             font=fonte_titulo,
         )
 
         draw.text(
-            (60, 840),
+            (60, 818),
             (
                 'Participante: '
                 f'{self.nome_participante or "-"}'
@@ -1220,7 +1227,7 @@ class IngressoEvento(models.Model):
         )
 
         draw.text(
-            (60, 900),
+            (60, 862),
             f'Código: {self.codigo_unico}',
             fill='black',
             font=fonte_codigo,
@@ -1228,7 +1235,7 @@ class IngressoEvento(models.Model):
 
         if self.assento_id:
             draw.text(
-                (60, 930),
+                (60, 906),
                 (
                     'Assento: '
                     f'{self.assento.fileira}'
@@ -1255,7 +1262,7 @@ class IngressoEvento(models.Model):
                 )
 
             draw.text(
-                (60, 960),
+                (60, 950),
                 f'Data: {data_formatada}',
                 fill='black',
                 font=fonte_texto,
@@ -1263,7 +1270,7 @@ class IngressoEvento(models.Model):
 
         if self.gratuito:
             draw.text(
-                (60, 990),
+                (60, 994),
                 'Ingresso gratuito',
                 fill='black',
                 font=fonte_texto,

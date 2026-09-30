@@ -1,7 +1,9 @@
 {% extends 'base.html' %}
 {% load static %}
 
+
 {% block title %}Espetáculos - {{ SITE_NAME }}{% endblock %}
+
 
 {% block content %}
 <div style="max-width: 1200px; margin: 0 auto; padding: 2rem 1rem 3rem;">
@@ -10,111 +12,13 @@
         Confira os espetáculos, eventos, audições e ingressos disponíveis.
     </p>
 
-    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2rem;">
-        {% for espetaculo in espetaculos %}
-            <div style="background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: flex; flex-direction: column;">
-
-                {% if espetaculo.imagem %}
-                    <div style="height: 220px; overflow: hidden; background: #f4f4f4; display: flex; align-items: center; justify-content: center; padding: 0.5rem;">
-                        <img src="{{ espetaculo.imagem.url }}"
-                             alt="{{ espetaculo.titulo }}"
-                             loading="lazy"
-                             style="max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; object-position: center; display: block;"
-                             onerror="this.style.display='none'; this.parentNode.innerHTML='<div style=&quot;width:100%;height:220px;background:linear-gradient(135deg,#2c3e50,#b07a84);display:flex;align-items:center;justify-content:center;color:#fff;font-size:3rem;&quot;>🎭</div>';">
-                    </div>
-                {% else %}
-                    <div style="height: 220px; background: linear-gradient(135deg, #2c3e50, #b07a84); display: flex; align-items: center; justify-content: center;">
-                        <span style="font-size: 3rem;">🎭</span>
-                    </div>
-                {% endif %}
-
-                <div style="padding: 1.5rem; display: flex; flex-direction: column; flex: 1;">
-                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.9rem;">
-                        {% if espetaculo.tipo == 'evento' %}
-                            <span style="display: inline-block; padding: 0.35rem 0.7rem; border-radius: 999px; background: #fff3e5; color: #9a5b16; font-size: 0.78rem; font-weight: 700;">
-                                Evento
-                            </span>
-                        {% else %}
-                            <span style="display: inline-block; padding: 0.35rem 0.7rem; border-radius: 999px; background: #f7eef1; color: #b07a84; font-size: 0.78rem; font-weight: 700;">
-                                Espetáculo
-                            </span>
-                        {% endif %}
-
-                        {% if not espetaculo.publico and user.is_authenticated %}
-                            <span style="display: inline-block; padding: 0.35rem 0.7rem; border-radius: 999px; background: #f4f4f4; color: #555; font-size: 0.78rem; font-weight: 700;">
-                                Privado
-                            </span>
-                        {% endif %}
-
-                        {% if espetaculo.tipo == 'evento' and espetaculo.venda_aberta %}
-                            <span style="display: inline-block; padding: 0.35rem 0.7rem; border-radius: 999px; background: #edf8ef; color: #2e7d32; font-size: 0.78rem; font-weight: 700;">
-                                Ingressos à venda
-                            </span>
-                        {% endif %}
-
-                        {% if espetaculo.audicao_aberta %}
-                            <span style="display: inline-block; padding: 0.35rem 0.7rem; border-radius: 999px; background: #e8f5e9; color: #2e7d32; font-size: 0.78rem; font-weight: 700;">
-                                Audição aberta
-                            </span>
-                        {% endif %}
-                    </div>
-
-                    <h2 style="color: #2c3e50; margin: 0 0 0.5rem 0;">{{ espetaculo.titulo }}</h2>
-
-                    {% if espetaculo.subtitulo %}
-                        <p style="color: #b07a84; margin: 0 0 1rem 0;">{{ espetaculo.subtitulo }}</p>
-                    {% endif %}
-
-                    <p style="color: #666; margin: 0 0 0.5rem 0;">
-                        {{ espetaculo.data_apresentacao|date:"d/m/Y" }} às {{ espetaculo.data_apresentacao|date:"H:i" }}
-                    </p>
-                    <p style="color: #666; margin: 0 0 1rem 0;"> {{ espetaculo.local }}</p>
-
-                    <p style="color: #555; margin: 0 0 1.5rem 0; line-height: 1.6; flex: 1;">
-                        {{ espetaculo.descricao|truncatechars:150 }}
-                    </p>
-
-                    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: auto;">
-                        <a href="{% url 'espetaculo:detalhes_publico' espetaculo.pk %}"
-                           style="display: inline-block; background: #b07a84; color: white; padding: 0.75rem 1.2rem; border-radius: 5px; text-decoration: none; font-weight: 600;">
-                            Saiba mais
-                        </a>
-                      
-                        {% if user.is_authenticated %}
-                            <a href="{% url 'espetaculo:agendar_maquiagem' espetaculo.pk %}"
-                               style="display: inline-block; background: #fdeef5; color: #a63d7a; border: 1px solid #f3cfe0; padding: 0.75rem 1.2rem; border-radius: 5px; text-decoration: none; font-weight: 600;">
-                                Agendar Maquiagem
-                            </a>
-                        {% endif %}
-                        
-                        {% if espetaculo.tipo == 'evento' %}
-                            <a href="{% url 'espetaculo:evento_detalhe_publico' espetaculo.pk %}"
-                               style="display: inline-block; background: #fff; color: #9a5b16; border: 1px solid #e2c8a8; padding: 0.75rem 1.2rem; border-radius: 5px; text-decoration: none; font-weight: 600;">
-                                Ver evento
-                            </a>
-                        {% endif %}
-
-                        {% if espetaculo.audicao_aberta %}
-                            <a href="{% url 'espetaculo:audicao_rosa_branca' %}"
-                               style="display: inline-block; background: #f7eef1; color: #8f4f60; border: 1px solid #e8c8d2; padding: 0.75rem 1.2rem; border-radius: 5px; text-decoration: none; font-weight: 600;">
-                                🌹 Inscrever-se na audição
-                            </a>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-        {% empty %}
-            <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: #999; background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
-                Nenhum espetáculo ou evento disponível no momento.
-            </div>
-        {% endfor %}
-    </div>
 
     {% if patrocinadores %}
-        <div style="margin-top: 3rem; padding: 2rem 1.5rem; background: #fff; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); text-align: center;">
-            <p style="margin: 0 0 1.5rem 0; color: #999; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;">
+        <div style="margin: 0 0 2rem 0; padding: 1.5rem; background: #fff; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); text-align: center;">
+            <p style="margin: 0 0 1.25rem 0; color: #999; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;">
                 Apoio
             </p>
+
 
             <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 2rem;">
                 {% for patrocinador in patrocinadores %}
@@ -135,5 +39,117 @@
             </div>
         </div>
     {% endif %}
+
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2rem;">
+        {% for espetaculo in espetaculos %}
+            <div style="background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: flex; flex-direction: column;">
+
+
+                {% if espetaculo.imagem %}
+                    <div style="height: 220px; overflow: hidden; background: #f4f4f4; display: flex; align-items: center; justify-content: center; padding: 0.5rem;">
+                        <img src="{{ espetaculo.imagem.url }}"
+                             alt="{{ espetaculo.titulo }}"
+                             loading="lazy"
+                             style="max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; object-position: center; display: block;"
+                             onerror="this.style.display='none'; this.parentNode.innerHTML='<div style=&quot;width:100%;height:220px;background:linear-gradient(135deg,#2c3e50,#b07a84);display:flex;align-items:center;justify-content:center;color:#fff;font-size:3rem;&quot;>🎭</div>';">
+                    </div>
+                {% else %}
+                    <div style="height: 220px; background: linear-gradient(135deg, #2c3e50, #b07a84); display: flex; align-items: center; justify-content: center;">
+                        <span style="font-size: 3rem;">🎭</span>
+                    </div>
+                {% endif %}
+
+
+                <div style="padding: 1.5rem; display: flex; flex-direction: column; flex: 1;">
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.9rem;">
+                        {% if espetaculo.tipo == 'evento' %}
+                            <span style="display: inline-block; padding: 0.35rem 0.7rem; border-radius: 999px; background: #fff3e5; color: #9a5b16; font-size: 0.78rem; font-weight: 700;">
+                                Evento
+                            </span>
+                        {% else %}
+                            <span style="display: inline-block; padding: 0.35rem 0.7rem; border-radius: 999px; background: #f7eef1; color: #b07a84; font-size: 0.78rem; font-weight: 700;">
+                                Espetáculo
+                            </span>
+                        {% endif %}
+
+
+                        {% if not espetaculo.publico and user.is_authenticated %}
+                            <span style="display: inline-block; padding: 0.35rem 0.7rem; border-radius: 999px; background: #f4f4f4; color: #555; font-size: 0.78rem; font-weight: 700;">
+                                Privado
+                            </span>
+                        {% endif %}
+
+
+                        {% if espetaculo.tipo == 'evento' and espetaculo.venda_aberta %}
+                            <span style="display: inline-block; padding: 0.35rem 0.7rem; border-radius: 999px; background: #edf8ef; color: #2e7d32; font-size: 0.78rem; font-weight: 700;">
+                                Ingressos à venda
+                            </span>
+                        {% endif %}
+
+
+                        {% if espetaculo.audicao_aberta %}
+                            <span style="display: inline-block; padding: 0.35rem 0.7rem; border-radius: 999px; background: #e8f5e9; color: #2e7d32; font-size: 0.78rem; font-weight: 700;">
+                                Audição aberta
+                            </span>
+                        {% endif %}
+                    </div>
+
+
+                    <h2 style="color: #2c3e50; margin: 0 0 0.5rem 0;">{{ espetaculo.titulo }}</h2>
+
+
+                    {% if espetaculo.subtitulo %}
+                        <p style="color: #b07a84; margin: 0 0 1rem 0;">{{ espetaculo.subtitulo }}</p>
+                    {% endif %}
+
+
+                    <p style="color: #666; margin: 0 0 0.5rem 0;">
+                        {{ espetaculo.data_apresentacao|date:"d/m/Y" }} às {{ espetaculo.data_apresentacao|date:"H:i" }}
+                    </p>
+                    <p style="color: #666; margin: 0 0 1rem 0;"> {{ espetaculo.local }}</p>
+
+
+                    <p style="color: #555; margin: 0 0 1.5rem 0; line-height: 1.6; flex: 1;">
+                        {{ espetaculo.descricao|truncatechars:150 }}
+                    </p>
+
+
+                    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: auto;">
+                        <a href="{% url 'espetaculo:detalhes_publico' espetaculo.pk %}"
+                           style="display: inline-block; background: #b07a84; color: white; padding: 0.75rem 1.2rem; border-radius: 5px; text-decoration: none; font-weight: 600;">
+                            Saiba mais
+                        </a>
+
+                        {% if user.is_authenticated %}
+                            <a href="{% url 'espetaculo:agendar_maquiagem' espetaculo.pk %}"
+                               style="display: inline-block; background: #fdeef5; color: #a63d7a; border: 1px solid #f3cfe0; padding: 0.75rem 1.2rem; border-radius: 5px; text-decoration: none; font-weight: 600;">
+                                Agendar Maquiagem
+                            </a>
+                        {% endif %}
+
+                        {% if espetaculo.tipo == 'evento' %}
+                            <a href="{% url 'espetaculo:evento_detalhe_publico' espetaculo.pk %}"
+                               style="display: inline-block; background: #fff; color: #9a5b16; border: 1px solid #e2c8a8; padding: 0.75rem 1.2rem; border-radius: 5px; text-decoration: none; font-weight: 600;">
+                                Ver evento
+                            </a>
+                        {% endif %}
+
+
+                        {% if espetaculo.audicao_aberta %}
+                            <a href="{% url 'espetaculo:audicao_rosa_branca' %}"
+                               style="display: inline-block; background: #f7eef1; color: #8f4f60; border: 1px solid #e8c8d2; padding: 0.75rem 1.2rem; border-radius: 5px; text-decoration: none; font-weight: 600;">
+                                Inscrever-se na audição
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: #999; background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                Nenhum espetáculo ou evento disponível no momento.
+            </div>
+        {% endfor %}
+    </div>
 </div>
 {% endblock %}
