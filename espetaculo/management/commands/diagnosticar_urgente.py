@@ -1,4 +1,5 @@
 from django.core.management.base import BaseCommand
+from django.db import models
 
 from espetaculo.models import (
     Espetaculo,
@@ -27,8 +28,29 @@ class Command(BaseCommand):
 
         self.stdout.write('\n========== PARTE 1: GRATUIDADE ==========')
 
-        eventos = Espetaculo.objects.filter(venda_aberta=True).order_by('data_apresentacao')
-        self.stdout.write(f'Eventos com venda aberta: {eventos.count()}')
+        # CORREÇÃO: não filtra mais por venda_aberta=True (a usuária pode
+        # fechar as vendas manualmente por decisão própria, o que não tem
+        # nada a ver com a integridade dos dados de gratuidade). Em vez
+        # disso, identifica os dias do MESMO espetáculo pelo título.
+        titulo_mais_comum = (
+            Espetaculo.objects
+            .values('titulo')
+            .annotate(qtd=models.Count('id'))
+            .order_by('-qtd')
+            .first()
+        )
+
+        if titulo_mais_comum and titulo_mais_comum['qtd'] > 1:
+            eventos = Espetaculo.objects.filter(
+                titulo=titulo_mais_comum['titulo']
+            ).order_by('data_apresentacao')
+        else:
+            eventos = Espetaculo.objects.all().order_by('data_apresentacao')
+
+        self.stdout.write(
+            f'Eventos analisados (dias do espetáculo "{eventos.first().titulo if eventos else "-"}"): '
+            f'{eventos.count()}'
+        )
 
         for evento in eventos:
             self.stdout.write(
