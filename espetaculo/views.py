@@ -1847,7 +1847,11 @@ def alunas_disponiveis_para_gratuidade(request, evento, lock=False):
     - a própria aluna, quando o usuário logado for uma aluna com login
       próprio;
     - apenas alunas com participação confirmada (vai_dancar=True) neste
-      espetáculo específico.
+      espetáculo específico;
+    - a participação não pode estar com a gratuidade removida
+      manualmente pelo admin (ainda_tem_gratuidade=False) — um controle
+      manual, na tela de participações, para corrigir casos em que a
+      gratuidade precisou ser ajustada fora do fluxo normal.
 
     "Já utilizada" é controlado pelo modelo IngressoGratuitoAluna, que tem
     uma restrição única (aluna, evento): 1 gratuidade por aluna por dia,
@@ -1873,6 +1877,7 @@ def alunas_disponiveis_para_gratuidade(request, evento, lock=False):
     ).filter(
         participacoes_espetaculo__espetaculo=evento,
         participacoes_espetaculo__vai_dancar=True,
+        participacoes_espetaculo__ainda_tem_gratuidade=True,
     ).exclude(
         ingressos_gratuitos__evento=evento,
     ).order_by('id')

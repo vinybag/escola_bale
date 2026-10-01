@@ -1,0 +1,212 @@
+diff --git a/admin_dashboard/templates/admin_dashboard/espetaculos/participacoes.html b/admin_dashboard/templates/admin_dashboard/espetaculos/participacoes.html
+index 815509e..0c2e226 100644
+--- a/admin_dashboard/templates/admin_dashboard/espetaculos/participacoes.html
++++ b/admin_dashboard/templates/admin_dashboard/espetaculos/participacoes.html
+@@ -832,6 +832,12 @@
+                                 {% else %}
+                                     <span class="badge badge-nao">Não dança</span>
+                                 {% endif %}
++
++                                {% if participacao.ainda_tem_gratuidade %}
++                                    <span class="badge badge-sim">🎁 Gratuidade disponível</span>
++                                {% else %}
++                                    <span class="badge badge-nao">🚫 Gratuidade removida</span>
++                                {% endif %}
+                             </div>
+ 
+                             <div class="p-participacao-grid">
+@@ -874,6 +880,23 @@
+                             </div>
+ 
+                             <div class="p-acoes">
++                                <form
++                                    method="post"
++                                    action="{% url 'admin_dashboard:toggle_gratuidade_participacao' participacao.pk %}"
++                                    style="display: flex; align-items: center; margin-right: auto;"
++                                >
++                                    {% csrf_token %}
++                                    <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; color: #44384c; cursor: pointer;">
++                                        <input
++                                            type="checkbox"
++                                            {% if participacao.ainda_tem_gratuidade %}checked{% endif %}
++                                            onchange="this.form.submit()"
++                                            style="width: 16px; height: 16px; accent-color: #6b2d8f;"
++                                        >
++                                        Ainda tem ingresso grátis
++                                    </label>
++                                </form>
++
+                                 <a href="{% url 'admin_dashboard:participacao_cobrancas' participacao.pk %}" class="btn btn-ghost">
+                                     Cobranças
+                                 </a>
+diff --git a/admin_dashboard/urls.py b/admin_dashboard/urls.py
+index 9e892df..75d598d 100644
+--- a/admin_dashboard/urls.py
++++ b/admin_dashboard/urls.py
+@@ -43,6 +43,7 @@ urlpatterns = [
+     path('espetaculos/<int:pk>/participacoes/', views.espetaculo_participacoes, name='espetaculo_participacoes'),
+     path('espetaculos/<int:pk>/participantes-png/',views.espetaculo_participantes_png,name='espetaculo_participantes_png'),
+     path('espetaculos/participacoes/<int:pk>/excluir/', views.excluir_participacao, name='excluir_participacao'),
++    path('espetaculos/participacoes/<int:pk>/toggle-gratuidade/', views.toggle_gratuidade_participacao, name='toggle_gratuidade_participacao'),
+     path('espetaculos/<int:pk>/ingressos-vendidos/', views.espetaculo_ingressos_vendidos, name='espetaculo_ingressos_vendidos'),
+     path('espetaculos/<int:pk>/maquiagens/', views.espetaculo_maquiagens, name='espetaculo_maquiagens'),
+     path('maquiagens/agenda/<int:agenda_id>/horario/adicionar/', views.adicionar_horario_maquiagem, name='adicionar_horario_maquiagem'),
+diff --git a/admin_dashboard/views.py b/admin_dashboard/views.py
+index b542a2e..3d92ae4 100644
+--- a/admin_dashboard/views.py
++++ b/admin_dashboard/views.py
+@@ -4366,6 +4366,48 @@ def espetaculo_ingressos_vendidos(request, pk):
+         context
+     )
+ 
++@login_required
++def toggle_gratuidade_participacao(request, pk):
++    """
++    Liga/desliga o controle manual "ainda tem ingresso gratuito" de uma
++    participação — usado para corrigir manualmente casos em que a
++    gratuidade de uma aluna precisou ser ajustada fora do fluxo normal
++    (ex.: depois de uma correção manual no banco que a devolveu por
++    engano). Quando desmarcado, a aluna deixa de aparecer como elegível
++    à gratuidade deste evento, tanto no site quanto no admin — mesmo que
++    ela nunca tenha de fato usado o ingresso grátis.
++    """
++    if not request.user.is_staff:
++        return redirect('home')
++
++    from espetaculo.models import ParticipacaoEspetaculo
++
++    participacao = get_object_or_404(ParticipacaoEspetaculo, pk=pk)
++    espetaculo_pk = participacao.espetaculo.pk
++
++    if request.method == 'POST':
++        participacao.ainda_tem_gratuidade = not participacao.ainda_tem_gratuidade
++        participacao.save(update_fields=['ainda_tem_gratuidade'])
++
++        if participacao.ainda_tem_gratuidade:
++            messages.success(
++                request,
++                f'Gratuidade de {participacao.aluna.nome} reativada — '
++                'ela volta a aparecer como elegível neste evento.',
++            )
++        else:
++            messages.success(
++                request,
++                f'Gratuidade de {participacao.aluna.nome} removida — '
++                'ela não vai mais aparecer como elegível à gratuidade '
++                'deste evento, nem no site nem no admin.',
++            )
++    else:
++        messages.error(request, 'Ação inválida.')
++
++    return redirect('admin_dashboard:espetaculo_participacoes', pk=espetaculo_pk)
++
++
+ @login_required
+ def excluir_participacao(request, pk):
+     if not request.user.is_staff:
+@@ -5518,6 +5560,7 @@ def espetaculo_gerar_ingresso_manual(request, pk):
+         Espetaculo,
+         IngressoGratuitoAluna,
+         MapaAssentos,
++        ParticipacaoEspetaculo,
+         PedidoIngressoEvento,
+     )
+     from espetaculo.views import gerar_ingressos_do_pedido
+@@ -5586,10 +5629,23 @@ def espetaculo_gerar_ingresso_manual(request, pk):
+         .values_list('aluna_id', flat=True)
+     )
+ 
++    # Alunas cuja gratuidade foi removida manualmente pelo admin (tela de
++    # participações), mesmo sem terem de fato usado o ingresso grátis.
++    alunas_com_gratuidade_removida_manualmente = set(
++        ParticipacaoEspetaculo.objects
++        .filter(
++            espetaculo=espetaculo,
++            aluna__in=alunas_participantes,
++            ainda_tem_gratuidade=False,
++        )
++        .values_list('aluna_id', flat=True)
++    )
++
+     turmas_com_alunas = {}
+     for aluna in alunas_participantes:
+         aluna.tem_gratuidade_disponivel = (
+             aluna.id not in alunas_com_gratuidade_ja_usada
++            and aluna.id not in alunas_com_gratuidade_removida_manualmente
+         )
+ 
+         turmas_da_aluna = list(aluna.turmas.all()) or [None]
+diff --git a/espetaculo/migrations/0023_participacaoespetaculo_ainda_tem_gratuidade.py b/espetaculo/migrations/0023_participacaoespetaculo_ainda_tem_gratuidade.py
+new file mode 100644
+index 0000000..98d6d16
+--- /dev/null
++++ b/espetaculo/migrations/0023_participacaoespetaculo_ainda_tem_gratuidade.py
+@@ -0,0 +1,20 @@
++from django.db import migrations, models
++
++
++class Migration(migrations.Migration):
++
++    dependencies = [
++        ('espetaculo', '0022_patrocinador'),
++    ]
++
++    operations = [
++        migrations.AddField(
++            model_name='participacaoespetaculo',
++            name='ainda_tem_gratuidade',
++            field=models.BooleanField(
++                default=True,
++                help_text='Controle manual do admin: desmarque para impedir que esta aluna apareça como elegível à gratuidade deste evento (no site e no admin), mesmo que ela nunca tenha de fato usado o ingresso grátis. Útil para corrigir manualmente casos onde a gratuidade precisou ser ajustada fora do fluxo normal.',
++                verbose_name='Ainda tem ingresso gratuito',
++            ),
++        ),
++    ]
+diff --git a/espetaculo/models.py b/espetaculo/models.py
+index fd548f7..e4c13d5 100644
+--- a/espetaculo/models.py
++++ b/espetaculo/models.py
+@@ -303,6 +303,18 @@ class ParticipacaoEspetaculo(models.Model):
+     observacoes = models.TextField(blank=True, null=True)
+     criado_em = models.DateTimeField(auto_now_add=True)
+ 
++    ainda_tem_gratuidade = models.BooleanField(
++        default=True,
++        verbose_name='Ainda tem ingresso gratuito',
++        help_text=(
++            'Controle manual do admin: desmarque para impedir que esta '
++            'aluna apareça como elegível à gratuidade deste evento (no '
++            'site e no admin), mesmo que ela nunca tenha de fato usado o '
++            'ingresso grátis. Útil para corrigir manualmente casos onde '
++            'a gratuidade precisou ser ajustada fora do fluxo normal.'
++        ),
++    )
++
+     class Meta:
+         verbose_name = 'Participação no espetáculo'
+         verbose_name_plural = 'Participações no espetáculo'
+diff --git a/espetaculo/views.py b/espetaculo/views.py
+index 752d496..8a30ff1 100644
+--- a/espetaculo/views.py
++++ b/espetaculo/views.py
+@@ -1847,7 +1847,11 @@ def alunas_disponiveis_para_gratuidade(request, evento, lock=False):
+     - a própria aluna, quando o usuário logado for uma aluna com login
+       próprio;
+     - apenas alunas com participação confirmada (vai_dancar=True) neste
+-      espetáculo específico.
++      espetáculo específico;
++    - a participação não pode estar com a gratuidade removida
++      manualmente pelo admin (ainda_tem_gratuidade=False) — um controle
++      manual, na tela de participações, para corrigir casos em que a
++      gratuidade precisou ser ajustada fora do fluxo normal.
+ 
+     "Já utilizada" é controlado pelo modelo IngressoGratuitoAluna, que tem
+     uma restrição única (aluna, evento): 1 gratuidade por aluna por dia,
+@@ -1873,6 +1877,7 @@ def alunas_disponiveis_para_gratuidade(request, evento, lock=False):
+     ).filter(
+         participacoes_espetaculo__espetaculo=evento,
+         participacoes_espetaculo__vai_dancar=True,
++        participacoes_espetaculo__ainda_tem_gratuidade=True,
+     ).exclude(
+         ingressos_gratuitos__evento=evento,
+     ).order_by('id')

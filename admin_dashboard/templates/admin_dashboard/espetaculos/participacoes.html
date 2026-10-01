@@ -832,6 +832,12 @@
                                 {% else %}
                                     <span class="badge badge-nao">Não dança</span>
                                 {% endif %}
+
+                                {% if participacao.ainda_tem_gratuidade %}
+                                    <span class="badge badge-sim">🎁 Gratuidade disponível</span>
+                                {% else %}
+                                    <span class="badge badge-nao">🚫 Gratuidade removida</span>
+                                {% endif %}
                             </div>
 
                             <div class="p-participacao-grid">
@@ -874,6 +880,23 @@
                             </div>
 
                             <div class="p-acoes">
+                                <form
+                                    method="post"
+                                    action="{% url 'admin_dashboard:toggle_gratuidade_participacao' participacao.pk %}"
+                                    style="display: flex; align-items: center; margin-right: auto;"
+                                >
+                                    {% csrf_token %}
+                                    <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; color: #44384c; cursor: pointer;">
+                                        <input
+                                            type="checkbox"
+                                            {% if participacao.ainda_tem_gratuidade %}checked{% endif %}
+                                            onchange="this.form.submit()"
+                                            style="width: 16px; height: 16px; accent-color: #6b2d8f;"
+                                        >
+                                        Ainda tem ingresso grátis
+                                    </label>
+                                </form>
+
                                 <a href="{% url 'admin_dashboard:participacao_cobrancas' participacao.pk %}" class="btn btn-ghost">
                                     Cobranças
                                 </a>

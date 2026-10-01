@@ -43,6 +43,7 @@ urlpatterns = [
     path('espetaculos/<int:pk>/participacoes/', views.espetaculo_participacoes, name='espetaculo_participacoes'),
     path('espetaculos/<int:pk>/participantes-png/',views.espetaculo_participantes_png,name='espetaculo_participantes_png'),
     path('espetaculos/participacoes/<int:pk>/excluir/', views.excluir_participacao, name='excluir_participacao'),
+    path('espetaculos/participacoes/<int:pk>/toggle-gratuidade/', views.toggle_gratuidade_participacao, name='toggle_gratuidade_participacao'),
     path('espetaculos/<int:pk>/ingressos-vendidos/', views.espetaculo_ingressos_vendidos, name='espetaculo_ingressos_vendidos'),
     path('espetaculos/<int:pk>/maquiagens/', views.espetaculo_maquiagens, name='espetaculo_maquiagens'),
     path('maquiagens/agenda/<int:agenda_id>/horario/adicionar/', views.adicionar_horario_maquiagem, name='adicionar_horario_maquiagem'),

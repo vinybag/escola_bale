@@ -303,6 +303,18 @@ class ParticipacaoEspetaculo(models.Model):
     observacoes = models.TextField(blank=True, null=True)
     criado_em = models.DateTimeField(auto_now_add=True)
 
+    ainda_tem_gratuidade = models.BooleanField(
+        default=True,
+        verbose_name='Ainda tem ingresso gratuito',
+        help_text=(
+            'Controle manual do admin: desmarque para impedir que esta '
+            'aluna apareça como elegível à gratuidade deste evento (no '
+            'site e no admin), mesmo que ela nunca tenha de fato usado o '
+            'ingresso grátis. Útil para corrigir manualmente casos onde '
+            'a gratuidade precisou ser ajustada fora do fluxo normal.'
+        ),
+    )
+
     class Meta:
         verbose_name = 'Participação no espetáculo'
         verbose_name_plural = 'Participações no espetáculo'

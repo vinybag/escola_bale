@@ -4367,6 +4367,48 @@ def espetaculo_ingressos_vendidos(request, pk):
     )
 
 @login_required
+def toggle_gratuidade_participacao(request, pk):
+    """
+    Liga/desliga o controle manual "ainda tem ingresso gratuito" de uma
+    participação — usado para corrigir manualmente casos em que a
+    gratuidade de uma aluna precisou ser ajustada fora do fluxo normal
+    (ex.: depois de uma correção manual no banco que a devolveu por
+    engano). Quando desmarcado, a aluna deixa de aparecer como elegível
+    à gratuidade deste evento, tanto no site quanto no admin — mesmo que
+    ela nunca tenha de fato usado o ingresso grátis.
+    """
+    if not request.user.is_staff:
+        return redirect('home')
+
+    from espetaculo.models import ParticipacaoEspetaculo
+
+    participacao = get_object_or_404(ParticipacaoEspetaculo, pk=pk)
+    espetaculo_pk = participacao.espetaculo.pk
+
+    if request.method == 'POST':
+        participacao.ainda_tem_gratuidade = not participacao.ainda_tem_gratuidade
+        participacao.save(update_fields=['ainda_tem_gratuidade'])
+
+        if participacao.ainda_tem_gratuidade:
+            messages.success(
+                request,
+                f'Gratuidade de {participacao.aluna.nome} reativada — '
+                'ela volta a aparecer como elegível neste evento.',
+            )
+        else:
+            messages.success(
+                request,
+                f'Gratuidade de {participacao.aluna.nome} removida — '
+                'ela não vai mais aparecer como elegível à gratuidade '
+                'deste evento, nem no site nem no admin.',
+            )
+    else:
+        messages.error(request, 'Ação inválida.')
+
+    return redirect('admin_dashboard:espetaculo_participacoes', pk=espetaculo_pk)
+
+
+@login_required
 def excluir_participacao(request, pk):
     if not request.user.is_staff:
         return redirect('home')
@@ -5518,6 +5560,7 @@ def espetaculo_gerar_ingresso_manual(request, pk):
         Espetaculo,
         IngressoGratuitoAluna,
         MapaAssentos,
+        ParticipacaoEspetaculo,
         PedidoIngressoEvento,
     )
     from espetaculo.views import gerar_ingressos_do_pedido
@@ -5586,10 +5629,23 @@ def espetaculo_gerar_ingresso_manual(request, pk):
         .values_list('aluna_id', flat=True)
     )
 
+    # Alunas cuja gratuidade foi removida manualmente pelo admin (tela de
+    # participações), mesmo sem terem de fato usado o ingresso grátis.
+    alunas_com_gratuidade_removida_manualmente = set(
+        ParticipacaoEspetaculo.objects
+        .filter(
+            espetaculo=espetaculo,
+            aluna__in=alunas_participantes,
+            ainda_tem_gratuidade=False,
+        )
+        .values_list('aluna_id', flat=True)
+    )
+
     turmas_com_alunas = {}
     for aluna in alunas_participantes:
         aluna.tem_gratuidade_disponivel = (
             aluna.id not in alunas_com_gratuidade_ja_usada
+            and aluna.id not in alunas_com_gratuidade_removida_manualmente
         )
 
         turmas_da_aluna = list(aluna.turmas.all()) or [None]
