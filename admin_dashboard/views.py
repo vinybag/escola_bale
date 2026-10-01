@@ -5622,11 +5622,44 @@ def espetaculo_gerar_ingresso_manual(request, pk):
         tipo_registro = request.POST.get('tipo_registro', '')  # 'pago_manual' ou 'cortesia'
         aluna_gratuidade_id = request.POST.get('aluna_gratuidade_id', '').strip()
 
-        if not nome_completo or not whatsapp:
+        # CORREÇÃO: busca a aluna selecionada ANTES de checar nome/
+        # WhatsApp, porque agora isso decide se eles são obrigatórios ou
+        # não. Essa é "a aluna da venda" para fins de nome/contexto —
+        # repare que isso é independente de ela virar (ou não) uma
+        # gratuidade vinculada (isso só acontece mais abaixo, e só se
+        # tipo_registro for 'cortesia').
+        aluna_selecionada = None
+
+        if aluna_gratuidade_id:
+            try:
+                aluna_selecionada = Aluna.objects.get(
+                    pk=int(aluna_gratuidade_id),
+                )
+            except (Aluna.DoesNotExist, TypeError, ValueError):
+                messages.error(
+                    request,
+                    'Aluna selecionada é inválida.',
+                )
+                return redirect(
+                    'admin_dashboard:espetaculo_gerar_ingresso_manual', pk=pk
+                )
+
+        # CORREÇÃO: nome e WhatsApp só são obrigatórios quando a venda
+        # não está vinculada a nenhuma aluna.
+        if not aluna_selecionada and (not nome_completo or not whatsapp):
             messages.error(request, 'Preencha nome completo e WhatsApp.')
             return redirect(
                 'admin_dashboard:espetaculo_gerar_ingresso_manual', pk=pk
             )
+
+        # CORREÇÃO: se tem aluna vinculada e os campos vieram em branco,
+        # preenche automaticamente com o nome dela (e um traço no
+        # WhatsApp, já que o campo não aceita vazio no banco).
+        if aluna_selecionada and not nome_completo:
+            nome_completo = aluna_selecionada.nome
+
+        if aluna_selecionada and not whatsapp:
+            whatsapp = '-'
 
         if tipo_registro not in ('pago_manual', 'cortesia'):
             messages.error(request, 'Selecione o tipo de registro do ingresso.')
@@ -5689,21 +5722,13 @@ def espetaculo_gerar_ingresso_manual(request, pk):
                     'admin_dashboard:espetaculo_gerar_ingresso_manual', pk=pk
                 )
 
-        aluna_gratuidade = None
-
-        if tipo_registro == 'cortesia' and aluna_gratuidade_id:
-            try:
-                aluna_gratuidade = Aluna.objects.get(
-                    pk=int(aluna_gratuidade_id),
-                )
-            except (Aluna.DoesNotExist, TypeError, ValueError):
-                messages.error(
-                    request,
-                    'Aluna selecionada para vincular a gratuidade é inválida.',
-                )
-                return redirect(
-                    'admin_dashboard:espetaculo_gerar_ingresso_manual', pk=pk
-                )
+        # A gratuidade só é efetivamente vinculada (e bloqueada) quando o
+        # registro é cortesia. Selecionar a aluna numa venda "já pagou"
+        # serve só para preencher o nome/contexto, sem mexer na
+        # gratuidade dela (ex: ingresso extra pago, não o grátis dela).
+        aluna_gratuidade = (
+            aluna_selecionada if tipo_registro == 'cortesia' else None
+        )
 
         valor_total = valor_unitario * quantidade
         pedido = None
