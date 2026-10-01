@@ -57,6 +57,14 @@
                     </a>
                 </li>
 
+                {% if user.is_authenticated %}
+                    <li>
+                        <a href="{% url 'espetaculo:meus_ingressos' %}">
+                            Meus Ingressos
+                        </a>
+                    </li>
+                {% endif %}
+
                 <li>
                     <a href="/agenda/experimental/">
                         Aula Experimental

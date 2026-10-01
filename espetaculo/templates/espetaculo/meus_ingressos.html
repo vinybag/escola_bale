@@ -1,0 +1,86 @@
+{% extends 'base_public.html' %}
+
+{% block title %}Meus Ingressos{% endblock %}
+
+{% block content %}
+<div style="max-width: 860px; margin: 0 auto; padding: 2rem 1rem 3rem;">
+
+    <h1 style="color: #2e7d32; margin-bottom: 0.3rem;">Meus ingressos</h1>
+    <p style="color: #666; margin-top: 0;">
+        Aqui estão todos os ingressos já pagos vinculados à sua conta
+        ({{ email_usuario|default:"sem e-mail cadastrado" }}).
+    </p>
+
+    {% if not email_usuario %}
+        <div style="background: #fff8e6; border: 1px solid #f0d78c; border-radius: 12px; padding: 1.2rem; margin-top: 1.5rem;">
+            <p style="margin: 0; color: #8a6d1f;">
+                Sua conta não tem um e-mail cadastrado, e é por ele que localizamos
+                seus ingressos. Atualize seu e-mail no
+                <a href="/conta/perfil/" style="color: #8a6d1f; font-weight: 700;">perfil</a>
+                e tente novamente, ou entre em contato caso já tenha comprado um ingresso.
+            </p>
+        </div>
+    {% elif not pedidos %}
+        <div style="background: #faf7f8; border-radius: 12px; padding: 1.2rem; margin-top: 1.5rem;">
+            <p style="margin: 0; color: #666;">
+                Nenhum ingresso pago foi encontrado para o e-mail {{ email_usuario }}.
+                Se você acabou de comprar, aguarde a confirmação do pagamento.
+            </p>
+        </div>
+    {% else %}
+        <div style="display: grid; gap: 1.5rem; margin-top: 1.5rem;">
+            {% for pedido in pedidos %}
+                <div style="background: white; border-radius: 18px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); padding: 1.5rem;">
+                    <div style="background: #faf7f8; border-radius: 12px; padding: 1rem; margin-bottom: 1.25rem;">
+                        <p style="margin: 0 0 0.4rem 0;"><strong>Evento:</strong> {{ pedido.evento.titulo }}</p>
+                        <p style="margin: 0 0 0.4rem 0;"><strong>Data:</strong> {{ pedido.evento.data_apresentacao|date:"d/m/Y H:i" }}</p>
+                        <p style="margin: 0 0 0.4rem 0;"><strong>Quantidade:</strong> {{ pedido.quantidade }}</p>
+                        <p style="margin: 0;"><strong>Comprado em:</strong> {{ pedido.data_pagamento|date:"d/m/Y H:i" }}</p>
+                    </div>
+
+                    <div style="display: grid; gap: 1.25rem;">
+                        {% for ingresso in pedido.ingressos.all %}
+                            <div style="border: 1px solid #eadde1; border-radius: 12px; padding: 1rem; background: #fffdfd;">
+                                <p style="margin: 0 0 0.4rem 0;"><strong>Código:</strong> {{ ingresso.codigo_unico }}</p>
+                                <p style="margin: 0 0 1rem 0;"><strong>Status:</strong> {{ ingresso.get_status_display }}</p>
+
+                                {% if ingresso.imagem_ingresso %}
+                                    <div style="margin-bottom: 1rem; background: #f6f6f6; border-radius: 10px; padding: 1rem; display: flex; justify-content: center; align-items: center;">
+                                        <img src="{% url 'espetaculo:ver_imagem_ingresso' ingresso.id %}"
+                                             alt="Ingresso {{ ingresso.codigo_unico }}"
+                                             style="max-width: 100%; max-height: 560px; width: auto; height: auto; display: block; border-radius: 8px;">
+                                    </div>
+                                {% endif %}
+
+                                <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                                    {% if ingresso.imagem_ingresso %}
+                                        <a href="{% url 'espetaculo:baixar_ingresso' ingresso.id %}"
+                                           target="_blank"
+                                           rel="noopener noreferrer"
+                                           style="display: inline-block; background: #2c3e50; color: white; padding: 0.8rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600;">
+                                            Baixar ingresso
+                                        </a>
+                                    {% endif %}
+
+                                    {% if ingresso.qrcode_image %}
+                                        <a href="{% url 'espetaculo:baixar_qrcode_ingresso' ingresso.id %}"
+                                           target="_blank"
+                                           rel="noopener noreferrer"
+                                           style="display: inline-block; background: #f3f3f3; color: #333; padding: 0.8rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600;">
+                                            Baixar QR Code
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% empty %}
+                            <div style="border: 1px solid #eadde1; border-radius: 12px; padding: 1rem; background: #fffdfd;">
+                                <p style="margin: 0; color: #666;">Nenhum ingresso encontrado para este pedido.</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

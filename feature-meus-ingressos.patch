@@ -1,0 +1,174 @@
+diff --git a/espetaculo/templates/espetaculo/meus_ingressos.html b/espetaculo/templates/espetaculo/meus_ingressos.html
+new file mode 100644
+index 0000000..036962b
+--- /dev/null
++++ b/espetaculo/templates/espetaculo/meus_ingressos.html
+@@ -0,0 +1,86 @@
++{% extends 'base_public.html' %}
++
++{% block title %}Meus Ingressos{% endblock %}
++
++{% block content %}
++<div style="max-width: 860px; margin: 0 auto; padding: 2rem 1rem 3rem;">
++
++    <h1 style="color: #2e7d32; margin-bottom: 0.3rem;">Meus ingressos</h1>
++    <p style="color: #666; margin-top: 0;">
++        Aqui estão todos os ingressos já pagos vinculados à sua conta
++        ({{ email_usuario|default:"sem e-mail cadastrado" }}).
++    </p>
++
++    {% if not email_usuario %}
++        <div style="background: #fff8e6; border: 1px solid #f0d78c; border-radius: 12px; padding: 1.2rem; margin-top: 1.5rem;">
++            <p style="margin: 0; color: #8a6d1f;">
++                Sua conta não tem um e-mail cadastrado, e é por ele que localizamos
++                seus ingressos. Atualize seu e-mail no
++                <a href="/conta/perfil/" style="color: #8a6d1f; font-weight: 700;">perfil</a>
++                e tente novamente, ou entre em contato caso já tenha comprado um ingresso.
++            </p>
++        </div>
++    {% elif not pedidos %}
++        <div style="background: #faf7f8; border-radius: 12px; padding: 1.2rem; margin-top: 1.5rem;">
++            <p style="margin: 0; color: #666;">
++                Nenhum ingresso pago foi encontrado para o e-mail {{ email_usuario }}.
++                Se você acabou de comprar, aguarde a confirmação do pagamento.
++            </p>
++        </div>
++    {% else %}
++        <div style="display: grid; gap: 1.5rem; margin-top: 1.5rem;">
++            {% for pedido in pedidos %}
++                <div style="background: white; border-radius: 18px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); padding: 1.5rem;">
++                    <div style="background: #faf7f8; border-radius: 12px; padding: 1rem; margin-bottom: 1.25rem;">
++                        <p style="margin: 0 0 0.4rem 0;"><strong>Evento:</strong> {{ pedido.evento.titulo }}</p>
++                        <p style="margin: 0 0 0.4rem 0;"><strong>Data:</strong> {{ pedido.evento.data_apresentacao|date:"d/m/Y H:i" }}</p>
++                        <p style="margin: 0 0 0.4rem 0;"><strong>Quantidade:</strong> {{ pedido.quantidade }}</p>
++                        <p style="margin: 0;"><strong>Comprado em:</strong> {{ pedido.data_pagamento|date:"d/m/Y H:i" }}</p>
++                    </div>
++
++                    <div style="display: grid; gap: 1.25rem;">
++                        {% for ingresso in pedido.ingressos.all %}
++                            <div style="border: 1px solid #eadde1; border-radius: 12px; padding: 1rem; background: #fffdfd;">
++                                <p style="margin: 0 0 0.4rem 0;"><strong>Código:</strong> {{ ingresso.codigo_unico }}</p>
++                                <p style="margin: 0 0 1rem 0;"><strong>Status:</strong> {{ ingresso.get_status_display }}</p>
++
++                                {% if ingresso.imagem_ingresso %}
++                                    <div style="margin-bottom: 1rem; background: #f6f6f6; border-radius: 10px; padding: 1rem; display: flex; justify-content: center; align-items: center;">
++                                        <img src="{% url 'espetaculo:ver_imagem_ingresso' ingresso.id %}"
++                                             alt="Ingresso {{ ingresso.codigo_unico }}"
++                                             style="max-width: 100%; max-height: 560px; width: auto; height: auto; display: block; border-radius: 8px;">
++                                    </div>
++                                {% endif %}
++
++                                <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
++                                    {% if ingresso.imagem_ingresso %}
++                                        <a href="{% url 'espetaculo:baixar_ingresso' ingresso.id %}"
++                                           target="_blank"
++                                           rel="noopener noreferrer"
++                                           style="display: inline-block; background: #2c3e50; color: white; padding: 0.8rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600;">
++                                            Baixar ingresso
++                                        </a>
++                                    {% endif %}
++
++                                    {% if ingresso.qrcode_image %}
++                                        <a href="{% url 'espetaculo:baixar_qrcode_ingresso' ingresso.id %}"
++                                           target="_blank"
++                                           rel="noopener noreferrer"
++                                           style="display: inline-block; background: #f3f3f3; color: #333; padding: 0.8rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600;">
++                                            Baixar QR Code
++                                        </a>
++                                    {% endif %}
++                                </div>
++                            </div>
++                        {% empty %}
++                            <div style="border: 1px solid #eadde1; border-radius: 12px; padding: 1rem; background: #fffdfd;">
++                                <p style="margin: 0; color: #666;">Nenhum ingresso encontrado para este pedido.</p>
++                            </div>
++                        {% endfor %}
++                    </div>
++                </div>
++            {% endfor %}
++        </div>
++    {% endif %}
++</div>
++{% endblock %}
+diff --git a/espetaculo/urls_public.py b/espetaculo/urls_public.py
+index 0a44475..0b47798 100644
+--- a/espetaculo/urls_public.py
++++ b/espetaculo/urls_public.py
+@@ -30,6 +30,7 @@ urlpatterns = [
+     path('ingresso/pix/<int:pedido_id>/', views.pagar_ingresso_pix, name='pagar_ingresso_pix'),
+     path('ingresso/verificar-pix/<str:payment_id>/', views.verificar_pagamento_ingresso_pix, name='verificar_pagamento_ingresso_pix'),
+     path('ingresso/sucesso/<int:pedido_id>/', views.ingresso_sucesso, name='ingresso_sucesso'),
++    path('meus-ingressos/', views.meus_ingressos, name='meus_ingressos'),
+     path('ingressos/<int:ingresso_id>/imagem/', views.ver_imagem_ingresso, name='ver_imagem_ingresso'),
+     path('ingressos/<int:ingresso_id>/baixar/', views.baixar_ingresso, name='baixar_ingresso'),
+     path('ingressos/<int:ingresso_id>/baixar-qr/', views.baixar_qrcode_ingresso, name='baixar_qrcode_ingresso'),
+diff --git a/espetaculo/views.py b/espetaculo/views.py
+index d7205b0..207a850 100644
+--- a/espetaculo/views.py
++++ b/espetaculo/views.py
+@@ -1380,6 +1380,46 @@ def ingresso_sucesso(request, pedido_id):
+     return render(request, 'espetaculo/ingresso_sucesso.html', context)
+ 
+ 
++@login_required
++def meus_ingressos(request):
++    """
++    Lista todos os ingressos já pagos da pessoa logada, para ela poder
++    visualizar e baixar sem precisar guardar o link da página de sucesso
++    da compra.
++
++    O vínculo é feito pelo e-mail: todo pedido feito pelo site enquanto
++    a pessoa está logada já salva o e-mail da conta dela
++    (request.user.email) no próprio pedido — é a mesma informação usada
++    aqui para encontrar os pedidos dela depois.
++
++    Pedidos gerados manualmente pelo admin para alguém sem login (ou com
++    um e-mail diferente do cadastrado) não aparecem aqui, pois não há
++    como vinculá-los com segurança a esta conta.
++    """
++    email_usuario = (request.user.email or '').strip()
++
++    pedidos = []
++
++    if email_usuario:
++        pedidos = (
++            PedidoIngressoEvento.objects
++            .filter(
++                email__iexact=email_usuario,
++                status='pago',
++            )
++            .select_related('evento')
++            .prefetch_related('ingressos')
++            .order_by('-data_pagamento', '-criado_em')
++        )
++
++    context = {
++        'pedidos': pedidos,
++        'email_usuario': email_usuario,
++    }
++
++    return render(request, 'espetaculo/meus_ingressos.html', context)
++
++
+ def ver_imagem_ingresso(request, ingresso_id):
+     ingresso = get_object_or_404(IngressoEvento, id=ingresso_id)
+ 
+diff --git a/templates/base_public.html b/templates/base_public.html
+index 01f67a3..eb4dc96 100644
+--- a/templates/base_public.html
++++ b/templates/base_public.html
+@@ -57,6 +57,14 @@
+                     </a>
+                 </li>
+ 
++                {% if user.is_authenticated %}
++                    <li>
++                        <a href="{% url 'espetaculo:meus_ingressos' %}">
++                            Meus Ingressos
++                        </a>
++                    </li>
++                {% endif %}
++
+                 <li>
+                     <a href="/agenda/experimental/">
+                         Aula Experimental

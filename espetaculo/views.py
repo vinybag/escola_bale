@@ -1380,6 +1380,46 @@ def ingresso_sucesso(request, pedido_id):
     return render(request, 'espetaculo/ingresso_sucesso.html', context)
 
 
+@login_required
+def meus_ingressos(request):
+    """
+    Lista todos os ingressos já pagos da pessoa logada, para ela poder
+    visualizar e baixar sem precisar guardar o link da página de sucesso
+    da compra.
+
+    O vínculo é feito pelo e-mail: todo pedido feito pelo site enquanto
+    a pessoa está logada já salva o e-mail da conta dela
+    (request.user.email) no próprio pedido — é a mesma informação usada
+    aqui para encontrar os pedidos dela depois.
+
+    Pedidos gerados manualmente pelo admin para alguém sem login (ou com
+    um e-mail diferente do cadastrado) não aparecem aqui, pois não há
+    como vinculá-los com segurança a esta conta.
+    """
+    email_usuario = (request.user.email or '').strip()
+
+    pedidos = []
+
+    if email_usuario:
+        pedidos = (
+            PedidoIngressoEvento.objects
+            .filter(
+                email__iexact=email_usuario,
+                status='pago',
+            )
+            .select_related('evento')
+            .prefetch_related('ingressos')
+            .order_by('-data_pagamento', '-criado_em')
+        )
+
+    context = {
+        'pedidos': pedidos,
+        'email_usuario': email_usuario,
+    }
+
+    return render(request, 'espetaculo/meus_ingressos.html', context)
+
+
 def ver_imagem_ingresso(request, ingresso_id):
     ingresso = get_object_or_404(IngressoEvento, id=ingresso_id)
 
