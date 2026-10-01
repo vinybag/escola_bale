@@ -838,6 +838,21 @@ class PedidoIngressoEvento(models.Model):
         verbose_name='IDs dos assentos',
     )
 
+    aluna_vinculada = models.ForeignKey(
+        'usuarios.Aluna',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='pedidos_ingresso',
+        verbose_name='Aluna vinculada',
+        help_text=(
+            'Aluna vinculada a este pedido, independente de ser cortesia '
+            'ou pago — permite saber de quem é o pedido (e localizar o '
+            'e-mail da responsável) mesmo em vendas pagas onde nenhuma '
+            'gratuidade foi usada.'
+        ),
+    )
+
     valor_unitario = models.DecimalField(
         max_digits=10,
         decimal_places=2,

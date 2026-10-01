@@ -600,6 +600,49 @@
                 </div>
             </div>
 
+            <div style="padding: 0 1.25rem 1.25rem; margin-top: -0.5rem;">
+                {% if pedido.aluna_vinculada %}
+                    <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; padding: 0.7rem 0.9rem; background: #eafaf1; border-radius: 10px; font-size: 0.88rem; color: #1d6b36; font-weight: 600;">
+                        🎓 Vinculado a: {{ pedido.aluna_vinculada.nome }}
+                    </div>
+                {% else %}
+                    <details style="background: #f4eefa; border-radius: 10px; padding: 0.7rem 0.9rem;">
+                        <summary style="cursor: pointer; color: #6b2d8f; font-weight: 700; font-size: 0.88rem;">
+                            Vincular a uma aluna
+                        </summary>
+
+                        <form
+                            method="post"
+                            action="{% url 'admin_dashboard:vincular_pedido_aluna' pedido.id %}"
+                            style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 0.6rem; margin-top: 0.75rem; align-items: end;"
+                        >
+                            {% csrf_token %}
+
+                            <div>
+                                <label style="display: block; margin-bottom: 0.3rem; font-size: 0.78rem; font-weight: 700; color: #4a235f;">Turma</label>
+                                <select class="vincular-turma-select" style="width: 100%; padding: 0.55rem 0.7rem; border: 1px solid #d9cbe4; border-radius: 8px; font-size: 0.88rem;">
+                                    <option value="">Selecione</option>
+                                    {% for turma_nome in turmas_com_alunas_vinculo_json.keys %}
+                                        <option value="{{ turma_nome }}">{{ turma_nome }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label style="display: block; margin-bottom: 0.3rem; font-size: 0.78rem; font-weight: 700; color: #4a235f;">Aluna</label>
+                                <select name="aluna_id" class="vincular-aluna-select" required style="width: 100%; padding: 0.55rem 0.7rem; border: 1px solid #d9cbe4; border-radius: 8px; font-size: 0.88rem;">
+                                    <option value="">Selecione a turma primeiro</option>
+                                </select>
+                            </div>
+
+                            <button type="submit" class="ing-btn ing-btn-primary" style="padding: 0.55rem 1rem; font-size: 0.85rem;">
+                                Vincular
+                            </button>
+                        </form>
+                    </details>
+                {% endif %}
+            </div>
+
             <div class="pedido-footer">
                 <div class="ingressos-box">
                     <h4 class="ingressos-title">
@@ -702,4 +745,30 @@
         </div>
     {% endfor %}
 </div>
+
+{{ turmas_com_alunas_vinculo_json|json_script:"dadosTurmasAlunasVinculo" }}
+
+<script>
+(function () {
+    const dadosEl = document.getElementById('dadosTurmasAlunasVinculo');
+    const dados = dadosEl ? JSON.parse(dadosEl.textContent) : {};
+
+    document.querySelectorAll('.vincular-turma-select').forEach(function (turmaSelect) {
+        turmaSelect.addEventListener('change', function () {
+            const form = this.closest('form');
+            const alunaSelect = form.querySelector('.vincular-aluna-select');
+            const alunas = dados[this.value] || [];
+
+            alunaSelect.innerHTML = '<option value="">Selecione a aluna</option>';
+
+            alunas.forEach(function (aluna) {
+                const option = document.createElement('option');
+                option.value = aluna.id;
+                option.textContent = aluna.nome;
+                alunaSelect.appendChild(option);
+            });
+        });
+    });
+})();
+</script>
 {% endblock %}

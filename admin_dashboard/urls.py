@@ -64,6 +64,7 @@ urlpatterns = [
     path('turmas/<int:turma_id>/alunas/', views.alunas_por_turma, name='alunas_por_turma'),
     path('ajax/alunas-por-turma/<int:turma_id>/',views.alunas_por_turma,name='alunas_por_turma',),
     path('pedidos-ingresso/<int:pedido_id>/cancelar/',views.pedido_ingresso_cancelar,name='pedido_ingresso_cancelar',),
+    path('pedidos-ingresso/<int:pedido_id>/vincular-aluna/',views.vincular_pedido_aluna,name='vincular_pedido_aluna',),
     path('espetaculos/<int:pk>/mapa-assentos/',views.espetaculo_mapa_assentos,name='espetaculo_mapa_assentos'),
     path('espetaculos/<int:pk>/assentos/',views.espetaculo_assentos_gerenciar,name='espetaculo_assentos_gerenciar'),
     path('espetaculos/<int:pk>/gerar-ingresso-manual/',views.espetaculo_gerar_ingresso_manual,name='espetaculo_gerar_ingresso_manual',),

@@ -4364,6 +4364,7 @@ def espetaculo_ingressos_vendidos(request, pk):
     pedidos = (
         PedidoIngressoEvento.objects
         .filter(evento=espetaculo, status='pago')
+        .select_related('aluna_vinculada')
         .prefetch_related('ingressos')
         .order_by('-criado_em')
     )
@@ -4378,12 +4379,42 @@ def espetaculo_ingressos_vendidos(request, pk):
     total_pedidos = pedidos.count()
     total_ingressos = sum(pedido.ingressos.filter(status__in=['ativo', 'usado']).count()for pedido in pedidos)
 
+    # Dados de turma -> alunas deste espetáculo, para o dropdown de
+    # "vincular a uma aluna" em cada pedido (usado para corrigir vendas
+    # pagas/avulsas que ficaram sem o vínculo e, com isso, sem e-mail
+    # para aparecer em "Meus Ingressos").
+    from usuarios.models import Aluna
+
+    alunas_participantes = (
+        Aluna.objects
+        .filter(
+            ativa=True,
+            participacoes_espetaculo__espetaculo=espetaculo,
+            participacoes_espetaculo__vai_dancar=True,
+        )
+        .prefetch_related('turmas')
+        .distinct()
+        .order_by('nome')
+    )
+
+    turmas_com_alunas_vinculo = {}
+    for aluna in alunas_participantes:
+        turmas_da_aluna = list(aluna.turmas.all()) or [None]
+        for turma in turmas_da_aluna:
+            nome_turma = turma.nome if turma else 'Sem turma definida'
+            turmas_com_alunas_vinculo.setdefault(nome_turma, []).append(
+                {'id': aluna.id, 'nome': aluna.nome}
+            )
+
+    turmas_com_alunas_vinculo = dict(sorted(turmas_com_alunas_vinculo.items()))
+
     context = {
         'espetaculo': espetaculo,
         'pedidos': pedidos,
         'busca': busca,
         'total_pedidos': total_pedidos,
         'total_ingressos': total_ingressos,
+        'turmas_com_alunas_vinculo_json': turmas_com_alunas_vinculo,
     }
 
     return render(
@@ -4391,6 +4422,78 @@ def espetaculo_ingressos_vendidos(request, pk):
         'admin_dashboard/espetaculos/espetaculo_ingressos_vendidos.html',
         context
     )
+
+@login_required
+@require_POST
+def vincular_pedido_aluna(request, pedido_id):
+    """
+    Vincula manualmente um pedido já existente a uma aluna — útil para
+    corrigir vendas feitas na correria (avulsas, ou vinculadas mas
+    marcadas como "pago" em vez de cortesia) que ficaram sem essa
+    informação registrada.
+
+    Ao vincular, se o pedido não tiver e-mail cadastrado, já preenche
+    automaticamente com o e-mail da responsável da aluna (ou dela mesma,
+    se tiver login próprio) — é esse e-mail que a página "Meus
+    Ingressos" usa para encontrar os ingressos da família.
+    """
+    if not request.user.is_staff:
+        return redirect('home')
+
+    from usuarios.models import Aluna
+
+    pedido = get_object_or_404(PedidoIngressoEvento, pk=pedido_id)
+
+    aluna_id = request.POST.get('aluna_id', '').strip()
+
+    if not aluna_id:
+        messages.error(request, 'Selecione uma aluna para vincular.')
+        return redirect(
+            'admin_dashboard:espetaculo_ingressos_vendidos',
+            pk=pedido.evento_id,
+        )
+
+    try:
+        aluna = Aluna.objects.get(pk=int(aluna_id))
+    except (Aluna.DoesNotExist, TypeError, ValueError):
+        messages.error(request, 'Aluna selecionada é inválida.')
+        return redirect(
+            'admin_dashboard:espetaculo_ingressos_vendidos',
+            pk=pedido.evento_id,
+        )
+
+    pedido.aluna_vinculada = aluna
+
+    campos_atualizados = ['aluna_vinculada', 'atualizado_em']
+
+    if not pedido.email:
+        if aluna.responsavel_id and aluna.responsavel.email:
+            pedido.email = aluna.responsavel.email
+            campos_atualizados.append('email')
+        elif aluna.usuario_id and aluna.usuario.email:
+            pedido.email = aluna.usuario.email
+            campos_atualizados.append('email')
+
+    pedido.save(update_fields=campos_atualizados)
+
+    if 'email' in campos_atualizados:
+        messages.success(
+            request,
+            f'Pedido #{pedido.id} vinculado a "{aluna.nome}" — e-mail '
+            f'preenchido automaticamente ({pedido.email}). Já deve '
+            'aparecer em "Meus Ingressos" para a família dela.',
+        )
+    else:
+        messages.success(
+            request,
+            f'Pedido #{pedido.id} vinculado a "{aluna.nome}".',
+        )
+
+    return redirect(
+        'admin_dashboard:espetaculo_ingressos_vendidos',
+        pk=pedido.evento_id,
+    )
+
 
 @login_required
 def toggle_gratuidade_participacao(request, pk):
@@ -5889,6 +5992,12 @@ def espetaculo_gerar_ingresso_manual(request, pk):
                     valor_unitario=valor_unitario,
                     valor_total=valor_total,
                     status='pago',
+                    # CORREÇÃO: guarda o vínculo com a aluna sempre que
+                    # selecionada, independente de ser cortesia ou pago —
+                    # antes, só ficava salvo (via IngressoGratuitoAluna)
+                    # quando era cortesia, perdendo essa informação para
+                    # vendas pagas vinculadas a uma aluna.
+                    aluna_vinculada=aluna_selecionada,
                 )
 
                 pedido.data_pagamento = timezone.now()
