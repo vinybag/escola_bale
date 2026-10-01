@@ -442,6 +442,41 @@
         justify-content: space-between;
         align-items: flex-start;
         gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .p-participacao-badges {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        align-items: flex-start;
+        gap: 0.4rem;
+        flex-shrink: 0;
+    }
+
+    .p-gratuidade-toggle {
+        display: flex;
+        align-items: center;
+        padding: 0.65rem 0.85rem;
+        background: var(--p-purple-bg);
+        border-radius: var(--p-radius-sm);
+    }
+
+    .p-gratuidade-toggle label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--p-purple-3);
+        cursor: pointer;
+    }
+
+    .p-gratuidade-toggle input[type="checkbox"] {
+        width: 17px;
+        height: 17px;
+        accent-color: var(--p-purple-1);
+        flex-shrink: 0;
     }
 
     .p-participacao-titulo {
@@ -827,17 +862,19 @@
                                     <div class="p-participacao-sub">Participação vinculada ao espetáculo</div>
                                 </div>
 
-                                {% if participacao.vai_dancar %}
-                                    <span class="badge badge-sim">✓ Vai dançar</span>
-                                {% else %}
-                                    <span class="badge badge-nao">Não dança</span>
-                                {% endif %}
+                                <div class="p-participacao-badges">
+                                    {% if participacao.vai_dancar %}
+                                        <span class="badge badge-sim">✓ Vai dançar</span>
+                                    {% else %}
+                                        <span class="badge badge-nao">Não dança</span>
+                                    {% endif %}
 
-                                {% if participacao.ainda_tem_gratuidade %}
-                                    <span class="badge badge-sim">🎁 Gratuidade disponível</span>
-                                {% else %}
-                                    <span class="badge badge-nao">🚫 Gratuidade removida</span>
-                                {% endif %}
+                                    {% if gratuidade_disponivel_por_participacao|get_item:participacao.pk %}
+                                        <span class="badge badge-sim">🎁 Gratuidade disponível</span>
+                                    {% else %}
+                                        <span class="badge badge-nao">🚫 Sem gratuidade</span>
+                                    {% endif %}
+                                </div>
                             </div>
 
                             <div class="p-participacao-grid">
@@ -879,24 +916,25 @@
                                 </div>
                             </div>
 
-                            <div class="p-acoes">
+                            <div class="p-gratuidade-toggle">
                                 <form
                                     method="post"
                                     action="{% url 'admin_dashboard:toggle_gratuidade_participacao' participacao.pk %}"
-                                    style="display: flex; align-items: center; margin-right: auto;"
                                 >
                                     {% csrf_token %}
-                                    <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; color: #44384c; cursor: pointer;">
+                                    <label>
                                         <input
                                             type="checkbox"
-                                            {% if participacao.ainda_tem_gratuidade %}checked{% endif %}
+                                            name="ainda_tem_gratuidade"
+                                            {% if gratuidade_disponivel_por_participacao|get_item:participacao.pk %}checked{% endif %}
                                             onchange="this.form.submit()"
-                                            style="width: 16px; height: 16px; accent-color: #6b2d8f;"
                                         >
                                         Ainda tem ingresso grátis
                                     </label>
                                 </form>
+                            </div>
 
+                            <div class="p-acoes">
                                 <a href="{% url 'admin_dashboard:participacao_cobrancas' participacao.pk %}" class="btn btn-ghost">
                                     Cobranças
                                 </a>

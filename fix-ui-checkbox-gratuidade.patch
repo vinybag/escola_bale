@@ -1,0 +1,190 @@
+diff --git a/admin_dashboard/templates/admin_dashboard/espetaculos/participacoes.html b/admin_dashboard/templates/admin_dashboard/espetaculos/participacoes.html
+index 0c2e226..7a67fc9 100644
+--- a/admin_dashboard/templates/admin_dashboard/espetaculos/participacoes.html
++++ b/admin_dashboard/templates/admin_dashboard/espetaculos/participacoes.html
+@@ -442,6 +442,41 @@
+         justify-content: space-between;
+         align-items: flex-start;
+         gap: 0.75rem;
++        flex-wrap: wrap;
++    }
++
++    .p-participacao-badges {
++        display: flex;
++        flex-wrap: wrap;
++        justify-content: flex-end;
++        align-items: flex-start;
++        gap: 0.4rem;
++        flex-shrink: 0;
++    }
++
++    .p-gratuidade-toggle {
++        display: flex;
++        align-items: center;
++        padding: 0.65rem 0.85rem;
++        background: var(--p-purple-bg);
++        border-radius: var(--p-radius-sm);
++    }
++
++    .p-gratuidade-toggle label {
++        display: flex;
++        align-items: center;
++        gap: 0.5rem;
++        font-size: 0.85rem;
++        font-weight: 600;
++        color: var(--p-purple-3);
++        cursor: pointer;
++    }
++
++    .p-gratuidade-toggle input[type="checkbox"] {
++        width: 17px;
++        height: 17px;
++        accent-color: var(--p-purple-1);
++        flex-shrink: 0;
+     }
+ 
+     .p-participacao-titulo {
+@@ -827,17 +862,19 @@
+                                     <div class="p-participacao-sub">Participação vinculada ao espetáculo</div>
+                                 </div>
+ 
+-                                {% if participacao.vai_dancar %}
+-                                    <span class="badge badge-sim">✓ Vai dançar</span>
+-                                {% else %}
+-                                    <span class="badge badge-nao">Não dança</span>
+-                                {% endif %}
+-
+-                                {% if participacao.ainda_tem_gratuidade %}
+-                                    <span class="badge badge-sim">🎁 Gratuidade disponível</span>
+-                                {% else %}
+-                                    <span class="badge badge-nao">🚫 Gratuidade removida</span>
+-                                {% endif %}
++                                <div class="p-participacao-badges">
++                                    {% if participacao.vai_dancar %}
++                                        <span class="badge badge-sim">✓ Vai dançar</span>
++                                    {% else %}
++                                        <span class="badge badge-nao">Não dança</span>
++                                    {% endif %}
++
++                                    {% if gratuidade_disponivel_por_participacao|get_item:participacao.pk %}
++                                        <span class="badge badge-sim">🎁 Gratuidade disponível</span>
++                                    {% else %}
++                                        <span class="badge badge-nao">🚫 Sem gratuidade</span>
++                                    {% endif %}
++                                </div>
+                             </div>
+ 
+                             <div class="p-participacao-grid">
+@@ -879,24 +916,25 @@
+                                 </div>
+                             </div>
+ 
+-                            <div class="p-acoes">
++                            <div class="p-gratuidade-toggle">
+                                 <form
+                                     method="post"
+                                     action="{% url 'admin_dashboard:toggle_gratuidade_participacao' participacao.pk %}"
+-                                    style="display: flex; align-items: center; margin-right: auto;"
+                                 >
+                                     {% csrf_token %}
+-                                    <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; color: #44384c; cursor: pointer;">
++                                    <label>
+                                         <input
+                                             type="checkbox"
+-                                            {% if participacao.ainda_tem_gratuidade %}checked{% endif %}
++                                            name="ainda_tem_gratuidade"
++                                            {% if gratuidade_disponivel_por_participacao|get_item:participacao.pk %}checked{% endif %}
+                                             onchange="this.form.submit()"
+-                                            style="width: 16px; height: 16px; accent-color: #6b2d8f;"
+                                         >
+                                         Ainda tem ingresso grátis
+                                     </label>
+                                 </form>
++                            </div>
+ 
++                            <div class="p-acoes">
+                                 <a href="{% url 'admin_dashboard:participacao_cobrancas' participacao.pk %}" class="btn btn-ghost">
+                                     Cobranças
+                                 </a>
+diff --git a/admin_dashboard/views.py b/admin_dashboard/views.py
+index 3d92ae4..f8d309d 100644
+--- a/admin_dashboard/views.py
++++ b/admin_dashboard/views.py
+@@ -3372,6 +3372,7 @@ def espetaculo_participacoes(request, pk):
+         from usuarios.models import Aluna, Turma
+         from espetaculo.models import (
+             Espetaculo,
++            IngressoGratuitoAluna,
+             ParticipacaoEspetaculo,
+             CobrancaEspetaculo,
+             ParcelaCobrancaEspetaculo,
+@@ -3512,6 +3513,30 @@ def espetaculo_participacoes(request, pk):
+         total_recebido_geral = total_recebido_taxa_palco + total_recebido_figurino
+         total_a_receber_geral = total_a_receber_taxa_palco + total_a_receber_figurino
+ 
++        # CORREÇÃO: o checkbox exibido precisa refletir a situação REAL da
++        # gratuidade, não só o campo manual (ainda_tem_gratuidade, que por
++        # padrão é sempre True até alguém mexer nele). Uma aluna que já
++        # usou a gratuidade de verdade (existe um IngressoGratuitoAluna
++        # para ela neste evento) deve aparecer com o checkbox já
++        # DESMARCADO, mesmo que ninguém tenha tocado no campo manual
++        # ainda. Isso combina as duas informações só para a EXIBIÇÃO —
++        # o campo manual em si continua existindo separado, e é ele que
++        # a ação de marcar/desmarcar grava.
++        alunas_ids_desta_pagina = [p.aluna_id for p in participacoes]
++
++        alunas_com_gratuidade_ja_usada = set(
++            IngressoGratuitoAluna.objects
++            .filter(evento=espetaculo, aluna_id__in=alunas_ids_desta_pagina)
++            .values_list('aluna_id', flat=True)
++        )
++
++        gratuidade_disponivel_por_participacao = {}
++        for participacao in participacoes:
++            gratuidade_disponivel_por_participacao[participacao.pk] = (
++                participacao.ainda_tem_gratuidade
++                and participacao.aluna_id not in alunas_com_gratuidade_ja_usada
++            )
++
+         context = {
+             'espetaculo': espetaculo,
+             'participacoes': participacoes,
+@@ -3521,6 +3546,7 @@ def espetaculo_participacoes(request, pk):
+             'total_participacoes': participacoes.count(),
+             'status_por_participacao': status_por_participacao,
+             'quantidade_cobrancas_por_participacao': quantidade_cobrancas_por_participacao,
++            'gratuidade_disponivel_por_participacao': gratuidade_disponivel_por_participacao,
+             'total_recebido_taxa_palco': total_recebido_taxa_palco,
+             'total_recebido_figurino': total_recebido_figurino,
+             'total_recebido_geral': total_recebido_geral,
+@@ -4386,14 +4412,26 @@ def toggle_gratuidade_participacao(request, pk):
+     espetaculo_pk = participacao.espetaculo.pk
+ 
+     if request.method == 'POST':
+-        participacao.ainda_tem_gratuidade = not participacao.ainda_tem_gratuidade
++        # CORREÇÃO: usa o estado que veio do checkbox marcado/desmarcado
++        # na tela (em vez de inverter cegamente o valor salvo antes).
++        # Isso é necessário porque o checkbox exibido na tela reflete o
++        # status REAL (considerando também se a gratuidade já foi usada
++        # de verdade), que pode já estar diferente do campo manual puro
++        # — inverter o valor salvo às cegas poderia fazer o clique
++        # funcionar ao contrário do que a tela estava mostrando.
++        novo_valor = request.POST.get('ainda_tem_gratuidade') == 'on'
++
++        participacao.ainda_tem_gratuidade = novo_valor
+         participacao.save(update_fields=['ainda_tem_gratuidade'])
+ 
+-        if participacao.ainda_tem_gratuidade:
++        if novo_valor:
+             messages.success(
+                 request,
+-                f'Gratuidade de {participacao.aluna.nome} reativada — '
+-                'ela volta a aparecer como elegível neste evento.',
++                f'Gratuidade de {participacao.aluna.nome} marcada como '
++                'disponível. Se ela já tiver um ingresso gratuito '
++                'realmente emitido para este evento, ela continua sem '
++                'poder pegar outro — este controle não desfaz isso '
++                'sozinho.',
+             )
+         else:
+             messages.success(

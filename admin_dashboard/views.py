@@ -3372,6 +3372,7 @@ def espetaculo_participacoes(request, pk):
         from usuarios.models import Aluna, Turma
         from espetaculo.models import (
             Espetaculo,
+            IngressoGratuitoAluna,
             ParticipacaoEspetaculo,
             CobrancaEspetaculo,
             ParcelaCobrancaEspetaculo,
@@ -3512,6 +3513,30 @@ def espetaculo_participacoes(request, pk):
         total_recebido_geral = total_recebido_taxa_palco + total_recebido_figurino
         total_a_receber_geral = total_a_receber_taxa_palco + total_a_receber_figurino
 
+        # CORREÇÃO: o checkbox exibido precisa refletir a situação REAL da
+        # gratuidade, não só o campo manual (ainda_tem_gratuidade, que por
+        # padrão é sempre True até alguém mexer nele). Uma aluna que já
+        # usou a gratuidade de verdade (existe um IngressoGratuitoAluna
+        # para ela neste evento) deve aparecer com o checkbox já
+        # DESMARCADO, mesmo que ninguém tenha tocado no campo manual
+        # ainda. Isso combina as duas informações só para a EXIBIÇÃO —
+        # o campo manual em si continua existindo separado, e é ele que
+        # a ação de marcar/desmarcar grava.
+        alunas_ids_desta_pagina = [p.aluna_id for p in participacoes]
+
+        alunas_com_gratuidade_ja_usada = set(
+            IngressoGratuitoAluna.objects
+            .filter(evento=espetaculo, aluna_id__in=alunas_ids_desta_pagina)
+            .values_list('aluna_id', flat=True)
+        )
+
+        gratuidade_disponivel_por_participacao = {}
+        for participacao in participacoes:
+            gratuidade_disponivel_por_participacao[participacao.pk] = (
+                participacao.ainda_tem_gratuidade
+                and participacao.aluna_id not in alunas_com_gratuidade_ja_usada
+            )
+
         context = {
             'espetaculo': espetaculo,
             'participacoes': participacoes,
@@ -3521,6 +3546,7 @@ def espetaculo_participacoes(request, pk):
             'total_participacoes': participacoes.count(),
             'status_por_participacao': status_por_participacao,
             'quantidade_cobrancas_por_participacao': quantidade_cobrancas_por_participacao,
+            'gratuidade_disponivel_por_participacao': gratuidade_disponivel_por_participacao,
             'total_recebido_taxa_palco': total_recebido_taxa_palco,
             'total_recebido_figurino': total_recebido_figurino,
             'total_recebido_geral': total_recebido_geral,
@@ -4386,14 +4412,26 @@ def toggle_gratuidade_participacao(request, pk):
     espetaculo_pk = participacao.espetaculo.pk
 
     if request.method == 'POST':
-        participacao.ainda_tem_gratuidade = not participacao.ainda_tem_gratuidade
+        # CORREÇÃO: usa o estado que veio do checkbox marcado/desmarcado
+        # na tela (em vez de inverter cegamente o valor salvo antes).
+        # Isso é necessário porque o checkbox exibido na tela reflete o
+        # status REAL (considerando também se a gratuidade já foi usada
+        # de verdade), que pode já estar diferente do campo manual puro
+        # — inverter o valor salvo às cegas poderia fazer o clique
+        # funcionar ao contrário do que a tela estava mostrando.
+        novo_valor = request.POST.get('ainda_tem_gratuidade') == 'on'
+
+        participacao.ainda_tem_gratuidade = novo_valor
         participacao.save(update_fields=['ainda_tem_gratuidade'])
 
-        if participacao.ainda_tem_gratuidade:
+        if novo_valor:
             messages.success(
                 request,
-                f'Gratuidade de {participacao.aluna.nome} reativada — '
-                'ela volta a aparecer como elegível neste evento.',
+                f'Gratuidade de {participacao.aluna.nome} marcada como '
+                'disponível. Se ela já tiver um ingresso gratuito '
+                'realmente emitido para este evento, ela continua sem '
+                'poder pegar outro — este controle não desfaz isso '
+                'sozinho.',
             )
         else:
             messages.success(
