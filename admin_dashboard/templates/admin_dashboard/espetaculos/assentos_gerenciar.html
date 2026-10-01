@@ -197,6 +197,74 @@
 
     .assento-item:hover .assento-label { opacity: 1; }
 
+    .assento-item.is-selecionado .assento-svg {
+        color: #2e6fdb !important;
+        fill: currentColor !important;
+        filter: drop-shadow(0 0 4px rgba(46, 111, 219, 0.85));
+        transform: scale(1.2);
+    }
+
+    .barra-selecao-venda {
+        position: fixed;
+        left: 50%;
+        bottom: 24px;
+        z-index: 60;
+        display: none;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.9rem 1.3rem;
+        border-radius: 14px;
+        background: #26222b;
+        color: #fff;
+        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+        transform: translateX(-50%);
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .barra-selecao-venda.is-visivel { display: flex; }
+
+    .barra-selecao-venda strong {
+        font-size: 0.92rem;
+        white-space: nowrap;
+    }
+
+    .barra-selecao-venda button {
+        border: none;
+        border-radius: 9px;
+        padding: 0.55rem 1.1rem;
+        font-weight: 700;
+        font-size: 0.85rem;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
+    .barra-selecao-venda .btn-vender {
+        background: #2e9e5b;
+        color: #fff;
+    }
+
+    .barra-selecao-venda .btn-bloquear-sel {
+        background: #4a4152;
+        color: #fff;
+    }
+
+    .barra-selecao-venda .btn-limpar-sel {
+        background: transparent;
+        color: #d9d2e0;
+        text-decoration: underline;
+    }
+
+    @media (max-width: 640px) {
+        .barra-selecao-venda {
+            left: 12px;
+            right: 12px;
+            bottom: 12px;
+            transform: none;
+            width: auto;
+        }
+    }
+
     .assentos-info {
         display: grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -472,7 +540,9 @@
 
             <section class="assentos-section">
                 <p class="assentos-help">
-                    Para bloquear um assento, clique em um assento verde e informe o motivo.
+                    Clique em um ou mais assentos verdes para selecioná-los (ficam destacados em
+                    azul) — uma barra aparece embaixo com as opções de <strong>vender</strong> ou
+                    <strong>bloquear</strong> os selecionados de uma vez.
                     Para liberar um assento amarelo reservado temporariamente ou roxo bloqueado manualmente, clique nele e confirme a liberação.
                     Para cancelar o pedido de um assento vendido, clique nele e confirme o cancelamento.
                 </p>
@@ -487,6 +557,22 @@
         </div>
     </div>
 </div>
+
+<div id="barraSelecaoVenda" class="barra-selecao-venda">
+    <strong id="barraSelecaoContador">0 assentos selecionados</strong>
+    <button type="button" class="btn-vender" id="btnVenderSelecionados">Vender</button>
+    <button type="button" class="btn-bloquear-sel" id="btnBloquearSelecionados">Bloquear</button>
+    <button type="button" class="btn-limpar-sel" id="btnLimparSelecao">Limpar seleção</button>
+</div>
+
+<form
+    id="formReservarVenda"
+    method="post"
+    action="{% url 'admin_dashboard:espetaculo_assentos_reservar_venda' espetaculo.pk %}"
+    style="display: none;"
+>
+    {% csrf_token %}
+</form>
 
 <div id="assentoModalBackdrop" class="assento-modal-backdrop">
     <div class="assento-modal">
@@ -598,18 +684,144 @@
         modalBackdrop.classList.remove('is-open');
     }
 
+    // --- Seleção múltipla de assentos disponíveis, para vender ou
+    // bloquear vários de uma vez. Assentos de outros status continuam
+    // com o comportamento de sempre (abrem o modal na hora do clique).
+    const selecionados = new Set();
+    const barraSelecao = document.getElementById('barraSelecaoVenda');
+    const barraContador = document.getElementById('barraSelecaoContador');
+    const formReservarVenda = document.getElementById('formReservarVenda');
+
+    function atualizarBarraSelecao() {
+        const total = selecionados.size;
+
+        if (total === 0) {
+            barraSelecao.classList.remove('is-visivel');
+            return;
+        }
+
+        barraSelecao.classList.add('is-visivel');
+        barraContador.textContent =
+            total === 1 ? '1 assento selecionado' : total + ' assentos selecionados';
+    }
+
+    function limparSelecao() {
+        selecionados.forEach(function (id) {
+            const el = document.querySelector('.assento-item[data-id="' + id + '"]');
+            if (el) {
+                el.classList.remove('is-selecionado');
+            }
+        });
+        selecionados.clear();
+        atualizarBarraSelecao();
+    }
+
+    function alternarSelecao(assentoEl) {
+        const id = assentoEl.dataset.id;
+
+        if (selecionados.has(id)) {
+            selecionados.delete(id);
+            assentoEl.classList.remove('is-selecionado');
+        } else {
+            selecionados.add(id);
+            assentoEl.classList.add('is-selecionado');
+        }
+
+        atualizarBarraSelecao();
+    }
+
     document.querySelectorAll('.assento-item').forEach(function (assento) {
         assento.addEventListener('click', function () {
             const status = this.dataset.status;
 
+            if (status === 'disponivel') {
+                alternarSelecao(this);
+                return;
+            }
+
             if (
-                status === 'disponivel'
-                || status === 'bloqueado_manual'
+                status === 'bloqueado_manual'
                 || status === 'reservado_temporario'
                 || status === 'vendido'
             ) {
                 abrirModal(this);
             }
+        });
+    });
+
+    document.getElementById('btnLimparSelecao').addEventListener('click', limparSelecao);
+
+    document.getElementById('btnVenderSelecionados').addEventListener('click', function () {
+        if (selecionados.size === 0) {
+            return;
+        }
+
+        formReservarVenda.innerHTML =
+            formReservarVenda.innerHTML +
+            Array.from(selecionados).map(function (id) {
+                return '<input type="hidden" name="assento_id" value="' + id + '">';
+            }).join('');
+
+        const botao = this;
+        botao.disabled = true;
+        botao.textContent = 'Reservando...';
+
+        fetch(formReservarVenda.action, {
+            method: 'POST',
+            body: new FormData(formReservarVenda),
+        })
+            .then(function (resposta) { return resposta.json(); })
+            .then(function (dados) {
+                if (dados.ok) {
+                    window.location.href = dados.redirect_url;
+                } else {
+                    alert(dados.erro || 'Não foi possível reservar os assentos selecionados.');
+                    botao.disabled = false;
+                    botao.textContent = 'Vender';
+                    window.location.reload();
+                }
+            })
+            .catch(function () {
+                alert('Erro de conexão ao tentar reservar os assentos. Tente novamente.');
+                botao.disabled = false;
+                botao.textContent = 'Vender';
+            });
+    });
+
+    document.getElementById('btnBloquearSelecionados').addEventListener('click', function () {
+        if (selecionados.size === 0) {
+            return;
+        }
+
+        const motivo = prompt(
+            'Motivo do bloqueio (opcional) para os ' + selecionados.size + ' assento(s) selecionado(s):',
+            ''
+        );
+
+        if (motivo === null) {
+            return;
+        }
+
+        const idsParaBloquear = Array.from(selecionados);
+        let restantes = idsParaBloquear.length;
+
+        idsParaBloquear.forEach(function (id) {
+            const url =
+                "{% url 'admin_dashboard:espetaculo_assento_acao' espetaculo.pk 0 %}"
+                    .replace('/0/', '/' + id + '/');
+
+            const dadosForm = new FormData();
+            dadosForm.append('csrfmiddlewaretoken', formReservarVenda.querySelector('[name=csrfmiddlewaretoken]').value);
+            dadosForm.append('acao', 'bloquear');
+            dadosForm.append('motivo', motivo);
+
+            fetch(url, { method: 'POST', body: dadosForm })
+                .finally(function () {
+                    restantes -= 1;
+                    if (restantes === 0) {
+                        window.location.reload();
+                    }
+                });
         });
     });
 

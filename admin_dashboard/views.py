@@ -5200,6 +5200,15 @@ def espetaculo_assentos_gerenciar(request, pk):
             pk=pk
         )
 
+    # Limpa reservas temporárias já expiradas (15 min) sempre que o
+    # admin abre esta página — reforço importante porque, diferente do
+    # mapa público, esta página do admin é visitada mesmo quando as
+    # vendas estão fechadas (venda_aberta=False), garantindo que a
+    # limpeza automática continue acontecendo mesmo nessas horas.
+    from espetaculo.views import liberar_assentos_expirados
+
+    liberar_assentos_expirados(mapa)
+
     assentos = list(
         mapa.assentos.all().order_by(
             'fileira',
@@ -5288,6 +5297,151 @@ def espetaculo_assento_acao(request, pk, assento_id):
 
     return redirect('admin_dashboard:espetaculo_assentos_gerenciar', pk=pk)
 
+
+@login_required
+@require_POST
+def espetaculo_assentos_reservar_venda(request, pk):
+    """
+    Chamada pelo mapa interno do admin quando um ou mais assentos são
+    marcados para "Vender". Trava esses assentos imediatamente por 15
+    minutos — o MESMO mecanismo (select_for_update + status
+    'reservado_temporario') já usado no site público, para que ninguém
+    mais (nem o site, nem outra pessoa do admin) consiga pegar esse
+    mesmo assento enquanto esta venda está sendo preenchida.
+
+    A reserva fica marcada com um "token" próprio (não um pedido, já que
+    o pedido ainda não existe nesse momento) guardado na sessão do
+    admin; a tela de gerar ingresso manual usa esse token para saber
+    quais assentos já estão reservados para ela.
+
+    Se o admin abandonar o processo (fechar a aba, não finalizar), os
+    15 minutos expiram sozinhos e o assento volta a ficar disponível,
+    do mesmo jeito que já acontece com reservas do site público.
+    """
+    if not request.user.is_staff:
+        return JsonResponse({'ok': False, 'erro': 'Acesso negado.'}, status=403)
+
+    import uuid
+
+    from django.db import transaction
+
+    espetaculo = get_object_or_404(Espetaculo, pk=pk)
+
+    assentos_ids_raw = request.POST.getlist('assento_id')
+
+    try:
+        assentos_ids = sorted({int(valor) for valor in assentos_ids_raw})
+    except (TypeError, ValueError):
+        return JsonResponse({'ok': False, 'erro': 'Assento inválido.'}, status=400)
+
+    if not assentos_ids:
+        return JsonResponse(
+            {'ok': False, 'erro': 'Nenhum assento selecionado.'},
+            status=400,
+        )
+
+    token = f'venda_admin:{request.user.id}:{uuid.uuid4().hex[:10]}'
+
+    with transaction.atomic():
+        assentos = list(
+            Assento.objects.select_for_update().filter(
+                id__in=assentos_ids,
+                mapa__evento=espetaculo,
+            )
+        )
+
+        if len(assentos) != len(assentos_ids):
+            return JsonResponse(
+                {
+                    'ok': False,
+                    'erro': 'Um ou mais assentos não foram encontrados.',
+                },
+                status=404,
+            )
+
+        indisponiveis = [
+            a.identificador for a in assentos if a.status != 'disponivel'
+        ]
+
+        if indisponiveis:
+            return JsonResponse(
+                {
+                    'ok': False,
+                    'erro': (
+                        'Os seguintes assentos não estão mais '
+                        'disponíveis: ' + ', '.join(indisponiveis)
+                    ),
+                },
+                status=409,
+            )
+
+        agora = timezone.now()
+
+        for assento in assentos:
+            assento.status = 'reservado_temporario'
+            assento.reservado_em = agora
+            assento.reservado_por_sessao = token
+            assento.save(
+                update_fields=[
+                    'status',
+                    'reservado_em',
+                    'reservado_por_sessao',
+                    'atualizado_em',
+                ],
+            )
+
+    request.session[f'venda_manual_evento_{pk}_token'] = token
+    request.session[f'venda_manual_evento_{pk}_assentos_ids'] = assentos_ids
+    request.session.modified = True
+
+    return JsonResponse({
+        'ok': True,
+        'redirect_url': reverse(
+            'admin_dashboard:espetaculo_gerar_ingresso_manual',
+            args=[pk],
+        ),
+    })
+
+
+@login_required
+@require_POST
+def espetaculo_assentos_cancelar_reserva_venda(request, pk):
+    """
+    Libera de volta (antes dos 15 minutos) os assentos que o admin
+    tinha travado para uma venda manual, mas decidiu não continuar —
+    por exemplo, ao clicar em "Cancelar" na tela de gerar ingresso.
+    """
+    if not request.user.is_staff:
+        return redirect('home')
+
+    token = request.session.get(f'venda_manual_evento_{pk}_token')
+    assentos_ids = request.session.get(
+        f'venda_manual_evento_{pk}_assentos_ids', [],
+    )
+
+    if token and assentos_ids:
+        assentos = Assento.objects.filter(
+            id__in=assentos_ids,
+            mapa__evento_id=pk,
+            status='reservado_temporario',
+            reservado_por_sessao=token,
+        )
+
+        for assento in assentos:
+            assento.liberar()
+
+        messages.success(
+            request,
+            'Reserva cancelada: os assentos foram liberados.',
+        )
+
+    request.session.pop(f'venda_manual_evento_{pk}_token', None)
+    request.session.pop(f'venda_manual_evento_{pk}_assentos_ids', None)
+    request.session.modified = True
+
+    return redirect('admin_dashboard:espetaculo_assentos_gerenciar', pk=pk)
+
+
 @login_required
 @require_POST
 def pedido_ingresso_cancelar(request, pedido_id):
@@ -5371,6 +5525,18 @@ def espetaculo_gerar_ingresso_manual(request, pk):
 
     espetaculo = get_object_or_404(Espetaculo, pk=pk)
 
+    # Se o admin veio do mapa interno e já travou assento(s) para esta
+    # venda (via espetaculo_assentos_reservar_venda), recupera esse
+    # token/ids da sessão — eles entram na lista de assentos
+    # selecionáveis (mesmo estando 'reservado_temporario', porque essa
+    # reserva específica é desta venda) e vêm pré-marcados no formulário.
+    token_venda_mapa = request.session.get(
+        f'venda_manual_evento_{pk}_token'
+    )
+    assentos_pre_selecionados_ids = request.session.get(
+        f'venda_manual_evento_{pk}_assentos_ids', [],
+    )
+
     mapa = None
     assentos_selecionaveis = []
 
@@ -5383,38 +5549,70 @@ def espetaculo_gerar_ingresso_manual(request, pk):
         )
 
         if mapa:
+            filtro = models.Q(status__in=['disponivel', 'bloqueado_manual'])
+
+            if token_venda_mapa and assentos_pre_selecionados_ids:
+                filtro |= models.Q(
+                    id__in=assentos_pre_selecionados_ids,
+                    status='reservado_temporario',
+                    reservado_por_sessao=token_venda_mapa,
+                )
+
             assentos_selecionaveis = list(
-                mapa.assentos.filter(
-                    status__in=['disponivel', 'bloqueado_manual']
-                ).order_by('fileira', 'numero')
+                mapa.assentos.filter(filtro)
+                .distinct()
+                .order_by('fileira', 'numero')
             )
 
-    # Alunas que participam deste espetáculo e que ainda não usaram a
-    # gratuidade deste dia (mesma regra usada no site), agrupadas por
-    # turma para preencher o dropdown do formulário.
-    alunas_elegiveis = (
+    # Alunas que participam deste espetáculo — TODAS, independente de já
+    # terem usado a gratuidade ou não (quem decide isso agora é a tela,
+    # mostrando o status de cada uma; antes, quem já tinha usado nem
+    # aparecia na lista).
+    alunas_participantes = (
         Aluna.objects
         .filter(
             ativa=True,
             participacoes_espetaculo__espetaculo=espetaculo,
             participacoes_espetaculo__vai_dancar=True,
         )
-        .exclude(
-            ingressos_gratuitos__evento=espetaculo,
-        )
         .prefetch_related('turmas')
         .distinct()
         .order_by('nome')
     )
 
+    alunas_com_gratuidade_ja_usada = set(
+        IngressoGratuitoAluna.objects
+        .filter(evento=espetaculo, aluna__in=alunas_participantes)
+        .values_list('aluna_id', flat=True)
+    )
+
     turmas_com_alunas = {}
-    for aluna in alunas_elegiveis:
+    for aluna in alunas_participantes:
+        aluna.tem_gratuidade_disponivel = (
+            aluna.id not in alunas_com_gratuidade_ja_usada
+        )
+
         turmas_da_aluna = list(aluna.turmas.all()) or [None]
         for turma in turmas_da_aluna:
             nome_turma = turma.nome if turma else 'Sem turma definida'
             turmas_com_alunas.setdefault(nome_turma, []).append(aluna)
 
     turmas_com_alunas = dict(sorted(turmas_com_alunas.items()))
+
+    # Mesma informação, em formato simples para o JavaScript montar o
+    # dropdown turma -> aluna e mostrar o status de gratuidade na hora,
+    # sem precisar de outra consulta ao servidor.
+    dados_turmas_alunas_json = {
+        turma_nome: [
+            {
+                'id': aluna.id,
+                'nome': aluna.nome,
+                'tem_gratuidade': aluna.tem_gratuidade_disponivel,
+            }
+            for aluna in alunas
+        ]
+        for turma_nome, alunas in turmas_com_alunas.items()
+    }
 
     if request.method == 'POST':
         nome_completo = request.POST.get('nome_completo', '').strip()
@@ -5528,7 +5726,16 @@ def espetaculo_gerar_ingresso_manual(request, pk):
                         )
 
                     for assento in assentos_trava:
-                        if assento.status not in ('disponivel', 'bloqueado_manual'):
+                        e_desta_venda_travada = (
+                            assento.status == 'reservado_temporario'
+                            and token_venda_mapa is not None
+                            and assento.reservado_por_sessao == token_venda_mapa
+                        )
+
+                        if (
+                            assento.status not in ('disponivel', 'bloqueado_manual')
+                            and not e_desta_venda_travada
+                        ):
                             raise ValueError(
                                 f'O assento {assento.identificador} não está mais '
                                 f'disponível (status atual: '
@@ -5601,6 +5808,10 @@ def espetaculo_gerar_ingresso_manual(request, pk):
                 'admin_dashboard:espetaculo_gerar_ingresso_manual', pk=pk
             )
 
+        request.session.pop(f'venda_manual_evento_{pk}_token', None)
+        request.session.pop(f'venda_manual_evento_{pk}_assentos_ids', None)
+        request.session.modified = True
+
         messages.success(
             request,
             f'Ingresso gerado com sucesso para {nome_completo} '
@@ -5617,6 +5828,9 @@ def espetaculo_gerar_ingresso_manual(request, pk):
         'mapa': mapa,
         'assentos_selecionaveis': assentos_selecionaveis,
         'turmas_com_alunas': turmas_com_alunas,
+        'assentos_pre_selecionados_ids': assentos_pre_selecionados_ids,
+        'venda_via_mapa': bool(token_venda_mapa),
+        'dados_turmas_alunas_json': dados_turmas_alunas_json,
     }
 
     return render(

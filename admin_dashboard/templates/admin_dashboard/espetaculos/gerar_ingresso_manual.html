@@ -205,6 +205,52 @@
         color: #6c3483;
     }
 
+    .ger-ing-badge-reservado {
+        background: #fff4e0;
+        color: #8a6d1f;
+    }
+
+    .ger-ing-aviso-mapa {
+        background: #fff8e6;
+        border: 1px solid #f0d78c;
+        border-radius: 12px;
+        padding: 1rem 1.3rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .ger-ing-aviso-mapa strong {
+        color: #8a6d1f;
+        display: block;
+        margin-bottom: 0.3rem;
+    }
+
+    .ger-ing-aviso-mapa p {
+        margin: 0;
+        color: #7a6a3a;
+        font-size: 0.88rem;
+    }
+
+    .ger-ing-gratuidade-msg {
+        display: none;
+        margin-top: 0.75rem;
+        padding: 0.75rem 1rem;
+        border-radius: 10px;
+        font-size: 0.88rem;
+        font-weight: 600;
+    }
+
+    .ger-ing-gratuidade-msg.tem {
+        display: block;
+        background: #eafaf1;
+        color: #1e8449;
+    }
+
+    .ger-ing-gratuidade-msg.nao-tem {
+        display: block;
+        background: #fdeaea;
+        color: #b3261e;
+    }
+
     .ger-ing-vazio {
         padding: 1rem;
         border: 1px dashed #d9cbe4;
@@ -285,6 +331,17 @@
             {% csrf_token %}
 
             <div class="ger-ing-body">
+                {% if venda_via_mapa %}
+                    <div class="ger-ing-aviso-mapa">
+                        <strong>⏱ Assento(s) reservado(s) por 15 minutos para esta venda</strong>
+                        <p>
+                            Enquanto você preenche os dados, ninguém mais consegue pegar esse(s)
+                            assento(s) — nem pelo site, nem por outra venda manual. Se você não
+                            finalizar a tempo, eles voltam a ficar disponíveis sozinhos.
+                        </p>
+                    </div>
+                {% endif %}
+
                 <section class="ger-ing-section">
                     <h3>Dados do comprador</h3>
 
@@ -309,6 +366,54 @@
                         <label for="cpf">CPF</label>
                         <input type="text" id="cpf" name="cpf" class="ger-ing-input" placeholder="Opcional">
                     </div>
+                </section>
+
+                <section class="ger-ing-section">
+                    <h3>Essa venda é para uma aluna específica?</h3>
+                    <p class="ger-ing-help">
+                        Se for a gratuidade (ou um ingresso extra) de uma aluna confirmada
+                        neste espetáculo, selecione ela abaixo — o sistema já mostra se ela
+                        ainda tem o ingresso grátis disponível para este dia.
+                    </p>
+
+                    <div class="ger-ing-tipo-registro">
+                        <label class="ger-ing-tipo-card is-selected" id="cardSemAluna">
+                            <input type="radio" name="venda_para_aluna" value="nao" checked>
+                            <strong>Não</strong>
+                            <span>Venda avulsa, não vinculada a nenhuma aluna.</span>
+                        </label>
+
+                        <label class="ger-ing-tipo-card" id="cardComAluna">
+                            <input type="radio" name="venda_para_aluna" value="sim">
+                            <strong>Sim</strong>
+                            <span>Escolher a turma e a aluna.</span>
+                        </label>
+                    </div>
+
+                    <div id="selecaoAlunaContainer" style="display: none; margin-top: 1rem;">
+                        <div class="ger-ing-row">
+                            <div class="ger-ing-field">
+                                <label for="turma_select">Turma</label>
+                                <select id="turma_select" class="ger-ing-input">
+                                    <option value="">Selecione a turma</option>
+                                    {% for turma_nome in turmas_com_alunas.keys %}
+                                        <option value="{{ turma_nome }}">{{ turma_nome }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="ger-ing-field">
+                                <label for="aluna_gratuidade_id">Aluna</label>
+                                <select id="aluna_gratuidade_id" name="aluna_gratuidade_id" class="ger-ing-input">
+                                    <option value="">Selecione a turma primeiro</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div id="gratuidadeStatusMsg" class="ger-ing-gratuidade-msg"></div>
+                    </div>
+
+                    {{ dados_turmas_alunas_json|json_script:"dadosTurmasAlunas" }}
                 </section>
 
                 <section class="ger-ing-section">
@@ -348,28 +453,6 @@
                             (R$ {{ espetaculo.preco_ingresso|floatformat:2 }}).
                         </small>
                     </div>
-
-                    <div class="ger-ing-field" id="alunaGratuidadeContainer" style="margin-top: 1rem;">
-                        <label for="aluna_gratuidade_id">Vincular a uma aluna (bloqueia a gratuidade dela)</label>
-                        <select id="aluna_gratuidade_id" name="aluna_gratuidade_id" class="ger-ing-input">
-                            <option value="">Não vincular (cortesia avulsa)</option>
-                            {% for turma_nome, alunas in turmas_com_alunas.items %}
-                                <optgroup label="{{ turma_nome }}">
-                                    {% for aluna in alunas %}
-                                        <option value="{{ aluna.id }}">{{ aluna.nome }}</option>
-                                    {% endfor %}
-                                </optgroup>
-                            {% endfor %}
-                        </select>
-                        <small style="display:block; margin-top:0.4rem; color:#8a8390; font-size:0.85rem;">
-                            Se esta cortesia é a gratuidade de uma aluna (ex: mãe que não
-                            conseguiu comprar pelo site), selecione a aluna aqui. Assim, se a
-                            responsável tentar pegar o ingresso grátis dela no site depois,
-                            o sistema já vai saber que essa gratuidade foi usada e não vai
-                            gerar em duplicidade. A lista só mostra alunas confirmadas neste
-                            espetáculo que ainda não usaram a gratuidade deste dia.
-                        </small>
-                    </div>
                 </section>
 
                 {% if espetaculo.venda_com_assentos_numerados %}
@@ -385,10 +468,15 @@
                             <div class="ger-ing-assentos">
                                 {% for assento in assentos_selecionaveis %}
                                     <label class="ger-ing-assento-item">
-                                        <input type="checkbox" name="assento_id" value="{{ assento.id }}">
+                                        <input
+                                            type="checkbox"
+                                            name="assento_id"
+                                            value="{{ assento.id }}"
+                                            {% if assento.id in assentos_pre_selecionados_ids %}checked{% endif %}
+                                        >
                                         {{ assento.identificador }}
-                                        <span class="ger-ing-assento-badge {% if assento.status == 'disponivel' %}ger-ing-badge-disponivel{% else %}ger-ing-badge-bloqueado{% endif %}">
-                                            {% if assento.status == 'disponivel' %}Livre{% else %}Bloqueado{% endif %}
+                                        <span class="ger-ing-assento-badge {% if assento.status == 'disponivel' %}ger-ing-badge-disponivel{% elif assento.status == 'reservado_temporario' %}ger-ing-badge-reservado{% else %}ger-ing-badge-bloqueado{% endif %}">
+                                            {% if assento.status == 'disponivel' %}Livre{% elif assento.status == 'reservado_temporario' %}Desta venda{% else %}Bloqueado{% endif %}
                                         </span>
                                     </label>
                                 {% endfor %}
@@ -412,7 +500,11 @@
                 {% endif %}
 
                 <div class="ger-ing-footer">
-                    {% if espetaculo.venda_com_assentos_numerados %}
+                    {% if venda_via_mapa %}
+                        <button type="submit" form="formCancelarReservaVenda" class="ger-ing-btn ger-ing-btn-light">
+                            Cancelar e liberar assento(s)
+                        </button>
+                    {% elif espetaculo.venda_com_assentos_numerados %}
                         <a href="{% url 'admin_dashboard:espetaculo_assentos_gerenciar' espetaculo.pk %}" class="ger-ing-btn ger-ing-btn-light">
                             Cancelar
                         </a>
@@ -428,6 +520,17 @@
                 </div>
             </div>
         </form>
+
+        {% if venda_via_mapa %}
+            <form
+                id="formCancelarReservaVenda"
+                method="post"
+                action="{% url 'admin_dashboard:espetaculo_assentos_cancelar_reserva_venda' espetaculo.pk %}"
+                style="display: none;"
+            >
+                {% csrf_token %}
+            </form>
+        {% endif %}
     </div>
 </div>
 
@@ -437,29 +540,113 @@
     const cardCortesia = document.getElementById('cardCortesia');
     const valorContainer = document.getElementById('valorUnitarioContainer');
     const valorInput = document.getElementById('valor_unitario');
-    const alunaGratuidadeContainer = document.getElementById('alunaGratuidadeContainer');
-    const alunaGratuidadeSelect = document.getElementById('aluna_gratuidade_id');
 
-    function atualizarSelecao() {
+    function atualizarTipoRegistro() {
         const cortesiaMarcada = cardCortesia.querySelector('input').checked;
 
         cardPagoManual.classList.toggle('is-selected', !cortesiaMarcada);
         cardCortesia.classList.toggle('is-selected', cortesiaMarcada);
 
         valorContainer.style.display = cortesiaMarcada ? 'none' : 'block';
-        alunaGratuidadeContainer.style.display = cortesiaMarcada ? 'block' : 'none';
 
         if (cortesiaMarcada) {
             valorInput.value = '';
-        } else {
-            alunaGratuidadeSelect.value = '';
         }
     }
 
-    cardPagoManual.querySelector('input').addEventListener('change', atualizarSelecao);
-    cardCortesia.querySelector('input').addEventListener('change', atualizarSelecao);
+    cardPagoManual.querySelector('input').addEventListener('change', atualizarTipoRegistro);
+    cardCortesia.querySelector('input').addEventListener('change', atualizarTipoRegistro);
 
-    atualizarSelecao();
+    atualizarTipoRegistro();
+
+    // --- Seção "Essa venda é para uma aluna específica?" ---
+
+    const cardSemAluna = document.getElementById('cardSemAluna');
+    const cardComAluna = document.getElementById('cardComAluna');
+    const selecaoAlunaContainer = document.getElementById('selecaoAlunaContainer');
+    const turmaSelect = document.getElementById('turma_select');
+    const alunaSelect = document.getElementById('aluna_gratuidade_id');
+    const gratuidadeMsg = document.getElementById('gratuidadeStatusMsg');
+
+    const dadosTurmasAlunasEl = document.getElementById('dadosTurmasAlunas');
+    const dadosTurmasAlunas = dadosTurmasAlunasEl
+        ? JSON.parse(dadosTurmasAlunasEl.textContent)
+        : {};
+
+    function atualizarCardsAluna() {
+        const comAlunaMarcada = cardComAluna.querySelector('input').checked;
+        cardSemAluna.classList.toggle('is-selected', !comAlunaMarcada);
+        cardComAluna.classList.toggle('is-selected', comAlunaMarcada);
+        selecaoAlunaContainer.style.display = comAlunaMarcada ? 'block' : 'none';
+
+        if (!comAlunaMarcada) {
+            turmaSelect.value = '';
+            alunaSelect.innerHTML = '<option value="">Selecione a turma primeiro</option>';
+            alunaSelect.value = '';
+            gratuidadeMsg.className = 'ger-ing-gratuidade-msg';
+            gratuidadeMsg.textContent = '';
+        }
+    }
+
+    function popularAlunasDaTurma() {
+        const turma = turmaSelect.value;
+        const alunas = dadosTurmasAlunas[turma] || [];
+
+        alunaSelect.innerHTML = '<option value="">Selecione a aluna</option>';
+
+        alunas.forEach(function (aluna) {
+            const option = document.createElement('option');
+            option.value = aluna.id;
+            option.textContent = aluna.nome;
+            option.dataset.temGratuidade = aluna.tem_gratuidade ? '1' : '0';
+            alunaSelect.appendChild(option);
+        });
+
+        gratuidadeMsg.className = 'ger-ing-gratuidade-msg';
+        gratuidadeMsg.textContent = '';
+    }
+
+    function mostrarStatusGratuidade() {
+        const opcaoSelecionada = alunaSelect.options[alunaSelect.selectedIndex];
+
+        if (!opcaoSelecionada || !opcaoSelecionada.value) {
+            gratuidadeMsg.className = 'ger-ing-gratuidade-msg';
+            gratuidadeMsg.textContent = '';
+            return;
+        }
+
+        const temGratuidade = opcaoSelecionada.dataset.temGratuidade === '1';
+        const nomeAluna = opcaoSelecionada.textContent;
+
+        if (temGratuidade) {
+            gratuidadeMsg.className = 'ger-ing-gratuidade-msg tem';
+            gratuidadeMsg.textContent =
+                '✅ ' + nomeAluna + ' ainda tem um ingresso gratuito disponível para este evento.';
+        } else {
+            gratuidadeMsg.className = 'ger-ing-gratuidade-msg nao-tem';
+            gratuidadeMsg.textContent =
+                '⚠️ ' + nomeAluna + ' já usou o ingresso gratuito dela para este evento.';
+        }
+
+        // Sugere automaticamente o tipo de registro mais provável, sem
+        // travar a escolha — o admin ainda pode mudar na mão (ex: a
+        // aluna tem gratuidade, mas esta venda é de um ingresso EXTRA
+        // pago, não o gratuito dela).
+        if (temGratuidade) {
+            cardCortesia.querySelector('input').checked = true;
+        } else {
+            cardPagoManual.querySelector('input').checked = true;
+        }
+
+        atualizarTipoRegistro();
+    }
+
+    cardSemAluna.querySelector('input').addEventListener('change', atualizarCardsAluna);
+    cardComAluna.querySelector('input').addEventListener('change', atualizarCardsAluna);
+    turmaSelect.addEventListener('change', popularAlunasDaTurma);
+    alunaSelect.addEventListener('change', mostrarStatusGratuidade);
+
+    atualizarCardsAluna();
 })();
 </script>
 {% endblock %}
