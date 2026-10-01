@@ -1395,13 +1395,16 @@ def meus_ingressos(request):
     Pedidos gerados manualmente pelo admin para alguém sem login (ou com
     um e-mail diferente do cadastrado) não aparecem aqui, pois não há
     como vinculá-los com segurança a esta conta.
+
+    Um dropdown permite filtrar e mostrar só os ingressos de um evento
+    específico (?evento=<id> na URL) — sem isso, mostra todos juntos.
     """
     email_usuario = (request.user.email or '').strip()
 
-    pedidos = []
+    pedidos_todos = []
 
     if email_usuario:
-        pedidos = (
+        pedidos_todos = list(
             PedidoIngressoEvento.objects
             .filter(
                 email__iexact=email_usuario,
@@ -1412,9 +1415,36 @@ def meus_ingressos(request):
             .order_by('-data_pagamento', '-criado_em')
         )
 
+    # Lista de eventos distintos entre os pedidos da pessoa, para
+    # preencher o dropdown — ordenada pela data do evento.
+    eventos_vistos = {}
+    for pedido in pedidos_todos:
+        eventos_vistos[pedido.evento_id] = pedido.evento
+
+    eventos_disponiveis = sorted(
+        eventos_vistos.values(),
+        key=lambda evento: evento.data_apresentacao,
+    )
+
+    evento_selecionado_id = request.GET.get('evento', '').strip()
+
+    pedidos = pedidos_todos
+
+    if evento_selecionado_id:
+        try:
+            evento_selecionado_id_int = int(evento_selecionado_id)
+            pedidos = [
+                pedido for pedido in pedidos_todos
+                if pedido.evento_id == evento_selecionado_id_int
+            ]
+        except (TypeError, ValueError):
+            pedidos = pedidos_todos
+
     context = {
         'pedidos': pedidos,
         'email_usuario': email_usuario,
+        'eventos_disponiveis': eventos_disponiveis,
+        'evento_selecionado_id': evento_selecionado_id,
     }
 
     return render(request, 'espetaculo/meus_ingressos.html', context)

@@ -11,6 +11,30 @@
         ({{ email_usuario|default:"sem e-mail cadastrado" }}).
     </p>
 
+    {% if eventos_disponiveis|length > 1 %}
+        <form method="get" style="margin-top: 1.25rem; max-width: 360px;">
+            <label for="evento" style="display: block; margin-bottom: 0.4rem; color: #44384c; font-weight: 600; font-size: 0.92rem;">
+                Filtrar por evento
+            </label>
+            <select
+                name="evento"
+                id="evento"
+                onchange="this.form.submit()"
+                style="width: 100%; padding: 0.7rem 0.9rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 0.95rem; background: #fff; color: #2f2438;"
+            >
+                <option value="">Todos os eventos</option>
+                {% for evento in eventos_disponiveis %}
+                    <option
+                        value="{{ evento.id }}"
+                        {% if evento_selecionado_id == evento.id|stringformat:"s" %}selected{% endif %}
+                    >
+                        {{ evento.titulo }} — {{ evento.data_apresentacao|date:"d/m/Y" }}
+                    </option>
+                {% endfor %}
+            </select>
+        </form>
+    {% endif %}
+
     {% if not email_usuario %}
         <div style="background: #fff8e6; border: 1px solid #f0d78c; border-radius: 12px; padding: 1.2rem; margin-top: 1.5rem;">
             <p style="margin: 0; color: #8a6d1f;">
