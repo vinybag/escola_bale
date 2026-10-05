@@ -1,0 +1,115 @@
+diff --git a/espetaculo/views.py b/espetaculo/views.py
+index 6840dd8..3a2bed8 100644
+--- a/espetaculo/views.py
++++ b/espetaculo/views.py
+@@ -420,72 +420,55 @@ def comprar_ingresso(request, pk):
+     if request.user.is_authenticated:
+         aluna = Aluna.objects.filter(usuario=request.user).first()
+ 
+-    # ---------- Fluxo gratuito de aluna (lógica igual, dados de contato corrigidos) ----------
+-    if evento.permite_ingresso_gratuito_aluna and aluna:
+-        pedido_existente = PedidoIngressoEvento.objects.filter(
++    # ---------- Fluxo gratuito de aluna (somente eventos SEM assentos numerados) ----------
++    # Em eventos com assentos numerados a gratuidade é calculada em
++    # confirmar_selecao_assentos (controle via IngressoGratuitoAluna).
++    # Por isso a aluna segue o fluxo normal de usuário logado logo abaixo
++    # e pode voltar ao mapa para comprar ingressos adicionais.
++    #
++    # Antes, existia aqui uma checagem de "pedido gratuito já existente"
++    # que redirecionava para a página de sucesso do pedido anterior,
++    # impedindo a aluna de voltar ao mapa e comprar mais ingressos.
++    if (
++        evento.permite_ingresso_gratuito_aluna
++        and aluna
++        and not evento.venda_com_assentos_numerados
++    ):
++        ja_usou_gratuidade = PedidoIngressoEvento.objects.filter(
+             evento=evento,
+             email=request.user.email,
+             status='pago',
+             external_reference__startswith='ingresso_gratuito_aluna:',
+-        ).first()
++        ).exists()
+ 
+-        if pedido_existente:
+-            return redirect(
+-                'espetaculo:ingresso_sucesso',
+-                pedido_id=pedido_existente.id
+-            )
++        if not ja_usou_gratuidade:
++            # Aluna não tem whatsapp/cpf; esses dados ficam em Perfil.
++            perfil = getattr(request.user, 'perfil', None)
++            whatsapp_usuario = getattr(perfil, 'telefone', '') or '-'
++            cpf_usuario = getattr(perfil, 'cpf', '') or ''
+ 
+-        # CORREÇÃO: Aluna não tem whatsapp/cpf; esses dados ficam em Perfil.
+-        perfil = getattr(request.user, 'perfil', None)
+-        whatsapp_usuario = getattr(perfil, 'telefone', '') or '-'
+-        cpf_usuario = getattr(perfil, 'cpf', '') or ''
+-
+-        if evento.venda_com_assentos_numerados:
+-            if not evento.tem_mapa_assentos:
+-                return render(
+-                    request,
+-                    'espetaculo/comprar_ingresso_assentos.html',
+-                    {
+-                        'evento': evento,
+-                        'erro': (
+-                            'Este evento ainda não possui mapa '
+-                            'de assentos configurado. '
+-                            'Fale com a organização.'
+-                        ),
+-                    }
+-                )
+-
+-            request.session[f'compra_evento_{pk}_nome_completo'] = aluna.nome
+-            request.session[f'compra_evento_{pk}_email'] = request.user.email or ''
+-            request.session[f'compra_evento_{pk}_whatsapp'] = whatsapp_usuario
+-            request.session[f'compra_evento_{pk}_cpf'] = cpf_usuario
+-            request.session[f'compra_evento_{pk}_valor_unitario'] = str(
+-                evento.preco_ingresso or Decimal('0.00')
++            pedido = PedidoIngressoEvento.objects.create(
++                evento=evento,
++                nome_completo=aluna.nome,
++                email=request.user.email or '',
++                whatsapp=whatsapp_usuario,
++                cpf=cpf_usuario,
++                quantidade=1,
++                valor_unitario=Decimal('0.00'),
++                valor_total=Decimal('0.00'),
++                status='pago',
+             )
+-            request.session[f'compra_evento_{pk}_assentos_ids'] = []
+-            request.session.modified = True
+-
+-            return redirect('espetaculo:mapa_assentos_publico', pk=pk)
+ 
+-        pedido = PedidoIngressoEvento.objects.create(
+-            evento=evento,
+-            nome_completo=aluna.nome,
+-            email=request.user.email or '',
+-            whatsapp=whatsapp_usuario,
+-            cpf=cpf_usuario,
+-            quantidade=1,
+-            valor_unitario=Decimal('0.00'),
+-            valor_total=Decimal('0.00'),
+-            status='pago',
+-        )
++            pedido.data_pagamento = timezone.now()
++            pedido.external_reference = f'ingresso_gratuito_aluna:{pedido.id}'
++            pedido.save(update_fields=['data_pagamento', 'external_reference'])
+ 
+-        pedido.data_pagamento = timezone.now()
+-        pedido.external_reference = f'ingresso_gratuito_aluna:{pedido.id}'
+-        pedido.save(update_fields=['data_pagamento', 'external_reference'])
++            gerar_ingressos_do_pedido(pedido)
+ 
+-        gerar_ingressos_do_pedido(pedido)
++            return redirect('espetaculo:ingresso_sucesso', pedido_id=pedido.id)
+ 
+-        return redirect('espetaculo:ingresso_sucesso', pedido_id=pedido.id)
++        # Gratuidade já utilizada: segue para o fluxo pago abaixo,
++        # permitindo comprar ingressos adicionais.
+ 
+     # ---------- NOVO: qualquer outro usuário logado pula o formulário de dados pessoais ----------
+     if request.user.is_authenticated:
