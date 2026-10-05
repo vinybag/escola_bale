@@ -10,6 +10,7 @@
         
         <form method="post" id="form-login">
             {% csrf_token %}
+            {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
             <div class="form-group">
                 <label for="username">Usuário ou Email:</label>
                 <input type="text" name="username" id="username" required>

@@ -7,10 +7,25 @@ from django.core.mail import send_mail
 from django.conf import settings
 from .models import Perfil, Aluna, RecuperacaoSenha
 from django.db.models import Prefetch
+from django.utils.http import url_has_allowed_host_and_scheme
 from decimal import Decimal, ROUND_HALF_UP
 
 def user_login(request):
     """Pagina de login"""
+
+    # Para onde voltar depois de entrar (ex.: a pessoa estava na página de
+    # um espetáculo e clicou em "Entrar"). Só aceita endereços do próprio
+    # site — qualquer outro (ex.: um link malicioso apontando para fora)
+    # é descartado e o login segue o caminho de sempre (painel).
+    proximo = request.POST.get('next') or request.GET.get('next') or ''
+
+    if proximo and not url_has_allowed_host_and_scheme(
+        url=proximo,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        proximo = ''
+
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
@@ -28,11 +43,15 @@ def user_login(request):
         
         if user is not None:
             login(request, user)
+
+            if proximo:
+                return redirect(proximo)
+
             return redirect('dashboard')
         else:
             messages.error(request, 'Usuario ou senha incorretos!')
     
-    return render(request, 'usuarios/login.html')
+    return render(request, 'usuarios/login.html', {'next': proximo})
 
 def user_logout(request):
     """Logout"""
