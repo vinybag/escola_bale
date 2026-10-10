@@ -76,6 +76,7 @@ INSTALLED_APPS = [
 
 
 MIDDLEWARE = [
+    'core.middleware.RegistrarPaginasLentasMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'csp.middleware.CSPMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
@@ -91,6 +92,50 @@ MIDDLEWARE = [
 
 
 ROOT_URLCONF = 'config.urls'
+
+
+# Páginas que demoram mais que isso (em segundos) são registradas no log do
+# servidor (ver core/middleware.py). Pode ser ajustado pela variável de
+# ambiente LENTO_LIMITE_SEGUNDOS.
+LENTO_LIMITE_SEGUNDOS = config('LENTO_LIMITE_SEGUNDOS', default=3, cast=float)
+
+
+# Registro (log) de erros e de lentidão.
+#
+# Por padrão, com DEBUG desligado, o Django NÃO escreve no log do servidor
+# o motivo de um "Internal Server Error" (o erro só iria por e-mail para
+# ADMINS, que não está configurado) — então, em produção, o motivo real do
+# erro desaparecia. Aqui mandamos esses erros (com todos os detalhes) para
+# a saída padrão, que é o que aparece nos logs do Railway.
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'simples': {
+            'format': '[%(levelname)s] %(asctime)s %(name)s: %(message)s',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'simples',
+        },
+    },
+    'loggers': {
+        # Erros de página (500): inclui o rastreamento completo do erro.
+        'django.request': {
+            'handlers': ['console'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        # Páginas lentas (ver core/middleware.py).
+        'lentidao': {
+            'handlers': ['console'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+    },
+}
 
 
 
@@ -124,7 +169,15 @@ DATABASE_URL = config('DATABASE_URL', default=None)
 if DATABASE_URL:
     # Produção (Railway com PostgreSQL)
     DATABASES = {
-        'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600)
+        # conn_health_checks: antes de reaproveitar uma conexão guardada, o
+        # Django confirma que ela ainda está viva. Sem isso, se o banco
+        # derrubar uma conexão parada, a primeira página aberta depois
+        # falha com "Internal Server Error".
+        'default': dj_database_url.parse(
+            DATABASE_URL,
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
     }
 else:
     # Desenvolvimento (SQLite local)

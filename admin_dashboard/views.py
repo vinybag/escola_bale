@@ -1580,16 +1580,41 @@ def espetaculos_list(request):
     try:
         from espetaculo.models import Espetaculo
 
+        from django.db.models import Count
+
+        from espetaculo.models import IngressoEvento, PedidoIngressoEvento
+
         espetaculos = list(
             Espetaculo.objects.all().order_by('-data_apresentacao')
         )
 
+        ids_espetaculos = [esp.pk for esp in espetaculos]
+
+        # CORREÇÃO (lentidão): antes, o sistema fazia UMA consulta ao banco
+        # para cada pedido pago só para contar os ingressos — o que
+        # crescia a cada venda e a cada espetáculo, e deixava esta página
+        # lenta (centenas de consultas). Agora são só 2 consultas
+        # agrupadas, independente de quantos pedidos existam. Os números
+        # mostrados são os mesmos de antes.
+        compradores_por_espetaculo = dict(
+            PedidoIngressoEvento.objects
+            .filter(status='pago', evento_id__in=ids_espetaculos)
+            .order_by()
+            .values_list('evento_id')
+            .annotate(total=Count('id'))
+        )
+
+        ingressos_por_espetaculo = dict(
+            IngressoEvento.objects
+            .filter(pedido__status='pago', pedido__evento_id__in=ids_espetaculos)
+            .order_by()
+            .values_list('pedido__evento_id')
+            .annotate(total=Count('id'))
+        )
+
         for esp in espetaculos:
-            pedidos_qs = esp.pedidos_ingresso.filter(status='pago')
-            esp.total_compradores = pedidos_qs.count()
-            esp.total_ingressos_vendidos = sum(
-                pedido.ingressos.count() for pedido in pedidos_qs
-            )
+            esp.total_compradores = compradores_por_espetaculo.get(esp.pk, 0)
+            esp.total_ingressos_vendidos = ingressos_por_espetaculo.get(esp.pk, 0)
 
     except Exception as e:
         print(f"Erro ao buscar espetáculos: {e}")
@@ -4361,11 +4386,22 @@ def espetaculo_ingressos_vendidos(request, pk):
 
     busca = request.GET.get('q', '').strip()
 
+    from django.db.models import Prefetch
+
+    # CORREÇÃO (lentidão): os ingressos de cada pedido agora já vêm
+    # carregados junto com o assento de cada um (select_related). Antes,
+    # a tela fazia uma consulta ao banco POR INGRESSO só para descobrir o
+    # assento (centenas de consultas, crescendo a cada venda).
     pedidos = (
         PedidoIngressoEvento.objects
         .filter(evento=espetaculo, status='pago')
         .select_related('aluna_vinculada')
-        .prefetch_related('ingressos')
+        .prefetch_related(
+            Prefetch(
+                'ingressos',
+                queryset=IngressoEvento.objects.select_related('assento'),
+            )
+        )
         .order_by('-criado_em')
     )
 
@@ -4377,7 +4413,16 @@ def espetaculo_ingressos_vendidos(request, pk):
         )
 
     total_pedidos = pedidos.count()
-    total_ingressos = sum(pedido.ingressos.filter(status__in=['ativo', 'usado']).count()for pedido in pedidos)
+
+    # Conta a partir dos ingressos já carregados (sem uma consulta por
+    # pedido, como era antes). O resultado é o mesmo: ingressos ativos
+    # ou usados.
+    total_ingressos = sum(
+        1
+        for pedido in pedidos
+        for ingresso in pedido.ingressos.all()
+        if ingresso.status in ('ativo', 'usado')
+    )
 
     # Dados de turma -> alunas deste espetáculo, para o dropdown de
     # "vincular a uma aluna" em cada pedido (usado para corrigir vendas

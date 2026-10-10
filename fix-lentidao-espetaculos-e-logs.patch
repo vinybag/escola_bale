@@ -1,0 +1,237 @@
+diff --git a/admin_dashboard/views.py b/admin_dashboard/views.py
+index f2370b4..6bd41d6 100644
+--- a/admin_dashboard/views.py
++++ b/admin_dashboard/views.py
+@@ -1580,16 +1580,41 @@ def espetaculos_list(request):
+     try:
+         from espetaculo.models import Espetaculo
+ 
++        from django.db.models import Count
++
++        from espetaculo.models import IngressoEvento, PedidoIngressoEvento
++
+         espetaculos = list(
+             Espetaculo.objects.all().order_by('-data_apresentacao')
+         )
+ 
++        ids_espetaculos = [esp.pk for esp in espetaculos]
++
++        # CORREÇÃO (lentidão): antes, o sistema fazia UMA consulta ao banco
++        # para cada pedido pago só para contar os ingressos — o que
++        # crescia a cada venda e a cada espetáculo, e deixava esta página
++        # lenta (centenas de consultas). Agora são só 2 consultas
++        # agrupadas, independente de quantos pedidos existam. Os números
++        # mostrados são os mesmos de antes.
++        compradores_por_espetaculo = dict(
++            PedidoIngressoEvento.objects
++            .filter(status='pago', evento_id__in=ids_espetaculos)
++            .order_by()
++            .values_list('evento_id')
++            .annotate(total=Count('id'))
++        )
++
++        ingressos_por_espetaculo = dict(
++            IngressoEvento.objects
++            .filter(pedido__status='pago', pedido__evento_id__in=ids_espetaculos)
++            .order_by()
++            .values_list('pedido__evento_id')
++            .annotate(total=Count('id'))
++        )
++
+         for esp in espetaculos:
+-            pedidos_qs = esp.pedidos_ingresso.filter(status='pago')
+-            esp.total_compradores = pedidos_qs.count()
+-            esp.total_ingressos_vendidos = sum(
+-                pedido.ingressos.count() for pedido in pedidos_qs
+-            )
++            esp.total_compradores = compradores_por_espetaculo.get(esp.pk, 0)
++            esp.total_ingressos_vendidos = ingressos_por_espetaculo.get(esp.pk, 0)
+ 
+     except Exception as e:
+         print(f"Erro ao buscar espetáculos: {e}")
+@@ -4361,11 +4386,22 @@ def espetaculo_ingressos_vendidos(request, pk):
+ 
+     busca = request.GET.get('q', '').strip()
+ 
++    from django.db.models import Prefetch
++
++    # CORREÇÃO (lentidão): os ingressos de cada pedido agora já vêm
++    # carregados junto com o assento de cada um (select_related). Antes,
++    # a tela fazia uma consulta ao banco POR INGRESSO só para descobrir o
++    # assento (centenas de consultas, crescendo a cada venda).
+     pedidos = (
+         PedidoIngressoEvento.objects
+         .filter(evento=espetaculo, status='pago')
+         .select_related('aluna_vinculada')
+-        .prefetch_related('ingressos')
++        .prefetch_related(
++            Prefetch(
++                'ingressos',
++                queryset=IngressoEvento.objects.select_related('assento'),
++            )
++        )
+         .order_by('-criado_em')
+     )
+ 
+@@ -4377,7 +4413,16 @@ def espetaculo_ingressos_vendidos(request, pk):
+         )
+ 
+     total_pedidos = pedidos.count()
+-    total_ingressos = sum(pedido.ingressos.filter(status__in=['ativo', 'usado']).count()for pedido in pedidos)
++
++    # Conta a partir dos ingressos já carregados (sem uma consulta por
++    # pedido, como era antes). O resultado é o mesmo: ingressos ativos
++    # ou usados.
++    total_ingressos = sum(
++        1
++        for pedido in pedidos
++        for ingresso in pedido.ingressos.all()
++        if ingresso.status in ('ativo', 'usado')
++    )
+ 
+     # Dados de turma -> alunas deste espetáculo, para o dropdown de
+     # "vincular a uma aluna" em cada pedido (usado para corrigir vendas
+diff --git a/config/settings.py b/config/settings.py
+index aae67af..f025c5d 100644
+--- a/config/settings.py
++++ b/config/settings.py
+@@ -76,6 +76,7 @@ INSTALLED_APPS = [
+ 
+ 
+ MIDDLEWARE = [
++    'core.middleware.RegistrarPaginasLentasMiddleware',
+     'django.middleware.security.SecurityMiddleware',
+     'csp.middleware.CSPMiddleware',
+     'whitenoise.middleware.WhiteNoiseMiddleware',
+@@ -93,6 +94,50 @@ MIDDLEWARE = [
+ ROOT_URLCONF = 'config.urls'
+ 
+ 
++# Páginas que demoram mais que isso (em segundos) são registradas no log do
++# servidor (ver core/middleware.py). Pode ser ajustado pela variável de
++# ambiente LENTO_LIMITE_SEGUNDOS.
++LENTO_LIMITE_SEGUNDOS = config('LENTO_LIMITE_SEGUNDOS', default=3, cast=float)
++
++
++# Registro (log) de erros e de lentidão.
++#
++# Por padrão, com DEBUG desligado, o Django NÃO escreve no log do servidor
++# o motivo de um "Internal Server Error" (o erro só iria por e-mail para
++# ADMINS, que não está configurado) — então, em produção, o motivo real do
++# erro desaparecia. Aqui mandamos esses erros (com todos os detalhes) para
++# a saída padrão, que é o que aparece nos logs do Railway.
++LOGGING = {
++    'version': 1,
++    'disable_existing_loggers': False,
++    'formatters': {
++        'simples': {
++            'format': '[%(levelname)s] %(asctime)s %(name)s: %(message)s',
++        },
++    },
++    'handlers': {
++        'console': {
++            'class': 'logging.StreamHandler',
++            'formatter': 'simples',
++        },
++    },
++    'loggers': {
++        # Erros de página (500): inclui o rastreamento completo do erro.
++        'django.request': {
++            'handlers': ['console'],
++            'level': 'ERROR',
++            'propagate': False,
++        },
++        # Páginas lentas (ver core/middleware.py).
++        'lentidao': {
++            'handlers': ['console'],
++            'level': 'WARNING',
++            'propagate': False,
++        },
++    },
++}
++
++
+ 
+ TEMPLATES = [
+     {
+@@ -124,7 +169,15 @@ DATABASE_URL = config('DATABASE_URL', default=None)
+ if DATABASE_URL:
+     # Produção (Railway com PostgreSQL)
+     DATABASES = {
+-        'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600)
++        # conn_health_checks: antes de reaproveitar uma conexão guardada, o
++        # Django confirma que ela ainda está viva. Sem isso, se o banco
++        # derrubar uma conexão parada, a primeira página aberta depois
++        # falha com "Internal Server Error".
++        'default': dj_database_url.parse(
++            DATABASE_URL,
++            conn_max_age=600,
++            conn_health_checks=True,
++        )
+     }
+ else:
+     # Desenvolvimento (SQLite local)
+diff --git a/core/middleware.py b/core/middleware.py
+new file mode 100644
+index 0000000..779bf17
+--- /dev/null
++++ b/core/middleware.py
+@@ -0,0 +1,58 @@
++import logging
++import time
++
++from django.conf import settings
++from django.db import connection
++
++logger = logging.getLogger('lentidao')
++
++
++class RegistrarPaginasLentasMiddleware:
++    """
++    Escreve uma linha no registro (log) do servidor sempre que uma página
++    demora mais que o limite (padrão: 3 segundos), dizendo QUAL página foi,
++    quanto demorou e quantas consultas fez ao banco de dados.
++
++    Serve para descobrir, com dados reais de produção, o que está
++    deixando o site lento — em vez de adivinhar. Páginas rápidas não
++    geram nenhuma linha. O limite pode ser mudado pela variável de
++    ambiente LENTO_LIMITE_SEGUNDOS.
++
++    Não altera a resposta enviada ao usuário em nada: só observa.
++    """
++
++    def __init__(self, get_response):
++        self.get_response = get_response
++
++    def __call__(self, request):
++        contador = {'consultas': 0}
++
++        def contar_consulta(execute, sql, params, many, context):
++            contador['consultas'] += 1
++            return execute(sql, params, many, context)
++
++        inicio = time.perf_counter()
++
++        with connection.execute_wrapper(contar_consulta):
++            response = self.get_response(request)
++
++        duracao = time.perf_counter() - inicio
++
++        try:
++            limite = getattr(settings, 'LENTO_LIMITE_SEGUNDOS', 3)
++
++            if duracao >= limite:
++                logger.warning(
++                    '[PÁGINA LENTA] %s %s levou %.1fs e fez %d consultas ao '
++                    'banco (resposta %s)',
++                    request.method,
++                    request.path,
++                    duracao,
++                    contador['consultas'],
++                    getattr(response, 'status_code', '?'),
++                )
++        except Exception:
++            # O registro nunca pode atrapalhar a página.
++            pass
++
++        return response
