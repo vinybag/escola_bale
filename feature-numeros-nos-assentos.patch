@@ -1,0 +1,195 @@
+diff --git a/espetaculo/models.py b/espetaculo/models.py
+index 595ad33..4c65843 100644
+--- a/espetaculo/models.py
++++ b/espetaculo/models.py
+@@ -1517,6 +1517,18 @@ class Assento(models.Model):
+     def __str__(self):
+         return f'{self.fileira}{self.numero} - {self.mapa.evento.titulo} ({self.get_status_display()})'
+ 
++    @property
++    def rotulo(self):
++        """
++        Texto curto do assento (ex.: "C18"), o mesmo formato que aparece
++        no ingresso. É o que o mapa público escreve em cima de cada
++        assento. Se a fileira estiver vazia, usa o identificador.
++        """
++        if self.fileira:
++            return f'{self.fileira}{self.numero}'
++
++        return self.identificador
++
+     @property
+     def esta_disponivel(self):
+         return self.status == 'disponivel'
+diff --git a/espetaculo/templates/espetaculo/mapa_assentos_publico.html b/espetaculo/templates/espetaculo/mapa_assentos_publico.html
+index 5e2c84d..4aaeffc 100644
+--- a/espetaculo/templates/espetaculo/mapa_assentos_publico.html
++++ b/espetaculo/templates/espetaculo/mapa_assentos_publico.html
+@@ -389,6 +389,40 @@
+         transform: translate(-50%, -50%);
+         user-select: none;
+         -webkit-tap-highlight-color: transparent;
++
++        /* Faz o número escrito no assento medir o tamanho DO ASSENTO
++           (unidade cqw = 1% da largura do assento), então o texto cresce
++           junto com o zoom, exatamente como o ícone. */
++        container-type: inline-size;
++    }
++
++    /* Número/letra do assento (ex.: C18) escrito em cima do ícone.
++       Fica escondido quando o zoom está tão baixo que o texto seria só
++       um borrão, e aparece sozinho quando o assento fica grande o
++       suficiente para ler (o JavaScript liga a classe
++       "mostrar-rotulos" no mapa). */
++    .mapa-publico-rotulo {
++        position: absolute;
++        inset: 0;
++        display: none;
++        align-items: center;
++        justify-content: center;
++        pointer-events: none;
++        white-space: nowrap;
++        font-size: 6px; /* reserva, para navegadores sem a unidade cqw */
++        font-size: min(48cqw, calc(146cqw / max(3, var(--n, 3))));
++        font-weight: 800;
++        line-height: 1;
++        letter-spacing: -0.02em;
++        color: #fff;
++        /* contorno escuro: dá para ler sobre assento verde, vermelho,
++           azul ou direto sobre a imagem do teatro */
++        -webkit-text-stroke: 0.14em rgba(0, 0, 0, 0.8);
++        paint-order: stroke fill;
++    }
++
++    .mostrar-rotulos .mapa-publico-rotulo {
++        display: flex;
+     }
+ 
+     .mapa-publico-assento[data-clicavel="1"] {
+@@ -537,6 +571,11 @@
+         transform: translateX(-50%) translateY(0);
+     }
+ 
++    /* Dica (não é erro): cor neutra em vez do vermelho de aviso. */
++    .mapa-publico-toast.mapa-publico-toast-dica {
++        background: #2f3e5c;
++    }
++
+     .mapa-sem-assentos {
+         position: absolute;
+         inset: 0;
+@@ -768,6 +807,11 @@
+                                 stroke-width="0.4"
+                             />
+                         </svg>
++                        <span
++                            class="mapa-publico-rotulo"
++                            style="--n: {{ assento.rotulo|length }};"
++                            aria-hidden="true"
++                        >{{ assento.rotulo }}</span>
+                     </button>
+                 {% empty %}
+                     <p class="mapa-sem-assentos">
+@@ -899,11 +943,40 @@
+     const minScale = 1;
+     const maxScale = 4;
+ 
++    // Número escrito em cima de cada assento: só aparece quando, com o
++    // zoom atual, o assento fica grande o bastante na tela para o texto
++    // ser legível (senão seria só um borrão). Em computador costuma
++    // aparecer já no tamanho normal; no celular, ao aproximar o mapa.
++    const LARGURA_MINIMA_ASSENTO_PX = 15;
++    const assentoReferencia = canvas.querySelector('.mapa-publico-assento');
++
++    function atualizarRotulos() {
++        if (!assentoReferencia) {
++            return;
++        }
++
++        // offsetWidth é o tamanho "de layout" (sem o zoom); multiplicar
++        // pela escala dá o tamanho que a pessoa realmente vê.
++        const larguraNaTela = assentoReferencia.offsetWidth * scale;
++
++        const rotulosVisiveis = larguraNaTela >= LARGURA_MINIMA_ASSENTO_PX;
++
++        canvas.classList.toggle('mostrar-rotulos', rotulosVisiveis);
++
++        // A dica "aproxime o mapa" perde o sentido assim que os números
++        // aparecem: some na hora (só ela; avisos de erro não são mexidos).
++        if (rotulosVisiveis && toast.classList.contains('mapa-publico-toast-dica')) {
++            toast.classList.remove('visivel');
++        }
++    }
++
+     function aplicarTransform() {
+         canvas.style.transform =
+             'translate(-50%, -50%) ' +
+             'translate(' + posX + 'px, ' + posY + 'px) ' +
+             'scale(' + scale + ')';
++
++        atualizarRotulos();
+     }
+ 
+     function limitarPan() {
+@@ -934,7 +1007,8 @@
+         );
+     }
+ 
+-    function mostrarToast(mensagem) {
++    function mostrarToast(mensagem, ehDica) {
++        toast.classList.toggle('mapa-publico-toast-dica', !!ehDica);
+         toast.textContent = mensagem;
+         toast.classList.add('visivel');
+ 
+@@ -1359,6 +1433,51 @@
+ 
+     atualizarContador();
+     aplicarTransform();
++
++    // Dica (uma vez por visita): se os números ainda não aparecem porque
++    // o mapa está pequeno (comum no celular), explica como aproximar.
++    function mostrarDicaZoom() {
++        if (canvas.classList.contains('mostrar-rotulos')) {
++            return;
++        }
++
++        const chaveDica = 'dicaZoomMapaVista_{{ espetaculo.pk }}';
++
++        try {
++            if (sessionStorage.getItem(chaveDica) === '1') {
++                return;
++            }
++
++            sessionStorage.setItem(chaveDica, '1');
++        } catch (erro) {
++            // sem sessionStorage: mostra mesmo assim, sem problema.
++        }
++
++        mostrarToast(
++            'Aproxime o mapa (dois toques ou pinça) para ver o número de cada assento.',
++            true
++        );
++    }
++
++    // Espera um instante para não aparecer junto do aviso de login; se o
++    // aviso estiver na tela, a dica vem logo depois que a pessoa o fecha.
++    setTimeout(function () {
++        const avisoLogin = document.getElementById('avisoLoginOverlay');
++
++        if (avisoLogin && avisoLogin.classList.contains('is-visivel')) {
++            const continuar = document.getElementById('avisoLoginContinuar');
++
++            if (continuar) {
++                continuar.addEventListener('click', function () {
++                    setTimeout(mostrarDicaZoom, 400);
++                }, { once: true });
++            }
++
++            return;
++        }
++
++        mostrarDicaZoom();
++    }, 700);
+ })();
+ </script>
+ 

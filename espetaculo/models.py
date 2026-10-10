@@ -1518,6 +1518,18 @@ class Assento(models.Model):
         return f'{self.fileira}{self.numero} - {self.mapa.evento.titulo} ({self.get_status_display()})'
 
     @property
+    def rotulo(self):
+        """
+        Texto curto do assento (ex.: "C18"), o mesmo formato que aparece
+        no ingresso. É o que o mapa público escreve em cima de cada
+        assento. Se a fileira estiver vazia, usa o identificador.
+        """
+        if self.fileira:
+            return f'{self.fileira}{self.numero}'
+
+        return self.identificador
+
+    @property
     def esta_disponivel(self):
         return self.status == 'disponivel'
 
