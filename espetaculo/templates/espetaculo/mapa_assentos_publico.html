@@ -494,6 +494,23 @@
         background: rgba(255, 255, 255, 0.25);
     }
 
+    /* Valor do ingresso, sempre visível na barra de legenda. */
+    .legenda-pill-preco {
+        padding: 0.15rem 0.65rem;
+        border-radius: 999px;
+        background: #f4d35e;
+        color: #3b2a00;
+        font-weight: 800;
+    }
+
+    .legenda-pill-gratis {
+        padding: 0.15rem 0.65rem;
+        border-radius: 999px;
+        background: #1e7a43;
+        color: #fff;
+        font-weight: 700;
+    }
+
     .mapa-publico-footer {
         position: relative;
         z-index: 5;
@@ -520,6 +537,11 @@
     }
 
     .mapa-publico-confirmar {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.1rem;
+        line-height: 1.2;
         padding: 0.75rem 1.4rem;
         border: none;
         border-radius: 10px;
@@ -534,6 +556,27 @@
         opacity: 0.4;
         pointer-events: none;
         transition: opacity 0.15s ease;
+    }
+
+    .mapa-publico-confirmar .confirmar-total {
+        font-size: 0.82rem;
+        font-weight: 800;
+        color: #f4d35e;
+    }
+
+    .mapa-publico-confirmar .confirmar-total:empty {
+        display: none;
+    }
+
+    .mapa-publico-contador .contador-detalhe {
+        display: block;
+        margin-top: 0.15rem;
+        color: #b9a7c7;
+        font-size: 0.75rem;
+    }
+
+    .mapa-publico-contador .contador-detalhe:empty {
+        display: none;
     }
 
     .mapa-publico-confirmar.habilitado {
@@ -637,6 +680,14 @@
             font-size: 0.78rem;
         }
 
+        .mapa-publico-confirmar .confirmar-total {
+            font-size: 0.78rem;
+        }
+
+        .mapa-publico-contador .contador-detalhe {
+            display: none;
+        }
+
         .mapa-publico-zoom-controles {
             right: 8px;
             bottom: 10px;
@@ -721,6 +772,18 @@
     {% endif %}
 
     <div class="mapa-publico-legenda">
+        {% if mostrar_valor %}
+            <span class="legenda-pill legenda-pill-preco">
+                🎟 R$ {{ valor_unitario|floatformat:2 }} por assento
+            </span>
+
+            {% if gratuitas_disponiveis %}
+                <span class="legenda-pill legenda-pill-gratis">
+                    {{ gratuitas_disponiveis }} gratuito{{ gratuitas_disponiveis|pluralize }} de aluna
+                </span>
+            {% endif %}
+        {% endif %}
+
         <span class="legenda-pill">
             <span
                 class="legenda-dot"
@@ -876,12 +939,18 @@
         </div>
     {% endif %}
 
-    <div class="mapa-publico-footer">
+    <div
+        class="mapa-publico-footer"
+        id="mapaFooter"
+        data-valor-unitario="{% if mostrar_valor %}{{ valor_unitario_js }}{% else %}0{% endif %}"
+        data-gratuitas="{{ gratuitas_disponiveis }}"
+    >
         <div class="mapa-publico-contador">
             <strong id="totalSelecionados">
                 {{ ja_selecionados|length }}
             </strong>
             assento(s) selecionado(s)
+            <span class="contador-detalhe" id="detalheValor"></span>
         </div>
 
         <button
@@ -889,7 +958,8 @@
             class="mapa-publico-confirmar{% if ja_selecionados %} habilitado{% endif %}"
             id="btnConfirmar"
         >
-            Confirmar seleção
+            <span class="confirmar-rotulo">Confirmar seleção</span>
+            <span class="confirmar-total" id="totalValor"></span>
         </button>
     </div>
 </div>
@@ -932,6 +1002,59 @@
 
     const btnConfirmar =
         document.getElementById('btnConfirmar');
+
+    // Valor do ingresso (em centavos, para não ter erro de arredondamento)
+    // e quantas gratuidades de aluna abatem dos primeiros assentos.
+    // Mesma regra de confirmar_selecao_assentos:
+    // total = valor × (assentos − gratuitos).
+    const rodape =
+        document.getElementById('mapaFooter');
+
+    const valorUnitarioCentavos = Math.round(
+        (parseFloat(rodape.dataset.valorUnitario) || 0) * 100
+    );
+
+    const gratuitasDisponiveis =
+        parseInt(rodape.dataset.gratuitas, 10) || 0;
+
+    const totalValorSpan =
+        document.getElementById('totalValor');
+
+    const detalheValorSpan =
+        document.getElementById('detalheValor');
+
+    function formatarReais(centavos) {
+        return (centavos / 100).toLocaleString(
+            'pt-BR',
+            { style: 'currency', currency: 'BRL' }
+        );
+    }
+
+    function atualizarValor(total) {
+        if (valorUnitarioCentavos <= 0 || total < 1) {
+            totalValorSpan.textContent = '';
+            detalheValorSpan.textContent = '';
+            return;
+        }
+
+        const gratuitos = Math.min(total, gratuitasDisponiveis);
+        const pagos = total - gratuitos;
+        const totalCentavos = pagos * valorUnitarioCentavos;
+
+        totalValorSpan.textContent = totalCentavos > 0
+            ? 'Total: ' + formatarReais(totalCentavos)
+            : 'Gratuito';
+
+        let detalhe =
+            total + ' × ' + formatarReais(valorUnitarioCentavos);
+
+        if (gratuitos > 0) {
+            detalhe += ' − ' + gratuitos +
+                (gratuitos === 1 ? ' gratuito' : ' gratuitos');
+        }
+
+        detalheValorSpan.textContent = detalhe;
+    }
 
     const toast =
         document.getElementById('toastAviso');
@@ -1026,6 +1149,8 @@
             ).length;
 
         totalSpan.textContent = total;
+
+        atualizarValor(total);
 
         if (total > 0) {
             btnConfirmar.classList.add('habilitado');

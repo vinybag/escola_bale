@@ -1535,6 +1535,29 @@ def baixar_qrcode_ingresso(request, ingresso_id):
     )
 
 
+def _valor_unitario_para_exibicao(request, evento):
+    """
+    Valor de UM ingresso que será cobrado nesta compra, para mostrar no
+    mapa. Usa o mesmo valor guardado na sessão no começo da compra (é ele
+    que confirmar_selecao_assentos usa para cobrar), e cai para o preço
+    atual do evento se, por qualquer motivo, não estiver lá — assim o que
+    a pessoa vê é o que será cobrado.
+    """
+    padrao = evento.preco_ingresso or Decimal('0.00')
+
+    bruto = request.session.get(
+        f'compra_evento_{evento.pk}_valor_unitario',
+    )
+
+    if bruto is None:
+        return padrao
+
+    try:
+        return Decimal(bruto)
+    except (InvalidOperation, TypeError, ValueError):
+        return padrao
+
+
 def mapa_assentos_publico(request, pk):
     """
     Página pública onde o comprador escolhe os assentos.
@@ -1614,10 +1637,29 @@ def mapa_assentos_publico(request, pk):
         [],
     )
 
+    # Valor para exibir no mapa (preço por assento e total no botão de
+    # confirmar). A gratuidade de aluna é descontada dos primeiros assentos
+    # exatamente como em confirmar_selecao_assentos, para o total mostrado
+    # ser o mesmo que será cobrado.
+    valor_unitario = _valor_unitario_para_exibicao(request, evento)
+    mostrar_valor = valor_unitario > 0
+
+    gratuitas_disponiveis = (
+        quantidade_gratuita_disponivel(request, evento)
+        if mostrar_valor
+        else 0
+    )
+
     context = {
         'espetaculo': evento,
         'evento': evento,
         'mapa': mapa,
+        'mostrar_valor': mostrar_valor,
+        'valor_unitario': valor_unitario,
+        # Ponto como separador decimal, para o JavaScript ler sem erro
+        # (no template, floatformat usaria vírgula em pt-br).
+        'valor_unitario_js': f'{valor_unitario:.2f}',
+        'gratuitas_disponiveis': gratuitas_disponiveis,
         'assentos': assentos,
         'identificador_sessao': identificador_sessao,
         'ja_selecionados': ja_selecionados,

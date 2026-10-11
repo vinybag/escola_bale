@@ -1,0 +1,456 @@
+diff --git a/espetaculo/templates/espetaculo/mapa_assentos_publico.html b/espetaculo/templates/espetaculo/mapa_assentos_publico.html
+index 4aaeffc..445882e 100644
+--- a/espetaculo/templates/espetaculo/mapa_assentos_publico.html
++++ b/espetaculo/templates/espetaculo/mapa_assentos_publico.html
+@@ -494,6 +494,23 @@
+         background: rgba(255, 255, 255, 0.25);
+     }
+ 
++    /* Valor do ingresso, sempre visível na barra de legenda. */
++    .legenda-pill-preco {
++        padding: 0.15rem 0.65rem;
++        border-radius: 999px;
++        background: #f4d35e;
++        color: #3b2a00;
++        font-weight: 800;
++    }
++
++    .legenda-pill-gratis {
++        padding: 0.15rem 0.65rem;
++        border-radius: 999px;
++        background: #1e7a43;
++        color: #fff;
++        font-weight: 700;
++    }
++
+     .mapa-publico-footer {
+         position: relative;
+         z-index: 5;
+@@ -520,6 +537,11 @@
+     }
+ 
+     .mapa-publico-confirmar {
++        display: inline-flex;
++        flex-direction: column;
++        align-items: center;
++        gap: 0.1rem;
++        line-height: 1.2;
+         padding: 0.75rem 1.4rem;
+         border: none;
+         border-radius: 10px;
+@@ -536,6 +558,27 @@
+         transition: opacity 0.15s ease;
+     }
+ 
++    .mapa-publico-confirmar .confirmar-total {
++        font-size: 0.82rem;
++        font-weight: 800;
++        color: #f4d35e;
++    }
++
++    .mapa-publico-confirmar .confirmar-total:empty {
++        display: none;
++    }
++
++    .mapa-publico-contador .contador-detalhe {
++        display: block;
++        margin-top: 0.15rem;
++        color: #b9a7c7;
++        font-size: 0.75rem;
++    }
++
++    .mapa-publico-contador .contador-detalhe:empty {
++        display: none;
++    }
++
+     .mapa-publico-confirmar.habilitado {
+         opacity: 1;
+         pointer-events: auto;
+@@ -637,6 +680,14 @@
+             font-size: 0.78rem;
+         }
+ 
++        .mapa-publico-confirmar .confirmar-total {
++            font-size: 0.78rem;
++        }
++
++        .mapa-publico-contador .contador-detalhe {
++            display: none;
++        }
++
+         .mapa-publico-zoom-controles {
+             right: 8px;
+             bottom: 10px;
+@@ -721,6 +772,18 @@
+     {% endif %}
+ 
+     <div class="mapa-publico-legenda">
++        {% if mostrar_valor %}
++            <span class="legenda-pill legenda-pill-preco">
++                🎟 R$ {{ valor_unitario|floatformat:2 }} por assento
++            </span>
++
++            {% if gratuitas_disponiveis %}
++                <span class="legenda-pill legenda-pill-gratis">
++                    {{ gratuitas_disponiveis }} gratuito{{ gratuitas_disponiveis|pluralize }} de aluna
++                </span>
++            {% endif %}
++        {% endif %}
++
+         <span class="legenda-pill">
+             <span
+                 class="legenda-dot"
+@@ -876,12 +939,18 @@
+         </div>
+     {% endif %}
+ 
+-    <div class="mapa-publico-footer">
++    <div
++        class="mapa-publico-footer"
++        id="mapaFooter"
++        data-valor-unitario="{% if mostrar_valor %}{{ valor_unitario_js }}{% else %}0{% endif %}"
++        data-gratuitas="{{ gratuitas_disponiveis }}"
++    >
+         <div class="mapa-publico-contador">
+             <strong id="totalSelecionados">
+                 {{ ja_selecionados|length }}
+             </strong>
+             assento(s) selecionado(s)
++            <span class="contador-detalhe" id="detalheValor"></span>
+         </div>
+ 
+         <button
+@@ -889,7 +958,8 @@
+             class="mapa-publico-confirmar{% if ja_selecionados %} habilitado{% endif %}"
+             id="btnConfirmar"
+         >
+-            Confirmar seleção
++            <span class="confirmar-rotulo">Confirmar seleção</span>
++            <span class="confirmar-total" id="totalValor"></span>
+         </button>
+     </div>
+ </div>
+@@ -933,6 +1003,59 @@
+     const btnConfirmar =
+         document.getElementById('btnConfirmar');
+ 
++    // Valor do ingresso (em centavos, para não ter erro de arredondamento)
++    // e quantas gratuidades de aluna abatem dos primeiros assentos.
++    // Mesma regra de confirmar_selecao_assentos:
++    // total = valor × (assentos − gratuitos).
++    const rodape =
++        document.getElementById('mapaFooter');
++
++    const valorUnitarioCentavos = Math.round(
++        (parseFloat(rodape.dataset.valorUnitario) || 0) * 100
++    );
++
++    const gratuitasDisponiveis =
++        parseInt(rodape.dataset.gratuitas, 10) || 0;
++
++    const totalValorSpan =
++        document.getElementById('totalValor');
++
++    const detalheValorSpan =
++        document.getElementById('detalheValor');
++
++    function formatarReais(centavos) {
++        return (centavos / 100).toLocaleString(
++            'pt-BR',
++            { style: 'currency', currency: 'BRL' }
++        );
++    }
++
++    function atualizarValor(total) {
++        if (valorUnitarioCentavos <= 0 || total < 1) {
++            totalValorSpan.textContent = '';
++            detalheValorSpan.textContent = '';
++            return;
++        }
++
++        const gratuitos = Math.min(total, gratuitasDisponiveis);
++        const pagos = total - gratuitos;
++        const totalCentavos = pagos * valorUnitarioCentavos;
++
++        totalValorSpan.textContent = totalCentavos > 0
++            ? 'Total: ' + formatarReais(totalCentavos)
++            : 'Gratuito';
++
++        let detalhe =
++            total + ' × ' + formatarReais(valorUnitarioCentavos);
++
++        if (gratuitos > 0) {
++            detalhe += ' − ' + gratuitos +
++                (gratuitos === 1 ? ' gratuito' : ' gratuitos');
++        }
++
++        detalheValorSpan.textContent = detalhe;
++    }
++
+     const toast =
+         document.getElementById('toastAviso');
+ 
+@@ -1027,6 +1150,8 @@
+ 
+         totalSpan.textContent = total;
+ 
++        atualizarValor(total);
++
+         if (total > 0) {
+             btnConfirmar.classList.add('habilitado');
+         } else {
+diff --git a/espetaculo/tests_mapa_valor.py b/espetaculo/tests_mapa_valor.py
+new file mode 100644
+index 0000000..1c7f3de
+--- /dev/null
++++ b/espetaculo/tests_mapa_valor.py
+@@ -0,0 +1,185 @@
++from datetime import timedelta
++from decimal import Decimal
++
++from django.contrib.auth import get_user_model
++from django.test import TestCase, override_settings
++from django.urls import reverse
++from django.utils import timezone
++
++from espetaculo.models import (
++    Assento,
++    Espetaculo,
++    MapaAssentos,
++    ParticipacaoEspetaculo,
++)
++from usuarios.models import Aluna
++
++
++# O storage de estáticos de produção (manifesto) exige `collectstatic`
++# antes de renderizar templates com {% static %}; nos testes usamos o
++# storage simples só para a página poder ser renderizada.
++@override_settings(
++    STORAGES={
++        'default': {
++            'BACKEND': 'django.core.files.storage.FileSystemStorage',
++        },
++        'staticfiles': {
++            'BACKEND': (
++                'django.contrib.staticfiles.storage.StaticFilesStorage'
++            ),
++        },
++    }
++)
++class MapaPublicoValorTests(TestCase):
++    def setUp(self):
++        self.evento = Espetaculo.objects.create(
++            titulo='Quebra-Nozes',
++            descricao='x',
++            tipo='evento',
++            data_apresentacao=timezone.now() + timedelta(days=10),
++            local='Teatro',
++            endereco='Rua A',
++            preco_ingresso=Decimal('50.00'),
++            venda_aberta=True,
++            venda_com_assentos_numerados=True,
++        )
++        mapa = MapaAssentos.objects.create(evento=self.evento)
++        for numero in (1, 2, 3):
++            Assento.objects.create(
++                mapa=mapa,
++                identificador=f'A{numero}',
++                fileira='A',
++                numero=numero,
++                x_pct=Decimal(numero),
++                y_pct=Decimal('1'),
++            )
++
++        self.url = reverse(
++            'espetaculo:mapa_assentos_publico', args=[self.evento.pk]
++        )
++
++    def _preparar_sessao(self, valor_unitario='50.00'):
++        sessao = self.client.session
++        pk = self.evento.pk
++        sessao[f'compra_evento_{pk}_nome_completo'] = 'Maria Silva'
++        sessao[f'compra_evento_{pk}_whatsapp'] = '11912345678'
++        if valor_unitario is not None:
++            sessao[f'compra_evento_{pk}_valor_unitario'] = valor_unitario
++        sessao.save()
++
++    def test_mostra_valor_por_assento(self):
++        self._preparar_sessao()
++
++        resposta = self.client.get(self.url)
++
++        self.assertEqual(resposta.status_code, 200)
++        self.assertTrue(resposta.context['mostrar_valor'])
++        self.assertContains(resposta, 'R$ 50,00 por assento')
++        # valor chega ao JavaScript com ponto decimal
++        self.assertContains(resposta, 'data-valor-unitario="50.00"')
++        self.assertContains(resposta, 'id="totalValor"')
++
++    def test_valor_vem_da_sessao_que_e_o_que_sera_cobrado(self):
++        self._preparar_sessao(valor_unitario='35.50')
++        # preço do evento mudou depois: a cobrança usa o da sessão.
++        Espetaculo.objects.filter(pk=self.evento.pk).update(
++            preco_ingresso=Decimal('90.00')
++        )
++
++        resposta = self.client.get(self.url)
++
++        self.assertContains(resposta, 'data-valor-unitario="35.50"')
++        self.assertContains(resposta, 'R$ 35,50 por assento')
++
++    def test_sem_valor_na_sessao_usa_preco_do_evento(self):
++        self._preparar_sessao(valor_unitario=None)
++
++        resposta = self.client.get(self.url)
++
++        self.assertContains(resposta, 'data-valor-unitario="50.00"')
++
++    def test_valor_invalido_na_sessao_usa_preco_do_evento(self):
++        self._preparar_sessao(valor_unitario='lixo')
++
++        resposta = self.client.get(self.url)
++
++        self.assertEqual(resposta.status_code, 200)
++        self.assertContains(resposta, 'data-valor-unitario="50.00"')
++
++    def test_evento_gratuito_nao_mostra_valor(self):
++        Espetaculo.objects.filter(pk=self.evento.pk).update(
++            preco_ingresso=Decimal('0.00')
++        )
++        self._preparar_sessao(valor_unitario='0.00')
++
++        resposta = self.client.get(self.url)
++
++        self.assertEqual(resposta.status_code, 200)
++        self.assertFalse(resposta.context['mostrar_valor'])
++        self.assertNotContains(resposta, 'por assento')
++        self.assertContains(resposta, 'data-valor-unitario="0"')
++
++    def test_visitante_sem_login_nao_tem_gratuidade(self):
++        self._preparar_sessao()
++
++        resposta = self.client.get(self.url)
++
++        self.assertEqual(resposta.context['gratuitas_disponiveis'], 0)
++        self.assertNotContains(
++            resposta, 'class="legenda-pill legenda-pill-gratis"'
++        )
++
++    def test_responsavel_com_aluna_participante_ve_gratuidades(self):
++        User = get_user_model()
++        responsavel = User.objects.create_user(
++            'resp', 'resp@example.com', 'senha123'
++        )
++        for nome in ('Ana', 'Bia'):
++            aluna = Aluna.objects.create(nome=nome, responsavel=responsavel)
++            ParticipacaoEspetaculo.objects.create(
++                espetaculo=self.evento, aluna=aluna, vai_dancar=True,
++            )
++        # Terceira aluna não vai dançar: não conta.
++        outra = Aluna.objects.create(nome='Carla', responsavel=responsavel)
++        ParticipacaoEspetaculo.objects.create(
++            espetaculo=self.evento, aluna=outra, vai_dancar=False,
++        )
++
++        self.client.force_login(responsavel)
++        self._preparar_sessao()
++
++        resposta = self.client.get(self.url)
++
++        self.assertEqual(resposta.context['gratuitas_disponiveis'], 2)
++        self.assertContains(resposta, 'data-gratuitas="2"')
++        self.assertContains(
++            resposta, 'class="legenda-pill legenda-pill-gratis"'
++        )
++        self.assertContains(resposta, '2 gratuitos de aluna')
++
++    def test_mesma_regra_de_cobranca_do_servidor(self):
++        """
++        O desconto exibido deve bater com quantidade_gratuita_disponivel,
++        a mesma função que confirmar_selecao_assentos usa para cobrar.
++        """
++        from espetaculo.views import quantidade_gratuita_disponivel
++
++        User = get_user_model()
++        responsavel = User.objects.create_user(
++            'resp2', 'resp2@example.com', 'senha123'
++        )
++        aluna = Aluna.objects.create(nome='Ana', responsavel=responsavel)
++        ParticipacaoEspetaculo.objects.create(
++            espetaculo=self.evento, aluna=aluna, vai_dancar=True,
++        )
++
++        self.client.force_login(responsavel)
++        self._preparar_sessao()
++
++        resposta = self.client.get(self.url)
++
++        request = resposta.wsgi_request
++        self.assertEqual(
++            resposta.context['gratuitas_disponiveis'],
++            quantidade_gratuita_disponivel(request, self.evento),
++        )
+diff --git a/espetaculo/views.py b/espetaculo/views.py
+index 3a2bed8..cd7865b 100644
+--- a/espetaculo/views.py
++++ b/espetaculo/views.py
+@@ -1535,6 +1535,29 @@ def baixar_qrcode_ingresso(request, ingresso_id):
+     )
+ 
+ 
++def _valor_unitario_para_exibicao(request, evento):
++    """
++    Valor de UM ingresso que será cobrado nesta compra, para mostrar no
++    mapa. Usa o mesmo valor guardado na sessão no começo da compra (é ele
++    que confirmar_selecao_assentos usa para cobrar), e cai para o preço
++    atual do evento se, por qualquer motivo, não estiver lá — assim o que
++    a pessoa vê é o que será cobrado.
++    """
++    padrao = evento.preco_ingresso or Decimal('0.00')
++
++    bruto = request.session.get(
++        f'compra_evento_{evento.pk}_valor_unitario',
++    )
++
++    if bruto is None:
++        return padrao
++
++    try:
++        return Decimal(bruto)
++    except (InvalidOperation, TypeError, ValueError):
++        return padrao
++
++
+ def mapa_assentos_publico(request, pk):
+     """
+     Página pública onde o comprador escolhe os assentos.
+@@ -1614,10 +1637,29 @@ def mapa_assentos_publico(request, pk):
+         [],
+     )
+ 
++    # Valor para exibir no mapa (preço por assento e total no botão de
++    # confirmar). A gratuidade de aluna é descontada dos primeiros assentos
++    # exatamente como em confirmar_selecao_assentos, para o total mostrado
++    # ser o mesmo que será cobrado.
++    valor_unitario = _valor_unitario_para_exibicao(request, evento)
++    mostrar_valor = valor_unitario > 0
++
++    gratuitas_disponiveis = (
++        quantidade_gratuita_disponivel(request, evento)
++        if mostrar_valor
++        else 0
++    )
++
+     context = {
+         'espetaculo': evento,
+         'evento': evento,
+         'mapa': mapa,
++        'mostrar_valor': mostrar_valor,
++        'valor_unitario': valor_unitario,
++        # Ponto como separador decimal, para o JavaScript ler sem erro
++        # (no template, floatformat usaria vírgula em pt-br).
++        'valor_unitario_js': f'{valor_unitario:.2f}',
++        'gratuitas_disponiveis': gratuitas_disponiveis,
+         'assentos': assentos,
+         'identificador_sessao': identificador_sessao,
+         'ja_selecionados': ja_selecionados,
