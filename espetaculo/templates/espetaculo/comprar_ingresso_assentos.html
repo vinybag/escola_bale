@@ -126,6 +126,10 @@
     <div class="compra-assentos-card">
         <h1>{{ evento.titulo }}</h1>
 
+        <p style="margin: 0 0 0.9rem; font-weight: 800; color: #6b2d8f;">
+            📅 {{ evento.data_apresentacao|date:"l, d/m/Y" }} às {{ evento.data_apresentacao|date:"H:i" }}
+        </p>
+
         <p>
             Preencha seus dados. Na próxima etapa, você escolherá os assentos no mapa.
         </p>

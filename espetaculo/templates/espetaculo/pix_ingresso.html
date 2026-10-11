@@ -234,6 +234,11 @@
             </p>
 
             <p>
+                <strong>Data:</strong>
+                {{ evento.data_apresentacao|date:"l, d/m/Y" }} às {{ evento.data_apresentacao|date:"H:i" }}
+            </p>
+
+            <p>
                 <strong>Comprador:</strong>
                 {{ pedido.nome_completo }}
             </p>

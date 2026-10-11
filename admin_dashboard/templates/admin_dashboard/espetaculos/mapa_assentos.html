@@ -103,7 +103,7 @@
 <div class="mapa-header">
     <div>
         <h2 style="margin: 0 0 0.35rem 0; color: #4a235f;">Mapa de Assentos</h2>
-        <p style="margin: 0; color: #6f6f78;">{{ espetaculo.titulo }}</p>
+        <p style="margin: 0; color: #6f6f78;">{{ espetaculo.titulo }} — {{ espetaculo.data_apresentacao|date:"l, d/m/Y" }} às {{ espetaculo.data_apresentacao|date:"H:i" }}</p>
     </div>
     <a href="{% url 'admin_dashboard:espetaculo_editar' espetaculo.pk %}"
        style="padding: 0.78rem 1.25rem; background: #f3f3f3; color: #444; text-decoration: none; border: 1px solid #ddd; border-radius: 10px; font-weight: 600;">

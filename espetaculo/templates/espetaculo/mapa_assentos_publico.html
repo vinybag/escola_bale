@@ -68,6 +68,14 @@
         font-size: 0.72rem;
     }
 
+    /* Dia e horário do espetáculo: destaque para a pessoa saber de qual
+       dia está comprando (há mais de um dia de apresentação). */
+    .mapa-publico-titulo small.mapa-publico-dia {
+        color: #f4d35e;
+        font-size: 0.85rem;
+        font-weight: 800;
+    }
+
     .mapa-publico-header-placeholder {
         width: 60px;
         flex-shrink: 0;
@@ -654,6 +662,14 @@
             font-size: 0.68rem;
         }
 
+        .mapa-publico-titulo small.mapa-publico-dia {
+            font-size: 0.78rem;
+        }
+
+        .mapa-publico-titulo small.mapa-publico-dica {
+            display: none;
+        }
+
         .mapa-publico-legenda {
             min-height: 30px;
             gap: 0.45rem;
@@ -710,7 +726,10 @@
 
         <div class="mapa-publico-titulo">
             <h1>{{ espetaculo.titulo }}</h1>
-            <small>
+            <small class="mapa-publico-dia">
+                📅 {{ espetaculo.data_apresentacao|date:"l, d/m" }} · {{ espetaculo.data_apresentacao|date:"H:i" }}
+            </small>
+            <small class="mapa-publico-dica">
                 Selecione a quantidade desejada de assentos
             </small>
         </div>

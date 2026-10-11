@@ -413,7 +413,7 @@
 <div class="assentos-header">
     <div>
         <h2 style="margin: 0 0 0.35rem; color: #4a235f;">Gerenciar Assentos</h2>
-        <p style="margin: 0; color: #6f6f78;">{{ espetaculo.titulo }}</p>
+        <p style="margin: 0; color: #6f6f78;">{{ espetaculo.titulo }} — {{ espetaculo.data_apresentacao|date:"l, d/m/Y" }} às {{ espetaculo.data_apresentacao|date:"H:i" }}</p>
     </div>
     <div class="assentos-header-actions">
         <a href="{% url 'admin_dashboard:espetaculo_gerar_ingresso_manual' espetaculo.pk %}"
