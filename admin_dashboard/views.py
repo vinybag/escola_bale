@@ -4381,7 +4381,14 @@ def parcela_cobranca_espetaculo_marcar_pago(request, pk):
         messages.error(request, f'Erro ao marcar parcela como paga: {e}')
         return redirect('admin_dashboard:espetaculos_list')
     
+@login_required
 def espetaculo_ingressos_vendidos(request, pk):
+    # Mostra nome, WhatsApp e e-mail dos compradores: só para a equipe.
+    # (A compra de ingressos sem login é outro fluxo, em espetaculo/views.py,
+    # e não é afetada por esta proteção.)
+    if not request.user.is_staff:
+        return redirect('home')
+
     espetaculo = get_object_or_404(Espetaculo, pk=pk)
 
     busca = request.GET.get('q', '').strip()
@@ -4467,6 +4474,53 @@ def espetaculo_ingressos_vendidos(request, pk):
         'admin_dashboard/espetaculos/espetaculo_ingressos_vendidos.html',
         context
     )
+
+@login_required
+def espetaculo_contatos_ingressos(request, pk):
+    """
+    Tela de contatos dentro de "Ingressos vendidos": todas as pessoas que
+    tentaram comprar ingresso (pagaram ou não), agrupadas pelo WhatsApp,
+    para a equipe poder chamar quem gerou o PIX e não finalizou.
+
+    O status é calculado na hora a partir dos pedidos existentes: casos
+    antigos entram sozinhos e, se quem não comprou pagar depois, passa a
+    aparecer como "Comprou".
+    """
+    if not request.user.is_staff:
+        return redirect('home')
+
+    from .contatos_ingressos import (
+        contar_por_status,
+        filtrar_contatos,
+        montar_contatos,
+        ROTULOS,
+    )
+
+    espetaculo = get_object_or_404(Espetaculo, pk=pk)
+
+    status = request.GET.get('status', '').strip()
+    busca = request.GET.get('q', '').strip()
+
+    todos, sem_whatsapp = montar_contatos(espetaculo)
+    contagem = contar_por_status(todos)
+    contatos = filtrar_contatos(todos, status=status, busca=busca)
+
+    context = {
+        'espetaculo': espetaculo,
+        'contatos': contatos,
+        'total_contatos': len(todos),
+        'contagem': contagem,
+        'sem_whatsapp': sem_whatsapp,
+        'status_atual': status if status in ROTULOS else '',
+        'busca': busca,
+    }
+
+    return render(
+        request,
+        'admin_dashboard/espetaculos/espetaculo_contatos_ingressos.html',
+        context,
+    )
+
 
 @login_required
 @require_POST

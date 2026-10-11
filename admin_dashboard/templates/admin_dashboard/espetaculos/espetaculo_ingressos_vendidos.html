@@ -397,12 +397,21 @@
         </p>
     </div>
 
-    <a
-        href="{% url 'admin_dashboard:espetaculos_list' %}"
-        class="ing-btn ing-btn-light"
-    >
-        ← Voltar para espetáculos
-    </a>
+    <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
+        <a
+            href="{% url 'admin_dashboard:espetaculo_contatos_ingressos' espetaculo.pk %}"
+            class="ing-btn ing-btn-primary"
+        >
+            Contatos (compraram e não compraram)
+        </a>
+
+        <a
+            href="{% url 'admin_dashboard:espetaculos_list' %}"
+            class="ing-btn ing-btn-light"
+        >
+            ← Voltar para espetáculos
+        </a>
+    </div>
 </div>
 
 <div class="ing-list-shell">
