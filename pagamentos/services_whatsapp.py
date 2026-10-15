@@ -73,3 +73,65 @@ def enviar_whatsapp_template(numero_destino, nome_template, parametros):
         )
 
     return resposta.status_code, resposta_json
+
+
+def enviar_whatsapp_texto(numero_destino, texto):
+    """
+    Envia uma mensagem de TEXTO LIVRE pela WhatsApp Cloud API (Meta).
+
+    Diferente de enviar_whatsapp_template, não precisa de template aprovado,
+    mas a Meta só entrega se a pessoa tiver escrito para o número nas
+    últimas 24 horas (janela de atendimento). É o caso da resposta
+    automática a quem responde ao número de avisos.
+
+    Retorna (status_code, resposta_json), no mesmo formato de
+    enviar_whatsapp_template.
+    """
+    phone_number_id = settings.WHATSAPP_PHONE_NUMBER_ID
+    access_token = settings.WHATSAPP_ACCESS_TOKEN
+
+    if not phone_number_id or not access_token:
+        erro = {
+            "error": {
+                "message": (
+                    "WHATSAPP_PHONE_NUMBER_ID ou WHATSAPP_ACCESS_TOKEN "
+                    "não configurados neste serviço."
+                )
+            }
+        }
+        logger.error("Config ausente ao enviar WhatsApp (texto): %s", erro)
+        return 0, erro
+
+    url = f"https://graph.facebook.com/v20.0/{phone_number_id}/messages"
+
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json",
+    }
+
+    payload = {
+        "messaging_product": "whatsapp",
+        "to": numero_destino,
+        "type": "text",
+        "text": {"body": texto, "preview_url": False},
+    }
+
+    try:
+        resposta = requests.post(url, headers=headers, json=payload, timeout=10)
+    except requests.RequestException as exc:
+        erro = {"error": {"message": f"Falha de conexão com a Meta: {exc}"}}
+        logger.error("Erro de rede ao enviar WhatsApp (texto) para %s: %s", numero_destino, exc)
+        return 0, erro
+
+    try:
+        resposta_json = resposta.json()
+    except ValueError:
+        resposta_json = {"error": {"message": f"Resposta não-JSON: {resposta.text[:300]}"}}
+
+    if resposta.status_code != 200:
+        logger.error(
+            "Falha ao enviar WhatsApp (texto) para %s: status=%s resposta=%s",
+            numero_destino, resposta.status_code, resposta_json,
+        )
+
+    return resposta.status_code, resposta_json

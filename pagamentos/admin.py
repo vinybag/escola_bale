@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Mensalidade
+from .models import Mensalidade, WhatsAppMensagemRecebida
 
 @admin.register(Mensalidade)
 class MensalidadeAdmin(admin.ModelAdmin):
@@ -16,3 +16,20 @@ class MensalidadeAdmin(admin.ModelAdmin):
         else:
             return '⏳ Pendente'
     status_visual.short_description = 'Status Visual'
+
+
+@admin.register(WhatsAppMensagemRecebida)
+class WhatsAppMensagemRecebidaAdmin(admin.ModelAdmin):
+    """Somente leitura: mostra quem escreveu no número de avisos e se a
+    resposta automática foi enviada."""
+
+    list_display = ['telefone', 'tipo', 'status', 'motivo', 'criado_em']
+    list_filter = ['status', 'tipo']
+    search_fields = ['telefone']
+    date_hierarchy = 'criado_em'
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False

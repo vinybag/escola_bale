@@ -1,5 +1,5 @@
 from django.urls import path
-from . import views
+from . import views, views_whatsapp
 
 urlpatterns = [
     path('mensalidades/', views.mensalidades, name='mensalidades'),
@@ -11,4 +11,8 @@ urlpatterns = [
     
     # Webhook do Asaas (não requer autenticação)
     path('webhook/asaas/', views.webhook_asaas, name='webhook_asaas'),    
+
+    # Webhook do WhatsApp (Meta): resposta automática no número de avisos.
+    # Autenticado por token de verificação (GET) e assinatura HMAC (POST).
+    path('webhook/whatsapp/', views_whatsapp.webhook_whatsapp, name='webhook_whatsapp'),
 ]

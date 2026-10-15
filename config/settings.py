@@ -366,3 +366,19 @@ CSRF_TRUSTED_ORIGINS = config(
 WHATSAPP_PHONE_NUMBER_ID = os.environ.get('WHATSAPP_PHONE_NUMBER_ID')
 WHATSAPP_ACCESS_TOKEN = os.environ.get('WHATSAPP_ACCESS_TOKEN')
 WHATSAPP_NUMERO_ESCOLA = os.environ.get('WHATSAPP_NUMERO_ESCOLA')
+
+# Resposta automática para quem responde ao número de WhatsApp que serve
+# apenas para disparo de avisos (ver pagamentos/views_whatsapp.py).
+#   WHATSAPP_NUMERO_ATENDIMENTO -> número em que a escola ATENDE (o que é
+#                                  informado na resposta). NÃO é o número de
+#                                  disparos; WHATSAPP_NUMERO_ESCOLA não é usado.
+#   WHATSAPP_VERIFY_TOKEN   -> texto qualquer, o mesmo cadastrado na Meta
+#   WHATSAPP_APP_SECRET     -> "Chave secreta do app" (Configurações > Básico)
+#   WHATSAPP_AUTORESPOSTA_ATIVA=false desliga a resposta sem remover o webhook
+WHATSAPP_NUMERO_ATENDIMENTO = os.environ.get('WHATSAPP_NUMERO_ATENDIMENTO')
+WHATSAPP_VERIFY_TOKEN = os.environ.get('WHATSAPP_VERIFY_TOKEN')
+WHATSAPP_APP_SECRET = os.environ.get('WHATSAPP_APP_SECRET')
+WHATSAPP_AUTORESPOSTA_ATIVA = (
+    os.environ.get('WHATSAPP_AUTORESPOSTA_ATIVA', 'true').strip().lower()
+    not in ('0', 'false', 'no', 'nao', 'não', 'off')
+)

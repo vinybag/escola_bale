@@ -121,3 +121,59 @@ class Mensalidade(models.Model):
             self.status = self.status_atual
 
         super().save(*args, **kwargs)
+
+
+class WhatsAppMensagemRecebida(models.Model):
+    """
+    Registro de cada mensagem que alguém envia para o número de WhatsApp
+    usado só para disparo de avisos (mensalidades, ensaios).
+
+    Serve para duas coisas:
+      * não processar duas vezes a mesma mensagem (a Meta reenvia o aviso
+        quando não recebe resposta rápida do servidor); e
+      * responder automaticamente no máximo uma vez a cada 24 horas por
+        pessoa, informando o número correto de atendimento.
+
+    Por privacidade, o TEXTO da mensagem recebida não é guardado: só quem
+    escreveu, o tipo da mensagem e o que o sistema fez com ela.
+    """
+
+    STATUS_PROCESSANDO = 'processando'
+    STATUS_RESPONDIDA = 'respondida'
+    STATUS_IGNORADA = 'ignorada'
+    STATUS_ERRO = 'erro'
+
+    STATUS_CHOICES = [
+        (STATUS_PROCESSANDO, 'Processando'),
+        (STATUS_RESPONDIDA, 'Resposta automática enviada'),
+        (STATUS_IGNORADA, 'Ignorada'),
+        (STATUS_ERRO, 'Erro ao responder'),
+    ]
+
+    # ID da mensagem na Meta (wamid...). Único: evita processar o mesmo
+    # aviso duas vezes quando a Meta reenvia.
+    wamid = models.CharField(max_length=255, unique=True)
+    telefone = models.CharField(max_length=20)
+    tipo = models.CharField(max_length=30, blank=True)
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=STATUS_PROCESSANDO,
+    )
+    motivo = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text='Por que foi ignorada, ou o erro retornado ao responder.',
+    )
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-criado_em']
+        verbose_name = 'Mensagem recebida no WhatsApp de avisos'
+        verbose_name_plural = 'Mensagens recebidas no WhatsApp de avisos'
+        indexes = [
+            models.Index(fields=['telefone', 'criado_em']),
+        ]
+
+    def __str__(self):
+        return f'{self.telefone} - {self.get_status_display()}'
