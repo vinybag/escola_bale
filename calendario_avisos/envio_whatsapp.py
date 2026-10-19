@@ -134,6 +134,98 @@ def parametros_base_template(aviso, nome_template):
 
 
 # ---------------------------------------------------------------------------
+# Resumo de última hora (avisos que o domingo não pegou)
+# ---------------------------------------------------------------------------
+
+def fim_da_semana_em_curso(hoje):
+    """Próximo domingo (ou o próprio dia, se hoje é domingo)."""
+    return hoje + timedelta(days=(6 - hoje.weekday()) % 7)
+
+
+def avisos_para_resumo_atrasado(hoje):
+    """
+    Avisos de ensaio da SEMANA EM CURSO cujo resumo ainda não foi enviado.
+
+    O cron manda o resumo aos domingos, olhando a semana seguinte. Um aviso
+    criado (ou ligado ao WhatsApp, ou com a data mudada para esta semana)
+    depois do domingo ficaria sem resumo e só receberia o lembrete do dia.
+    Estes são os avisos que o domingo deixou de cobrir.
+
+    Regras:
+      * só ensaios de amanhã até o próximo domingo; o de hoje recebe apenas
+        o lembrete do dia, e os da semana seguinte esperam o domingo normal
+        (o horário dos outros avisos não muda);
+      * não roda aos domingos (o resumo normal já cuida da semana seguinte);
+      * o controle notificacao_semana_enviada evita repetir: ele também é
+        marcado pelo cron de domingo e pelo botão "Enviar agora".
+    """
+    if hoje.weekday() == 6:
+        return Aviso.objects.none()
+
+    return Aviso.objects.filter(
+        ativo=True,
+        tipo='ensaio',
+        enviar_whatsapp=True,
+        data_evento__gt=hoje,
+        data_evento__lte=fim_da_semana_em_curso(hoje),
+        notificacao_semana_enviada=False,
+    )
+
+
+def domingo_do_resumo(data_evento):
+    """Domingo em que o resumo da semana desse ensaio é enviado."""
+    return data_evento - timedelta(days=data_evento.weekday() + 1)
+
+
+def previsao_envio_automatico(aviso, hoje=None):
+    """
+    Frase, para a tela de edição, dizendo quando o sistema avisa as pessoas
+    sozinho. Não depende do horário do cron (que fica no Railway): fala em
+    "próximo disparo automático" e em dias.
+    """
+    hoje = hoje or timezone.localdate()
+    data = aviso.data_evento
+
+    if data is None or data < hoje:
+        return ''
+
+    if data == hoje:
+        if aviso.notificacao_dia_enviada:
+            return 'O lembrete de hoje já foi enviado.'
+        return (
+            'Hoje é o dia do ensaio: o lembrete do dia sai no próximo '
+            'disparo automático.'
+        )
+
+    if aviso.notificacao_semana_enviada:
+        return (
+            'O resumo da semana já foi enviado. O lembrete do dia sai no '
+            'dia do ensaio.'
+        )
+
+    if hoje.weekday() != 6 and data <= fim_da_semana_em_curso(hoje):
+        return (
+            'Este ensaio é desta semana e o resumo ainda não foi enviado: '
+            'o sistema envia sozinho no próximo disparo automático diário. '
+            'Se preferir avisar agora, use o botão abaixo. O lembrete do '
+            'dia sai no dia do ensaio.'
+        )
+
+    domingo = domingo_do_resumo(data)
+    if domingo <= hoje:
+        return (
+            'O resumo da semana sai no disparo automático de domingo (hoje). '
+            'Se o disparo de hoje já passou, use o botão abaixo. O lembrete '
+            'do dia sai no dia do ensaio.'
+        )
+
+    return (
+        f'O resumo da semana será enviado automaticamente no domingo, '
+        f'{domingo:%d/%m}. O lembrete do dia sai no dia do ensaio.'
+    )
+
+
+# ---------------------------------------------------------------------------
 # Envio manual ("Enviar agora")
 # ---------------------------------------------------------------------------
 

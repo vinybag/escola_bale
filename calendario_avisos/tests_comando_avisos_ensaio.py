@@ -88,8 +88,11 @@ class ComandoAvisosEnsaioTests(TestCase):
         enviar = self._rodar(DOMINGO)
         enviar.assert_not_called()
 
-    def test_fora_do_domingo_nao_envia_resumo(self):
-        self._aviso()
+    def test_fora_do_domingo_resumo_da_semana_seguinte_espera_o_domingo(self):
+        # Ensaio da semana SEGUINTE a quarta 21/10 (terça 27/10): o resumo
+        # continua saindo só no domingo. (Ensaios da semana em curso são
+        # outro caso: ver tests_resumo_atrasado.py.)
+        self._aviso(data_evento=date(2026, 10, 27))
         enviar = self._rodar(QUARTA)
         enviar.assert_not_called()
 

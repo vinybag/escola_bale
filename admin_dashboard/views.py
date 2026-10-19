@@ -1369,9 +1369,14 @@ def aviso_editar(request, pk):
     from calendario_avisos.envio_whatsapp import (
         historico_de_envios,
         motivo_bloqueio,
+        previsao_envio_automatico,
         situacao_do_envio,
     )
     context['envio_motivo_bloqueio'] = motivo_bloqueio(aviso)
+    context['envio_previsao'] = (
+        '' if context['envio_motivo_bloqueio']
+        else previsao_envio_automatico(aviso)
+    )
     context['envio_situacao'] = situacao_do_envio(aviso)
     context['envio_historico'] = historico_de_envios(aviso)
 

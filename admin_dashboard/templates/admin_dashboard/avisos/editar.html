@@ -353,6 +353,10 @@
             </p>
         {% endif %}
 
+        {% if envio_previsao %}
+            <p><strong>Envio automático:</strong> {{ envio_previsao }}</p>
+        {% endif %}
+
         <p>
             O envio usa o aviso <strong>como está salvo</strong>. Se mudou
             algo no formulário acima, clique em "Salvar Alterações" antes.

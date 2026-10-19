@@ -2,8 +2,12 @@
 Dispara, por WhatsApp, os avisos do tipo "ensaio" marcados com
 enviar_whatsapp=True:
 
-- Toda segunda-feira, manda um resumo pra quem tem ensaio nessa semana
+- Aos domingos, manda um resumo pra quem tem ensaio na semana seguinte
   (segunda a domingo).
+- Nos outros dias, manda o resumo (de última hora) dos ensaios desta semana
+  que o domingo não cobriu: avisos criados, ligados ao WhatsApp ou com a data
+  mudada depois do domingo. Ver avisos_para_resumo_atrasado. Dá para desligar
+  com AVISOS_ENSAIO_ENVIO_ATRASADO_ATIVO=false.
 - No próprio dia do ensaio, manda um lembrete.
 
 Cada um desses dois envios só acontece uma vez por aviso (controlado
@@ -18,10 +22,12 @@ precisam existir e estar aprovados na conta de WhatsApp Business
 
 from datetime import timedelta
 
+from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from calendario_avisos.envio_whatsapp import (
+    avisos_para_resumo_atrasado,
     destinatarios_do_aviso,
     parametros_base_template,
     telefone_valido,
@@ -79,6 +85,26 @@ class Command(BaseCommand):
                 data_evento=hoje,
                 notificacao_semana_enviada=False,
             ).update(notificacao_semana_enviada=True)
+
+        # Resumo de última hora: ensaios DESTA semana cujo resumo o domingo não
+        # mandou (criados/ligados ao WhatsApp depois dele). Só marca como
+        # enviado se alguém recebeu; se tudo falhar, tenta de novo no próximo
+        # disparo.
+        if getattr(settings, 'AVISOS_ENSAIO_ENVIO_ATRASADO_ATIVO', True):
+            enviados_atrasados = 0
+            for aviso in avisos_para_resumo_atrasado(hoje):
+                ok, falhas = self._enviar(aviso, 'aviso_ensaio_semana')
+                enviados += ok
+                erros += falhas
+                enviados_atrasados += ok
+                if ok > 0:
+                    aviso.notificacao_semana_enviada = True
+                    aviso.save(update_fields=['notificacao_semana_enviada'])
+
+            if enviados_atrasados:
+                self.stdout.write(
+                    f'Resumos de última hora enviados: {enviados_atrasados}'
+                )
 
         # Lembrete do dia: avisos cujo ensaio é hoje.
         avisos_de_hoje = avisos.filter(

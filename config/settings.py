@@ -382,3 +382,12 @@ WHATSAPP_AUTORESPOSTA_ATIVA = (
     os.environ.get('WHATSAPP_AUTORESPOSTA_ATIVA', 'true').strip().lower()
     not in ('0', 'false', 'no', 'nao', 'não', 'off')
 )
+
+# Resumo de última hora dos avisos de ensaio (comando enviar_avisos_ensaio):
+# avisos da semana em curso que o domingo não cobriu são enviados no próximo
+# disparo diário, em vez de esperar o lembrete do dia.
+#   AVISOS_ENSAIO_ENVIO_ATRASADO_ATIVO=false desliga, sem mexer no resto.
+AVISOS_ENSAIO_ENVIO_ATRASADO_ATIVO = (
+    os.environ.get('AVISOS_ENSAIO_ENVIO_ATRASADO_ATIVO', 'true').strip().lower()
+    not in ('0', 'false', 'no', 'nao', 'não', 'off')
+)
