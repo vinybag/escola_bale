@@ -8,6 +8,9 @@ enviar_whatsapp=True:
   que o domingo não cobriu: avisos criados, ligados ao WhatsApp ou com a data
   mudada depois do domingo. Ver avisos_para_resumo_atrasado. Dá para desligar
   com AVISOS_ENSAIO_ENVIO_ATRASADO_ATIVO=false.
+- Na véspera, para os avisos marcados com "Lembrar também um dia antes",
+  manda um lembrete ("amanhã"). Se o aviso acabou de receber o resumo (ou um
+  envio manual) no mesmo dia, a véspera é dispensada para não repetir.
 - No próprio dia do ensaio, manda um lembrete.
 
 Cada um desses dois envios só acontece uma vez por aviso (controlado
@@ -27,9 +30,12 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from calendario_avisos.envio_whatsapp import (
+    TEMPLATE_VESPERA,
     avisos_para_resumo_atrasado,
+    avisos_para_vespera,
     destinatarios_do_aviso,
     parametros_base_template,
+    recebeu_envio_manual_hoje,
     telefone_valido,
 )
 from calendario_avisos.models import Aviso
@@ -54,6 +60,10 @@ class Command(BaseCommand):
         enviados = 0
         erros = 0
 
+        # Avisos que já receberam o resumo nesta execução (domingo ou última
+        # hora): a véspera, se marcada, só repetiria a mesma informação.
+        ids_com_resumo_hoje = set()
+
         avisos = Aviso.objects.filter(
             ativo=True,
             tipo='ensaio',
@@ -75,6 +85,8 @@ class Command(BaseCommand):
                 ok, falhas = self._enviar(aviso, 'aviso_ensaio_semana')
                 enviados += ok
                 erros += falhas
+                if ok > 0:
+                    ids_com_resumo_hoje.add(aviso.pk)
                 aviso.notificacao_semana_enviada = True
                 aviso.save(update_fields=['notificacao_semana_enviada'])
 
@@ -98,6 +110,7 @@ class Command(BaseCommand):
                 erros += falhas
                 enviados_atrasados += ok
                 if ok > 0:
+                    ids_com_resumo_hoje.add(aviso.pk)
                     aviso.notificacao_semana_enviada = True
                     aviso.save(update_fields=['notificacao_semana_enviada'])
 
@@ -105,6 +118,32 @@ class Command(BaseCommand):
                 self.stdout.write(
                     f'Resumos de última hora enviados: {enviados_atrasados}'
                 )
+
+        # Lembrete de véspera: avisos com "Lembrar também um dia antes" cujo
+        # ensaio é amanhã. Se o aviso acabou de receber o resumo (domingo ou
+        # última hora) ou um envio manual hoje, a véspera repetiria a mesma
+        # informação: só é marcada como tratada. Como nos demais, só conta como
+        # enviada se alguém recebeu; se tudo falhar, a próxima execução do dia
+        # tenta de novo.
+        enviados_vespera = 0
+        for aviso in avisos_para_vespera(hoje):
+            if aviso.pk in ids_com_resumo_hoje or recebeu_envio_manual_hoje(aviso, hoje):
+                aviso.notificacao_vespera_enviada = True
+                aviso.save(update_fields=['notificacao_vespera_enviada'])
+                continue
+
+            ok, falhas = self._enviar(aviso, TEMPLATE_VESPERA)
+            enviados += ok
+            erros += falhas
+            enviados_vespera += ok
+            if ok > 0:
+                aviso.notificacao_vespera_enviada = True
+                aviso.save(update_fields=['notificacao_vespera_enviada'])
+
+        if enviados_vespera:
+            self.stdout.write(
+                f'Lembretes de véspera enviados: {enviados_vespera}'
+            )
 
         # Lembrete do dia: avisos cujo ensaio é hoje.
         avisos_de_hoje = avisos.filter(

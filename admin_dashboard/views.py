@@ -1221,6 +1221,7 @@ def aviso_criar(request):
             professoras_ids = request.POST.getlist('professoras')
             personagens_ids = request.POST.getlist('personagens')
             enviar_whatsapp = request.POST.get('enviar_whatsapp') == 'on'
+            lembrar_vespera = request.POST.get('lembrar_vespera') == 'on'
 
             # Validacao
             if not all([titulo, descricao, data_evento]):
@@ -1236,6 +1237,7 @@ def aviso_criar(request):
                 tipo=tipo,
                 autor=request.user,
                 enviar_whatsapp=enviar_whatsapp,
+                lembrar_vespera=lembrar_vespera,
             )
 
             if turmas_ids:
@@ -1301,10 +1303,16 @@ def aviso_editar(request, pk):
             # Atualiza dados
             aviso.titulo = request.POST.get('titulo')
             aviso.descricao = request.POST.get('descricao')
-            aviso.data_evento = request.POST.get('data_evento')
+            nova_data = request.POST.get('data_evento')
+            # Se a data mudou, o lembrete de véspera vale de novo para a data
+            # nova (mesmo que o da data antiga já tenha saído).
+            if str(aviso.data_evento) != (nova_data or ''):
+                aviso.notificacao_vespera_enviada = False
+            aviso.data_evento = nova_data
             aviso.horario = request.POST.get('horario', '').strip()
             aviso.tipo = request.POST.get('tipo', 'geral')
             aviso.enviar_whatsapp = request.POST.get('enviar_whatsapp') == 'on'
+            aviso.lembrar_vespera = request.POST.get('lembrar_vespera') == 'on'
 
             aviso.save()
 

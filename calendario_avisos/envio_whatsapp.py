@@ -31,10 +31,12 @@ logger = logging.getLogger(__name__)
 
 TEMPLATE_SEMANA = 'aviso_ensaio_semana'
 TEMPLATE_DIA = 'aviso_ensaio_dia_certo'
+TEMPLATE_VESPERA = 'aviso_ensaio_vespera'
 
 ROTULOS_TEMPLATE = {
     TEMPLATE_SEMANA: 'Aviso do ensaio, com data e horário',
     TEMPLATE_DIA: 'Lembrete de hoje',
+    TEMPLATE_VESPERA: 'Lembrete de amanhã (véspera)',
 }
 
 # Dois envios do mesmo aviso em menos tempo que isso são tratados como clique
@@ -122,11 +124,12 @@ def parametros_base_template(aviso, nome_template):
     Parâmetros do template, SEM o nome do contato (que vai na frente).
 
     aviso_ensaio_dia_certo:  {{1}} nome, {{2}} título, {{3}} horário
+    aviso_ensaio_vespera:    {{1}} nome, {{2}} título, {{3}} horário
     aviso_ensaio_semana:     {{1}} nome, {{2}} título, {{3}} data, {{4}} horário
     """
     horario = aviso.horario or 'horário a confirmar'
 
-    if nome_template == TEMPLATE_DIA:
+    if nome_template in (TEMPLATE_DIA, TEMPLATE_VESPERA):
         return [aviso.titulo, horario]
 
     data_formatada = aviso.data_evento.strftime('%d/%m/%Y')
@@ -198,31 +201,74 @@ def previsao_envio_automatico(aviso, hoje=None):
         )
 
     if aviso.notificacao_semana_enviada:
-        return (
+        texto = (
             'O resumo da semana já foi enviado. O lembrete do dia sai no '
             'dia do ensaio.'
         )
-
-    if hoje.weekday() != 6 and data <= fim_da_semana_em_curso(hoje):
-        return (
+    elif hoje.weekday() != 6 and data <= fim_da_semana_em_curso(hoje):
+        texto = (
             'Este ensaio é desta semana e o resumo ainda não foi enviado: '
             'o sistema envia sozinho no próximo disparo automático diário. '
             'Se preferir avisar agora, use o botão abaixo. O lembrete do '
             'dia sai no dia do ensaio.'
         )
+    else:
+        domingo = domingo_do_resumo(data)
+        if domingo <= hoje:
+            texto = (
+                'O resumo da semana sai no disparo automático de domingo '
+                '(hoje). Se o disparo de hoje já passou, use o botão abaixo. '
+                'O lembrete do dia sai no dia do ensaio.'
+            )
+        else:
+            texto = (
+                f'O resumo da semana será enviado automaticamente no '
+                f'domingo, {domingo:%d/%m}. O lembrete do dia sai no dia do '
+                f'ensaio.'
+            )
 
-    domingo = domingo_do_resumo(data)
-    if domingo <= hoje:
-        return (
-            'O resumo da semana sai no disparo automático de domingo (hoje). '
-            'Se o disparo de hoje já passou, use o botão abaixo. O lembrete '
-            'do dia sai no dia do ensaio.'
-        )
+    return texto + _frase_vespera(aviso, hoje)
 
-    return (
-        f'O resumo da semana será enviado automaticamente no domingo, '
-        f'{domingo:%d/%m}. O lembrete do dia sai no dia do ensaio.'
+
+# ---------------------------------------------------------------------------
+# Lembrete de véspera ("Lembrar também um dia antes")
+# ---------------------------------------------------------------------------
+
+def avisos_para_vespera(hoje):
+    """
+    Avisos marcados com "Lembrar também um dia antes" cujo ensaio é AMANHÃ e
+    que ainda não receberam o lembrete de véspera.
+    """
+    return Aviso.objects.filter(
+        ativo=True,
+        tipo='ensaio',
+        enviar_whatsapp=True,
+        lembrar_vespera=True,
+        data_evento=hoje + timedelta(days=1),
+        notificacao_vespera_enviada=False,
     )
+
+
+def recebeu_envio_manual_hoje(aviso, hoje):
+    """
+    Alguém usou "Enviar agora" neste aviso hoje (e saiu ao menos uma
+    mensagem)? Nesse caso a véspera repetiria a mesma informação.
+    """
+    return aviso.envios_manuais.filter(
+        criado_em__date=hoje, enviados__gt=0
+    ).exists()
+
+
+def _frase_vespera(aviso, hoje):
+    """Complemento da previsão: quando sai o lembrete de véspera, se marcado."""
+    if not aviso.lembrar_vespera or aviso.notificacao_vespera_enviada:
+        return ''
+
+    dia_antes = aviso.data_evento - timedelta(days=1)
+    if dia_antes <= hoje:
+        return ''
+
+    return f' Lembrete de véspera: {dia_antes:%d/%m}, um dia antes.'
 
 
 # ---------------------------------------------------------------------------

@@ -65,6 +65,17 @@ class Aviso(models.Model):
     notificacao_semana_enviada = models.BooleanField(default=False, editable=False)
     notificacao_dia_enviada = models.BooleanField(default=False, editable=False)
 
+    lembrar_vespera = models.BooleanField(
+        default=False,
+        verbose_name='Lembrar também um dia antes',
+        help_text=(
+            'Manda um lembrete por WhatsApp na véspera do ensaio, além do '
+            'resumo da semana e do lembrete do dia. Só vale com "Enviar por '
+            'WhatsApp também" marcado.'
+        ),
+    )
+    notificacao_vespera_enviada = models.BooleanField(default=False, editable=False)
+
     class Meta:
         ordering = ['-data_publicacao']
         verbose_name = 'Aviso'

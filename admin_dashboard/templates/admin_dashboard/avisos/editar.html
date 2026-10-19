@@ -249,6 +249,14 @@
                 <span class="aviso-help">Além de aparecer no site, dispara mensagem de WhatsApp pros destinatários (início da semana e no dia).</span>
             </div>
 
+            <div>
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 600; color: #4a235f; cursor: pointer;">
+                    <input type="checkbox" name="lembrar_vespera" {% if aviso.lembrar_vespera %}checked{% endif %} style="width: 1.1rem; height: 1.1rem;">
+                    Lembrar também um dia antes
+                </label>
+                <span class="aviso-help">Manda mais um lembrete de WhatsApp na véspera do ensaio. Só vale com "Enviar por WhatsApp também" marcado.</span>
+            </div>
+
             <div class="aviso-destinatarios">
                 <p class="aviso-destinatarios-titulo">Para quem é este aviso?</p>
                 <p class="aviso-destinatarios-sub">
