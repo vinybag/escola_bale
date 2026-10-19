@@ -131,6 +131,69 @@
             text-align: center;
         }
     }
+
+    .aviso-envio-card {
+        background: white;
+        padding: 1.5rem 2rem;
+        margin-top: 1.5rem;
+        border-radius: 14px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        border: 1px solid #ece3f2;
+        max-width: 800px;
+    }
+
+    .aviso-envio-card h3 {
+        margin: 0 0 0.35rem;
+        color: #4a235f;
+        font-size: 1.1rem;
+    }
+
+    .aviso-envio-card p {
+        margin: 0.35rem 0;
+        color: #5c5c66;
+        font-size: 0.92rem;
+    }
+
+    .aviso-envio-bloqueio {
+        padding: 0.7rem 0.9rem;
+        border-radius: 8px;
+        background: #fff8e6;
+        color: #7a5600;
+        font-size: 0.9rem;
+    }
+
+    .aviso-envio-historico {
+        margin: 0.75rem 0 0;
+        padding: 0;
+        list-style: none;
+        font-size: 0.85rem;
+        color: #5c5c66;
+    }
+
+    .aviso-envio-historico li {
+        padding: 0.35rem 0;
+        border-top: 1px solid #f0eaf3;
+    }
+
+    .aviso-envio-erro {
+        color: #a83245;
+    }
+
+    .aviso-envio-botao {
+        display: inline-block;
+        margin-top: 0.75rem;
+        padding: 0.7rem 1.3rem;
+        border-radius: 8px;
+        background: #1fa855;
+        color: #fff;
+        font-weight: 700;
+        text-decoration: none;
+    }
+
+    .aviso-envio-botao:hover {
+        background: #188a45;
+        color: #fff;
+    }
 </style>
 {% endblock %}
 
@@ -265,6 +328,51 @@
 
         </div>
     </form>
+</div>
+
+<div class="aviso-envio-card">
+    <h3>Enviar agora por WhatsApp</h3>
+    <p>
+        Use quando este aviso foi criado ou esquecido depois do envio de
+        domingo. O sistema avisa as pessoas na hora, em vez de esperar o
+        lembrete do dia.
+    </p>
+
+    {% if envio_motivo_bloqueio %}
+        <div class="aviso-envio-bloqueio">{{ envio_motivo_bloqueio }}</div>
+    {% else %}
+        {% if envio_situacao.template %}
+            <p>
+                <strong>Mensagem:</strong> {{ envio_situacao.rotulo }}.
+                {% if envio_situacao.ja_enviado %}
+                    <strong>Já foi enviada antes</strong> (pelo sistema ou
+                    manualmente), por isso será pedida uma confirmação.
+                {% else %}
+                    Ainda não foi enviada.
+                {% endif %}
+            </p>
+        {% endif %}
+
+        <p>
+            O envio usa o aviso <strong>como está salvo</strong>. Se mudou
+            algo no formulário acima, clique em "Salvar Alterações" antes.
+        </p>
+
+        <a href="{% url 'admin_dashboard:aviso_enviar_agora' aviso.pk %}"
+           class="aviso-envio-botao">Enviar agora…</a>
+    {% endif %}
+
+    {% if envio_historico %}
+        <ul class="aviso-envio-historico">
+            {% for envio in envio_historico %}
+                <li>
+                    {{ envio.criado_em|date:"d/m/Y H:i" }}
+                    {% if envio.enviado_por %}por {{ envio.enviado_por.get_full_name|default:envio.enviado_por.username }}{% endif %}
+                    — {{ envio.enviados }} enviada(s){% if envio.erros %}, <span class="aviso-envio-erro">{{ envio.erros }} falha(s)</span>{% endif %}{% if not envio.concluido %} <em>(não concluído)</em>{% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
 </div>
 
 <script>

@@ -33,6 +33,7 @@ urlpatterns = [
     path('avisos/', views.avisos_list, name='avisos_list'),
     path('avisos/criar/', views.aviso_criar, name='aviso_criar'),
     path('avisos/<int:pk>/editar/', views.aviso_editar, name='aviso_editar'),
+    path('avisos/<int:pk>/enviar-agora/', views.aviso_enviar_agora, name='aviso_enviar_agora'),
     path('avisos/<int:pk>/excluir/', views.aviso_excluir, name='aviso_excluir'),
     path('avisos/ajax/alunas-por-turmas/',views.alunas_por_turmas_multiplas,name='alunas_por_turmas_multiplas',),
     

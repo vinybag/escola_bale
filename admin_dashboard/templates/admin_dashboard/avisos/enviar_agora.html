@@ -1,0 +1,253 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Enviar aviso agora{% endblock %}
+
+{% block extra_css %}
+<style>
+    .envio-card {
+        background: white;
+        padding: 1.75rem 2rem;
+        margin-bottom: 1.25rem;
+        border-radius: 14px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        border: 1px solid #ece3f2;
+        max-width: 800px;
+    }
+
+    .envio-card h3 {
+        margin: 0 0 0.6rem;
+        color: #4a235f;
+        font-size: 1.1rem;
+    }
+
+    .envio-linha {
+        margin: 0.3rem 0;
+        color: #44384c;
+    }
+
+    .envio-linha span {
+        color: #7a7280;
+    }
+
+    .envio-aviso {
+        padding: 0.8rem 1rem;
+        margin-bottom: 1rem;
+        border-radius: 8px;
+        background: #fff8e6;
+        color: #7a5600;
+        font-size: 0.92rem;
+    }
+
+    .envio-bloqueio {
+        padding: 0.9rem 1rem;
+        border-radius: 8px;
+        background: #fde2e5;
+        color: #a83245;
+        font-weight: 600;
+    }
+
+    .envio-tabela-wrap {
+        max-height: 320px;
+        overflow-y: auto;
+        border: 1px solid #f0eaf3;
+        border-radius: 8px;
+    }
+
+    .envio-tabela {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+    }
+
+    .envio-tabela th {
+        position: sticky;
+        top: 0;
+        padding: 0.55rem 0.8rem;
+        background: #f7f2fa;
+        color: #4a235f;
+        text-align: left;
+        font-size: 0.78rem;
+        text-transform: uppercase;
+    }
+
+    .envio-tabela td {
+        padding: 0.5rem 0.8rem;
+        border-top: 1px solid #f0eaf3;
+    }
+
+    .envio-acoes {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-top: 1rem;
+    }
+
+    .envio-enviar {
+        padding: 0.8rem 1.5rem;
+        border: none;
+        border-radius: 8px;
+        background: #1fa855;
+        color: #fff;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .envio-enviar:disabled {
+        background: #9bc9ad;
+        cursor: wait;
+    }
+
+    .envio-voltar {
+        color: #6b2d8f;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    .envio-historico {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        font-size: 0.88rem;
+        color: #5c5c66;
+    }
+
+    .envio-historico li {
+        padding: 0.35rem 0;
+        border-top: 1px solid #f0eaf3;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2 style="color: #4a235f; margin-bottom: 0.35rem;">Enviar aviso agora</h2>
+    <p style="color: #6c757d; margin: 0;">{{ aviso.titulo }}</p>
+</div>
+
+{% if motivo_bloqueio %}
+    <div class="envio-card">
+        <div class="envio-bloqueio">{{ motivo_bloqueio }}</div>
+        <div class="envio-acoes">
+            <a class="envio-voltar" href="{% url 'admin_dashboard:aviso_editar' aviso.pk %}">← Voltar para o aviso</a>
+        </div>
+    </div>
+{% else %}
+
+    <div class="envio-card">
+        <h3>O que será enviado</h3>
+        <p class="envio-linha"><span>Mensagem:</span> {{ situacao.rotulo }}</p>
+        <p class="envio-linha"><span>Ensaio:</span> {{ aviso.titulo }}</p>
+        <p class="envio-linha"><span>Data:</span> {{ aviso.data_evento|date:"l, d/m/Y" }}</p>
+        <p class="envio-linha"><span>Horário:</span> {{ aviso.horario|default:"horário a confirmar" }}</p>
+    </div>
+
+    <div class="envio-card">
+        <h3>Para quem ({{ destinatarios|length }})</h3>
+
+        {% if destinatarios %}
+            <div class="envio-tabela-wrap">
+                <table class="envio-tabela">
+                    <thead>
+                        <tr>
+                            <th>Contato</th>
+                            <th>Aluna</th>
+                            <th>WhatsApp</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for d in destinatarios %}
+                            <tr>
+                                <td>{{ d.contato }}</td>
+                                <td>{{ d.aluna|default:"—" }}</td>
+                                <td>final {{ d.final }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="envio-bloqueio">
+                Nenhum destinatário tem WhatsApp cadastrado para este aviso.
+            </div>
+        {% endif %}
+
+        {% if sem_whatsapp %}
+            <p class="envio-aviso" style="margin-top: 1rem;">
+                <strong>{{ sem_whatsapp|length }}</strong> pessoa(s) deveriam
+                receber, mas não têm telefone cadastrado e <strong>não
+                receberão</strong>: {{ sem_whatsapp|join:", " }}.
+            </p>
+        {% endif %}
+    </div>
+
+    {% if historico %}
+        <div class="envio-card">
+            <h3>Envios manuais anteriores</h3>
+            <ul class="envio-historico">
+                {% for envio in historico %}
+                    <li>
+                        {{ envio.criado_em|date:"d/m/Y H:i" }}
+                        {% if envio.enviado_por %}por {{ envio.enviado_por.get_full_name|default:envio.enviado_por.username }}{% endif %}
+                        — {{ envio.enviados }} enviada(s){% if envio.erros %}, {{ envio.erros }} falha(s){% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    {% if destinatarios %}
+        <div class="envio-card">
+            <form method="post" id="form-enviar-agora">
+                {% csrf_token %}
+
+                {% if situacao.ja_enviado %}
+                    <p class="envio-aviso">
+                        <strong>Atenção:</strong> as pessoas já receberam esta
+                        mensagem (pelo envio automático ou por um envio manual).
+                        Se enviar de novo, elas receberão outra vez.
+                    </p>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 600; color: #4a235f; cursor: pointer;">
+                        <input type="checkbox" name="confirmo_reenvio" required style="width: 1.1rem; height: 1.1rem;">
+                        Entendo e quero enviar novamente
+                    </label>
+                {% endif %}
+
+                <div class="envio-acoes">
+                    <button type="submit" class="envio-enviar" id="btn-enviar-agora">
+                        Enviar para {{ destinatarios|length }} pessoa(s)
+                    </button>
+                    <a class="envio-voltar" href="{% url 'admin_dashboard:aviso_editar' aviso.pk %}">Cancelar</a>
+                </div>
+            </form>
+        </div>
+
+        <script>
+        (function () {
+            var botao = document.getElementById('btn-enviar-agora');
+            var textoOriginal = botao.textContent;
+
+            document.getElementById('form-enviar-agora').addEventListener('submit', function () {
+                // Evita clique duplo: o envio leva alguns segundos.
+                botao.disabled = true;
+                botao.textContent = 'Enviando… não feche esta página';
+            });
+
+            // Voltar pelo navegador não pode deixar o botão travado.
+            window.addEventListener('pageshow', function (evento) {
+                if (evento.persisted) {
+                    botao.disabled = false;
+                    botao.textContent = textoOriginal;
+                }
+            });
+        })();
+        </script>
+    {% else %}
+        <div class="envio-card">
+            <a class="envio-voltar" href="{% url 'admin_dashboard:aviso_editar' aviso.pk %}">← Voltar para o aviso</a>
+        </div>
+    {% endif %}
+
+{% endif %}
+{% endblock %}

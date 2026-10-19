@@ -155,3 +155,49 @@ class Aviso(models.Model):
             .values_list('id', flat=True)
         )
         return Aluna.objects.filter(id__in=ids)
+
+
+class AvisoEnvioManual(models.Model):
+    """
+    Registro de cada vez que alguém usou o botão "Enviar agora por WhatsApp"
+    na edição de um aviso.
+
+    Serve para três coisas:
+      * mostrar na própria tela do aviso quando e por quem foi enviado;
+      * impedir envio duplicado por clique duplo (dois cliques seguidos);
+      * avisar, antes de enviar de novo, que as pessoas já receberam.
+
+    Guarda só contagens e o nome de quem falhou, nunca telefones.
+    """
+
+    aviso = models.ForeignKey(
+        Aviso,
+        on_delete=models.CASCADE,
+        related_name='envios_manuais',
+    )
+    enviado_por = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='+',
+    )
+    # Nome do template da Meta usado (aviso_ensaio_semana / aviso_ensaio_dia_certo).
+    template = models.CharField(max_length=60)
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    total_destinatarios = models.PositiveIntegerField(default=0)
+    enviados = models.PositiveIntegerField(default=0)
+    erros = models.PositiveIntegerField(default=0)
+    detalhe_erros = models.TextField(blank=True)
+
+    # False enquanto o envio está em andamento (ou se foi interrompido).
+    concluido = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['-criado_em']
+        verbose_name = 'Envio manual de aviso'
+        verbose_name_plural = 'Envios manuais de avisos'
+
+    def __str__(self):
+        return f'{self.aviso} - {self.criado_em:%d/%m/%Y %H:%M}'

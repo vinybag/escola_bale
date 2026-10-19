@@ -21,55 +21,20 @@ from datetime import timedelta
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
+from calendario_avisos.envio_whatsapp import (
+    destinatarios_do_aviso,
+    parametros_base_template,
+    telefone_valido,
+)
 from calendario_avisos.models import Aviso
 from pagamentos.services_whatsapp import enviar_whatsapp_template
 
 
-def _telefone_valido(user):
-    """
-    Mesma lógica usada no comando de avisos de mensalidade: pega o
-    telefone do Perfil do usuário e formata pro padrão que a API do
-    WhatsApp espera (só dígitos, com o 55 na frente).
-    """
-    if not user or not hasattr(user, 'perfil'):
-        return None
-
-    telefone = user.perfil.telefone
-    if not telefone:
-        return None
-
-    numero = ''.join(filter(str.isdigit, telefone))
-    if not numero.startswith('55'):
-        numero = '55' + numero
-
-    return numero
-
-
-def _destinatarios_do_aviso(aviso):
-    """
-    Retorna uma lista de tuplas (nome, numero_whatsapp), sem duplicar
-    a mesma pessoa, juntando alunas (via responsável ou conta própria,
-    se for aluna adulta) e professoras.
-    """
-    destinatarios = {}
-
-    for aluna in aviso.alunas_destinatarias():
-        user_contato = aluna.usuario if aluna.usuario_id else aluna.responsavel
-        numero = _telefone_valido(user_contato)
-        if numero and numero not in destinatarios:
-            nome_contato = user_contato.get_full_name() or user_contato.username
-            destinatarios[numero] = (nome_contato, aluna.nome)
-
-    for professora in aviso.professoras.all():
-        numero = _telefone_valido(professora)
-        if numero and numero not in destinatarios:
-            nome_contato = professora.get_full_name() or professora.username
-            destinatarios[numero] = (nome_contato, None)
-
-    return [
-        (numero, nome_contato, nome_aluna)
-        for numero, (nome_contato, nome_aluna) in destinatarios.items()
-    ]
+# A lógica de destinatários e de parâmetros fica em envio_whatsapp.py, porque
+# o botão "Enviar agora" (edição do aviso) usa exatamente a mesma. Os nomes
+# antigos continuam existindo aqui.
+_telefone_valido = telefone_valido
+_destinatarios_do_aviso = destinatarios_do_aviso
 
 
 class Command(BaseCommand):
@@ -134,16 +99,9 @@ class Command(BaseCommand):
         enviados = 0
         erros = 0
 
-        data_formatada = aviso.data_evento.strftime('%d/%m/%Y')
-        horario = aviso.horario or 'horário a confirmar'
-
-        if nome_template == 'aviso_ensaio_dia_certo':
-            # {{1}} nome do contato, {{2}} título do aviso, {{3}} horário
-            parametros_base = [aviso.titulo, horario]
-
-        else:
-            # aviso_ensaio_semana: {{1}} nome, {{2}} título, {{3}} data, {{4}} horário
-            parametros_base = [aviso.titulo, data_formatada, horario]
+        # {{1}} é o nome do contato (vai na frente, abaixo); o resto depende
+        # do template. Ver parametros_base_template.
+        parametros_base = parametros_base_template(aviso, nome_template)
 
         for numero, nome_contato, nome_aluna in _destinatarios_do_aviso(aviso):
             parametros = [nome_contato] + parametros_base

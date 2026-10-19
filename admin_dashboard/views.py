@@ -1365,7 +1365,120 @@ def aviso_editar(request, pk):
         'personagens_selecionados_ids': personagens_selecionados_ids,
     }
 
+    # Bloco "Enviar agora por WhatsApp" (ver aviso_enviar_agora).
+    from calendario_avisos.envio_whatsapp import (
+        historico_de_envios,
+        motivo_bloqueio,
+        situacao_do_envio,
+    )
+    context['envio_motivo_bloqueio'] = motivo_bloqueio(aviso)
+    context['envio_situacao'] = situacao_do_envio(aviso)
+    context['envio_historico'] = historico_de_envios(aviso)
+
     return render(request, 'admin_dashboard/avisos/editar.html', context)
+
+
+@login_required
+def aviso_enviar_agora(request, pk):
+    """
+    "Enviar agora por WhatsApp": dispara na hora o aviso de ensaio para os
+    destinatários, para quando o aviso foi criado ou esquecido depois do
+    envio de domingo (o cron só olha a semana seguinte aos domingos).
+
+    GET  -> tela de confirmação: mostra o que será enviado e para quem.
+    POST -> envia. Marca os mesmos controles do cron, então o cron não manda
+            a mesma mensagem de novo.
+    """
+    if not request.user.is_staff:
+        return redirect('home')
+
+    from django.http import HttpResponseNotAllowed
+
+    from calendario_avisos.envio_whatsapp import (
+        EnvioNaoPermitido,
+        ReenvioPrecisaConfirmacao,
+        contatos_sem_whatsapp,
+        destinatarios_do_aviso,
+        enviar_agora,
+        historico_de_envios,
+        motivo_bloqueio,
+        situacao_do_envio,
+    )
+    from calendario_avisos.models import Aviso
+
+    if request.method not in ('GET', 'POST'):
+        return HttpResponseNotAllowed(['GET', 'POST'])
+
+    aviso = get_object_or_404(Aviso, pk=pk)
+
+    if request.method == 'POST':
+        try:
+            resultado = enviar_agora(
+                aviso,
+                request.user,
+                confirmou_reenvio=request.POST.get('confirmo_reenvio') == 'on',
+            )
+        except ReenvioPrecisaConfirmacao as exc:
+            messages.error(request, str(exc))
+            return redirect('admin_dashboard:aviso_enviar_agora', pk=pk)
+        except EnvioNaoPermitido as exc:
+            messages.error(request, str(exc))
+            return redirect('admin_dashboard:aviso_editar', pk=pk)
+
+        if resultado.erros == 0:
+            messages.success(
+                request,
+                f'Aviso "{aviso.titulo}" enviado para '
+                f'{resultado.enviados} pessoa(s).',
+            )
+        else:
+            nomes = '; '.join(
+                f'{nome} ({motivo})'
+                for nome, motivo in resultado.falhas[:10]
+            )
+            mais = resultado.erros - 10
+            if mais > 0:
+                nomes += f'; e mais {mais}'
+
+            # O base.html só estiliza sucesso e erro: falha parcial usa o
+            # estilo de erro para a secretaria não deixar passar.
+            if resultado.enviados > 0:
+                messages.error(
+                    request,
+                    f'Enviado para {resultado.enviados} de {resultado.total} '
+                    f'pessoa(s). Não foi possível enviar para: {nomes}',
+                )
+            else:
+                messages.error(
+                    request,
+                    f'Nenhuma mensagem foi enviada. Motivo: {nomes}',
+                )
+
+        return redirect('admin_dashboard:aviso_editar', pk=pk)
+
+    # GET: tela de confirmação
+    context = {
+        'aviso': aviso,
+        'motivo_bloqueio': motivo_bloqueio(aviso),
+    }
+
+    if not context['motivo_bloqueio']:
+        destinatarios = destinatarios_do_aviso(aviso)
+        context.update({
+            'situacao': situacao_do_envio(aviso),
+            # Só o final do número: o suficiente para conferir, sem expor
+            # telefone inteiro numa tela de conferência.
+            'destinatarios': [
+                {'contato': contato, 'aluna': aluna, 'final': numero[-4:]}
+                for numero, contato, aluna in destinatarios
+            ],
+            'sem_whatsapp': contatos_sem_whatsapp(aviso),
+            'historico': historico_de_envios(aviso),
+        })
+
+    return render(
+        request, 'admin_dashboard/avisos/enviar_agora.html', context
+    )
 
 
 @login_required
