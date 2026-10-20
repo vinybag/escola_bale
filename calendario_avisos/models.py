@@ -212,3 +212,38 @@ class AvisoEnvioManual(models.Model):
 
     def __str__(self):
         return f'{self.aviso} - {self.criado_em:%d/%m/%Y %H:%M}'
+
+
+class AvisoEnvioAutomatico(models.Model):
+    """
+    Resultado de cada envio feito pelo comando agendado (cron): resumo da
+    semana, lembrete de véspera e lembrete do dia.
+
+    Existe porque a marca "já enviei" do aviso NÃO prova que deu certo (o
+    resumo de domingo é marcado mesmo que todas as mensagens falhem). Este
+    registro guarda quantas mensagens saíram e quantas falharam, e é ele que
+    permite o pin "Já enviado" dizer a verdade.
+
+    Guarda só contagens, nunca telefones nem nomes.
+    """
+
+    aviso = models.ForeignKey(
+        Aviso,
+        on_delete=models.CASCADE,
+        related_name='envios_automaticos',
+    )
+    # Nome do template da Meta (aviso_ensaio_semana / _vespera / _dia_certo).
+    template = models.CharField(max_length=60)
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    total_destinatarios = models.PositiveIntegerField(default=0)
+    enviados = models.PositiveIntegerField(default=0)
+    erros = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ['-criado_em']
+        verbose_name = 'Envio automático de aviso'
+        verbose_name_plural = 'Envios automáticos de avisos'
+
+    def __str__(self):
+        return f'{self.aviso} - {self.template} - {self.criado_em:%d/%m/%Y %H:%M}'

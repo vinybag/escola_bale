@@ -18,6 +18,7 @@ mandar a mesma mensagem outra vez.
 """
 
 import logging
+from collections import defaultdict, namedtuple
 from datetime import timedelta
 
 from django.db import transaction
@@ -25,7 +26,7 @@ from django.utils import timezone
 
 from pagamentos.services_whatsapp import enviar_whatsapp_template
 
-from .models import Aviso, AvisoEnvioManual
+from .models import Aviso, AvisoEnvioAutomatico, AvisoEnvioManual
 
 logger = logging.getLogger(__name__)
 
@@ -269,6 +270,157 @@ def _frase_vespera(aviso, hoje):
         return ''
 
     return f' Lembrete de véspera: {dia_antes:%d/%m}, um dia antes.'
+
+
+# ---------------------------------------------------------------------------
+# Pin "Já enviado" (listagem e edição dos avisos)
+# ---------------------------------------------------------------------------
+
+PIN_ENVIADO = 'enviado'
+PIN_FALHAS = 'falhas'
+
+PinEnvio = namedtuple('PinEnvio', 'estado rotulo dica')
+
+ROTULOS_CURTOS = {
+    TEMPLATE_SEMANA: 'Resumo da semana',
+    TEMPLATE_VESPERA: 'Véspera',
+    TEMPLATE_DIA: 'Lembrete do dia',
+}
+
+DICA_ENVIADO = (
+    'Enviado por WhatsApp, sem falhas. Veja o histórico na edição do aviso.'
+)
+DICA_FALHAS = (
+    'Enviado por WhatsApp, mas houve falhas para algumas pessoas. Veja o '
+    'histórico na edição do aviso.'
+)
+DICA_LEGADO = (
+    'Enviado por WhatsApp. Este aviso foi enviado antes do registro de '
+    'entrega, então não há como saber se houve falhas.'
+)
+
+
+def _pin_pelo_controle_antigo(aviso):
+    """
+    Avisos enviados ANTES do registro de entrega só têm a marca "já enviei".
+    Ela não diz se houve falhas, por isso a dica avisa.
+    """
+    if (
+        aviso.notificacao_semana_enviada
+        or aviso.notificacao_dia_enviada
+        or aviso.notificacao_vespera_enviada
+    ):
+        return PinEnvio(PIN_ENVIADO, 'Já enviado', DICA_LEGADO)
+    return None
+
+
+def pin_de_envio_por_aviso(avisos):
+    """
+    Devolve {aviso.pk: PinEnvio ou None} para uma lista de avisos, com
+    apenas duas consultas (não uma por aviso).
+
+    Regras:
+      * com registro de envio (automático ou manual): olha o que de fato
+        saiu. Verde "Já enviado" se alguma mensagem saiu e a ÚLTIMA tentativa
+        de cada tipo de mensagem não teve falhas; amarelo "Enviado com
+        falhas" se a última tentativa teve falhas; sem pin se nenhuma saiu;
+      * sem nenhum registro (aviso antigo): usa a marca antiga, com a dica
+        explicando que não dá para saber se houve falhas.
+    """
+    avisos = list(avisos)
+    if not avisos:
+        return {}
+
+    ids = [aviso.pk for aviso in avisos]
+    registros = defaultdict(list)  # aviso_id -> [(criado_em, template, enviados, erros)]
+
+    campos = ('aviso_id', 'template', 'enviados', 'erros', 'criado_em')
+    # Envio manual ainda em andamento (ou interrompido) não conta.
+    manuais = AvisoEnvioManual.objects.filter(aviso_id__in=ids, concluido=True)
+    automaticos = AvisoEnvioAutomatico.objects.filter(aviso_id__in=ids)
+
+    for consulta in (manuais, automaticos):
+        for aviso_id, template, enviados, erros, criado_em in consulta.values_list(*campos):
+            registros[aviso_id].append((criado_em, template, enviados, erros))
+
+    pins = {}
+    for aviso in avisos:
+        regs = sorted(registros.get(aviso.pk, []))
+
+        if not regs:
+            pins[aviso.pk] = _pin_pelo_controle_antigo(aviso)
+            continue
+
+        por_template = {}
+        for _criado_em, template, enviados, erros in regs:  # do mais antigo ao mais novo
+            info = por_template.setdefault(
+                template, {'saiu_algum': False, 'ultima_com_falhas': False}
+            )
+            if enviados > 0:
+                info['saiu_algum'] = True
+            info['ultima_com_falhas'] = erros > 0
+
+        com_envio = [i for i in por_template.values() if i['saiu_algum']]
+
+        if not com_envio:
+            pins[aviso.pk] = None  # tentou, mas nada saiu
+        elif any(i['ultima_com_falhas'] for i in com_envio):
+            pins[aviso.pk] = PinEnvio(PIN_FALHAS, 'Enviado com falhas', DICA_FALHAS)
+        else:
+            pins[aviso.pk] = PinEnvio(PIN_ENVIADO, 'Já enviado', DICA_ENVIADO)
+
+    return pins
+
+
+def anexar_pin_de_envio(avisos):
+    """
+    Coloca o atributo `pin` em cada aviso. Se algo der errado ao calcular, a
+    listagem continua funcionando, só sem o pin (nunca esconde os avisos).
+    """
+    avisos = list(avisos)
+    try:
+        pins = pin_de_envio_por_aviso(avisos)
+    except Exception:
+        logger.exception('Erro ao calcular o pin de envio dos avisos')
+        pins = {}
+
+    for aviso in avisos:
+        aviso.pin = pins.get(aviso.pk)
+
+    return avisos
+
+
+def historico_completo(aviso, limite=8):
+    """
+    Envios deste aviso (automáticos e manuais) do mais recente ao mais
+    antigo, num formato único para a tela de edição.
+    """
+    itens = []
+
+    for envio in aviso.envios_manuais.select_related('enviado_por')[:limite]:
+        quem = envio.enviado_por
+        nome = (quem.get_full_name() or quem.username) if quem else ''
+        itens.append({
+            'criado_em': envio.criado_em,
+            'rotulo': ROTULOS_CURTOS.get(envio.template, envio.template),
+            'por': f'por {nome}' if nome else 'manual',
+            'enviados': envio.enviados,
+            'erros': envio.erros,
+            'concluido': envio.concluido,
+        })
+
+    for envio in aviso.envios_automaticos.all()[:limite]:
+        itens.append({
+            'criado_em': envio.criado_em,
+            'rotulo': ROTULOS_CURTOS.get(envio.template, envio.template),
+            'por': 'automático',
+            'enviados': envio.enviados,
+            'erros': envio.erros,
+            'concluido': True,
+        })
+
+    itens.sort(key=lambda item: item['criado_em'], reverse=True)
+    return itens[:limite]
 
 
 # ---------------------------------------------------------------------------

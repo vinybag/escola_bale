@@ -1173,6 +1173,11 @@ def avisos_list(request):
 
         total_avisos = avisos.count()
 
+        # Pin "Já enviado" (só quem foi enviado por WhatsApp). Falha aqui
+        # nunca esconde a listagem.
+        from calendario_avisos.envio_whatsapp import anexar_pin_de_envio
+        avisos = anexar_pin_de_envio(avisos)
+
     except Exception as e:
         print(f"Erro ao buscar avisos: {e}")
         import traceback
@@ -1375,18 +1380,21 @@ def aviso_editar(request, pk):
 
     # Bloco "Enviar agora por WhatsApp" (ver aviso_enviar_agora).
     from calendario_avisos.envio_whatsapp import (
-        historico_de_envios,
+        anexar_pin_de_envio,
+        historico_completo,
         motivo_bloqueio,
         previsao_envio_automatico,
         situacao_do_envio,
     )
+    anexar_pin_de_envio([aviso])
+    context['envio_pin'] = aviso.pin
     context['envio_motivo_bloqueio'] = motivo_bloqueio(aviso)
     context['envio_previsao'] = (
         '' if context['envio_motivo_bloqueio']
         else previsao_envio_automatico(aviso)
     )
     context['envio_situacao'] = situacao_do_envio(aviso)
-    context['envio_historico'] = historico_de_envios(aviso)
+    context['envio_historico'] = historico_completo(aviso)
 
     return render(request, 'admin_dashboard/avisos/editar.html', context)
 

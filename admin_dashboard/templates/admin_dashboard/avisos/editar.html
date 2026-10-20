@@ -200,7 +200,12 @@
 {% block content %}
 <div class="page-header">
     <h2 style="color: #4a235f; margin-bottom: 0.35rem;">Editar Aviso</h2>
-    <p style="color: #6c757d; margin: 0;">{{ aviso.titulo }}</p>
+    <p style="color: #6c757d; margin: 0;">
+        {{ aviso.titulo }}
+        {% if envio_pin %}
+            <span class="aviso-pin {{ envio_pin.estado }}" title="{{ envio_pin.dica }}" style="margin-left: 0.5rem;">{{ envio_pin.rotulo }}</span>
+        {% endif %}
+    </p>
 </div>
 
 <div class="aviso-form-card">
@@ -378,8 +383,7 @@
         <ul class="aviso-envio-historico">
             {% for envio in envio_historico %}
                 <li>
-                    {{ envio.criado_em|date:"d/m/Y H:i" }}
-                    {% if envio.enviado_por %}por {{ envio.enviado_por.get_full_name|default:envio.enviado_por.username }}{% endif %}
+                    {{ envio.criado_em|date:"d/m/Y H:i" }} · {{ envio.rotulo }} · {{ envio.por }}
                     — {{ envio.enviados }} enviada(s){% if envio.erros %}, <span class="aviso-envio-erro">{{ envio.erros }} falha(s)</span>{% endif %}{% if not envio.concluido %} <em>(não concluído)</em>{% endif %}
                 </li>
             {% endfor %}

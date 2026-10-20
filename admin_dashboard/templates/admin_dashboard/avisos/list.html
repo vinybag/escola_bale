@@ -361,6 +361,9 @@
                     <span class="aviso-badge {{ aviso.tipo }}">
                         {{ aviso.get_tipo_display }}
                     </span>
+                    {% if aviso.pin %}
+                        <span class="aviso-pin {{ aviso.pin.estado }}" title="{{ aviso.pin.dica }}">{{ aviso.pin.rotulo }}</span>
+                    {% endif %}
                 </div>
                 <p class="aviso-meta">
                     Data: {{ aviso.data_evento|date:"d/m/Y" }}

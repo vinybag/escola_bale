@@ -38,7 +38,7 @@ from calendario_avisos.envio_whatsapp import (
     recebeu_envio_manual_hoje,
     telefone_valido,
 )
-from calendario_avisos.models import Aviso
+from calendario_avisos.models import Aviso, AvisoEnvioAutomatico
 from pagamentos.services_whatsapp import enviar_whatsapp_template
 
 
@@ -180,4 +180,28 @@ class Command(BaseCommand):
                     f'Falha ao enviar para {numero} ({nome_contato}): {status} - {resposta_json}'
                 ))
 
+        self._registrar_envio(aviso, nome_template, enviados, erros)
+
         return enviados, erros
+
+    def _registrar_envio(self, aviso, nome_template, enviados, erros):
+        """
+        Guarda quantas mensagens saíram e quantas falharam. É isso que o pin
+        "Já enviado" dos avisos usa para dizer se deu tudo certo. Uma falha ao
+        registrar nunca pode atrapalhar o envio em si.
+        """
+        if enviados + erros == 0:
+            return
+
+        try:
+            AvisoEnvioAutomatico.objects.create(
+                aviso=aviso,
+                template=nome_template,
+                total_destinatarios=enviados + erros,
+                enviados=enviados,
+                erros=erros,
+            )
+        except Exception as exc:
+            self.stdout.write(self.style.ERROR(
+                f'Não foi possível registrar o envio do aviso {aviso.pk}: {exc}'
+            ))
