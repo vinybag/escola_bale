@@ -2598,13 +2598,17 @@ def agendar_maquiagem(request, pk):
         messages.error(request, f'{aluna.nome} não tem nenhuma turma vinculada.')
         return redirect('espetaculo:evento_detalhe_publico', pk=espetaculo.pk)
 
-    agenda = AgendaMaquiagemTurma.objects.filter(
-        espetaculo=espetaculo,
-        turma=turma_aluna,
-        ativo=True,
-    ).first()
+    # A turma pode ter mais de uma agenda (uma por maquiadora): a aluna vê os
+    # horários de todas, e cada horário informa a maquiadora.
+    agendas = list(
+        AgendaMaquiagemTurma.objects.filter(
+            espetaculo=espetaculo,
+            turma=turma_aluna,
+            ativo=True,
+        ).order_by('maquiadora', 'id')
+    )
 
-    if not agenda:
+    if not agendas:
         messages.error(
             request,
             f'Ainda não há horários de maquiagem disponíveis para a turma de {aluna.nome}.'
@@ -2627,21 +2631,26 @@ def agendar_maquiagem(request, pk):
             'Você pode agendar para mais de uma aluna. Selecione qual deseja agendar acima.'
         )
 
-    HorarioMaquiagem.liberar_expirados(agenda=agenda)
+    for agenda_da_turma in agendas:
+        HorarioMaquiagem.liberar_expirados(agenda=agenda_da_turma)
 
     if not request.session.session_key:
         request.session.create()
 
-    horarios_disponiveis = agenda.horarios.filter(
-        status='disponivel'
-    ).order_by('horario')
+    horarios_disponiveis = HorarioMaquiagem.objects.filter(
+        agenda__in=agendas,
+        status='disponivel',
+    ).select_related('agenda').order_by('horario', 'agenda__maquiadora', 'id')
 
     return render(
         request,
         'espetaculo/agendar_maquiagem.html',
         {
             'espetaculo': espetaculo,
-            'agenda': agenda,
+            'agenda': agendas[0],
+            'agendas': agendas,
+            'varias_maquiadoras': len(agendas) > 1,
+            'maquiadoras_texto': ', '.join(a.maquiadora for a in agendas),
             'horarios_disponiveis': horarios_disponiveis,
             'tipos_servico': AgendamentoMaquiagem.TIPO_CHOICES,
             'aluna': aluna,
@@ -2666,6 +2675,7 @@ def reservar_horario_maquiagem(request, pk, horario_id):
         pk=horario_id,
         agenda__espetaculo=espetaculo,
         agenda__turma=turma_aluna,
+        agenda__ativo=True,
     )
 
     if not request.session.session_key:

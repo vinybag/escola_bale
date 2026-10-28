@@ -398,7 +398,11 @@
 
         <!-- CRIAR / EDITAR AGENDA DA TURMA -->
         <div class="maq-card">
-            <h3 class="maq-card-title">Definir maquiadora da turma</h3>
+            <h3 class="maq-card-title">Adicionar maquiadora a uma turma</h3>
+            <p style="margin: 0 0 0.9rem; color: #6c757d; font-size: 0.88rem;">
+                Para a mesma turma ter mais de uma maquiadora, adicione a turma de novo
+                com outro nome. As alunas veem os horários de todas as maquiadoras da turma.
+            </p>
 
             <div class="maq-form-wrapper">
                 <form method="post" class="maq-form maq-form-3">
@@ -421,7 +425,7 @@
                     </div>
 
                     <div class="maq-submit">
-                        <button type="submit" class="maq-btn">Salvar</button>
+                        <button type="submit" class="maq-btn">Adicionar</button>
                     </div>
                 </form>
             </div>
@@ -429,7 +433,7 @@
 
         <!-- LISTA DE AGENDAS (TURMAS JÁ CONFIGURADAS) -->
         <div class="maq-card">
-            <h3 class="maq-card-title">Turmas configuradas</h3>
+            <h3 class="maq-card-title">Turmas e maquiadoras configuradas</h3>
 
             {% if agendas %}
                 <div class="maq-agendas-lista">
@@ -439,7 +443,7 @@
                             href="?agenda_id={{ agenda.id }}"
                         >
                             <strong>{{ agenda.turma.nome }}</strong>
-                            <span>{{ agenda.maquiadora }} · {{ agenda.total_disponiveis }} livres / {{ agenda.total_horarios }}</span>
+                            <span>{{ agenda.maquiadora }} · {{ agenda.total_disponiveis }} livres / {{ agenda.total_horarios }}{% if not agenda.ativo %} · <em>desativada</em>{% endif %}</span>
                         </a>
                     {% endfor %}
                 </div>
@@ -454,7 +458,29 @@
             <div class="maq-card">
                 <h3 class="maq-card-title">
                     Horários - {{ agenda_selecionada.turma.nome }} ({{ agenda_selecionada.maquiadora }})
+                    {% if not agenda_selecionada.ativo %}<em style="font-size: 0.8rem; color: #a13c3c;"> · desativada</em>{% endif %}
                 </h3>
+
+                <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: flex-end; margin-bottom: 1rem;">
+                    <form method="post" style="display: flex; gap: 0.5rem; align-items: flex-end; flex-wrap: wrap;">
+                        {% csrf_token %}
+                        <input type="hidden" name="acao" value="renomear_agenda">
+                        <input type="hidden" name="agenda_id" value="{{ agenda_selecionada.id }}">
+                        <div class="maq-field" style="min-width: 220px;">
+                            <label for="id_renomear_maquiadora">Nome da maquiadora</label>
+                            <input type="text" id="id_renomear_maquiadora" name="maquiadora" value="{{ agenda_selecionada.maquiadora }}" required maxlength="120">
+                        </div>
+                        <button type="submit" class="maq-btn">Renomear</button>
+                    </form>
+
+                    <form method="post"
+                          {% if agenda_selecionada.ativo %}onsubmit="return confirm('Desativar esta agenda? As alunas deixam de ver os horários dela (os agendamentos já feitos continuam).');"{% endif %}>
+                        {% csrf_token %}
+                        <input type="hidden" name="acao" value="alternar_agenda">
+                        <input type="hidden" name="agenda_id" value="{{ agenda_selecionada.id }}">
+                        <button type="submit" class="maq-btn">{% if agenda_selecionada.ativo %}Desativar agenda{% else %}Ativar agenda{% endif %}</button>
+                    </form>
+                </div>
 
                 <form
                     method="post"
@@ -499,7 +525,7 @@
                         {% endfor %}
                     </div>
                 {% else %}
-                    <div class="maq-empty">Nenhum horário cadastrado para essa turma ainda.</div>
+                    <div class="maq-empty">Nenhum horário cadastrado para essa agenda ainda.</div>
                 {% endif %}
             </div>
 

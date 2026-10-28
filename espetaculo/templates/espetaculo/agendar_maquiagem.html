@@ -90,6 +90,12 @@
         transition: transform 0.15s ease, box-shadow 0.15s ease;
     }
 
+    /* Nome da maquiadora ao lado do horário (quando a turma tem mais de uma). */
+    .agmaq-horario-maquiadora {
+        font-weight: 500;
+        font-size: 0.8rem;
+    }
+
     .agmaq-horario-btn:hover:not(:disabled) {
         transform: translateY(-1px);
         box-shadow: 0 4px 10px rgba(176, 122, 132, 0.2);
@@ -233,7 +239,7 @@
 <div class="agmaq-page">
 
     <h2 class="agmaq-title">Agendar Maquiagem</h2>
-    <p class="agmaq-subtitle">{{ espetaculo.titulo }} · Maquiadora: {{ agenda.maquiadora }}</p>
+    <p class="agmaq-subtitle">{{ espetaculo.titulo }} · {% if varias_maquiadoras %}Maquiadoras: {{ maquiadoras_texto }}{% else %}Maquiadora: {{ agenda.maquiadora }}{% endif %}</p>
 
     {% if alunas_possiveis|length > 1 %}
     <div class="agmaq-seletor-aluna">
@@ -290,7 +296,7 @@
                         data-horario-texto="{{ h.horario|timezone:"America/Sao_Paulo"|date:'d/m/Y \à\s H:i' }}"
                         data-duracao="{{ h.duracao_minutos }}"
                     >
-                        {{ h.horario|timezone:"America/Sao_Paulo"|date:"d/m H:i" }}
+                        {{ h.horario|timezone:"America/Sao_Paulo"|date:"d/m H:i" }}{% if varias_maquiadoras %}<span class="agmaq-horario-maquiadora"> · {{ h.agenda.maquiadora }}</span>{% endif %}
                     </button>
                 {% endfor %}
             </div>

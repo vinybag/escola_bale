@@ -1636,6 +1636,9 @@ class AgendaMaquiagemTurma(models.Model):
     Configuração feita pelo admin: define quem é a maquiadora
     responsável pela turma dentro de um espetáculo específico.
     Os horários disponíveis penduram nela.
+
+    Uma turma pode ter MAIS DE UMA agenda no mesmo espetáculo (uma por
+    maquiadora). As alunas da turma veem os horários de todas elas.
     """
     espetaculo = models.ForeignKey(
         'espetaculo.Espetaculo',
@@ -1658,7 +1661,9 @@ class AgendaMaquiagemTurma(models.Model):
     class Meta:
         verbose_name = 'Agenda de maquiagem da turma'
         verbose_name_plural = 'Agendas de maquiagem das turmas'
-        unique_together = ('espetaculo', 'turma')
+        # Uma agenda por (espetáculo, turma, maquiadora): a mesma turma pode
+        # ter várias maquiadoras, mas não a mesma maquiadora duas vezes.
+        unique_together = ('espetaculo', 'turma', 'maquiadora')
 
     def __str__(self):
         return f'{self.turma.nome} - {self.espetaculo.titulo} ({self.maquiadora})'
