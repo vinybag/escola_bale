@@ -27,6 +27,7 @@ from pagamentos.asaas_helper import AsaasAPI
 from usuarios.models import Aluna
 
 from .forms import InscricaoAudicaoForm
+from .maquiagem_agenda import alunas_do_usuario, horarios_da_familia
 from .models import (
     Assento,
     Espetaculo,
@@ -103,11 +104,21 @@ def espetaculos_lista_publica(request):
     else:
         espetaculos = Espetaculo.objects.filter(ativo=True, publico=True).order_by('-data_apresentacao')
 
+    # O botão de maquiagem só aparece nos espetáculos que têm agenda de maquiagem.
+    ids_com_maquiagem = set()
+    if request.user.is_authenticated:
+        ids_com_maquiagem = set(
+            AgendaMaquiagemTurma.objects.filter(
+                espetaculo__in=espetaculos
+            ).values_list('espetaculo_id', flat=True)
+        )
+
     return render(
         request,
         'espetaculo/public_list.html',
         {
             'espetaculos': espetaculos,
+            'ids_com_maquiagem': ids_com_maquiagem,
             'patrocinadores': patrocinadores_para('listagem'),
         },
     )
@@ -2540,6 +2551,19 @@ def agendar_maquiagem(request, pk):
         messages.error(request, 'Você precisa estar logada para agendar.')
         return redirect('espetaculo:evento_detalhe_publico', pk=espetaculo.pk)
 
+    # Padrão: só a escola agenda. A aluna (ou a família) vê APENAS o horário
+    # marcado para ela, sem lista de horários dos outros.
+    if not espetaculo.maquiagem_familia_escolhe_horario:
+        return render(
+            request,
+            'espetaculo/horarios_maquiagem_aluna.html',
+            {
+                'espetaculo': espetaculo,
+                'itens': horarios_da_familia(request.user, espetaculo),
+                'tem_alunas': bool(alunas_do_usuario(request.user)),
+            },
+        )
+
     alunas_possiveis = []
 
     aluna_usuario = Aluna.objects.filter(usuario=request.user).first()
@@ -2665,6 +2689,12 @@ def reservar_horario_maquiagem(request, pk, horario_id):
 
     espetaculo = get_object_or_404(Espetaculo, pk=pk, ativo=True)
 
+    if not espetaculo.maquiagem_familia_escolhe_horario:
+        return JsonResponse(
+            {'ok': False, 'erro': 'Os horários de maquiagem são marcados pela escola.'},
+            status=403,
+        )
+
     aluna_id = request.POST.get('aluna_id') or request.GET.get('aluna_id')
     aluna, turma_aluna, erro = _buscar_aluna_para_maquiagem(request, espetaculo, aluna_id=aluna_id)
     if erro:
@@ -2715,6 +2745,10 @@ def reservar_horario_maquiagem(request, pk, horario_id):
 def confirmar_agendamento_maquiagem(request, pk, horario_id):
     espetaculo = get_object_or_404(Espetaculo, pk=pk, ativo=True)
 
+    if not espetaculo.maquiagem_familia_escolhe_horario:
+        messages.error(request, 'Os horários de maquiagem são marcados pela escola.')
+        return redirect('espetaculo:agendar_maquiagem', pk=pk)
+
     aluna_id = request.POST.get('aluna_id')
     aluna, turma_aluna, erro = _buscar_aluna_para_maquiagem(request, espetaculo, aluna_id=aluna_id)
     if erro:
@@ -2755,6 +2789,7 @@ def confirmar_agendamento_maquiagem(request, pk, horario_id):
         agendamento_id=agendamento.id,
     )
 
+@login_required
 def agendamento_maquiagem_sucesso(request, agendamento_id):
     agendamento = get_object_or_404(
         AgendamentoMaquiagem.objects.select_related(
@@ -2765,39 +2800,25 @@ def agendamento_maquiagem_sucesso(request, agendamento_id):
 
     espetaculo = agendamento.espetaculo
 
-    agendamentos = [agendamento]
+    # Dados de alunas (muitas vezes crianças): só quem é da família da aluna
+    # (ou a equipe da escola) vê este agendamento. Para qualquer outra pessoa a
+    # página simplesmente não existe, sem revelar que o número é válido.
+    alunas_possiveis = alunas_do_usuario(request.user)
 
-    if request.user.is_authenticated:
-        alunas_possiveis = []
+    if request.user.is_staff:
+        agendamentos = [agendamento]
+    else:
+        if agendamento.aluna_id not in {a.pk for a in alunas_possiveis}:
+            raise Http404()
 
-        aluna_usuario = Aluna.objects.filter(usuario=request.user).first()
-        if aluna_usuario:
-            alunas_possiveis.append(aluna_usuario)
-
-        alunas_responsavel = Aluna.objects.filter(
-            responsavel=request.user,
-            ativa=True,
-        )
-        for aluna_resp in alunas_responsavel:
-            if aluna_usuario and aluna_resp.pk == aluna_usuario.pk:
-                continue
-            alunas_possiveis.append(aluna_resp)
-
-        alunas_possiveis = list(dict.fromkeys(alunas_possiveis))
-
-        if alunas_possiveis:
-            agendamentos = list(
-                AgendamentoMaquiagem.objects.filter(
-                    aluna__in=alunas_possiveis,
-                    horario__agenda__espetaculo=espetaculo,
-                )
-                .select_related('horario', 'horario__agenda', 'aluna')
-                .order_by('horario__horario')
+        agendamentos = list(
+            AgendamentoMaquiagem.objects.filter(
+                aluna__in=alunas_possiveis,
+                horario__agenda__espetaculo=espetaculo,
             )
-
-            if agendamento not in agendamentos:
-                agendamentos.append(agendamento)
-                agendamentos.sort(key=lambda a: a.horario.horario)
+            .select_related('horario', 'horario__agenda', 'aluna')
+            .order_by('horario__horario')
+        )
 
     limite_recente = timezone.now() - timezone.timedelta(minutes=5)
 

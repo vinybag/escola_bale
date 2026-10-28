@@ -298,8 +298,13 @@ class RenomearEAtivarAgendaTests(BaseTests):
 
 @override_settings(STORAGES=STORAGES_TESTE)
 class AlunaVeHorariosDeTodasAsMaquiadorasTests(BaseTests):
+    """Modo em que a escola libera a escolha do horário pelas famílias."""
+
     def setUp(self):
         super().setUp()
+        Espetaculo.objects.filter(pk=self.espetaculo.pk).update(
+            maquiagem_familia_escolhe_horario=True
+        )
         self.client.force_login(self.responsavel)
         self.url = reverse('espetaculo:agendar_maquiagem', args=[self.espetaculo.pk])
 
@@ -645,6 +650,9 @@ class AcessoRestritoTests(BaseTests):
             horario=self.horario, aluna=self.aluna, tipo_servico='maquiagem',
         )
         self.horario.marcar_como_agendado()
+        # Outra aluna da turma, ainda sem horário (cada aluna só pode ter um).
+        self.outra_aluna = Aluna.objects.create(nome='Bia')
+        self.outra_aluna.turmas.add(self.turma_a)
 
         self.gets = {
             'lista': self.url_admin,
@@ -675,7 +683,7 @@ class AcessoRestritoTests(BaseTests):
             'agendar_admin': (
                 reverse('admin_dashboard:agendar_maquiagem_admin',
                         args=[self.livre.pk]),
-                {'aluna': self.aluna.pk, 'tipo_servico': 'cabelo'},
+                {'aluna': self.outra_aluna.pk, 'tipo_servico': 'cabelo'},
             ),
             'editar_post': (
                 reverse('admin_dashboard:maquiagem_editar',

@@ -1,0 +1,2694 @@
+diff --git a/admin_dashboard/templates/admin_dashboard/espetaculos/espetaculo_maquiagens.html b/admin_dashboard/templates/admin_dashboard/espetaculos/espetaculo_maquiagens.html
+index 825c9ac..d09c8a4 100644
+--- a/admin_dashboard/templates/admin_dashboard/espetaculos/espetaculo_maquiagens.html
++++ b/admin_dashboard/templates/admin_dashboard/espetaculos/espetaculo_maquiagens.html
+@@ -382,6 +382,54 @@
+         .maq-field input, .maq-field select { font-size: 16px; }
+         .maq-btn, .maq-filtro-btn, .maq-filtro-limpar, .maq-voltar, .maq-exportar-btn { font-size: 0.82rem; }
+     }
++    /* ---------- Agenda por horário (grade) ---------- */
++    .maq-sub { font-size: 0.85rem; color: #6c757d; margin: 0 0 0.5rem; }
++    .maq-dias { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
++    .maq-dia {
++        padding: 0.45rem 0.8rem; border-radius: 999px; border: 1px solid #ddc9ea;
++        background: #faf7fc; color: #4a235f; text-decoration: none; font-size: 0.85rem;
++    }
++    .maq-dia.ativo { background: #6b2d8f; color: #fff; border-color: transparent; }
++    .maq-contagem { display: flex; flex-wrap: wrap; gap: 1.25rem; font-size: 0.9rem; color: #4a235f; margin-bottom: 0.75rem; }
++    .maq-aviso { padding: 0.65rem 0.9rem; border-radius: 10px; background: #fff3d6; color: #7a5200; font-size: 0.88rem; margin-bottom: 0.9rem; }
++    .maq-grade-layout { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 1.25rem; align-items: start; }
++    .maq-pend-lista { display: flex; flex-direction: column; gap: 0.4rem; max-height: 440px; overflow-y: auto; }
++    .maq-pend-item { display: block; position: relative; margin: 0; }
++    .maq-pend-item input { position: absolute; opacity: 0; pointer-events: none; }
++    .maq-pend-item span {
++        display: block; padding: 0.55rem 0.75rem; border-radius: 10px; cursor: pointer;
++        border: 1px solid #ddc9ea; background: #faf7fc; color: #4a235f; font-size: 0.9rem;
++    }
++    .maq-pend-item input:checked + span { background: #6b2d8f; color: #fff; border-color: transparent; }
++    .maq-pend-item input:focus-visible + span { outline: 2px solid #6b2d8f; outline-offset: 2px; }
++    .maq-grade { overflow-x: auto; }
++    .maq-grade-linha {
++        display: grid; grid-template-columns: 56px repeat(var(--cols, 1), minmax(150px, 1fr));
++        gap: 6px; margin-bottom: 6px; align-items: stretch;
++    }
++    .maq-grade-cab { font-weight: 600; font-size: 0.9rem; color: #4a235f; padding: 0.2rem 0.1rem; }
++    .maq-grade-hora { font-size: 0.85rem; color: #6c757d; display: flex; align-items: center; }
++    .maq-celula {
++        min-height: 46px; border-radius: 10px; padding: 0.35rem 0.6rem; font-size: 0.85rem;
++        width: 100%; text-align: left; display: flex; align-items: center; justify-content: space-between; gap: 0.4rem;
++    }
++    .maq-celula.livre { border: 1px dashed #c9b3da; background: transparent; color: #8a7a96; cursor: pointer; }
++    .maq-celula.livre:hover { background: #f4ecfa; }
++    .maq-celula.ocupada { border: 1px solid #e6d9ef; background: #faf7fc; color: #3b2a4a; }
++    .maq-celula.bloqueada { border: 1px solid #eee; background: #f5f5f5; color: #888; }
++    .maq-celula.ausente { color: #c3b8cb; justify-content: center; }
++    .maq-tag { display: inline-block; margin-left: 0.4rem; padding: 0.05rem 0.45rem; border-radius: 6px; font-size: 0.72rem; }
++    .maq-tag.t-maquiagem { background: #ede4f7; color: #4a2a72; }
++    .maq-tag.t-cabelo { background: #dcf1ec; color: #115e4f; }
++    .maq-tag.t-cabelo_e_maquiagem { background: #fdeccd; color: #6b4300; }
++    .maq-remover { border: none; background: transparent; color: #a13c3c; font-size: 1.1rem; line-height: 1; cursor: pointer; padding: 0 0.3rem; }
++    .maq-gerar summary { cursor: pointer; font-weight: 600; color: #4a235f; margin-bottom: 0.75rem; }
++    .maq-checks { display: flex; flex-wrap: wrap; gap: 0.4rem 1.2rem; }
++    .maq-checks label { display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 400; }
++    .maq-previa { grid-column: 1 / -1; font-size: 0.85rem; color: #6c757d; margin: 0; }
++    .maq-grupo { margin-bottom: 1rem; }
++    .maq-grupo-topo { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.5rem; color: #4a235f; }
++    @media (max-width: 760px) { .maq-grade-layout { grid-template-columns: 1fr; } .maq-pend-lista { max-height: 220px; } }
+ </style>
+ 
+ <div class="maq-page">
+@@ -396,6 +444,136 @@
+ 
+     <div class="maq-shell">
+ 
++
++        {% if turma_grade %}
++        <!-- AGENDA POR HORÁRIO -->
++        <div class="maq-card" id="agenda-por-horario">
++            <h3 class="maq-card-title">Agenda por horário · {{ turma_grade.nome }}</h3>
++
++            {% if not grade.agendas %}
++                <div class="maq-empty">Essa turma ainda não tem maquiadora. Adicione uma no cartão abaixo.</div>
++            {% else %}
++
++                <details class="maq-gerar" {% if not grade.dias %}open{% endif %}>
++                    <summary>Criar horários de um dia</summary>
++                    <form method="post" class="maq-form maq-form-3" id="form-gerar">
++                        {% csrf_token %}
++                        <input type="hidden" name="acao" value="gerar_horarios">
++                        <input type="hidden" name="turma" value="{{ turma_grade.pk }}">
++
++                        <div class="maq-field" style="grid-column: 1 / -1;">
++                            <label>Maquiadoras que atendem nesse dia</label>
++                            <div class="maq-checks">
++                                {% for agenda in grade.agendas %}
++                                    <label><input type="checkbox" name="agendas" value="{{ agenda.pk }}" {% if agenda.ativo %}checked{% endif %}> {{ agenda.maquiadora }}</label>
++                                {% endfor %}
++                            </div>
++                        </div>
++
++                        <div class="maq-field"><label for="id_gen_dia">Dia</label><input type="date" id="id_gen_dia" name="dia" required></div>
++                        <div class="maq-field"><label for="id_gen_inicio">Das</label><input type="time" id="id_gen_inicio" name="inicio" required></div>
++                        <div class="maq-field"><label for="id_gen_fim">Até</label><input type="time" id="id_gen_fim" name="fim" required></div>
++                        <div class="maq-field"><label for="id_gen_duracao">Duração de cada horário (min)</label><input type="number" id="id_gen_duracao" name="duracao" value="30" min="5" max="240" required></div>
++                        <div class="maq-field"><label for="id_gen_intervalo">Intervalo entre horários (min)</label><input type="number" id="id_gen_intervalo" name="intervalo" value="0" min="0" max="120"></div>
++
++                        <p class="maq-previa" id="gen-previa"></p>
++
++                        <div class="maq-submit"><button type="submit" class="maq-btn">Criar horários</button></div>
++                    </form>
++                </details>
++
++                {% if grade.dias %}
++                    <div class="maq-dias">
++                        {% for d in grade.dias %}
++                            <a class="maq-dia {% if d.data == grade.dia %}ativo{% endif %}"
++                               href="?turma={{ turma_grade.pk }}&dia={{ d.data|date:'Y-m-d' }}&tipo={{ tipo_selecionado }}">{{ d.data|date:"D d/m" }} · {{ d.livres }} livres / {{ d.total }}</a>
++                        {% endfor %}
++                    </div>
++
++                    <div class="maq-contagem">
++                        <span>Sem horário: <strong>{{ pendentes|length }}</strong></span>
++                        <span>Horários livres: <strong>{{ grade.livres_total }}</strong></span>
++                    </div>
++
++                    {% if pendentes|length > grade.livres_total %}
++                        <div class="maq-aviso">Faltam horários livres: são {{ pendentes|length }} alunas sem horário e só {{ grade.livres_total }} horários livres. Crie mais horários acima.</div>
++                    {% endif %}
++
++                    <form method="post" id="form-grade">
++                        {% csrf_token %}
++                        <button type="submit" name="nada" value="1" hidden tabindex="-1" aria-hidden="true"></button>
++                        <input type="hidden" name="acao" value="grade">
++                        <input type="hidden" name="turma" value="{{ turma_grade.pk }}">
++                        <input type="hidden" name="dia" value="{{ grade.dia|date:'Y-m-d' }}">
++
++                        <div class="maq-grade-layout">
++                            <div>
++                                <p class="maq-sub">1. Escolha a aluna</p>
++                                {% if pendentes %}
++                                    <div class="maq-pend-lista">
++                                        {% for a in pendentes %}
++                                            <label class="maq-pend-item"><input type="radio" name="aluna" value="{{ a.pk }}" {% if forloop.first %}checked{% endif %}><span>{{ a.nome }}</span></label>
++                                        {% endfor %}
++                                    </div>
++                                {% else %}
++                                    <div class="maq-empty">Todas as alunas ativas da turma já têm horário.</div>
++                                {% endif %}
++
++                                <div class="maq-field" style="margin-top: 1rem;">
++                                    <label for="id_tipo_grade">Serviço</label>
++                                    <select id="id_tipo_grade" name="tipo_servico">
++                                        {% for valor, rotulo in tipos_servico %}
++                                            <option value="{{ valor }}" {% if valor == tipo_selecionado %}selected{% endif %}>{{ rotulo }}</option>
++                                        {% endfor %}
++                                    </select>
++                                </div>
++                            </div>
++
++                            <div>
++                                <p class="maq-sub">2. Clique no horário livre</p>
++                                <div class="maq-grade">
++                                    <div class="maq-grade-linha" style="--cols: {{ grade.agendas|length }};">
++                                        <div></div>
++                                        {% for a in grade.agendas %}
++                                            <div class="maq-grade-cab">{{ a.maquiadora }}{% if not a.ativo %} <em style="font-weight: 400;">(desativada)</em>{% endif %}</div>
++                                        {% endfor %}
++                                    </div>
++
++                                    {% for linha in grade.linhas %}
++                                        <div class="maq-grade-linha" style="--cols: {{ grade.agendas|length }};">
++                                            <div class="maq-grade-hora">{{ linha.hora|time:"H:i" }}</div>
++                                            {% for c in linha.celulas %}
++                                                {% if c.estado == 'livre' %}
++                                                    <button type="submit" name="agendar" value="{{ c.horario.pk }}" class="maq-celula livre">livre</button>
++                                                {% elif c.estado == 'ocupado' and c.agendamento %}
++                                                    <div class="maq-celula ocupada">
++                                                        <div>
++                                                            <span>{{ c.agendamento.aluna.nome }}</span>
++                                                            <span class="maq-tag t-{{ c.agendamento.tipo_servico }}">{{ c.agendamento.get_tipo_servico_display }}</span>
++                                                        </div>
++                                                        <button type="submit" name="remover" value="{{ c.agendamento.pk }}" class="maq-remover"
++                                                                aria-label="Remover {{ c.agendamento.aluna.nome }} deste horário"
++                                                                onclick="return confirm('Remover {{ c.agendamento.aluna.nome|escapejs }} deste horário?');">&times;</button>
++                                                    </div>
++                                                {% elif c.estado == 'reservado' %}
++                                                    <div class="maq-celula bloqueada">reservado</div>
++                                                {% elif c.estado == 'ausente' %}
++                                                    <div class="maq-celula ausente">—</div>
++                                                {% else %}
++                                                    <div class="maq-celula bloqueada">indisponível</div>
++                                                {% endif %}
++                                            {% endfor %}
++                                        </div>
++                                    {% endfor %}
++                                </div>
++                            </div>
++                        </div>
++                    </form>
++                {% endif %}
++            {% endif %}
++        </div>
++        {% endif %}
++
+         <!-- CRIAR / EDITAR AGENDA DA TURMA -->
+         <div class="maq-card">
+             <h3 class="maq-card-title">Adicionar maquiadora a uma turma</h3>
+@@ -436,17 +614,24 @@
+             <h3 class="maq-card-title">Turmas e maquiadoras configuradas</h3>
+ 
+             {% if agendas %}
+-                <div class="maq-agendas-lista">
+-                    {% for agenda in agendas %}
+-                        
+-                        <a class="maq-agenda-chip {% if agenda_selecionada.id == agenda.id %}ativo{% endif %}"
+-                            href="?agenda_id={{ agenda.id }}"
+-                        >
+-                            <strong>{{ agenda.turma.nome }}</strong>
+-                            <span>{{ agenda.maquiadora }} · {{ agenda.total_disponiveis }} livres / {{ agenda.total_horarios }}{% if not agenda.ativo %} · <em>desativada</em>{% endif %}</span>
+-                        </a>
+-                    {% endfor %}
+-                </div>
++                {% for grupo in grupos_agendas %}
++                    <div class="maq-grupo">
++                        <div class="maq-grupo-topo">
++                            <strong>{{ grupo.turma.nome }}</strong>
++                            <a class="maq-btn maq-btn-small" style="text-decoration: none;" href="?turma={{ grupo.turma.pk }}">Agendar alunas</a>
++                        </div>
++                        <div class="maq-agendas-lista">
++                            {% for agenda in grupo.agendas %}
++                                <a class="maq-agenda-chip {% if agenda_selecionada.id == agenda.id %}ativo{% endif %}"
++                                    href="?agenda_id={{ agenda.id }}"
++                                >
++                                    <strong>{{ agenda.maquiadora }}</strong>
++                                    <span>{{ agenda.total_disponiveis }} livres / {{ agenda.total_horarios }}{% if not agenda.ativo %} · <em>desativada</em>{% endif %}</span>
++                                </a>
++                            {% endfor %}
++                        </div>
++                    </div>
++                {% endfor %}
+             {% else %}
+                 <div class="maq-empty">Nenhuma turma configurada ainda.</div>
+             {% endif %}
+@@ -454,10 +639,10 @@
+ 
+         {% if agenda_selecionada %}
+ 
+-            <!-- ADICIONAR HORÁRIO -->
++            <!-- MAQUIADORA SELECIONADA: renomear, desativar e horários cadastrados -->
+             <div class="maq-card">
+                 <h3 class="maq-card-title">
+-                    Horários - {{ agenda_selecionada.turma.nome }} ({{ agenda_selecionada.maquiadora }})
++                    {{ agenda_selecionada.maquiadora }} · {{ agenda_selecionada.turma.nome }}
+                     {% if not agenda_selecionada.ativo %}<em style="font-size: 0.8rem; color: #a13c3c;"> · desativada</em>{% endif %}
+                 </h3>
+ 
+@@ -480,31 +665,11 @@
+                         <input type="hidden" name="agenda_id" value="{{ agenda_selecionada.id }}">
+                         <button type="submit" class="maq-btn">{% if agenda_selecionada.ativo %}Desativar agenda{% else %}Ativar agenda{% endif %}</button>
+                     </form>
+-                </div>
+-
+-                <form
+-                    method="post"
+-                    action="{% url 'admin_dashboard:adicionar_horario_maquiagem' agenda_selecionada.id %}"
+-                    class="maq-form maq-form-3"
+-                    style="margin-bottom: 1.25rem;"
+-                >
+-                    {% csrf_token %}
+ 
+-                    <div class="maq-field">
+-                        <label for="id_horario">Data e horário</label>
+-                        <input type="datetime-local" id="id_horario" name="horario" required>
+-                    </div>
+-
+-                    <div class="maq-field">
+-                        <label for="id_duracao">Duração (minutos)</label>
+-                        <input type="number" id="id_duracao" name="duracao_minutos" min="1" value="30" required>
+-                    </div>
+-
+-                    <div class="maq-submit">
+-                        <button type="submit" class="maq-btn">Adicionar horário</button>
+-                    </div>
+-                </form>
++                    <a class="maq-btn" style="text-decoration: none;" href="?turma={{ agenda_selecionada.turma_id }}">Agendar alunas desta turma</a>
++                </div>
+ 
++                <p class="maq-sub">Horários cadastrados (só os livres podem ser removidos)</p>
+                 {% if horarios %}
+                     <div class="maq-slots">
+                         {% for h in horarios %}
+@@ -525,68 +690,31 @@
+                         {% endfor %}
+                     </div>
+                 {% else %}
+-                    <div class="maq-empty">Nenhum horário cadastrado para essa agenda ainda.</div>
++                    <div class="maq-empty">Nenhum horário cadastrado para essa agenda ainda. Use "Criar horários de um dia" na agenda por horário.</div>
+                 {% endif %}
+             </div>
+ 
+-            <!-- AGENDAR MANUALMENTE -->
+-            <div class="maq-card">
+-                <h3 class="maq-card-title">Agendar manualmente</h3>
+-
+-                <div class="maq-form-wrapper">
+-                    <form
+-                        method="post"
+-                        id="form-agendar-manual"
+-                        class="maq-form maq-form-3"
+-                        action=""
+-                    >
+-                        {% csrf_token %}
+-
+-                        <div class="maq-field">
+-                            <label for="id_horario_manual">Horário disponível</label>
+-                            <select id="id_horario_manual" name="horario_manual" required>
+-                                <option value="">Selecione o horário</option>
+-                                {% for h in horarios %}
+-                                    {% if h.status == 'disponivel' %}
+-                                        <option
+-                                            value="{% url 'admin_dashboard:agendar_maquiagem_admin' h.id %}"
+-                                        >
+-                                            {{ h.horario|date:"d/m H:i" }} ({{ h.duracao_minutos }} min)
+-                                        </option>
+-                                    {% endif %}
+-                                {% endfor %}
+-                            </select>
+-                        </div>
+-
+-                        <div class="maq-field">
+-                            <label for="id_aluna_manual">Aluna</label>
+-                            <select id="id_aluna_manual" name="aluna" required>
+-                                {% for aluna in agenda_selecionada.turma.alunas.all %}
+-                                    {% if aluna.ativa %}
+-                                        <option value="{{ aluna.id }}">{{ aluna.nome }}</option>
+-                                    {% endif %}
+-                                {% endfor %}
+-                            </select>
+-                        </div>
+-
+-                        <div class="maq-field">
+-                            <label for="id_tipo_manual">Tipo de serviço</label>
+-                            <select id="id_tipo_manual" name="tipo_servico" required>
+-                                {% for valor, rotulo in tipos_servico %}
+-                                    <option value="{{ valor }}">{{ rotulo }}</option>
+-                                {% endfor %}
+-                            </select>
+-                        </div>
+-
+-                        <div class="maq-submit">
+-                            <button type="submit" class="maq-btn">Agendar</button>
+-                        </div>
+-                    </form>
+-                </div>
+-            </div>
+-
+         {% endif %}
+ 
++        <!-- QUEM ESCOLHE OS HORÁRIOS -->
++        <div class="maq-card">
++            <h3 class="maq-card-title">Quem escolhe os horários?</h3>
++            <p class="maq-sub">
++                {% if espetaculo.maquiagem_familia_escolhe_horario %}
++                    Hoje as famílias escolhem o próprio horário entre os livres.
++                {% else %}
++                    Hoje só a escola agenda. A aluna vê apenas o horário marcado para ela.
++                {% endif %}
++            </p>
++            <form method="post">
++                {% csrf_token %}
++                <input type="hidden" name="acao" value="alternar_escolha_familia">
++                <button type="submit" class="maq-btn">
++                    {% if espetaculo.maquiagem_familia_escolhe_horario %}Voltar para só a escola agendar{% else %}Permitir que as famílias escolham{% endif %}
++                </button>
++            </form>
++        </div>
++
+         <!-- FILTROS -->
+         <div class="maq-card">
+             <h3 class="maq-card-title">Filtrar agendamentos</h3>
+@@ -694,19 +822,35 @@
+ document.addEventListener('DOMContentLoaded', function () {
+ 
+     // Envia o form de "agendar manualmente" pra URL escolhida no select de horário
+-    const formAgendarManual = document.getElementById('form-agendar-manual');
+-    const selectHorarioManual = document.getElementById('id_horario_manual');
+-
+-    if (formAgendarManual && selectHorarioManual) {
+-        formAgendarManual.addEventListener('submit', function (event) {
+-            if (!selectHorarioManual.value) {
+-                event.preventDefault();
+-                alert('Selecione um horário.');
+-                return;
+-            }
+-            formAgendarManual.action = selectHorarioManual.value;
+-        });
+-    }
++    // Prévia de quantos horários o formulário "Criar horários" vai gerar.
++    (function () {
++        const form = document.getElementById('form-gerar');
++        const previa = document.getElementById('gen-previa');
++        if (!form || !previa) { return; }
++
++        function minutos(valor) {
++            const partes = (valor || '').split(':');
++            return partes.length === 2 ? parseInt(partes[0], 10) * 60 + parseInt(partes[1], 10) : null;
++        }
++
++        function atualizar() {
++            const campos = form.elements;
++            const ini = minutos(campos['inicio'].value);
++            const fim = minutos(campos['fim'].value);
++            const dur = parseInt(campos['duracao'].value, 10);
++            const gap = parseInt(campos['intervalo'].value || '0', 10);
++            if (ini === null || fim === null || !(dur > 0) || !(fim > ini)) { previa.textContent = ''; return; }
++            let n = 0;
++            for (let t = ini; t + dur <= fim; t += dur + (gap || 0)) { n += 1; }
++            const maq = form.querySelectorAll('input[name="agendas"]:checked').length;
++            previa.textContent = n
++                ? 'Vão ser criados ' + n + ' horário(s) por maquiadora' + (maq ? ' (' + (n * maq) + ' no total).' : '.')
++                : 'Esse período não comporta nenhum horário.';
++        }
++
++        form.addEventListener('input', atualizar);
++        atualizar();
++    })();
+ 
+     const checkTodas = document.getElementById('check-todas');
+     const checksLinha = document.querySelectorAll('.maq-check-linha');
+diff --git a/admin_dashboard/views.py b/admin_dashboard/views.py
+index 11c3484..4f0c968 100644
+--- a/admin_dashboard/views.py
++++ b/admin_dashboard/views.py
+@@ -6612,6 +6612,144 @@ def espetaculo_maquiagens(request, pk):
+             )
+             return voltar(agenda)
+ 
++        # ---- Agenda por horário (grade) ----
++        from urllib.parse import urlencode
++
++        from django.utils.dateparse import parse_date, parse_time
++
++        from espetaculo.maquiagem_agenda import (
++            ErroAgendamento,
++            agendar_aluna,
++            formatar_horario,
++            gerar_horarios,
++            remover_agendamento,
++        )
++
++        def voltar_grade(turma_id, dia=None, tipo=None):
++            parametros = {'turma': turma_id}
++            if dia:
++                parametros['dia'] = dia
++            if tipo:
++                parametros['tipo'] = tipo
++            url = reverse('admin_dashboard:espetaculo_maquiagens', args=[pk])
++            return redirect(f'{url}?{urlencode(parametros)}')
++
++        def turma_do_post():
++            try:
++                return Turma.objects.filter(
++                    pk=int(request.POST.get('turma'))
++                ).first()
++            except (TypeError, ValueError):
++                return None
++
++        if acao == 'gerar_horarios':
++            turma = turma_do_post()
++            if turma is None:
++                messages.error(request, 'Turma não encontrada.')
++                return voltar()
++
++            dia = parse_date(request.POST.get('dia', ''))
++            inicio = parse_time(request.POST.get('inicio', ''))
++            fim = parse_time(request.POST.get('fim', ''))
++            try:
++                duracao = int(request.POST.get('duracao'))
++                intervalo = int(request.POST.get('intervalo') or 0)
++            except (TypeError, ValueError):
++                duracao = intervalo = None
++
++            agendas_escolhidas = []
++            for valor in request.POST.getlist('agendas'):
++                try:
++                    agenda = AgendaMaquiagemTurma.objects.filter(
++                        pk=int(valor), espetaculo=espetaculo, turma=turma
++                    ).first()
++                except (TypeError, ValueError):
++                    agenda = None
++                if agenda is not None:
++                    agendas_escolhidas.append(agenda)
++
++            if None in (dia, inicio, fim, duracao, intervalo):
++                messages.error(
++                    request,
++                    'Preencha o dia, o início, o fim e a duração dos horários.',
++                )
++                return voltar_grade(turma.pk)
++
++            try:
++                resultado = gerar_horarios(
++                    agendas_escolhidas, dia, inicio, fim, duracao, intervalo
++                )
++            except ErroAgendamento as exc:
++                messages.error(request, str(exc))
++                return voltar_grade(turma.pk)
++
++            texto = (
++                f'{resultado["criados"]} horário(s) criado(s) '
++                f'para {dia:%d/%m}.'
++            )
++            if resultado['existentes']:
++                texto += (
++                    f' {resultado["existentes"]} já existia(m) e foi(ram) '
++                    f'mantido(s).'
++                )
++            messages.success(request, texto)
++            return voltar_grade(turma.pk, dia.isoformat())
++
++        if acao == 'grade':
++            turma = turma_do_post()
++            if turma is None:
++                messages.error(request, 'Turma não encontrada.')
++                return voltar()
++
++            dia = request.POST.get('dia', '')
++            tipo = request.POST.get('tipo_servico', '')
++
++            try:
++                if 'remover' in request.POST:
++                    nome = remover_agendamento(
++                        espetaculo, int(request.POST.get('remover'))
++                    )
++                    messages.success(
++                        request,
++                        f'{nome} voltou para a lista de alunas sem horário.',
++                    )
++                elif 'agendar' in request.POST:
++                    agendamento = agendar_aluna(
++                        espetaculo,
++                        turma,
++                        request.POST.get('agendar'),
++                        request.POST.get('aluna'),
++                        tipo,
++                    )
++                    messages.success(
++                        request,
++                        f'{agendamento.aluna.nome} agendada: '
++                        f'{formatar_horario(agendamento.horario.horario)} '
++                        f'com {agendamento.horario.agenda.maquiadora}.',
++                    )
++            except ErroAgendamento as exc:
++                messages.error(request, str(exc))
++            except (TypeError, ValueError):
++                messages.error(request, 'Pedido inválido. Tente de novo.')
++
++            return voltar_grade(turma.pk, dia, tipo)
++
++        if acao == 'alternar_escolha_familia':
++            espetaculo.maquiagem_familia_escolhe_horario = (
++                not espetaculo.maquiagem_familia_escolhe_horario
++            )
++            espetaculo.save(
++                update_fields=['maquiagem_familia_escolhe_horario', 'atualizado_em']
++            )
++            messages.success(
++                request,
++                'Agora as famílias escolhem o próprio horário.'
++                if espetaculo.maquiagem_familia_escolhe_horario
++                else 'Agora só a escola agenda: as famílias veem apenas o '
++                     'horário marcado para a aluna.',
++            )
++            return voltar()
++
+         return voltar()
+ 
+     agendas = AgendaMaquiagemTurma.objects.filter(
+@@ -6648,6 +6786,35 @@ def espetaculo_maquiagens(request, pk):
+     if aluna_filtro:
+         agendamentos = agendamentos.filter(aluna__nome__icontains=aluna_filtro)
+ 
++    # Agenda por horário: a grade de uma turma (várias maquiadoras lado a lado).
++    from django.utils.dateparse import parse_date
++
++    from espetaculo.maquiagem_agenda import alunas_sem_horario, montar_grade
++
++    turma_grade = None
++    grade = None
++    pendentes = []
++    try:
++        turma_grade = Turma.objects.filter(pk=int(request.GET.get('turma'))).first()
++    except (TypeError, ValueError):
++        turma_grade = None
++
++    tipo_selecionado = request.GET.get('tipo', '')
++    if tipo_selecionado not in dict(AgendamentoMaquiagem.TIPO_CHOICES):
++        tipo_selecionado = 'maquiagem'
++
++    if turma_grade is not None:
++        grade = montar_grade(
++            espetaculo, turma_grade, parse_date(request.GET.get('dia', ''))
++        )
++        pendentes = list(alunas_sem_horario(espetaculo, turma_grade))
++
++    grupos_agendas = []
++    for agenda in agendas:
++        if not grupos_agendas or grupos_agendas[-1]['turma'].pk != agenda.turma_id:
++            grupos_agendas.append({'turma': agenda.turma, 'agendas': []})
++        grupos_agendas[-1]['agendas'].append(agenda)
++
+     return render(
+         request,
+         'admin_dashboard/espetaculos/espetaculo_maquiagens.html',
+@@ -6655,6 +6822,11 @@ def espetaculo_maquiagens(request, pk):
+             'espetaculo': espetaculo,
+             'turmas': turmas,
+             'agendas': agendas,
++            'grupos_agendas': grupos_agendas,
++            'turma_grade': turma_grade,
++            'grade': grade,
++            'pendentes': pendentes,
++            'tipo_selecionado': tipo_selecionado,
+             'agenda_selecionada': agenda_selecionada,
+             'horarios': horarios,
+             'agendamentos': agendamentos,
+@@ -6736,35 +6908,33 @@ def agendar_maquiagem_admin(request, horario_id):
+     if not request.user.is_staff:
+         return redirect('home')
+ 
++    from espetaculo.maquiagem_agenda import (
++        ErroAgendamento,
++        agendar_aluna,
++    )
++
+     horario = get_object_or_404(HorarioMaquiagem, pk=horario_id)
+     agenda = horario.agenda
+-    aluna_id = request.POST.get('aluna')
+-    tipo_servico = request.POST.get('tipo_servico')
+ 
+     redirect_url = (
+         f"{reverse('admin_dashboard:espetaculo_maquiagens', args=[agenda.espetaculo_id])}"
+         f"?agenda_id={agenda.id}"
+     )
+ 
+-    if not aluna_id or tipo_servico not in dict(AgendamentoMaquiagem.TIPO_CHOICES):
+-        messages.error(request, 'Selecione a aluna e o tipo de serviço.')
+-        return redirect(redirect_url)
+-
+     HorarioMaquiagem.liberar_expirados(agenda=agenda)
+-    horario.refresh_from_db()
+ 
+-    if horario.status != 'disponivel':
+-        messages.error(request, 'Esse horário não está mais disponível.')
++    try:
++        agendar_aluna(
++            agenda.espetaculo,
++            agenda.turma,
++            horario.pk,
++            request.POST.get('aluna'),
++            request.POST.get('tipo_servico'),
++        )
++    except ErroAgendamento as exc:
++        messages.error(request, str(exc))
+         return redirect(redirect_url)
+ 
+-    AgendamentoMaquiagem.objects.create(
+-        horario=horario,
+-        aluna_id=aluna_id,
+-        tipo_servico=tipo_servico,
+-        criado_por_admin=True,
+-    )
+-    horario.marcar_como_agendado()
+-
+     messages.success(request, 'Agendamento criado com sucesso.')
+     return redirect(redirect_url)
+ 
+@@ -6818,6 +6988,20 @@ def maquiagem_editar(request, pk):
+             messages.error(request, 'Aluna inválida para esta turma.')
+             return tela_de_edicao()
+ 
++        # Uma aluna só pode ter um horário por espetáculo.
++        outro = AgendamentoMaquiagem.objects.filter(
++            aluna_id=aluna_id,
++            horario__agenda__espetaculo_id=agenda.espetaculo_id,
++        ).exclude(pk=agendamento.pk).select_related('horario').first()
++        if outro is not None:
++            messages.error(
++                request,
++                f'{outro.aluna.nome} já tem outro horário neste espetáculo '
++                f'({timezone.localtime(outro.horario.horario):%d/%m às %H:%M}). '
++                f'Remova esse agendamento antes.',
++            )
++            return tela_de_edicao()
++
+         with transaction.atomic():
+             if novo_horario_id != agendamento.horario_id:
+                 novo_horario = HorarioMaquiagem.objects.select_for_update(
+diff --git a/espetaculo/maquiagem_agenda.py b/espetaculo/maquiagem_agenda.py
+new file mode 100644
+index 0000000..83a73b9
+--- /dev/null
++++ b/espetaculo/maquiagem_agenda.py
+@@ -0,0 +1,374 @@
++"""
++Agenda de maquiagem/cabelo: lógica usada pelo painel (grade por horário,
++criação de horários em lote, agendar e remover) e pela área das alunas.
++
++Regras importantes:
++  * cada aluna tem no máximo UM agendamento por espetáculo;
++  * os horários pertencem a uma agenda (turma + maquiadora); uma turma pode ter
++    várias maquiadoras, e a grade mostra uma coluna por maquiadora;
++  * agendar e remover são atômicos e travam as linhas envolvidas, para duas
++    pessoas da secretaria não ocuparem o mesmo horário nem agendarem a mesma
++    aluna duas vezes ao mesmo tempo.
++"""
++
++from datetime import datetime, timedelta
++
++from django.core.exceptions import ObjectDoesNotExist
++from django.db import transaction
++from django.utils import timezone
++
++from usuarios.models import Aluna
++
++from .models import (
++    AgendaMaquiagemTurma,
++    AgendamentoMaquiagem,
++    HorarioMaquiagem,
++)
++
++# Trava de segurança: evita criar milhares de horários por engano.
++MAX_HORARIOS_POR_MAQUIADORA = 100
++
++
++class ErroAgendamento(Exception):
++    """Mensagem pronta para mostrar à secretaria."""
++
++
++def formatar_horario(valor):
++    """'14/11 às 09:30', no fuso local."""
++    return f'{timezone.localtime(valor):%d/%m às %H:%M}'
++
++
++# ---------------------------------------------------------------------------
++# Quem é quem
++# ---------------------------------------------------------------------------
++
++def alunas_do_usuario(user):
++    """
++    Alunas ligadas a quem está logado: a própria aluna adulta e os dependentes
++    ativos de quem é responsável. Nunca devolve aluna de outra família.
++    """
++    if not getattr(user, 'is_authenticated', False):
++        return []
++
++    alunas = []
++    adulta = Aluna.objects.filter(usuario=user).first()
++    if adulta:
++        alunas.append(adulta)
++
++    for dependente in Aluna.objects.filter(
++        responsavel=user, ativa=True
++    ).order_by('nome'):
++        if adulta and dependente.pk == adulta.pk:
++            continue
++        alunas.append(dependente)
++
++    return alunas
++
++
++def horarios_da_familia(user, espetaculo):
++    """
++    O que a aluna (ou a família) enxerga na área de maquiagem: SOMENTE os
++    horários agendados para as alunas dela.
++
++    Devolve uma lista de dicts {'aluna', 'agendamento'}. Alunas sem horário só
++    entram se a turma delas tem maquiagem neste espetáculo (para a tela poder
++    dizer "ainda sem horário"); as demais não aparecem.
++    """
++    alunas = alunas_do_usuario(user)
++    if not alunas:
++        return []
++
++    por_aluna = {
++        ag.aluna_id: ag
++        for ag in AgendamentoMaquiagem.objects.filter(
++            aluna__in=alunas,
++            horario__agenda__espetaculo=espetaculo,
++        ).select_related('horario', 'horario__agenda', 'aluna')
++    }
++
++    itens = []
++    for aluna in alunas:
++        agendamento = por_aluna.get(aluna.pk)
++        if agendamento is None:
++            tem_agenda = AgendaMaquiagemTurma.objects.filter(
++                espetaculo=espetaculo, turma__in=aluna.turmas.all()
++            ).exists()
++            if not tem_agenda:
++                continue
++        itens.append({'aluna': aluna, 'agendamento': agendamento})
++
++    return itens
++
++
++# ---------------------------------------------------------------------------
++# Consultas do painel
++# ---------------------------------------------------------------------------
++
++def agendamento_da_aluna(aluna, espetaculo):
++    return AgendamentoMaquiagem.objects.filter(
++        aluna=aluna, horario__agenda__espetaculo=espetaculo
++    ).select_related('horario', 'horario__agenda').first()
++
++
++def alunas_sem_horario(espetaculo, turma):
++    """Alunas ativas da turma que ainda não têm horário neste espetáculo."""
++    return Aluna.objects.filter(
++        turmas=turma, ativa=True
++    ).exclude(
++        agendamentos_maquiagem__horario__agenda__espetaculo=espetaculo
++    ).distinct().order_by('nome')
++
++
++def _agendamento_de(horario):
++    try:
++        return horario.agendamento
++    except ObjectDoesNotExist:
++        return None
++
++
++def montar_grade(espetaculo, turma, dia=None):
++    """
++    Dados da grade "agenda por horário" de uma turma: uma coluna por maquiadora
++    (agenda), uma linha por horário do dia escolhido.
++
++    Cada célula traz um estado: livre, ocupado, reservado, bloqueado ou
++    ausente (essa maquiadora não tem horário nesse momento).
++    """
++    agendas = list(
++        AgendaMaquiagemTurma.objects.filter(
++            espetaculo=espetaculo, turma=turma
++        ).order_by('maquiadora', 'id')
++    )
++    for agenda in agendas:
++        HorarioMaquiagem.liberar_expirados(agenda=agenda)
++
++    horarios = list(
++        HorarioMaquiagem.objects.filter(agenda__in=agendas)
++        .select_related('agenda', 'agendamento', 'agendamento__aluna')
++        .order_by('horario', 'agenda__maquiadora', 'id')
++    )
++
++    resumo_dias = {}
++    for horario in horarios:
++        data = timezone.localtime(horario.horario).date()
++        info = resumo_dias.setdefault(data, {'total': 0, 'livres': 0})
++        info['total'] += 1
++        if horario.status == 'disponivel':
++            info['livres'] += 1
++
++    dias = [
++        {'data': data, 'total': info['total'], 'livres': info['livres']}
++        for data, info in sorted(resumo_dias.items())
++    ]
++
++    datas = [d['data'] for d in dias]
++    if dia not in datas:
++        com_livres = [d['data'] for d in dias if d['livres']]
++        dia = (com_livres or datas or [None])[0]
++
++    linhas = []
++    if dia is not None:
++        do_dia = {}
++        for horario in horarios:
++            local = timezone.localtime(horario.horario)
++            if local.date() == dia:
++                do_dia[(local.time(), horario.agenda_id)] = horario
++
++        for hora in sorted({chave[0] for chave in do_dia}):
++            celulas = []
++            for agenda in agendas:
++                horario = do_dia.get((hora, agenda.pk))
++                agendamento = _agendamento_de(horario) if horario else None
++
++                if horario is None:
++                    estado = 'ausente'
++                elif horario.status == 'disponivel':
++                    estado = 'livre'
++                elif horario.status == 'agendado':
++                    estado = 'ocupado'
++                elif horario.status == 'reservado_temporario':
++                    estado = 'reservado'
++                else:
++                    estado = 'bloqueado'
++
++                celulas.append({
++                    'agenda': agenda,
++                    'horario': horario,
++                    'agendamento': agendamento,
++                    'estado': estado,
++                })
++            linhas.append({'hora': hora, 'celulas': celulas})
++
++    return {
++        'turma': turma,
++        'agendas': agendas,
++        'dias': dias,
++        'dia': dia,
++        'linhas': linhas,
++        'livres_total': sum(d['livres'] for d in dias),
++    }
++
++
++# ---------------------------------------------------------------------------
++# Criar horários em lote
++# ---------------------------------------------------------------------------
++
++def gerar_horarios(agendas, dia, inicio, fim, duracao, intervalo=0, hoje=None):
++    """
++    Cria todos os horários de um dia, para cada agenda (maquiadora) escolhida:
++    do início ao fim, de `duracao` em `duracao` minutos (mais um `intervalo`
++    opcional entre eles). O que já existe é pulado, nada é duplicado.
++
++    Devolve {'criados', 'existentes', 'por_agenda'}.
++    """
++    hoje = hoje or timezone.localdate()
++
++    if not agendas:
++        raise ErroAgendamento('Escolha ao menos uma maquiadora.')
++    if dia < hoje:
++        raise ErroAgendamento('Essa data já passou. Confira o dia informado.')
++    if not 5 <= duracao <= 240:
++        raise ErroAgendamento(
++            'A duração de cada horário deve ficar entre 5 e 240 minutos.'
++        )
++    if not 0 <= intervalo <= 120:
++        raise ErroAgendamento('O intervalo deve ficar entre 0 e 120 minutos.')
++
++    fuso = timezone.get_current_timezone()
++    comeco = timezone.make_aware(datetime.combine(dia, inicio), fuso)
++    limite = timezone.make_aware(datetime.combine(dia, fim), fuso)
++
++    if limite <= comeco:
++        raise ErroAgendamento('O horário final precisa ser depois do inicial.')
++
++    duracao_td = timedelta(minutes=duracao)
++    passo = timedelta(minutes=duracao + intervalo)
++
++    horarios = []
++    atual = comeco
++    while atual + duracao_td <= limite:
++        horarios.append(atual)
++        atual += passo
++        if len(horarios) > MAX_HORARIOS_POR_MAQUIADORA:
++            raise ErroAgendamento(
++                f'Isso criaria mais de {MAX_HORARIOS_POR_MAQUIADORA} horários '
++                f'por maquiadora. Confira o início, o fim e a duração.'
++            )
++
++    if not horarios:
++        raise ErroAgendamento(
++            f'Esse período não comporta nenhum horário de {duracao} minutos.'
++        )
++
++    criados = 0
++    existentes = 0
++    with transaction.atomic():
++        for agenda in agendas:
++            ja_existem = set(
++                HorarioMaquiagem.objects.filter(
++                    agenda=agenda, horario__in=horarios
++                ).values_list('horario', flat=True)
++            )
++            novos = [
++                HorarioMaquiagem(
++                    agenda=agenda, horario=h, duracao_minutos=duracao
++                )
++                for h in horarios
++                if h not in ja_existem
++            ]
++            HorarioMaquiagem.objects.bulk_create(novos)
++            criados += len(novos)
++            existentes += len(horarios) - len(novos)
++
++    return {
++        'criados': criados,
++        'existentes': existentes,
++        'por_agenda': len(horarios),
++    }
++
++
++# ---------------------------------------------------------------------------
++# Agendar e remover
++# ---------------------------------------------------------------------------
++
++def agendar_aluna(espetaculo, turma, horario_id, aluna_id, tipo_servico):
++    """
++    Agenda a aluna no horário. Recusa (ErroAgendamento) se: o horário não é da
++    turma, a aluna não é da turma, o serviço é inválido, a aluna já tem horário
++    neste espetáculo ou o horário já foi ocupado.
++    """
++    if tipo_servico not in dict(AgendamentoMaquiagem.TIPO_CHOICES):
++        raise ErroAgendamento('Escolha o tipo de serviço.')
++
++    try:
++        aluna_id = int(aluna_id)
++        horario_id = int(horario_id)
++    except (TypeError, ValueError):
++        raise ErroAgendamento('Escolha uma aluna na lista e um horário livre.')
++
++    with transaction.atomic():
++        # Trava a aluna e o horário: duas pessoas clicando ao mesmo tempo não
++        # agendam a mesma aluna duas vezes nem ocupam o mesmo horário.
++        aluna = Aluna.objects.select_for_update(of=('self',)).filter(
++            pk=aluna_id, turmas=turma, ativa=True
++        ).first()
++        if aluna is None:
++            raise ErroAgendamento(
++                'Essa aluna não está ativa nesta turma. Atualize a página.'
++            )
++
++        horario = HorarioMaquiagem.objects.select_for_update(
++            of=('self',)
++        ).select_related('agenda').filter(
++            pk=horario_id,
++            agenda__espetaculo=espetaculo,
++            agenda__turma=turma,
++        ).first()
++        if horario is None:
++            raise ErroAgendamento('Horário não encontrado para esta turma.')
++
++        existente = agendamento_da_aluna(aluna, espetaculo)
++        if existente is not None:
++            raise ErroAgendamento(
++                f'{aluna.nome} já tem horário: '
++                f'{formatar_horario(existente.horario.horario)} com '
++                f'{existente.horario.agenda.maquiadora}. '
++                f'Remova esse agendamento antes de marcar outro.'
++            )
++
++        if horario.esta_reservado_expirado:
++            horario.liberar()
++
++        if horario.status != 'disponivel':
++            raise ErroAgendamento(
++                'Esse horário não está mais disponível. Atualize a página.'
++            )
++
++        agendamento = AgendamentoMaquiagem.objects.create(
++            horario=horario,
++            aluna=aluna,
++            tipo_servico=tipo_servico,
++            criado_por_admin=True,
++        )
++        horario.marcar_como_agendado()
++
++    return agendamento
++
++
++def remover_agendamento(espetaculo, agendamento_id):
++    """Remove o agendamento, libera o horário e devolve o nome da aluna."""
++    with transaction.atomic():
++        agendamento = AgendamentoMaquiagem.objects.select_related(
++            'horario', 'horario__agenda', 'aluna'
++        ).filter(
++            pk=agendamento_id, horario__agenda__espetaculo=espetaculo
++        ).first()
++        if agendamento is None:
++            raise ErroAgendamento('Agendamento não encontrado.')
++
++        horario = agendamento.horario
++        nome = agendamento.aluna.nome
++        agendamento.delete()
++        horario.liberar()
++
++    return nome
+diff --git a/espetaculo/migrations/0026_maquiagem_familia_escolhe_horario.py b/espetaculo/migrations/0026_maquiagem_familia_escolhe_horario.py
+new file mode 100644
+index 0000000..7e1d194
+--- /dev/null
++++ b/espetaculo/migrations/0026_maquiagem_familia_escolhe_horario.py
+@@ -0,0 +1,18 @@
++# Generated by Django 6.0.1 on 2026-10-28 23:10
++
++from django.db import migrations, models
++
++
++class Migration(migrations.Migration):
++
++    dependencies = [
++        ('espetaculo', '0025_agenda_maquiagem_varias_maquiadoras'),
++    ]
++
++    operations = [
++        migrations.AddField(
++            model_name='espetaculo',
++            name='maquiagem_familia_escolhe_horario',
++            field=models.BooleanField(default=False, help_text='Desmarcado (padrão): só a escola agenda, e a aluna vê apenas o horário marcado para ela. Marcado: a família escolhe o próprio horário entre os livres.', verbose_name='Famílias escolhem o horário da maquiagem'),
++        ),
++    ]
+diff --git a/espetaculo/models.py b/espetaculo/models.py
+index d1a1a95..9aeaf5a 100644
+--- a/espetaculo/models.py
++++ b/espetaculo/models.py
+@@ -121,6 +121,17 @@ class Espetaculo(models.Model):
+         help_text='Se marcado, apenas usuários autenticados podem comprar ingressos deste evento.'
+     )
+ 
++    # Maquiagem/cabelo: quem escolhe o horário?
++    maquiagem_familia_escolhe_horario = models.BooleanField(
++        default=False,
++        verbose_name='Famílias escolhem o horário da maquiagem',
++        help_text=(
++            'Desmarcado (padrão): só a escola agenda, e a aluna vê apenas o '
++            'horário marcado para ela. Marcado: a família escolhe o próprio '
++            'horário entre os livres.'
++        ),
++    )
++
+     # Controle
+     ativo = models.BooleanField(default=True)
+     criado_em = models.DateTimeField(auto_now_add=True)
+diff --git a/espetaculo/templates/espetaculo/horarios_maquiagem_aluna.html b/espetaculo/templates/espetaculo/horarios_maquiagem_aluna.html
+new file mode 100644
+index 0000000..eb373df
+--- /dev/null
++++ b/espetaculo/templates/espetaculo/horarios_maquiagem_aluna.html
+@@ -0,0 +1,185 @@
++{% extends 'base.html' %}
++{% load tz %}
++
++{% block title %}Meus horários de maquiagem{% endblock %}
++
++{% block content %}
++
++<style>
++    .agconf-page {
++        max-width: 700px;
++        margin: 0 auto;
++        padding: 1.5rem 1rem 3rem;
++        box-sizing: border-box;
++        text-align: center;
++    }
++
++    .agconf-title {
++        color: #2c3e50;
++        font-size: 1.6rem;
++        margin: 0 0 0.5rem 0;
++    }
++
++    .agconf-subtitle {
++        color: #777;
++        font-size: 0.95rem;
++        margin: 0 0 1.5rem 0;
++    }
++
++    .agconf-lista {
++        display: flex;
++        flex-direction: column;
++        gap: 1rem;
++        text-align: left;
++    }
++
++    .agconf-card {
++        background: #ffffff;
++        border-radius: 10px;
++        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
++        padding: 1.25rem;
++        box-sizing: border-box;
++        max-width: 100%;
++    }
++
++    .agconf-card.atual {
++        border: 2px solid #b07a84;
++    }
++
++    .agconf-card-header {
++        display: flex;
++        justify-content: space-between;
++        align-items: center;
++        flex-wrap: wrap;
++        gap: 0.5rem;
++        margin-bottom: 0.85rem;
++        padding-bottom: 0.75rem;
++        border-bottom: 1px solid #f1ebf6;
++    }
++
++    .agconf-aluna-nome {
++        color: #2c3e50;
++        font-size: 1.1rem;
++        font-weight: 700;
++        margin: 0;
++        word-break: break-word;
++    }
++
++    .agconf-badge {
++        display: inline-flex;
++        align-items: center;
++        padding: 0.25rem 0.65rem;
++        border-radius: 999px;
++        background: #f7eef1;
++        color: #b07a84;
++        font-size: 0.75rem;
++        font-weight: 700;
++        text-transform: uppercase;
++        letter-spacing: 0.03em;
++        white-space: nowrap;
++    }
++
++    .agconf-linha {
++        display: flex;
++        justify-content: space-between;
++        gap: 0.75rem;
++        padding: 0.4rem 0;
++        font-size: 0.92rem;
++        flex-wrap: wrap;
++    }
++
++    .agconf-label {
++        color: #777;
++        font-weight: 600;
++    }
++
++    .agconf-valor {
++        color: #2c3e50;
++        font-weight: 500;
++        text-align: right;
++    }
++
++    .agconf-empty {
++        color: #999;
++        padding: 2rem 1rem;
++        background: #ffffff;
++        border-radius: 10px;
++        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
++    }
++
++    .agconf-voltar {
++        display: inline-block;
++        margin-top: 1.75rem;
++        color: #b07a84;
++        font-weight: 700;
++        text-decoration: none;
++    }
++
++    .agconf-voltar:hover {
++        text-decoration: underline;
++    }
++
++    @media (max-width: 480px) {
++        .agconf-linha {
++            flex-direction: column;
++            gap: 0.15rem;
++        }
++
++        .agconf-valor {
++            text-align: left;
++        }
++    }
++</style>
++<style>
++    .agconf-sem-horario {
++        color: #6c5560;
++        font-size: 0.95rem;
++        line-height: 1.5;
++    }
++</style>
++
++
++<div class="agconf-page">
++    <h2 class="agconf-title">Meus horários de maquiagem</h2>
++    <p class="agconf-subtitle">{{ espetaculo.titulo }}</p>
++
++    {% if itens %}
++        <div class="agconf-lista">
++            {% for item in itens %}
++                <div class="agconf-card">
++                    <div class="agconf-card-header">
++                        <p class="agconf-aluna-nome">{{ item.aluna.nome }}</p>
++                    </div>
++
++                    {% if item.agendamento %}
++                        <div class="agconf-linha">
++                            <span class="agconf-label">Horário</span>
++                            <span class="agconf-valor">{{ item.agendamento.horario.horario|timezone:"America/Sao_Paulo"|date:"d/m/Y \à\s H:i" }}</span>
++                        </div>
++                        <div class="agconf-linha">
++                            <span class="agconf-label">Serviço</span>
++                            <span class="agconf-valor">{{ item.agendamento.get_tipo_servico_display }}</span>
++                        </div>
++                        <div class="agconf-linha">
++                            <span class="agconf-label">Maquiadora</span>
++                            <span class="agconf-valor">{{ item.agendamento.maquiadora }}</span>
++                        </div>
++                    {% else %}
++                        <p class="agconf-sem-horario">
++                            Ainda sem horário de maquiagem. A escola vai agendar, e o horário aparece aqui.
++                        </p>
++                    {% endif %}
++                </div>
++            {% endfor %}
++        </div>
++    {% elif tem_alunas %}
++        <div class="agconf-empty">Não há horário de maquiagem para você neste espetáculo.</div>
++    {% else %}
++        <div class="agconf-empty">Nenhuma aluna encontrada na sua conta.</div>
++    {% endif %}
++
++    <a href="{% url 'espetaculo:lista_publica' %}" class="agconf-voltar">
++        Voltar aos espetáculos
++    </a>
++</div>
++{% endblock %}
+diff --git a/espetaculo/templates/espetaculo/public_list.html b/espetaculo/templates/espetaculo/public_list.html
+index 3e2e854..b98edf8 100644
+--- a/espetaculo/templates/espetaculo/public_list.html
++++ b/espetaculo/templates/espetaculo/public_list.html
+@@ -121,10 +121,10 @@
+                             Saiba mais
+                         </a>
+ 
+-                        {% if user.is_authenticated %}
++                        {% if user.is_authenticated and espetaculo.pk in ids_com_maquiagem %}
+                             <a href="{% url 'espetaculo:agendar_maquiagem' espetaculo.pk %}"
+                                style="display: inline-block; background: #fdeef5; color: #a63d7a; border: 1px solid #f3cfe0; padding: 0.75rem 1.2rem; border-radius: 5px; text-decoration: none; font-weight: 600;">
+-                                Agendar Maquiagem
++                                {% if espetaculo.maquiagem_familia_escolhe_horario %}Agendar maquiagem{% else %}Meus horários de maquiagem{% endif %}
+                             </a>
+                         {% endif %}
+ 
+diff --git a/espetaculo/tests_maquiagem_agendas.py b/espetaculo/tests_maquiagem_agendas.py
+index 16d99bd..a8f1ba5 100644
+--- a/espetaculo/tests_maquiagem_agendas.py
++++ b/espetaculo/tests_maquiagem_agendas.py
+@@ -298,8 +298,13 @@ class RenomearEAtivarAgendaTests(BaseTests):
+ 
+ @override_settings(STORAGES=STORAGES_TESTE)
+ class AlunaVeHorariosDeTodasAsMaquiadorasTests(BaseTests):
++    """Modo em que a escola libera a escolha do horário pelas famílias."""
++
+     def setUp(self):
+         super().setUp()
++        Espetaculo.objects.filter(pk=self.espetaculo.pk).update(
++            maquiagem_familia_escolhe_horario=True
++        )
+         self.client.force_login(self.responsavel)
+         self.url = reverse('espetaculo:agendar_maquiagem', args=[self.espetaculo.pk])
+ 
+@@ -645,6 +650,9 @@ class AcessoRestritoTests(BaseTests):
+             horario=self.horario, aluna=self.aluna, tipo_servico='maquiagem',
+         )
+         self.horario.marcar_como_agendado()
++        # Outra aluna da turma, ainda sem horário (cada aluna só pode ter um).
++        self.outra_aluna = Aluna.objects.create(nome='Bia')
++        self.outra_aluna.turmas.add(self.turma_a)
+ 
+         self.gets = {
+             'lista': self.url_admin,
+@@ -675,7 +683,7 @@ class AcessoRestritoTests(BaseTests):
+             'agendar_admin': (
+                 reverse('admin_dashboard:agendar_maquiagem_admin',
+                         args=[self.livre.pk]),
+-                {'aluna': self.aluna.pk, 'tipo_servico': 'cabelo'},
++                {'aluna': self.outra_aluna.pk, 'tipo_servico': 'cabelo'},
+             ),
+             'editar_post': (
+                 reverse('admin_dashboard:maquiagem_editar',
+diff --git a/espetaculo/tests_maquiagem_grade.py b/espetaculo/tests_maquiagem_grade.py
+new file mode 100644
+index 0000000..09f5014
+--- /dev/null
++++ b/espetaculo/tests_maquiagem_grade.py
+@@ -0,0 +1,1188 @@
++"""
++Agenda de maquiagem: grade por horário, criação de horários em lote, agendar
++e remover pelo painel, e a área da aluna (só vê o que é dela).
++"""
++
++from datetime import date, datetime, time, timedelta
++
++from django.contrib.auth.models import User
++from django.test import TestCase, override_settings
++from django.urls import reverse
++from django.utils import timezone
++
++from espetaculo.maquiagem_agenda import (
++    MAX_HORARIOS_POR_MAQUIADORA,
++    ErroAgendamento,
++    agendar_aluna,
++    alunas_sem_horario,
++    gerar_horarios,
++    horarios_da_familia,
++    montar_grade,
++    remover_agendamento,
++)
++from espetaculo.models import (
++    AgendaMaquiagemTurma,
++    AgendamentoMaquiagem,
++    Espetaculo,
++    HorarioMaquiagem,
++)
++from usuarios.models import Aluna, Turma
++
++STORAGES_TESTE = {
++    'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
++    'staticfiles': {
++        'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage'
++    },
++}
++
++DIA = timezone.localdate() + timedelta(days=20)
++
++
++def _dt(hora, minuto=0, dia=DIA):
++    return timezone.make_aware(datetime.combine(dia, time(hora, minuto)))
++
++
++class BaseTests(TestCase):
++    def setUp(self):
++        self.staff = User.objects.create_user(
++            'staff', 'staff@example.com', 'senha123', is_staff=True
++        )
++        self.espetaculo = Espetaculo.objects.create(
++            titulo='Quebra-Nozes', descricao='x', tipo='evento',
++            data_apresentacao=timezone.now() + timedelta(days=40),
++            local='Teatro', endereco='Rua A',
++        )
++        self.turma_a = Turma.objects.create(nome='Turma A')
++        self.turma_b = Turma.objects.create(nome='Turma B')
++
++        self.resp_ana = User.objects.create_user('resp_ana', 'a@x.com', 'senha123')
++        self.resp_bia = User.objects.create_user('resp_bia', 'b@x.com', 'senha123')
++
++        self.ana = self._aluna('Ana', self.turma_a, self.resp_ana)
++        self.bia = self._aluna('Bia', self.turma_a, self.resp_bia)
++        self.clara = self._aluna('Clara', self.turma_a)
++        self.dora = self._aluna('Dora', self.turma_a, ativa=False)
++        self.eva = self._aluna('Eva', self.turma_b)
++
++        self.maria = self._agenda('Maria')
++        self.joana = self._agenda('Joana')
++        self.url = reverse(
++            'admin_dashboard:espetaculo_maquiagens', args=[self.espetaculo.pk]
++        )
++
++    # ---------- atalhos ----------
++
++    def _aluna(self, nome, turma, responsavel=None, ativa=True):
++        aluna = Aluna.objects.create(
++            nome=nome, responsavel=responsavel, ativa=ativa
++        )
++        aluna.turmas.add(turma)
++        return aluna
++
++    def _agenda(self, maquiadora, turma=None, **extra):
++        return AgendaMaquiagemTurma.objects.create(
++            espetaculo=extra.pop('espetaculo', self.espetaculo),
++            turma=turma or self.turma_a,
++            maquiadora=maquiadora,
++            ativo=extra.pop('ativo', True),
++        )
++
++    def _h(self, agenda, hora, minuto=0, dia=DIA, status='disponivel'):
++        return HorarioMaquiagem.objects.create(
++            agenda=agenda, horario=_dt(hora, minuto, dia), status=status,
++        )
++
++    def _agendar(self, aluna, horario, tipo='maquiagem'):
++        return agendar_aluna(
++            self.espetaculo, horario.agenda.turma, horario.pk, aluna.pk, tipo
++        )
++
++
++# ===========================================================================
++# B. Criar horários em lote
++# ===========================================================================
++
++class GerarHorariosServicoTests(BaseTests):
++    def _gerar(self, agendas=None, inicio=time(9, 0), fim=time(11, 0),
++               duracao=30, intervalo=0, dia=DIA, hoje=None):
++        return gerar_horarios(
++            agendas if agendas is not None else [self.maria, self.joana],
++            dia, inicio, fim, duracao, intervalo, hoje=hoje,
++        )
++
++    def test_cria_os_horarios_do_periodo_para_cada_maquiadora(self):
++        resultado = self._gerar()
++
++        self.assertEqual(
++            resultado, {'criados': 8, 'existentes': 0, 'por_agenda': 4}
++        )
++        for agenda in (self.maria, self.joana):
++            horas = [
++                timezone.localtime(h.horario).strftime('%H:%M')
++                for h in agenda.horarios.order_by('horario')
++            ]
++            self.assertEqual(horas, ['09:00', '09:30', '10:00', '10:30'])
++            self.assertTrue(
++                all(h.duracao_minutos == 30 for h in agenda.horarios.all())
++            )
++
++    def test_o_horario_e_gravado_no_fuso_local_e_nao_em_utc(self):
++        self._gerar(inicio=time(9, 0), fim=time(9, 30))
++        horario = self.maria.horarios.get()
++        self.assertEqual(timezone.localtime(horario.horario).hour, 9)
++
++    def test_o_ultimo_horario_termina_exatamente_no_fim(self):
++        self._gerar(inicio=time(9, 0), fim=time(10, 0))
++        self.assertEqual(self.maria.horarios.count(), 2)  # 09:00 e 09:30
++
++    def test_intervalo_entre_horarios(self):
++        # 30 min + 15 de intervalo: 09:00, 09:45, 10:30
++        resultado = self._gerar(
++            inicio=time(9, 0), fim=time(11, 0), duracao=30, intervalo=15
++        )
++        horas = [
++            timezone.localtime(h.horario).strftime('%H:%M')
++            for h in self.maria.horarios.order_by('horario')
++        ]
++        self.assertEqual(horas, ['09:00', '09:45', '10:30'])
++        self.assertEqual(resultado['por_agenda'], 3)
++
++    def test_so_as_agendas_escolhidas_recebem(self):
++        self._gerar(agendas=[self.maria])
++        self.assertEqual(self.maria.horarios.count(), 4)
++        self.assertEqual(self.joana.horarios.count(), 0)
++
++    def test_repetir_nao_duplica(self):
++        self._gerar()
++        resultado = self._gerar()
++        self.assertEqual(resultado['criados'], 0)
++        self.assertEqual(resultado['existentes'], 8)
++        self.assertEqual(HorarioMaquiagem.objects.count(), 8)
++
++    def test_completa_so_o_que_falta(self):
++        self._h(self.maria, 9, 0)
++        resultado = self._gerar(agendas=[self.maria])
++        self.assertEqual(resultado['criados'], 3)
++        self.assertEqual(resultado['existentes'], 1)
++
++    def test_nao_mexe_em_horario_ja_agendado(self):
++        horario = self._h(self.maria, 9, 0)
++        self._agendar(self.ana, horario)
++
++        self._gerar(agendas=[self.maria])
++
++        horario.refresh_from_db()
++        self.assertEqual(horario.status, 'agendado')
++        self.assertTrue(AgendamentoMaquiagem.objects.filter(aluna=self.ana).exists())
++
++    def test_erros_nao_criam_nada(self):
++        casos = {
++            'sem maquiadora': dict(agendas=[]),
++            'data passada': dict(
++                dia=timezone.localdate() - timedelta(days=1)
++            ),
++            'fim antes do inicio': dict(inicio=time(11, 0), fim=time(9, 0)),
++            'fim igual ao inicio': dict(inicio=time(9, 0), fim=time(9, 0)),
++            'duracao curta': dict(duracao=4),
++            'duracao longa': dict(duracao=241),
++            'intervalo negativo': dict(intervalo=-1),
++            'intervalo grande': dict(intervalo=121),
++            'periodo curto demais': dict(
++                inicio=time(9, 0), fim=time(9, 10), duracao=30
++            ),
++        }
++        for nome, kwargs in casos.items():
++            with self.subTest(nome):
++                with self.assertRaises(ErroAgendamento):
++                    self._gerar(**kwargs)
++        self.assertEqual(HorarioMaquiagem.objects.count(), 0)
++
++    def test_trava_contra_excesso_de_horarios(self):
++        with self.assertRaises(ErroAgendamento):
++            self._gerar(
++                inicio=time(0, 0), fim=time(23, 59), duracao=5, intervalo=0
++            )
++        self.assertEqual(HorarioMaquiagem.objects.count(), 0)
++        self.assertGreater(MAX_HORARIOS_POR_MAQUIADORA, 50)
++
++    def test_hoje_e_permitido(self):
++        hoje = timezone.localdate()
++        resultado = self._gerar(dia=hoje, hoje=hoje)
++        self.assertEqual(resultado['criados'], 8)
++
++
++@override_settings(STORAGES=STORAGES_TESTE)
++class GerarHorariosViewTests(BaseTests):
++    def setUp(self):
++        super().setUp()
++        self.client.force_login(self.staff)
++
++    def _post(self, **dados):
++        base = {
++            'acao': 'gerar_horarios', 'turma': self.turma_a.pk,
++            'agendas': [self.maria.pk, self.joana.pk],
++            'dia': DIA.isoformat(), 'inicio': '09:00', 'fim': '11:00',
++            'duracao': '30', 'intervalo': '0',
++        }
++        base.update(dados)
++        return self.client.post(self.url, base)
++
++    def test_cria_e_volta_para_a_grade_do_dia(self):
++        resposta = self._post()
++
++        self.assertEqual(HorarioMaquiagem.objects.count(), 8)
++        self.assertRedirects(
++            resposta,
++            f'{self.url}?turma={self.turma_a.pk}&dia={DIA.isoformat()}',
++            fetch_redirect_response=False,
++        )
++        pagina = self.client.get(resposta['Location'])
++        self.assertContains(pagina, '8 horário(s) criado(s)')
++
++    def test_mensagem_conta_os_que_ja_existiam(self):
++        self._post()
++        resposta = self._post()
++        pagina = self.client.get(resposta['Location'])
++        self.assertContains(pagina, '0 horário(s) criado(s)')
++        self.assertContains(pagina, '8 já existia(m)')
++
++    def test_agenda_de_outra_turma_ou_espetaculo_e_ignorada(self):
++        outra_turma = self._agenda('Outra', turma=self.turma_b)
++        outro = Espetaculo.objects.create(
++            titulo='Outro', descricao='x', tipo='evento',
++            data_apresentacao=timezone.now(), local='L', endereco='E',
++        )
++        alheia = self._agenda('Alheia', espetaculo=outro)
++
++        self._post(agendas=[outra_turma.pk, alheia.pk])
++
++        self.assertEqual(HorarioMaquiagem.objects.count(), 0)
++
++    def test_campos_vazios_ou_invalidos_nao_quebram_nem_criam(self):
++        casos = [
++            {'dia': ''}, {'dia': 'xx'}, {'inicio': ''}, {'fim': 'abc'},
++            {'duracao': ''}, {'duracao': 'abc'}, {'intervalo': 'x'},
++            {'agendas': []}, {'agendas': ['abc']}, {'turma': 'abc'},
++            {'turma': 999999},
++        ]
++        for dados in casos:
++            with self.subTest(dados=dados):
++                resposta = self._post(**dados)
++                self.assertEqual(resposta.status_code, 302)
++        self.assertEqual(HorarioMaquiagem.objects.count(), 0)
++
++    def test_data_passada_e_recusada_com_mensagem(self):
++        resposta = self._post(
++            dia=(timezone.localdate() - timedelta(days=2)).isoformat()
++        )
++        self.assertEqual(HorarioMaquiagem.objects.count(), 0)
++        pagina = self.client.get(resposta['Location'])
++        self.assertContains(pagina, 'já passou')
++
++
++# ===========================================================================
++# A. A grade
++# ===========================================================================
++
++class MontarGradeTests(BaseTests):
++    def test_uma_coluna_por_maquiadora_e_uma_linha_por_horario(self):
++        self._h(self.maria, 9)
++        self._h(self.joana, 9)
++        self._h(self.maria, 9, 30)
++
++        grade = montar_grade(self.espetaculo, self.turma_a, DIA)
++
++        self.assertEqual(
++            [a.maquiadora for a in grade['agendas']], ['Joana', 'Maria']
++        )
++        self.assertEqual(
++            [l['hora'] for l in grade['linhas']], [time(9, 0), time(9, 30)]
++        )
++
++    def test_estados_das_celulas(self):
++        livre = self._h(self.maria, 9)
++        ocupado = self._h(self.maria, 9, 30)
++        self._agendar(self.ana, ocupado)
++        self._h(self.maria, 10, status='reservado_temporario')
++        HorarioMaquiagem.objects.filter(
++            agenda=self.maria, horario=_dt(10)
++        ).update(reservado_em=timezone.now())
++        self._h(self.maria, 10, 30, status='bloqueado_manual')
++        self._h(self.joana, 9)  # Joana só tem 09:00
++
++        grade = montar_grade(self.espetaculo, self.turma_a, DIA)
++        por_hora = {
++            l['hora']: {c['agenda'].maquiadora: c for c in l['celulas']}
++            for l in grade['linhas']
++        }
++
++        self.assertEqual(por_hora[time(9, 0)]['Maria']['estado'], 'livre')
++        self.assertEqual(por_hora[time(9, 0)]['Maria']['horario'], livre)
++        self.assertEqual(por_hora[time(9, 30)]['Maria']['estado'], 'ocupado')
++        self.assertEqual(
++            por_hora[time(9, 30)]['Maria']['agendamento'].aluna, self.ana
++        )
++        self.assertEqual(por_hora[time(10, 0)]['Maria']['estado'], 'reservado')
++        self.assertEqual(por_hora[time(10, 30)]['Maria']['estado'], 'bloqueado')
++        self.assertEqual(por_hora[time(9, 30)]['Joana']['estado'], 'ausente')
++        self.assertEqual(por_hora[time(9, 0)]['Joana']['estado'], 'livre')
++
++    def test_dias_com_contagem_de_livres(self):
++        self._h(self.maria, 9)
++        ocupado = self._h(self.maria, 10)
++        self._agendar(self.ana, ocupado)
++        self._h(self.maria, 9, dia=DIA + timedelta(days=1))
++
++        grade = montar_grade(self.espetaculo, self.turma_a, DIA)
++
++        self.assertEqual(
++            [(d['data'], d['total'], d['livres']) for d in grade['dias']],
++            [(DIA, 2, 1), (DIA + timedelta(days=1), 1, 1)],
++        )
++        self.assertEqual(grade['livres_total'], 2)
++
++    def test_dia_padrao_e_o_primeiro_com_horario_livre(self):
++        lotado = self._h(self.maria, 9)
++        self._agendar(self.ana, lotado)
++        self._h(self.maria, 9, dia=DIA + timedelta(days=1))
++
++        grade = montar_grade(self.espetaculo, self.turma_a)
++
++        self.assertEqual(grade['dia'], DIA + timedelta(days=1))
++
++    def test_dia_pedido_e_respeitado_e_dia_invalido_cai_no_padrao(self):
++        self._h(self.maria, 9)
++        self._h(self.maria, 9, dia=DIA + timedelta(days=1))
++
++        pedido = montar_grade(
++            self.espetaculo, self.turma_a, DIA + timedelta(days=1)
++        )
++        invalido = montar_grade(
++            self.espetaculo, self.turma_a, DIA + timedelta(days=9)
++        )
++
++        self.assertEqual(pedido['dia'], DIA + timedelta(days=1))
++        self.assertEqual(invalido['dia'], DIA)
++
++    def test_sem_horarios_nao_quebra(self):
++        grade = montar_grade(self.espetaculo, self.turma_a)
++        self.assertIsNone(grade['dia'])
++        self.assertEqual(grade['linhas'], [])
++        self.assertEqual(grade['livres_total'], 0)
++
++    def test_reserva_expirada_volta_a_ficar_livre(self):
++        h = self._h(self.maria, 9, status='reservado_temporario')
++        HorarioMaquiagem.objects.filter(pk=h.pk).update(
++            reservado_em=timezone.now() - timedelta(minutes=40),
++            reservado_por_sessao='x',
++        )
++
++        grade = montar_grade(self.espetaculo, self.turma_a, DIA)
++
++        self.assertEqual(grade['linhas'][0]['celulas'][1]['estado'], 'livre')
++
++    def test_turma_sem_agenda(self):
++        grade = montar_grade(self.espetaculo, self.turma_b, DIA)
++        self.assertEqual(grade['agendas'], [])
++
++    def test_nao_mistura_horarios_de_outra_turma(self):
++        outra = self._agenda('Outra', turma=self.turma_b)
++        self._h(outra, 9)
++        self._h(self.maria, 10)
++
++        grade = montar_grade(self.espetaculo, self.turma_a, DIA)
++
++        self.assertEqual([l['hora'] for l in grade['linhas']], [time(10, 0)])
++
++
++class AlunasSemHorarioTests(BaseTests):
++    def test_so_ativas_da_turma_ordenadas_por_nome(self):
++        nomes = [a.nome for a in alunas_sem_horario(self.espetaculo, self.turma_a)]
++        self.assertEqual(nomes, ['Ana', 'Bia', 'Clara'])  # sem Dora (inativa) e Eva
++
++    def test_quem_ja_tem_horario_sai_da_lista(self):
++        self._agendar(self.ana, self._h(self.maria, 9))
++        nomes = [a.nome for a in alunas_sem_horario(self.espetaculo, self.turma_a)]
++        self.assertEqual(nomes, ['Bia', 'Clara'])
++
++    def test_horario_em_outro_espetaculo_nao_conta(self):
++        outro = Espetaculo.objects.create(
++            titulo='Outro', descricao='x', tipo='evento',
++            data_apresentacao=timezone.now(), local='L', endereco='E',
++        )
++        agenda = self._agenda('Z', espetaculo=outro)
++        horario = HorarioMaquiagem.objects.create(
++            agenda=agenda, horario=_dt(9)
++        )
++        agendar_aluna(outro, self.turma_a, horario.pk, self.ana.pk, 'cabelo')
++
++        nomes = [a.nome for a in alunas_sem_horario(self.espetaculo, self.turma_a)]
++        self.assertIn('Ana', nomes)
++
++    def test_aluna_em_duas_turmas_aparece_uma_vez(self):
++        self.ana.turmas.add(self.turma_b)
++        nomes = [a.nome for a in alunas_sem_horario(self.espetaculo, self.turma_b)]
++        self.assertEqual(nomes.count('Ana'), 1)
++
++
++# ===========================================================================
++# A. Agendar e remover (serviço)
++# ===========================================================================
++
++class AgendarAlunaServicoTests(BaseTests):
++    def test_agenda_e_ocupa_o_horario(self):
++        horario = self._h(self.maria, 9)
++
++        agendamento = self._agendar(self.ana, horario, 'cabelo')
++
++        horario.refresh_from_db()
++        self.assertEqual(horario.status, 'agendado')
++        self.assertEqual(agendamento.aluna, self.ana)
++        self.assertEqual(agendamento.tipo_servico, 'cabelo')
++        self.assertTrue(agendamento.criado_por_admin)
++
++    def test_aluna_nao_pode_ter_dois_horarios_no_mesmo_espetaculo(self):
++        primeiro = self._h(self.maria, 9)
++        segundo = self._h(self.joana, 10)
++        self._agendar(self.ana, primeiro)
++
++        with self.assertRaises(ErroAgendamento) as ctx:
++            self._agendar(self.ana, segundo)
++
++        mensagem = str(ctx.exception)
++        self.assertIn('Ana já tem horário', mensagem)
++        self.assertIn('Maria', mensagem)  # diz onde ela já está
++        segundo.refresh_from_db()
++        self.assertEqual(segundo.status, 'disponivel')
++        self.assertEqual(AgendamentoMaquiagem.objects.count(), 1)
++
++    def test_horario_ocupado_e_recusado(self):
++        horario = self._h(self.maria, 9)
++        self._agendar(self.ana, horario)
++
++        with self.assertRaises(ErroAgendamento) as ctx:
++            self._agendar(self.bia, horario)
++
++        self.assertIn('não está mais disponível', str(ctx.exception))
++        self.assertEqual(
++            AgendamentoMaquiagem.objects.filter(aluna=self.bia).count(), 0
++        )
++
++    def test_aluna_de_outra_turma_e_recusada(self):
++        with self.assertRaises(ErroAgendamento):
++            self._agendar(self.eva, self._h(self.maria, 9))
++
++    def test_aluna_inativa_e_recusada(self):
++        with self.assertRaises(ErroAgendamento):
++            self._agendar(self.dora, self._h(self.maria, 9))
++
++    def test_horario_de_outra_turma_e_recusado(self):
++        outra = self._agenda('Outra', turma=self.turma_b)
++        horario = self._h(outra, 9)
++        with self.assertRaises(ErroAgendamento):
++            agendar_aluna(
++                self.espetaculo, self.turma_a, horario.pk, self.ana.pk, 'cabelo'
++            )
++
++    def test_horario_de_outro_espetaculo_e_recusado(self):
++        outro = Espetaculo.objects.create(
++            titulo='Outro', descricao='x', tipo='evento',
++            data_apresentacao=timezone.now(), local='L', endereco='E',
++        )
++        agenda = self._agenda('Z', espetaculo=outro)
++        horario = HorarioMaquiagem.objects.create(agenda=agenda, horario=_dt(9))
++        with self.assertRaises(ErroAgendamento):
++            agendar_aluna(
++                self.espetaculo, self.turma_a, horario.pk, self.ana.pk, 'cabelo'
++            )
++
++    def test_servico_invalido(self):
++        with self.assertRaises(ErroAgendamento):
++            agendar_aluna(
++                self.espetaculo, self.turma_a, self._h(self.maria, 9).pk,
++                self.ana.pk, 'inexistente',
++            )
++
++    def test_ids_invalidos(self):
++        for aluna_id, horario_id in [('abc', 1), (None, 1), ('1', 'x'), ('', '')]:
++            with self.subTest(aluna=aluna_id, horario=horario_id):
++                with self.assertRaises(ErroAgendamento):
++                    agendar_aluna(
++                        self.espetaculo, self.turma_a, horario_id, aluna_id,
++                        'maquiagem',
++                    )
++
++    def test_reserva_expirada_pode_receber_a_aluna(self):
++        horario = self._h(self.maria, 9, status='reservado_temporario')
++        HorarioMaquiagem.objects.filter(pk=horario.pk).update(
++            reservado_em=timezone.now() - timedelta(minutes=40),
++            reservado_por_sessao='x',
++        )
++
++        self._agendar(self.ana, horario)
++
++        horario.refresh_from_db()
++        self.assertEqual(horario.status, 'agendado')
++
++    def test_reserva_ainda_valida_bloqueia(self):
++        horario = self._h(self.maria, 9, status='reservado_temporario')
++        HorarioMaquiagem.objects.filter(pk=horario.pk).update(
++            reservado_em=timezone.now(), reservado_por_sessao='x',
++        )
++        with self.assertRaises(ErroAgendamento):
++            self._agendar(self.ana, horario)
++
++    def test_remover_libera_o_horario_e_a_aluna_volta_para_a_lista(self):
++        horario = self._h(self.maria, 9)
++        agendamento = self._agendar(self.ana, horario)
++
++        nome = remover_agendamento(self.espetaculo, agendamento.pk)
++
++        self.assertEqual(nome, 'Ana')
++        horario.refresh_from_db()
++        self.assertEqual(horario.status, 'disponivel')
++        self.assertIn(
++            self.ana, alunas_sem_horario(self.espetaculo, self.turma_a)
++        )
++
++    def test_remover_de_outro_espetaculo_e_recusado(self):
++        agendamento = self._agendar(self.ana, self._h(self.maria, 9))
++        outro = Espetaculo.objects.create(
++            titulo='Outro', descricao='x', tipo='evento',
++            data_apresentacao=timezone.now(), local='L', endereco='E',
++        )
++        with self.assertRaises(ErroAgendamento):
++            remover_agendamento(outro, agendamento.pk)
++        self.assertTrue(AgendamentoMaquiagem.objects.filter(pk=agendamento.pk).exists())
++
++    def test_remover_inexistente(self):
++        with self.assertRaises(ErroAgendamento):
++            remover_agendamento(self.espetaculo, 999999)
++
++
++# ===========================================================================
++# A. A grade no painel (tela)
++# ===========================================================================
++
++@override_settings(STORAGES=STORAGES_TESTE)
++class GradeNoPainelTests(BaseTests):
++    def setUp(self):
++        super().setUp()
++        self.client.force_login(self.staff)
++        for hora, minuto in ((9, 0), (9, 30), (10, 0)):
++            self._h(self.maria, hora, minuto)
++            self._h(self.joana, hora, minuto)
++
++    def _grade(self, **params):
++        base = {'turma': self.turma_a.pk}
++        base.update(params)
++        return self.client.get(self.url, base)
++
++    def _post_grade(self, **dados):
++        base = {
++            'acao': 'grade', 'turma': self.turma_a.pk, 'dia': DIA.isoformat(),
++            'tipo_servico': 'maquiagem', 'aluna': self.ana.pk,
++        }
++        base.update(dados)
++        return self.client.post(self.url, base)
++
++    def _h_de(self, agenda, hora, minuto=0):
++        return HorarioMaquiagem.objects.get(agenda=agenda, horario=_dt(hora, minuto))
++
++    # ---------- o que a tela mostra ----------
++
++    def test_mostra_as_colunas_os_horarios_e_as_alunas_sem_horario(self):
++        resposta = self._grade()
++
++        self.assertEqual(resposta.status_code, 200)
++        self.assertContains(resposta, 'Agenda por horário · Turma A')
++        self.assertContains(resposta, 'Joana')
++        self.assertContains(resposta, 'Maria')
++        self.assertContains(resposta, '09:30')
++        self.assertContains(resposta, 'name="agendar"', count=6)
++        self.assertEqual(
++            [a.nome for a in resposta.context['pendentes']],
++            ['Ana', 'Bia', 'Clara'],
++        )
++
++    def test_nao_mostra_aluna_inativa_nem_de_outra_turma(self):
++        resposta = self._grade()
++        nomes = [a.nome for a in resposta.context['pendentes']]
++        self.assertNotIn('Dora', nomes)
++        self.assertNotIn('Eva', nomes)
++
++    def test_a_primeira_aluna_ja_vem_selecionada(self):
++        resposta = self._grade()
++        self.assertContains(
++            resposta,
++            f'name="aluna" value="{self.ana.pk}" checked',
++        )
++
++    def test_aluna_agendada_some_da_lista_e_aparece_no_horario(self):
++        self._agendar(self.ana, self._h_de(self.maria, 9))
++
++        resposta = self._grade()
++
++        self.assertEqual(
++            [a.nome for a in resposta.context['pendentes']], ['Bia', 'Clara']
++        )
++        self.assertContains(resposta, 'name="remover"')
++        self.assertContains(resposta, 'Ana')
++        # a próxima da lista já fica selecionada
++        self.assertContains(
++            resposta, f'name="aluna" value="{self.bia.pk}" checked'
++        )
++
++    def test_avisa_quando_faltam_horarios(self):
++        for h in HorarioMaquiagem.objects.all()[:5]:
++            h.delete()  # sobra 1 horário livre para 3 alunas
++
++        resposta = self._grade()
++
++        self.assertContains(resposta, 'Faltam horários livres')
++
++    def test_nao_avisa_quando_ha_horarios_de_sobra(self):
++        resposta = self._grade()
++        self.assertNotContains(resposta, 'Faltam horários livres')
++
++    def test_turma_sem_maquiadora_explica(self):
++        resposta = self.client.get(self.url, {'turma': self.turma_b.pk})
++        self.assertContains(resposta, 'ainda não tem maquiadora')
++
++    def test_turma_invalida_nao_quebra(self):
++        for valor in ('abc', '999999', ''):
++            self.assertEqual(
++                self.client.get(self.url, {'turma': valor}).status_code, 200
++            )
++
++    def test_o_servico_escolhido_e_mantido(self):
++        resposta = self._grade(tipo='cabelo')
++        self.assertContains(resposta, '<option value="cabelo" selected>')
++
++    def test_servico_invalido_cai_em_maquiagem(self):
++        resposta = self._grade(tipo='xxx')
++        self.assertContains(resposta, '<option value="maquiagem" selected>')
++
++    def test_dias_aparecem_como_abas(self):
++        self._h(self.maria, 9, dia=DIA + timedelta(days=1))
++        resposta = self._grade()
++        self.assertContains(resposta, f'dia={DIA.isoformat()}')
++        self.assertContains(resposta, f'dia={(DIA + timedelta(days=1)).isoformat()}')
++
++    def test_sem_horarios_abre_o_formulario_de_criar(self):
++        HorarioMaquiagem.objects.all().delete()
++        resposta = self._grade()
++        self.assertContains(resposta, '<details class="maq-gerar" open>')
++        self.assertNotContains(resposta, 'name="agendar"')
++
++    def test_um_botao_escondido_evita_acao_acidental_com_enter(self):
++        resposta = self._grade()
++        conteudo = resposta.content.decode()
++        escondido = conteudo.index('name="nada"')
++        primeiro_agendar = conteudo.index('name="agendar"')
++        self.assertLess(escondido, primeiro_agendar)
++
++    # ---------- agendar pela grade ----------
++
++    def test_clicar_no_horario_livre_agenda_e_volta_para_a_grade(self):
++        horario = self._h_de(self.joana, 9, 30)
++
++        resposta = self._post_grade(agendar=horario.pk, tipo_servico='cabelo')
++
++        agendamento = AgendamentoMaquiagem.objects.get()
++        self.assertEqual(agendamento.aluna, self.ana)
++        self.assertEqual(agendamento.horario, horario)
++        self.assertEqual(agendamento.tipo_servico, 'cabelo')
++        self.assertRedirects(
++            resposta,
++            f'{self.url}?turma={self.turma_a.pk}&dia={DIA.isoformat()}&tipo=cabelo',
++            fetch_redirect_response=False,
++        )
++        pagina = self.client.get(resposta['Location'])
++        self.assertContains(pagina, 'Ana agendada')
++        self.assertContains(pagina, 'com Joana')
++
++    def test_agendar_a_mesma_aluna_de_novo_e_barrado(self):
++        self._post_grade(agendar=self._h_de(self.maria, 9).pk)
++        resposta = self._post_grade(agendar=self._h_de(self.joana, 9).pk)
++
++        self.assertEqual(AgendamentoMaquiagem.objects.count(), 1)
++        pagina = self.client.get(resposta['Location'])
++        self.assertContains(pagina, 'Ana já tem horário')
++
++    def test_horario_ja_ocupado_e_barrado(self):
++        horario = self._h_de(self.maria, 9)
++        self._post_grade(agendar=horario.pk, aluna=self.ana.pk)
++        resposta = self._post_grade(agendar=horario.pk, aluna=self.bia.pk)
++
++        self.assertEqual(AgendamentoMaquiagem.objects.count(), 1)
++        pagina = self.client.get(resposta['Location'])
++        self.assertContains(pagina, 'não está mais disponível')
++
++    def test_sem_aluna_selecionada_explica(self):
++        resposta = self._post_grade(
++            agendar=self._h_de(self.maria, 9).pk, aluna=''
++        )
++        pagina = self.client.get(resposta['Location'])
++        self.assertContains(pagina, 'Escolha uma aluna')
++        self.assertEqual(AgendamentoMaquiagem.objects.count(), 0)
++
++    def test_aluna_de_outra_turma_e_barrada(self):
++        self._post_grade(
++            agendar=self._h_de(self.maria, 9).pk, aluna=self.eva.pk
++        )
++        self.assertEqual(AgendamentoMaquiagem.objects.count(), 0)
++
++    def test_entradas_invalidas_nao_quebram(self):
++        casos = [
++            {'agendar': 'abc'}, {'agendar': 999999}, {'remover': 'abc'},
++            {'remover': 999999}, {'tipo_servico': 'xxx', 'agendar': 1},
++            {'turma': 'abc'}, {'turma': 999999}, {'aluna': 'abc', 'agendar': 1},
++        ]
++        for dados in casos:
++            with self.subTest(dados=dados):
++                self.assertEqual(self._post_grade(**dados).status_code, 302)
++        self.assertEqual(AgendamentoMaquiagem.objects.count(), 0)
++
++    def test_enter_no_formulario_nao_faz_nada(self):
++        # O navegador usa o botão escondido "nada" quando alguém aperta Enter.
++        horario = self._h_de(self.maria, 9)
++        resposta = self._post_grade(nada='1')
++
++        self.assertEqual(resposta.status_code, 302)
++        horario.refresh_from_db()
++        self.assertEqual(horario.status, 'disponivel')
++        self.assertEqual(AgendamentoMaquiagem.objects.count(), 0)
++
++    # ---------- remover pela grade ----------
++
++    def test_remover_devolve_a_aluna_para_a_lista(self):
++        agendamento = self._agendar(self.ana, self._h_de(self.maria, 9))
++
++        resposta = self._post_grade(remover=agendamento.pk)
++
++        self.assertEqual(AgendamentoMaquiagem.objects.count(), 0)
++        self.assertEqual(self._h_de(self.maria, 9).status, 'disponivel')
++        pagina = self.client.get(resposta['Location'])
++        self.assertContains(pagina, 'Ana voltou para a lista')
++        self.assertIn(self.ana, pagina.context['pendentes'])
++
++    def test_o_botao_remover_pede_confirmacao(self):
++        self._agendar(self.ana, self._h_de(self.maria, 9))
++        resposta = self._grade()
++        self.assertContains(resposta, "return confirm('Remover Ana deste horário?')")
++
++    # ---------- quem escolhe ----------
++
++    def test_alternar_quem_escolhe_os_horarios(self):
++        self.assertFalse(self.espetaculo.maquiagem_familia_escolhe_horario)
++
++        self.client.post(self.url, {'acao': 'alternar_escolha_familia'})
++        self.espetaculo.refresh_from_db()
++        self.assertTrue(self.espetaculo.maquiagem_familia_escolhe_horario)
++
++        self.client.post(self.url, {'acao': 'alternar_escolha_familia'})
++        self.espetaculo.refresh_from_db()
++        self.assertFalse(self.espetaculo.maquiagem_familia_escolhe_horario)
++
++    def test_a_tela_explica_quem_escolhe(self):
++        resposta = self.client.get(self.url)
++        self.assertContains(resposta, 'Hoje só a escola agenda')
++        self.assertContains(resposta, 'Permitir que as famílias escolham')
++
++    # ---------- o resto da tela continua ----------
++
++    def test_pagina_sem_turma_mostra_as_turmas_com_o_botao_de_agendar(self):
++        resposta = self.client.get(self.url)
++        self.assertContains(resposta, 'Agendar alunas')
++        self.assertContains(resposta, f'?turma={self.turma_a.pk}')
++        self.assertNotContains(resposta, 'id="agenda-por-horario"')
++
++    def test_a_tela_antiga_de_agendar_manualmente_saiu(self):
++        resposta = self._grade()
++        self.assertNotContains(resposta, 'Agendar manualmente')
++        self.assertNotContains(resposta, 'form-agendar-manual')
++
++    def test_download_do_png_continua_na_pagina(self):
++        self._agendar(self.ana, self._h_de(self.maria, 9))
++
++        resposta = self._grade()
++
++        self.assertContains(resposta, 'id="btn-exportar-png"')
++        self.assertContains(resposta, 'html2canvas')
++        self.assertContains(resposta, 'Ana')
++        # o botão só fica ativo quando há agendamentos
++        self.assertNotContains(
++            resposta, 'id="btn-exportar-png" class="maq-exportar-btn" disabled'
++        )
++
++    def test_png_sem_agendamentos_fica_desativado_como_antes(self):
++        resposta = self._grade()
++        self.assertContains(resposta, 'id="btn-exportar-png"')
++        self.assertContains(resposta, 'maq-exportar-btn" disabled')
++
++
++# ===========================================================================
++# Endpoints antigos também respeitam "uma aluna, um horário"
++# ===========================================================================
++
++@override_settings(STORAGES=STORAGES_TESTE)
++class UmHorarioPorAlunaNosEndpointsAntigosTests(BaseTests):
++    def setUp(self):
++        super().setUp()
++        self.client.force_login(self.staff)
++        self.h1 = self._h(self.maria, 9)
++        self.h2 = self._h(self.maria, 10)
++        self.h3 = self._h(self.maria, 11)
++        self.ag = self._agendar(self.ana, self.h1)
++
++    def test_agendar_maquiagem_admin_barra_aluna_que_ja_tem_horario(self):
++        self.client.post(
++            reverse('admin_dashboard:agendar_maquiagem_admin', args=[self.h2.pk]),
++            {'aluna': self.ana.pk, 'tipo_servico': 'cabelo'},
++        )
++        self.assertEqual(AgendamentoMaquiagem.objects.count(), 1)
++
++    def test_agendar_maquiagem_admin_barra_aluna_de_fora_da_turma(self):
++        self.client.post(
++            reverse('admin_dashboard:agendar_maquiagem_admin', args=[self.h2.pk]),
++            {'aluna': self.eva.pk, 'tipo_servico': 'cabelo'},
++        )
++        self.assertEqual(AgendamentoMaquiagem.objects.count(), 1)
++
++    def test_agendar_maquiagem_admin_continua_agendando_aluna_livre(self):
++        self.client.post(
++            reverse('admin_dashboard:agendar_maquiagem_admin', args=[self.h2.pk]),
++            {'aluna': self.bia.pk, 'tipo_servico': 'cabelo'},
++        )
++        self.assertEqual(AgendamentoMaquiagem.objects.count(), 2)
++
++    def test_editar_nao_troca_para_aluna_que_ja_tem_outro_horario(self):
++        outro = self._agendar(self.bia, self.h2)
++        self.client.post(
++            reverse('admin_dashboard:maquiagem_editar', args=[self.ag.pk]),
++            {'aluna': self.bia.pk, 'tipo_servico': 'maquiagem',
++             'horario': self.h1.pk},
++        )
++        self.ag.refresh_from_db()
++        self.assertEqual(self.ag.aluna, self.ana)
++        outro.refresh_from_db()
++        self.assertEqual(outro.aluna, self.bia)
++
++    def test_editar_salvando_a_propria_aluna_nao_e_barrado(self):
++        self.client.post(
++            reverse('admin_dashboard:maquiagem_editar', args=[self.ag.pk]),
++            {'aluna': self.ana.pk, 'tipo_servico': 'cabelo',
++             'horario': self.h3.pk},
++        )
++        self.ag.refresh_from_db()
++        self.assertEqual(self.ag.tipo_servico, 'cabelo')
++        self.assertEqual(self.ag.horario, self.h3)
++
++
++# ===========================================================================
++# Acesso do painel
++# ===========================================================================
++
++@override_settings(STORAGES=STORAGES_TESTE)
++class AcessoDasNovasAcoesTests(BaseTests):
++    def setUp(self):
++        super().setUp()
++        self.horario = self._h(self.maria, 9)
++        self.posts = {
++            'gerar': {'acao': 'gerar_horarios', 'turma': self.turma_a.pk,
++                      'agendas': [self.maria.pk], 'dia': DIA.isoformat(),
++                      'inicio': '09:00', 'fim': '10:00', 'duracao': '30'},
++            'agendar': {'acao': 'grade', 'turma': self.turma_a.pk,
++                        'aluna': self.ana.pk, 'tipo_servico': 'cabelo',
++                        'agendar': self.horario.pk},
++            'alternar': {'acao': 'alternar_escolha_familia'},
++        }
++
++    def _nada_mudou(self):
++        self.assertEqual(HorarioMaquiagem.objects.count(), 1)
++        self.assertEqual(AgendamentoMaquiagem.objects.count(), 0)
++        self.espetaculo.refresh_from_db()
++        self.assertFalse(self.espetaculo.maquiagem_familia_escolhe_horario)
++
++    def test_visitante_nao_faz_nada(self):
++        for nome, dados in self.posts.items():
++            with self.subTest(nome):
++                resposta = self.client.post(self.url, dados)
++                self.assertIn('login', resposta['Location'])
++        self._nada_mudou()
++
++    def test_usuario_comum_nao_faz_nada(self):
++        self.client.force_login(self.resp_ana)
++        for nome, dados in self.posts.items():
++            with self.subTest(nome):
++                self.assertEqual(self.client.post(self.url, dados).status_code, 302)
++        self._nada_mudou()
++
++
++# ===========================================================================
++# A aluna só vê o que é dela
++# ===========================================================================
++
++@override_settings(STORAGES=STORAGES_TESTE)
++class AreaDaAlunaTests(BaseTests):
++    def setUp(self):
++        super().setUp()
++        self.h_ana = self._h(self.maria, 9)
++        self.h_bia = self._h(self.joana, 9, 30)
++        self.livre = self._h(self.maria, 10)
++        self.ag_ana = self._agendar(self.ana, self.h_ana, 'cabelo_e_maquiagem')
++        self.ag_bia = self._agendar(self.bia, self.h_bia)
++        self.url_aluna = reverse(
++            'espetaculo:agendar_maquiagem', args=[self.espetaculo.pk]
++        )
++
++    def test_a_familia_ve_so_o_horario_da_sua_aluna(self):
++        self.client.force_login(self.resp_ana)
++
++        resposta = self.client.get(self.url_aluna)
++
++        self.assertEqual(resposta.status_code, 200)
++        self.assertTemplateUsed(resposta, 'espetaculo/horarios_maquiagem_aluna.html')
++        self.assertContains(resposta, 'Ana')
++        self.assertContains(resposta, 'Cabelo e Maquiagem')
++        self.assertContains(resposta, 'Maria')
++        self.assertContains(resposta, 'Meus horários de maquiagem')
++
++    def test_nao_aparece_nada_de_outras_alunas(self):
++        self.client.force_login(self.resp_ana)
++
++        resposta = self.client.get(self.url_aluna)
++
++        self.assertNotContains(resposta, 'Bia')
++        self.assertNotContains(resposta, 'Joana')  # a maquiadora da Bia
++        self.assertNotContains(resposta, 'Clara')
++
++    def test_nao_ha_lista_de_horarios_livres_para_escolher(self):
++        self.client.force_login(self.resp_ana)
++
++        resposta = self.client.get(self.url_aluna)
++
++        self.assertNotContains(resposta, 'agmaq-horario-btn')
++        self.assertNotContains(resposta, '10:00')  # o horário livre da Maria
++
++    def test_aluna_sem_horario_ainda_ve_aviso_de_que_a_escola_vai_agendar(self):
++        responsavel_clara = User.objects.create_user('rc', 'rc@x.com', 'senha123')
++        self.clara.responsavel = responsavel_clara
++        self.clara.save()
++        self.client.force_login(responsavel_clara)
++
++        resposta = self.client.get(self.url_aluna)
++
++        self.assertContains(resposta, 'Clara')
++        self.assertContains(resposta, 'Ainda sem horário')
++        self.assertContains(resposta, 'A escola vai agendar')
++
++    def test_familia_com_duas_alunas_ve_as_duas_e_so_elas(self):
++        self.bia.responsavel = self.resp_ana
++        self.bia.save()
++        self.client.force_login(self.resp_ana)
++
++        resposta = self.client.get(self.url_aluna)
++
++        self.assertContains(resposta, 'Ana')
++        self.assertContains(resposta, 'Bia')
++        self.assertNotContains(resposta, 'Clara')
++
++    def test_aluna_adulta_ve_o_proprio_horario(self):
++        adulta_user = User.objects.create_user('adulta', 'ad@x.com', 'senha123')
++        self.clara.usuario = adulta_user
++        self.clara.save()
++        self._agendar(self.clara, self.livre)
++        self.client.force_login(adulta_user)
++
++        resposta = self.client.get(self.url_aluna)
++
++        self.assertContains(resposta, 'Clara')
++        self.assertNotContains(resposta, 'Ana')
++
++    def test_aluna_de_turma_sem_maquiagem_nao_aparece(self):
++        resp_eva = User.objects.create_user('re', 're@x.com', 'senha123')
++        self.eva.responsavel = resp_eva
++        self.eva.save()
++        self.client.force_login(resp_eva)
++
++        resposta = self.client.get(self.url_aluna)
++
++        self.assertNotContains(resposta, 'Eva')
++        self.assertContains(resposta, 'Não há horário de maquiagem')
++
++    def test_usuario_sem_alunas(self):
++        sozinho = User.objects.create_user('so', 'so@x.com', 'senha123')
++        self.client.force_login(sozinho)
++        resposta = self.client.get(self.url_aluna)
++        self.assertContains(resposta, 'Nenhuma aluna encontrada')
++
++    def test_visitante_e_mandado_de_volta(self):
++        resposta = self.client.get(self.url_aluna)
++        self.assertEqual(resposta.status_code, 302)
++
++    def test_ordem_dos_horarios_da_familia(self):
++        self.bia.responsavel = self.resp_ana
++        self.bia.save()
++        itens = horarios_da_familia(self.resp_ana, self.espetaculo)
++        self.assertEqual([i['aluna'].nome for i in itens], ['Ana', 'Bia'])
++
++    def test_com_a_escolha_liberada_a_tela_antiga_volta(self):
++        Espetaculo.objects.filter(pk=self.espetaculo.pk).update(
++            maquiagem_familia_escolhe_horario=True
++        )
++        responsavel_clara = User.objects.create_user('rc', 'rc@x.com', 'senha123')
++        self.clara.responsavel = responsavel_clara
++        self.clara.save()
++        self.client.force_login(responsavel_clara)
++
++        resposta = self.client.get(self.url_aluna)
++
++        self.assertTemplateUsed(resposta, 'espetaculo/agendar_maquiagem.html')
++        self.assertContains(resposta, 'agmaq-horario-btn')
++
++    # ---------- a família não consegue escolher por conta própria ----------
++
++    def test_reservar_e_recusado_quando_so_a_escola_agenda(self):
++        responsavel_clara = User.objects.create_user('rc', 'rc@x.com', 'senha123')
++        self.clara.responsavel = responsavel_clara
++        self.clara.save()
++        self.client.force_login(responsavel_clara)
++
++        resposta = self.client.post(
++            reverse('espetaculo:reservar_horario_maquiagem',
++                    args=[self.espetaculo.pk, self.livre.pk]),
++            {'aluna_id': self.clara.pk},
++        )
++
++        self.assertEqual(resposta.status_code, 403)
++        self.livre.refresh_from_db()
++        self.assertEqual(self.livre.status, 'disponivel')
++
++    def test_confirmar_e_recusado_quando_so_a_escola_agenda(self):
++        responsavel_clara = User.objects.create_user('rc', 'rc@x.com', 'senha123')
++        self.clara.responsavel = responsavel_clara
++        self.clara.save()
++        self.client.force_login(responsavel_clara)
++        HorarioMaquiagem.objects.filter(pk=self.livre.pk).update(
++            status='reservado_temporario', reservado_em=timezone.now(),
++            reservado_por_sessao=self.client.session.session_key or 'x',
++        )
++
++        self.client.post(
++            reverse('espetaculo:confirmar_agendamento_maquiagem',
++                    args=[self.espetaculo.pk, self.livre.pk]),
++            {'aluna_id': self.clara.pk, 'tipo_servico': 'maquiagem'},
++        )
++
++        self.assertFalse(
++            AgendamentoMaquiagem.objects.filter(aluna=self.clara).exists()
++        )
++
++
++@override_settings(STORAGES=STORAGES_TESTE)
++class ConfirmacaoProtegidaTests(BaseTests):
++    """
++    A tela de confirmação abria para qualquer pessoa, mesmo sem login: bastava
++    trocar o número no endereço para ver o horário de outra aluna.
++    """
++
++    def setUp(self):
++        super().setUp()
++        self.ag_ana = self._agendar(self.ana, self._h(self.maria, 9))
++        self.ag_bia = self._agendar(self.bia, self._h(self.joana, 9, 30))
++        self.url_ana = reverse(
++            'espetaculo:agendamento_maquiagem_sucesso', args=[self.ag_ana.pk]
++        )
++        self.url_bia = reverse(
++            'espetaculo:agendamento_maquiagem_sucesso', args=[self.ag_bia.pk]
++        )
++
++    def test_visitante_vai_para_o_login_e_nao_ve_nada(self):
++        resposta = self.client.get(self.url_ana)
++        self.assertEqual(resposta.status_code, 302)
++        self.assertIn('login', resposta['Location'])
++
++    def test_a_familia_ve_o_proprio_agendamento(self):
++        self.client.force_login(self.resp_ana)
++        resposta = self.client.get(self.url_ana)
++        self.assertEqual(resposta.status_code, 200)
++        self.assertContains(resposta, 'Ana')
++
++    def test_outra_familia_nao_ve_e_a_pagina_nao_revela_que_existe(self):
++        self.client.force_login(self.resp_bia)
++
++        existente = self.client.get(self.url_ana)
++        inexistente = self.client.get(
++            reverse('espetaculo:agendamento_maquiagem_sucesso', args=[999999])
++        )
++
++        self.assertEqual(existente.status_code, 404)
++        self.assertEqual(inexistente.status_code, 404)
++        self.assertNotContains(existente, 'Ana', status_code=404)
++
++    def test_a_familia_nao_ve_agendamentos_de_outras_alunas_na_lista(self):
++        self.client.force_login(self.resp_ana)
++        resposta = self.client.get(self.url_ana)
++        self.assertNotContains(resposta, 'Bia')
++
++    def test_usuario_sem_aluna_nao_ve_nada(self):
++        sozinho = User.objects.create_user('so', 'so@x.com', 'senha123')
++        self.client.force_login(sozinho)
++        self.assertEqual(self.client.get(self.url_ana).status_code, 404)
++
++    def test_a_equipe_da_escola_continua_vendo(self):
++        staff = User.objects.create_user(
++            'staff2', 's2@x.com', 'senha123', is_staff=True
++        )
++        self.client.force_login(staff)
++        resposta = self.client.get(self.url_bia)
++        self.assertEqual(resposta.status_code, 200)
++        self.assertContains(resposta, 'Bia')
++        self.assertNotContains(resposta, 'Ana')
++
++    def test_responsavel_de_duas_alunas_ve_as_duas(self):
++        self.bia.responsavel = self.resp_ana
++        self.bia.save()
++        self.client.force_login(self.resp_ana)
++        resposta = self.client.get(self.url_ana)
++        self.assertContains(resposta, 'Ana')
++        self.assertContains(resposta, 'Bia')
++
++
++@override_settings(STORAGES=STORAGES_TESTE)
++class BotaoNaListaPublicaTests(BaseTests):
++    def setUp(self):
++        super().setUp()
++        self.sem_maquiagem = Espetaculo.objects.create(
++            titulo='Sem maquiagem', descricao='x', tipo='espetaculo',
++            data_apresentacao=timezone.now() + timedelta(days=30),
++            local='L', endereco='E', publico=True,
++        )
++        Espetaculo.objects.filter(pk=self.espetaculo.pk).update(publico=True)
++        self.url_lista = reverse('espetaculo:lista_publica')
++
++    def test_aparece_so_no_espetaculo_que_tem_maquiagem(self):
++        self.client.force_login(self.resp_ana)
++        resposta = self.client.get(self.url_lista)
++
++        self.assertContains(resposta, 'Meus horários de maquiagem', count=1)
++        self.assertEqual(
++            resposta.context['ids_com_maquiagem'], {self.espetaculo.pk}
++        )
++
++    def test_texto_muda_quando_a_familia_escolhe(self):
++        Espetaculo.objects.filter(pk=self.espetaculo.pk).update(
++            maquiagem_familia_escolhe_horario=True
++        )
++        self.client.force_login(self.resp_ana)
++        resposta = self.client.get(self.url_lista)
++        self.assertContains(resposta, 'Agendar maquiagem')
++        self.assertNotContains(resposta, 'Meus horários de maquiagem')
++
++    def test_visitante_nao_ve_o_botao(self):
++        resposta = self.client.get(self.url_lista)
++        self.assertNotContains(resposta, 'Meus horários de maquiagem')
++        self.assertNotContains(resposta, 'Agendar maquiagem')
++        self.assertEqual(resposta.context['ids_com_maquiagem'], set())
+diff --git a/espetaculo/views.py b/espetaculo/views.py
+index 74b9148..c3d6d15 100644
+--- a/espetaculo/views.py
++++ b/espetaculo/views.py
+@@ -27,6 +27,7 @@ from pagamentos.asaas_helper import AsaasAPI
+ from usuarios.models import Aluna
+ 
+ from .forms import InscricaoAudicaoForm
++from .maquiagem_agenda import alunas_do_usuario, horarios_da_familia
+ from .models import (
+     Assento,
+     Espetaculo,
+@@ -103,11 +104,21 @@ def espetaculos_lista_publica(request):
+     else:
+         espetaculos = Espetaculo.objects.filter(ativo=True, publico=True).order_by('-data_apresentacao')
+ 
++    # O botão de maquiagem só aparece nos espetáculos que têm agenda de maquiagem.
++    ids_com_maquiagem = set()
++    if request.user.is_authenticated:
++        ids_com_maquiagem = set(
++            AgendaMaquiagemTurma.objects.filter(
++                espetaculo__in=espetaculos
++            ).values_list('espetaculo_id', flat=True)
++        )
++
+     return render(
+         request,
+         'espetaculo/public_list.html',
+         {
+             'espetaculos': espetaculos,
++            'ids_com_maquiagem': ids_com_maquiagem,
+             'patrocinadores': patrocinadores_para('listagem'),
+         },
+     )
+@@ -2540,6 +2551,19 @@ def agendar_maquiagem(request, pk):
+         messages.error(request, 'Você precisa estar logada para agendar.')
+         return redirect('espetaculo:evento_detalhe_publico', pk=espetaculo.pk)
+ 
++    # Padrão: só a escola agenda. A aluna (ou a família) vê APENAS o horário
++    # marcado para ela, sem lista de horários dos outros.
++    if not espetaculo.maquiagem_familia_escolhe_horario:
++        return render(
++            request,
++            'espetaculo/horarios_maquiagem_aluna.html',
++            {
++                'espetaculo': espetaculo,
++                'itens': horarios_da_familia(request.user, espetaculo),
++                'tem_alunas': bool(alunas_do_usuario(request.user)),
++            },
++        )
++
+     alunas_possiveis = []
+ 
+     aluna_usuario = Aluna.objects.filter(usuario=request.user).first()
+@@ -2665,6 +2689,12 @@ def reservar_horario_maquiagem(request, pk, horario_id):
+ 
+     espetaculo = get_object_or_404(Espetaculo, pk=pk, ativo=True)
+ 
++    if not espetaculo.maquiagem_familia_escolhe_horario:
++        return JsonResponse(
++            {'ok': False, 'erro': 'Os horários de maquiagem são marcados pela escola.'},
++            status=403,
++        )
++
+     aluna_id = request.POST.get('aluna_id') or request.GET.get('aluna_id')
+     aluna, turma_aluna, erro = _buscar_aluna_para_maquiagem(request, espetaculo, aluna_id=aluna_id)
+     if erro:
+@@ -2715,6 +2745,10 @@ def reservar_horario_maquiagem(request, pk, horario_id):
+ def confirmar_agendamento_maquiagem(request, pk, horario_id):
+     espetaculo = get_object_or_404(Espetaculo, pk=pk, ativo=True)
+ 
++    if not espetaculo.maquiagem_familia_escolhe_horario:
++        messages.error(request, 'Os horários de maquiagem são marcados pela escola.')
++        return redirect('espetaculo:agendar_maquiagem', pk=pk)
++
+     aluna_id = request.POST.get('aluna_id')
+     aluna, turma_aluna, erro = _buscar_aluna_para_maquiagem(request, espetaculo, aluna_id=aluna_id)
+     if erro:
+@@ -2755,6 +2789,7 @@ def confirmar_agendamento_maquiagem(request, pk, horario_id):
+         agendamento_id=agendamento.id,
+     )
+ 
++@login_required
+ def agendamento_maquiagem_sucesso(request, agendamento_id):
+     agendamento = get_object_or_404(
+         AgendamentoMaquiagem.objects.select_related(
+@@ -2765,39 +2800,25 @@ def agendamento_maquiagem_sucesso(request, agendamento_id):
+ 
+     espetaculo = agendamento.espetaculo
+ 
+-    agendamentos = [agendamento]
+-
+-    if request.user.is_authenticated:
+-        alunas_possiveis = []
+-
+-        aluna_usuario = Aluna.objects.filter(usuario=request.user).first()
+-        if aluna_usuario:
+-            alunas_possiveis.append(aluna_usuario)
++    # Dados de alunas (muitas vezes crianças): só quem é da família da aluna
++    # (ou a equipe da escola) vê este agendamento. Para qualquer outra pessoa a
++    # página simplesmente não existe, sem revelar que o número é válido.
++    alunas_possiveis = alunas_do_usuario(request.user)
+ 
+-        alunas_responsavel = Aluna.objects.filter(
+-            responsavel=request.user,
+-            ativa=True,
+-        )
+-        for aluna_resp in alunas_responsavel:
+-            if aluna_usuario and aluna_resp.pk == aluna_usuario.pk:
+-                continue
+-            alunas_possiveis.append(aluna_resp)
+-
+-        alunas_possiveis = list(dict.fromkeys(alunas_possiveis))
++    if request.user.is_staff:
++        agendamentos = [agendamento]
++    else:
++        if agendamento.aluna_id not in {a.pk for a in alunas_possiveis}:
++            raise Http404()
+ 
+-        if alunas_possiveis:
+-            agendamentos = list(
+-                AgendamentoMaquiagem.objects.filter(
+-                    aluna__in=alunas_possiveis,
+-                    horario__agenda__espetaculo=espetaculo,
+-                )
+-                .select_related('horario', 'horario__agenda', 'aluna')
+-                .order_by('horario__horario')
++        agendamentos = list(
++            AgendamentoMaquiagem.objects.filter(
++                aluna__in=alunas_possiveis,
++                horario__agenda__espetaculo=espetaculo,
+             )
+-
+-            if agendamento not in agendamentos:
+-                agendamentos.append(agendamento)
+-                agendamentos.sort(key=lambda a: a.horario.horario)
++            .select_related('horario', 'horario__agenda', 'aluna')
++            .order_by('horario__horario')
++        )
+ 
+     limite_recente = timezone.now() - timezone.timedelta(minutes=5)
+ 

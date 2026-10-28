@@ -6612,6 +6612,144 @@ def espetaculo_maquiagens(request, pk):
             )
             return voltar(agenda)
 
+        # ---- Agenda por horário (grade) ----
+        from urllib.parse import urlencode
+
+        from django.utils.dateparse import parse_date, parse_time
+
+        from espetaculo.maquiagem_agenda import (
+            ErroAgendamento,
+            agendar_aluna,
+            formatar_horario,
+            gerar_horarios,
+            remover_agendamento,
+        )
+
+        def voltar_grade(turma_id, dia=None, tipo=None):
+            parametros = {'turma': turma_id}
+            if dia:
+                parametros['dia'] = dia
+            if tipo:
+                parametros['tipo'] = tipo
+            url = reverse('admin_dashboard:espetaculo_maquiagens', args=[pk])
+            return redirect(f'{url}?{urlencode(parametros)}')
+
+        def turma_do_post():
+            try:
+                return Turma.objects.filter(
+                    pk=int(request.POST.get('turma'))
+                ).first()
+            except (TypeError, ValueError):
+                return None
+
+        if acao == 'gerar_horarios':
+            turma = turma_do_post()
+            if turma is None:
+                messages.error(request, 'Turma não encontrada.')
+                return voltar()
+
+            dia = parse_date(request.POST.get('dia', ''))
+            inicio = parse_time(request.POST.get('inicio', ''))
+            fim = parse_time(request.POST.get('fim', ''))
+            try:
+                duracao = int(request.POST.get('duracao'))
+                intervalo = int(request.POST.get('intervalo') or 0)
+            except (TypeError, ValueError):
+                duracao = intervalo = None
+
+            agendas_escolhidas = []
+            for valor in request.POST.getlist('agendas'):
+                try:
+                    agenda = AgendaMaquiagemTurma.objects.filter(
+                        pk=int(valor), espetaculo=espetaculo, turma=turma
+                    ).first()
+                except (TypeError, ValueError):
+                    agenda = None
+                if agenda is not None:
+                    agendas_escolhidas.append(agenda)
+
+            if None in (dia, inicio, fim, duracao, intervalo):
+                messages.error(
+                    request,
+                    'Preencha o dia, o início, o fim e a duração dos horários.',
+                )
+                return voltar_grade(turma.pk)
+
+            try:
+                resultado = gerar_horarios(
+                    agendas_escolhidas, dia, inicio, fim, duracao, intervalo
+                )
+            except ErroAgendamento as exc:
+                messages.error(request, str(exc))
+                return voltar_grade(turma.pk)
+
+            texto = (
+                f'{resultado["criados"]} horário(s) criado(s) '
+                f'para {dia:%d/%m}.'
+            )
+            if resultado['existentes']:
+                texto += (
+                    f' {resultado["existentes"]} já existia(m) e foi(ram) '
+                    f'mantido(s).'
+                )
+            messages.success(request, texto)
+            return voltar_grade(turma.pk, dia.isoformat())
+
+        if acao == 'grade':
+            turma = turma_do_post()
+            if turma is None:
+                messages.error(request, 'Turma não encontrada.')
+                return voltar()
+
+            dia = request.POST.get('dia', '')
+            tipo = request.POST.get('tipo_servico', '')
+
+            try:
+                if 'remover' in request.POST:
+                    nome = remover_agendamento(
+                        espetaculo, int(request.POST.get('remover'))
+                    )
+                    messages.success(
+                        request,
+                        f'{nome} voltou para a lista de alunas sem horário.',
+                    )
+                elif 'agendar' in request.POST:
+                    agendamento = agendar_aluna(
+                        espetaculo,
+                        turma,
+                        request.POST.get('agendar'),
+                        request.POST.get('aluna'),
+                        tipo,
+                    )
+                    messages.success(
+                        request,
+                        f'{agendamento.aluna.nome} agendada: '
+                        f'{formatar_horario(agendamento.horario.horario)} '
+                        f'com {agendamento.horario.agenda.maquiadora}.',
+                    )
+            except ErroAgendamento as exc:
+                messages.error(request, str(exc))
+            except (TypeError, ValueError):
+                messages.error(request, 'Pedido inválido. Tente de novo.')
+
+            return voltar_grade(turma.pk, dia, tipo)
+
+        if acao == 'alternar_escolha_familia':
+            espetaculo.maquiagem_familia_escolhe_horario = (
+                not espetaculo.maquiagem_familia_escolhe_horario
+            )
+            espetaculo.save(
+                update_fields=['maquiagem_familia_escolhe_horario', 'atualizado_em']
+            )
+            messages.success(
+                request,
+                'Agora as famílias escolhem o próprio horário.'
+                if espetaculo.maquiagem_familia_escolhe_horario
+                else 'Agora só a escola agenda: as famílias veem apenas o '
+                     'horário marcado para a aluna.',
+            )
+            return voltar()
+
         return voltar()
 
     agendas = AgendaMaquiagemTurma.objects.filter(
@@ -6648,6 +6786,35 @@ def espetaculo_maquiagens(request, pk):
     if aluna_filtro:
         agendamentos = agendamentos.filter(aluna__nome__icontains=aluna_filtro)
 
+    # Agenda por horário: a grade de uma turma (várias maquiadoras lado a lado).
+    from django.utils.dateparse import parse_date
+
+    from espetaculo.maquiagem_agenda import alunas_sem_horario, montar_grade
+
+    turma_grade = None
+    grade = None
+    pendentes = []
+    try:
+        turma_grade = Turma.objects.filter(pk=int(request.GET.get('turma'))).first()
+    except (TypeError, ValueError):
+        turma_grade = None
+
+    tipo_selecionado = request.GET.get('tipo', '')
+    if tipo_selecionado not in dict(AgendamentoMaquiagem.TIPO_CHOICES):
+        tipo_selecionado = 'maquiagem'
+
+    if turma_grade is not None:
+        grade = montar_grade(
+            espetaculo, turma_grade, parse_date(request.GET.get('dia', ''))
+        )
+        pendentes = list(alunas_sem_horario(espetaculo, turma_grade))
+
+    grupos_agendas = []
+    for agenda in agendas:
+        if not grupos_agendas or grupos_agendas[-1]['turma'].pk != agenda.turma_id:
+            grupos_agendas.append({'turma': agenda.turma, 'agendas': []})
+        grupos_agendas[-1]['agendas'].append(agenda)
+
     return render(
         request,
         'admin_dashboard/espetaculos/espetaculo_maquiagens.html',
@@ -6655,6 +6822,11 @@ def espetaculo_maquiagens(request, pk):
             'espetaculo': espetaculo,
             'turmas': turmas,
             'agendas': agendas,
+            'grupos_agendas': grupos_agendas,
+            'turma_grade': turma_grade,
+            'grade': grade,
+            'pendentes': pendentes,
+            'tipo_selecionado': tipo_selecionado,
             'agenda_selecionada': agenda_selecionada,
             'horarios': horarios,
             'agendamentos': agendamentos,
@@ -6736,34 +6908,32 @@ def agendar_maquiagem_admin(request, horario_id):
     if not request.user.is_staff:
         return redirect('home')
 
+    from espetaculo.maquiagem_agenda import (
+        ErroAgendamento,
+        agendar_aluna,
+    )
+
     horario = get_object_or_404(HorarioMaquiagem, pk=horario_id)
     agenda = horario.agenda
-    aluna_id = request.POST.get('aluna')
-    tipo_servico = request.POST.get('tipo_servico')
 
     redirect_url = (
         f"{reverse('admin_dashboard:espetaculo_maquiagens', args=[agenda.espetaculo_id])}"
         f"?agenda_id={agenda.id}"
     )
 
-    if not aluna_id or tipo_servico not in dict(AgendamentoMaquiagem.TIPO_CHOICES):
-        messages.error(request, 'Selecione a aluna e o tipo de serviço.')
-        return redirect(redirect_url)
-
     HorarioMaquiagem.liberar_expirados(agenda=agenda)
-    horario.refresh_from_db()
 
-    if horario.status != 'disponivel':
-        messages.error(request, 'Esse horário não está mais disponível.')
+    try:
+        agendar_aluna(
+            agenda.espetaculo,
+            agenda.turma,
+            horario.pk,
+            request.POST.get('aluna'),
+            request.POST.get('tipo_servico'),
+        )
+    except ErroAgendamento as exc:
+        messages.error(request, str(exc))
         return redirect(redirect_url)
-
-    AgendamentoMaquiagem.objects.create(
-        horario=horario,
-        aluna_id=aluna_id,
-        tipo_servico=tipo_servico,
-        criado_por_admin=True,
-    )
-    horario.marcar_como_agendado()
 
     messages.success(request, 'Agendamento criado com sucesso.')
     return redirect(redirect_url)
@@ -6816,6 +6986,20 @@ def maquiagem_editar(request, pk):
 
         if not alunas_da_turma.filter(pk=aluna_id).exists():
             messages.error(request, 'Aluna inválida para esta turma.')
+            return tela_de_edicao()
+
+        # Uma aluna só pode ter um horário por espetáculo.
+        outro = AgendamentoMaquiagem.objects.filter(
+            aluna_id=aluna_id,
+            horario__agenda__espetaculo_id=agenda.espetaculo_id,
+        ).exclude(pk=agendamento.pk).select_related('horario').first()
+        if outro is not None:
+            messages.error(
+                request,
+                f'{outro.aluna.nome} já tem outro horário neste espetáculo '
+                f'({timezone.localtime(outro.horario.horario):%d/%m às %H:%M}). '
+                f'Remova esse agendamento antes.',
+            )
             return tela_de_edicao()
 
         with transaction.atomic():

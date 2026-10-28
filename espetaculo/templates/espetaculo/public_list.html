@@ -121,10 +121,10 @@
                             Saiba mais
                         </a>
 
-                        {% if user.is_authenticated %}
+                        {% if user.is_authenticated and espetaculo.pk in ids_com_maquiagem %}
                             <a href="{% url 'espetaculo:agendar_maquiagem' espetaculo.pk %}"
                                style="display: inline-block; background: #fdeef5; color: #a63d7a; border: 1px solid #f3cfe0; padding: 0.75rem 1.2rem; border-radius: 5px; text-decoration: none; font-weight: 600;">
-                                Agendar Maquiagem
+                                {% if espetaculo.maquiagem_familia_escolhe_horario %}Agendar maquiagem{% else %}Meus horários de maquiagem{% endif %}
                             </a>
                         {% endif %}
 

@@ -121,6 +121,17 @@ class Espetaculo(models.Model):
         help_text='Se marcado, apenas usuários autenticados podem comprar ingressos deste evento.'
     )
 
+    # Maquiagem/cabelo: quem escolhe o horário?
+    maquiagem_familia_escolhe_horario = models.BooleanField(
+        default=False,
+        verbose_name='Famílias escolhem o horário da maquiagem',
+        help_text=(
+            'Desmarcado (padrão): só a escola agenda, e a aluna vê apenas o '
+            'horário marcado para ela. Marcado: a família escolhe o próprio '
+            'horário entre os livres.'
+        ),
+    )
+
     # Controle
     ativo = models.BooleanField(default=True)
     criado_em = models.DateTimeField(auto_now_add=True)
