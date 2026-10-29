@@ -126,7 +126,8 @@ class AbrirAProfessoraTests(TestCase):
         self.assertNotContains(
             resposta, 'Use "Criar horários de um dia" na agenda por horário'
         )
-        self.assertContains(resposta, 'logo acima')
+        self.assertContains(resposta, 'são da turma')
+        self.assertContains(resposta, 'Agenda por horário')
 
     def test_turma_pedida_tem_prioridade_sobre_a_da_professora(self):
         resposta = self.client.get(
@@ -208,7 +209,8 @@ class AbrirAProfessoraTests(TestCase):
 
         agendamento = AgendamentoMaquiagem.objects.get()
         self.assertEqual(agendamento.aluna, self.ana)
-        self.assertEqual(agendamento.horario.agenda, self.maria)
+        # o primeiro "livre" da grade é de uma das maquiadoras da turma
+        self.assertIn(agendamento.horario.agenda, (self.maria, self.joana))
         pagina = self.client.get(resposta['Location'])
         self.assertContains(pagina, 'Ana agendada')
 

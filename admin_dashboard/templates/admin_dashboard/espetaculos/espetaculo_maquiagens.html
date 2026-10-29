@@ -362,7 +362,8 @@
         .maq-card { padding: 1rem; border-radius: 14px; margin-bottom: 1rem; }
         .maq-card-title { font-size: 1rem; margin-bottom: 1rem; }
         .maq-form-wrapper { overflow: visible; }
-        .maq-form { grid-template-columns: minmax(0, 1fr); gap: 0.85rem; }
+        .maq-form,
+        .maq-form.maq-form-3 { grid-template-columns: minmax(0, 1fr); gap: 0.85rem; }
         .maq-submit { justify-content: stretch; }
         .maq-btn { width: 100%; }
         .maq-filtros { flex-direction: column; align-items: stretch; gap: 0.7rem; }
@@ -404,7 +405,7 @@
     .maq-pend-item input:focus-visible + span { outline: 2px solid #6b2d8f; outline-offset: 2px; }
     .maq-grade { overflow-x: auto; }
     .maq-grade-linha {
-        display: grid; grid-template-columns: 56px repeat(var(--cols, 1), minmax(150px, 1fr));
+        display: grid; grid-template-columns: 72px repeat(var(--cols, 1), minmax(150px, 1fr));
         gap: 6px; margin-bottom: 6px; align-items: stretch;
     }
     .maq-grade-cab { font-weight: 600; font-size: 0.9rem; color: #4a235f; padding: 0.2rem 0.1rem; }
@@ -414,7 +415,10 @@
     .maq-agendadas ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; }
     .maq-agendadas li { padding: 0.4rem 0.6rem; border-radius: 8px; background: #f4ecfa; }
     .maq-agendadas li span { color: #6c757d; }
-    .maq-grade-hora { font-size: 0.85rem; color: #6c757d; display: flex; align-items: center; }
+    .maq-grade-hora { font-size: 0.85rem; color: #6c757d; display: flex; align-items: center; gap: 0.15rem; }
+    .maq-escolha-turma form { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+    .maq-escolha-turma label { font-weight: 700; color: #4a235f; margin: 0; }
+    .maq-escolha-turma select { min-width: 220px; padding: 0.6rem 0.8rem; border: 1px solid #ddc9ea; border-radius: 10px; font-size: 1rem; }
     .maq-celula {
         min-height: 46px; border-radius: 10px; padding: 0.35rem 0.6rem; font-size: 0.85rem;
         width: 100%; text-align: left; display: flex; align-items: center; justify-content: space-between; gap: 0.4rem;
@@ -430,12 +434,15 @@
     .maq-tag.t-cabelo_e_maquiagem { background: #fdeccd; color: #6b4300; }
     .maq-remover { border: none; background: transparent; color: #a13c3c; font-size: 1.1rem; line-height: 1; cursor: pointer; padding: 0 0.3rem; }
     .maq-gerar summary { cursor: pointer; font-weight: 600; color: #4a235f; margin-bottom: 0.75rem; }
-    .maq-checks { display: flex; flex-wrap: wrap; gap: 0.4rem 1.2rem; }
-    .maq-checks label { display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 400; }
     .maq-previa { grid-column: 1 / -1; font-size: 0.85rem; color: #6c757d; margin: 0; }
     .maq-grupo { margin-bottom: 1rem; }
     .maq-grupo-topo { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.5rem; color: #4a235f; }
-    @media (max-width: 760px) { .maq-grade-layout { grid-template-columns: 1fr; } .maq-pend-lista { max-height: 220px; } }
+    .maq-grade-layout > div { min-width: 0; }
+    @media (max-width: 760px) {
+        /* minmax(0, 1fr): a coluna pode encolher, e a grade rola para o lado sozinha */
+        .maq-grade-layout { grid-template-columns: minmax(0, 1fr); }
+        .maq-pend-lista { max-height: 220px; }
+    }
 </style>
 
 <div class="maq-page">
@@ -451,6 +458,22 @@
     <div class="maq-shell">
 
 
+        {% if turmas_com_agenda %}
+        <!-- 1. ESCOLHER A TURMA -->
+        <div class="maq-card maq-escolha-turma">
+            <form method="get">
+                <label for="id_turma_agenda">Agendar alunas da turma</label>
+                <select id="id_turma_agenda" name="turma" onchange="this.form.submit()">
+                    <option value="">Escolha a turma…</option>
+                    {% for t in turmas_com_agenda %}
+                        <option value="{{ t.pk }}" {% if turma_grade.pk == t.pk %}selected{% endif %}>{{ t.nome }}</option>
+                    {% endfor %}
+                </select>
+                <noscript><button type="submit" class="maq-btn">Abrir</button></noscript>
+            </form>
+        </div>
+        {% endif %}
+
         {% if turma_grade %}
         <!-- AGENDA POR HORÁRIO -->
         <div class="maq-card" id="agenda-por-horario">
@@ -462,19 +485,15 @@
 
                 <details class="maq-gerar" {% if not grade.dias %}open{% endif %}>
                     <summary>Criar horários de um dia</summary>
-                    <form method="post" class="maq-form maq-form-3" id="form-gerar">
+                    <form method="post" class="maq-form maq-form-3" id="form-gerar" data-maquiadoras="{{ grade.maquiadoras_ativas|length }}">
                         {% csrf_token %}
                         <input type="hidden" name="acao" value="gerar_horarios">
                         <input type="hidden" name="turma" value="{{ turma_grade.pk }}">
 
-                        <div class="maq-field" style="grid-column: 1 / -1;">
-                            <label>Maquiadoras que atendem nesse dia</label>
-                            <div class="maq-checks">
-                                {% for agenda in grade.agendas %}
-                                    <label><input type="checkbox" name="agendas" value="{{ agenda.pk }}" {% if agenda.ativo %}checked{% endif %}> {{ agenda.maquiadora }}</label>
-                                {% endfor %}
-                            </div>
-                        </div>
+                        <p class="maq-previa" style="grid-column: 1 / -1;">
+                            Os horários são da turma: valem para todas as maquiadoras
+                            ({{ grade.maquiadoras_ativas|join:", " }}).
+                        </p>
 
                         <div class="maq-field"><label for="id_gen_dia">Dia</label><input type="date" id="id_gen_dia" name="dia" required></div>
                         <div class="maq-field"><label for="id_gen_inicio">Das</label><input type="time" id="id_gen_inicio" name="inicio" required></div>
@@ -559,7 +578,13 @@
 
                                     {% for linha in grade.linhas %}
                                         <div class="maq-grade-linha" style="--cols: {{ grade.agendas|length }};">
-                                            <div class="maq-grade-hora">{{ linha.hora|time:"H:i" }}</div>
+                                            <div class="maq-grade-hora">
+                                                <span>{{ linha.hora|time:"H:i" }}</span>
+                                                <button type="submit" name="remover_horario" value="{{ linha.chave }}" class="maq-remover"
+                                                        title="Remover este horário de todas as maquiadoras"
+                                                        aria-label="Remover o horário das {{ linha.hora|time:'H:i' }} de todas as maquiadoras"
+                                                        onclick="return confirm('Remover o horário das {{ linha.hora|time:'H:i' }} para todas as maquiadoras da turma?');">&times;</button>
+                                            </div>
                                             {% for c in linha.celulas %}
                                                 {% if c.estado == 'livre' %}
                                                     <button type="submit" name="agendar" value="{{ c.horario.pk }}" class="maq-celula livre">livre</button>
@@ -597,7 +622,8 @@
             <h3 class="maq-card-title">Adicionar maquiadora a uma turma</h3>
             <p style="margin: 0 0 0.9rem; color: #6c757d; font-size: 0.88rem;">
                 Para a mesma turma ter mais de uma maquiadora, adicione a turma de novo
-                com outro nome. As alunas veem os horários de todas as maquiadoras da turma.
+                com outro nome. A nova maquiadora já recebe todos os horários que a
+                turma tem, e você escolhe com qual delas agendar cada aluna.
             </p>
 
             <div class="maq-form-wrapper">
@@ -686,29 +712,11 @@
 
                 </div>
 
-                <p class="maq-sub">Horários cadastrados desta maquiadora. Para escolher a aluna de cada horário, use a "Agenda por horário" acima. Aqui só é possível remover horários livres.</p>
-                {% if horarios %}
-                    <div class="maq-slots">
-                        {% for h in horarios %}
-                            <div class="maq-slot {{ h.status }}">
-                                <span>{{ h.horario|date:"d/m H:i" }} ({{ h.duracao_minutos }} min) - {{ h.get_status_display }}</span>
-                                {% if h.status == 'disponivel' %}
-                                    <form
-                                        method="post"
-                                        action="{% url 'admin_dashboard:excluir_horario_maquiagem' h.id %}"
-                                        onsubmit="return confirm('Remover este horário?');"
-                                        style="display:inline;"
-                                    >
-                                        {% csrf_token %}
-                                        <button type="submit" class="maq-slot-excluir">×</button>
-                                    </form>
-                                {% endif %}
-                            </div>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <div class="maq-empty">Nenhum horário cadastrado para essa agenda ainda. Crie no cartão "Agenda por horário", logo acima.</div>
-                {% endif %}
+                <p class="maq-sub">
+                    Os horários são da turma e valem para todas as maquiadoras dela.
+                    Para criar ou remover horários e para agendar as alunas, use a
+                    "Agenda por horário" acima.
+                </p>
             </div>
 
         {% endif %}
@@ -838,7 +846,6 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
-    // Envia o form de "agendar manualmente" pra URL escolhida no select de horário
     // Prévia de quantos horários o formulário "Criar horários" vai gerar.
     (function () {
         const form = document.getElementById('form-gerar');
@@ -859,7 +866,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (ini === null || fim === null || !(dur > 0) || !(fim > ini)) { previa.textContent = ''; return; }
             let n = 0;
             for (let t = ini; t + dur <= fim; t += dur + (gap || 0)) { n += 1; }
-            const maq = form.querySelectorAll('input[name="agendas"]:checked').length;
+            const maq = parseInt(form.dataset.maquiadoras || '0', 10);
             previa.textContent = n
                 ? 'Vão ser criados ' + n + ' horário(s) por maquiadora' + (maq ? ' (' + (n * maq) + ' no total).' : '.')
                 : 'Esse período não comporta nenhum horário.';

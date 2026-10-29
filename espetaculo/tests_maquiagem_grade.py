@@ -262,7 +262,7 @@ class GerarHorariosViewTests(BaseTests):
         casos = [
             {'dia': ''}, {'dia': 'xx'}, {'inicio': ''}, {'fim': 'abc'},
             {'duracao': ''}, {'duracao': 'abc'}, {'intervalo': 'x'},
-            {'agendas': []}, {'agendas': ['abc']}, {'turma': 'abc'},
+            {'agendas': ['abc']}, {'turma': 'abc'},
             {'turma': 999999},
         ]
         for dados in casos:
@@ -308,7 +308,7 @@ class MontarGradeTests(BaseTests):
             agenda=self.maria, horario=_dt(10)
         ).update(reservado_em=timezone.now())
         self._h(self.maria, 10, 30, status='bloqueado_manual')
-        self._h(self.joana, 9)  # Joana só tem 09:00
+        self._h(self.joana, 9)  # Joana só tinha 09:00; o resto vem da turma
 
         grade = montar_grade(self.espetaculo, self.turma_a, DIA)
         por_hora = {
@@ -324,8 +324,19 @@ class MontarGradeTests(BaseTests):
         )
         self.assertEqual(por_hora[time(10, 0)]['Maria']['estado'], 'reservado')
         self.assertEqual(por_hora[time(10, 30)]['Maria']['estado'], 'bloqueado')
-        self.assertEqual(por_hora[time(9, 30)]['Joana']['estado'], 'ausente')
+        # Os horários são da turma: a Joana também ganha o 09:30 (livre)...
+        self.assertEqual(por_hora[time(9, 30)]['Joana']['estado'], 'livre')
         self.assertEqual(por_hora[time(9, 0)]['Joana']['estado'], 'livre')
+
+    def test_maquiadora_desativada_nao_recebe_os_horarios_da_turma(self):
+        AgendaMaquiagemTurma.objects.filter(pk=self.joana.pk).update(ativo=False)
+        self._h(self.maria, 9)
+
+        grade = montar_grade(self.espetaculo, self.turma_a, DIA)
+        celulas = {c['agenda'].maquiadora: c['estado']
+                   for c in grade['linhas'][0]['celulas']}
+
+        self.assertEqual(celulas, {'Joana': 'ausente', 'Maria': 'livre'})
 
     def test_dias_com_contagem_de_livres(self):
         self._h(self.maria, 9)
@@ -335,13 +346,16 @@ class MontarGradeTests(BaseTests):
 
         grade = montar_grade(self.espetaculo, self.turma_a, DIA)
 
+        # Maria tem 2 horários no dia 1 (um ocupado) e 1 no dia 2; a Joana
+        # recebe os mesmos 3, todos livres.
         self.assertEqual(
             [(d['data'], d['total'], d['livres']) for d in grade['dias']],
-            [(DIA, 2, 1), (DIA + timedelta(days=1), 1, 1)],
+            [(DIA, 4, 3), (DIA + timedelta(days=1), 2, 2)],
         )
-        self.assertEqual(grade['livres_total'], 2)
+        self.assertEqual(grade['livres_total'], 5)
 
     def test_dia_padrao_e_o_primeiro_com_horario_livre(self):
+        AgendaMaquiagemTurma.objects.filter(pk=self.joana.pk).update(ativo=False)
         lotado = self._h(self.maria, 9)
         self._agendar(self.ana, lotado)
         self._h(self.maria, 9, dia=DIA + timedelta(days=1))

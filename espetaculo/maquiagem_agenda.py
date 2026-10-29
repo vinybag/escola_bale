@@ -4,13 +4,17 @@ criação de horários em lote, agendar e remover) e pela área das alunas.
 
 Regras importantes:
   * cada aluna tem no máximo UM agendamento por espetáculo;
-  * os horários pertencem a uma agenda (turma + maquiadora); uma turma pode ter
-    várias maquiadoras, e a grade mostra uma coluna por maquiadora;
+  * os horários são DA TURMA: toda maquiadora da turma pode atender em qualquer
+    um deles. Por baixo, cada maquiadora tem a sua agenda, e
+    `sincronizar_horarios_da_turma` garante que todas tenham os mesmos horários
+    (inclusive a maquiadora que entra depois). A grade mostra uma coluna por
+    maquiadora;
   * agendar e remover são atômicos e travam as linhas envolvidas, para duas
     pessoas da secretaria não ocuparem o mesmo horário nem agendarem a mesma
     aluna duas vezes ao mesmo tempo.
 """
 
+from collections import defaultdict
 from datetime import datetime, timedelta
 
 from django.core.exceptions import ObjectDoesNotExist
@@ -126,14 +130,109 @@ def _agendamento_de(horario):
         return None
 
 
-def montar_grade(espetaculo, turma, dia=None):
+def sincronizar_horarios_da_turma(espetaculo, turma):
+    """
+    Faz todas as maquiadoras ATIVAS da turma terem os mesmos horários.
+
+    Os horários são da turma. Sem isso, quem entrasse depois dos horários
+    criados (ou ficasse de fora na hora de criá-los) ficava sem nenhum horário e
+    não dava para agendar com ela. Aqui, cada horário que existe para qualquer
+    maquiadora da turma passa a existir para todas as ativas.
+
+    Só CRIA o que falta, nunca apaga nem altera um horário já existente (nem um
+    agendado). Pode rodar quantas vezes for preciso. Devolve quantos horários
+    foram criados.
+    """
+    agendas = list(
+        AgendaMaquiagemTurma.objects.filter(espetaculo=espetaculo, turma=turma)
+    )
+    ativas = [a for a in agendas if a.ativo]
+    if len(agendas) < 2 or not ativas:
+        return 0
+
+    possui = defaultdict(set)   # agenda_id -> {horários que ela tem}
+    duracao_de = {}             # horário -> duração (a primeira encontrada)
+    for agenda_id, horario, duracao in HorarioMaquiagem.objects.filter(
+        agenda__in=agendas
+    ).values_list('agenda_id', 'horario', 'duracao_minutos'):
+        possui[agenda_id].add(horario)
+        duracao_de.setdefault(horario, duracao)
+
+    todos = set(duracao_de)
+    criados = 0
+
+    with transaction.atomic():
+        for agenda in ativas:
+            faltam = sorted(todos - possui[agenda.pk])
+            if not faltam:
+                continue
+            # ignore_conflicts: se duas telas sincronizarem ao mesmo tempo, a
+            # segunda simplesmente não duplica.
+            HorarioMaquiagem.objects.bulk_create(
+                [
+                    HorarioMaquiagem(
+                        agenda=agenda, horario=h, duracao_minutos=duracao_de[h]
+                    )
+                    for h in faltam
+                ],
+                ignore_conflicts=True,
+            )
+            criados += len(faltam)
+
+    return criados
+
+
+def remover_horario_da_turma(espetaculo, turma, chave):
+    """
+    Remove um horário da turma INTEIRA (de todas as maquiadoras). Só é possível
+    se nenhuma aluna estiver agendada nele. Devolve quantos foram removidos.
+    """
+    try:
+        momento = timezone.make_aware(
+            datetime.strptime(chave, '%Y-%m-%dT%H:%M'),
+            timezone.get_current_timezone(),
+        )
+    except (TypeError, ValueError):
+        raise ErroAgendamento('Horário inválido.')
+
+    with transaction.atomic():
+        horarios = list(
+            HorarioMaquiagem.objects.select_for_update(of=('self',)).filter(
+                agenda__espetaculo=espetaculo,
+                agenda__turma=turma,
+                horario=momento,
+            )
+        )
+        if not horarios:
+            raise ErroAgendamento('Esse horário não existe mais. Atualize a página.')
+
+        if any(h.status != 'disponivel' for h in horarios):
+            raise ErroAgendamento(
+                'Há uma aluna agendada (ou reservando) nesse horário. '
+                'Remova o agendamento dela antes de apagar o horário.'
+            )
+
+        for horario in horarios:
+            horario.delete()
+
+    return len(horarios)
+
+
+def montar_grade(espetaculo, turma, dia=None, sincronizar=True):
     """
     Dados da grade "agenda por horário" de uma turma: uma coluna por maquiadora
     (agenda), uma linha por horário do dia escolhido.
 
+    Antes de montar, sincroniza os horários da turma (ver
+    `sincronizar_horarios_da_turma`), para toda maquiadora ativa ter todos os
+    horários.
+
     Cada célula traz um estado: livre, ocupado, reservado, bloqueado ou
-    ausente (essa maquiadora não tem horário nesse momento).
+    ausente (só acontece com maquiadora desativada).
     """
+    if sincronizar:
+        sincronizar_horarios_da_turma(espetaculo, turma)
+
     agendas = list(
         AgendaMaquiagemTurma.objects.filter(
             espetaculo=espetaculo, turma=turma
@@ -197,11 +296,16 @@ def montar_grade(espetaculo, turma, dia=None):
                     'agendamento': agendamento,
                     'estado': estado,
                 })
-            linhas.append({'hora': hora, 'celulas': celulas})
+            linhas.append({
+                'hora': hora,
+                'chave': f'{dia:%Y-%m-%d}T{hora:%H:%M}',
+                'celulas': celulas,
+            })
 
     return {
         'turma': turma,
         'agendas': agendas,
+        'maquiadoras_ativas': [a.maquiadora for a in agendas if a.ativo],
         'dias': dias,
         'dia': dia,
         'linhas': linhas,

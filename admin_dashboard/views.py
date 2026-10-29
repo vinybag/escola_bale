@@ -6484,6 +6484,16 @@ def espetaculo_maquiagens(request, pk):
     if not request.user.is_staff:
         return redirect('home')
 
+    from espetaculo.maquiagem_agenda import (
+        ErroAgendamento,
+        agendar_aluna,
+        formatar_horario,
+        gerar_horarios,
+        remover_agendamento,
+        remover_horario_da_turma,
+        sincronizar_horarios_da_turma,
+    )
+
     espetaculo = get_object_or_404(Espetaculo, pk=pk)
     turmas = Turma.objects.all().order_by('nome')
 
@@ -6532,6 +6542,8 @@ def espetaculo_maquiagens(request, pk):
                 else:
                     existente.ativo = True
                     existente.save(update_fields=['ativo', 'atualizado_em'])
+                    # Reativada: volta a ter todos os horários da turma.
+                    sincronizar_horarios_da_turma(espetaculo, turma)
                     messages.success(
                         request,
                         f'A agenda de {existente.maquiadora} para a turma {turma.nome} '
@@ -6554,15 +6566,19 @@ def espetaculo_maquiagens(request, pk):
             outras = AgendaMaquiagemTurma.objects.filter(
                 espetaculo=espetaculo, turma=turma,
             ).exclude(pk=agenda.pk).count()
-            messages.success(
-                request,
-                f'Agenda criada: turma {turma.nome} com {maquiadora}.'
-                + (
-                    f' Essa turma agora tem {outras + 1} maquiadoras: as alunas '
-                    f'veem os horários de todas.'
-                    if outras else ''
-                ),
-            )
+
+            # Os horários são da turma: a maquiadora nova já nasce com todos.
+            copiados = sincronizar_horarios_da_turma(espetaculo, turma)
+
+            texto = f'Agenda criada: turma {turma.nome} com {maquiadora}.'
+            if outras:
+                texto += f' Essa turma agora tem {outras + 1} maquiadoras.'
+            if copiados:
+                texto += (
+                    f' {maquiadora} já recebeu os {copiados} horário(s) '
+                    f'que a turma tem.'
+                )
+            messages.success(request, texto)
             return voltar(agenda)
 
         if acao == 'renomear_agenda':
@@ -6617,14 +6633,6 @@ def espetaculo_maquiagens(request, pk):
 
         from django.utils.dateparse import parse_date, parse_time
 
-        from espetaculo.maquiagem_agenda import (
-            ErroAgendamento,
-            agendar_aluna,
-            formatar_horario,
-            gerar_horarios,
-            remover_agendamento,
-        )
-
         def voltar_grade(turma_id, dia=None, tipo=None):
             parametros = {'turma': turma_id}
             if dia:
@@ -6657,16 +6665,26 @@ def espetaculo_maquiagens(request, pk):
             except (TypeError, ValueError):
                 duracao = intervalo = None
 
+            # Os horários são da turma: valem para TODAS as maquiadoras ativas
+            # dela. (Quem manda "agendas" explicitamente, por um formulário
+            # antigo, continua sendo respeitado.)
             agendas_escolhidas = []
-            for valor in request.POST.getlist('agendas'):
-                try:
-                    agenda = AgendaMaquiagemTurma.objects.filter(
-                        pk=int(valor), espetaculo=espetaculo, turma=turma
-                    ).first()
-                except (TypeError, ValueError):
-                    agenda = None
-                if agenda is not None:
-                    agendas_escolhidas.append(agenda)
+            if 'agendas' in request.POST:
+                for valor in request.POST.getlist('agendas'):
+                    try:
+                        agenda = AgendaMaquiagemTurma.objects.filter(
+                            pk=int(valor), espetaculo=espetaculo, turma=turma
+                        ).first()
+                    except (TypeError, ValueError):
+                        agenda = None
+                    if agenda is not None:
+                        agendas_escolhidas.append(agenda)
+            else:
+                agendas_escolhidas = list(
+                    AgendaMaquiagemTurma.objects.filter(
+                        espetaculo=espetaculo, turma=turma, ativo=True
+                    ).order_by('maquiadora', 'id')
+                )
 
             if None in (dia, inicio, fim, duracao, intervalo):
                 messages.error(
@@ -6683,9 +6701,10 @@ def espetaculo_maquiagens(request, pk):
                 messages.error(request, str(exc))
                 return voltar_grade(turma.pk)
 
+            nomes = ', '.join(a.maquiadora for a in agendas_escolhidas)
             texto = (
-                f'{resultado["criados"]} horário(s) criado(s) '
-                f'para {dia:%d/%m}.'
+                f'{resultado["criados"]} horário(s) criado(s) para {dia:%d/%m}, '
+                f'valendo para a(s) maquiadora(s) da turma: {nomes}.'
             )
             if resultado['existentes']:
                 texto += (
@@ -6705,7 +6724,15 @@ def espetaculo_maquiagens(request, pk):
             tipo = request.POST.get('tipo_servico', '')
 
             try:
-                if 'remover' in request.POST:
+                if 'remover_horario' in request.POST:
+                    remover_horario_da_turma(
+                        espetaculo, turma, request.POST.get('remover_horario')
+                    )
+                    messages.success(
+                        request,
+                        'Horário removido para todas as maquiadoras da turma.',
+                    )
+                elif 'remover' in request.POST:
                     nome = remover_agendamento(
                         espetaculo, int(request.POST.get('remover'))
                     )
@@ -6839,6 +6866,7 @@ def espetaculo_maquiagens(request, pk):
             'turmas': turmas,
             'agendas': agendas,
             'grupos_agendas': grupos_agendas,
+            'turmas_com_agenda': [g['turma'] for g in grupos_agendas],
             'turma_grade': turma_grade,
             'grade': grade,
             'pendentes': pendentes,
@@ -6901,18 +6929,27 @@ def excluir_horario_maquiagem(request, horario_id):
     if not request.user.is_staff:
         return redirect('home')
 
+    from espetaculo.maquiagem_agenda import (
+        ErroAgendamento,
+        remover_horario_da_turma,
+    )
+
     horario = get_object_or_404(HorarioMaquiagem, pk=horario_id)
     agenda = horario.agenda
     espetaculo_id = agenda.espetaculo_id
 
-    if horario.status == 'agendado':
-        messages.error(
-            request,
-            'Esse horário já está agendado. Cancele o agendamento antes de excluir o horário.'
+    # Os horários são da turma: remover um é remover para todas as maquiadoras
+    # dela (senão a sincronização o recriaria na próxima vez).
+    try:
+        remover_horario_da_turma(
+            agenda.espetaculo,
+            agenda.turma,
+            f'{timezone.localtime(horario.horario):%Y-%m-%dT%H:%M}',
         )
+    except ErroAgendamento as exc:
+        messages.error(request, str(exc))
     else:
-        horario.delete()
-        messages.success(request, 'Horário removido.')
+        messages.success(request, 'Horário removido para todas as maquiadoras da turma.')
 
     return redirect(
         f"{reverse('admin_dashboard:espetaculo_maquiagens', args=[espetaculo_id])}?agenda_id={agenda.id}"
