@@ -6803,11 +6803,27 @@ def espetaculo_maquiagens(request, pk):
     if tipo_selecionado not in dict(AgendamentoMaquiagem.TIPO_CHOICES):
         tipo_selecionado = 'maquiagem'
 
+    # Abrir uma maquiadora (agenda_id) sempre mostra, no topo, a grade para
+    # escolher as alunas da turma dela. Antes esse cartão não tinha onde
+    # escolher a aluna, e a pessoa ficava sem saber como agendar.
+    if turma_grade is None and agenda_selecionada is not None:
+        turma_grade = agenda_selecionada.turma
+
+    agendadas = []
     if turma_grade is not None:
         grade = montar_grade(
             espetaculo, turma_grade, parse_date(request.GET.get('dia', ''))
         )
         pendentes = list(alunas_sem_horario(espetaculo, turma_grade))
+        # Quem já tem horário não aparece em "Sem horário": mostramos onde está.
+        agendadas = list(
+            AgendamentoMaquiagem.objects.filter(
+                horario__agenda__espetaculo=espetaculo,
+                horario__agenda__turma=turma_grade,
+            ).select_related(
+                'aluna', 'horario', 'horario__agenda'
+            ).order_by('horario__horario', 'aluna__nome')
+        )
 
     grupos_agendas = []
     for agenda in agendas:
@@ -6826,6 +6842,7 @@ def espetaculo_maquiagens(request, pk):
             'turma_grade': turma_grade,
             'grade': grade,
             'pendentes': pendentes,
+            'agendadas': agendadas,
             'tipo_selecionado': tipo_selecionado,
             'agenda_selecionada': agenda_selecionada,
             'horarios': horarios,

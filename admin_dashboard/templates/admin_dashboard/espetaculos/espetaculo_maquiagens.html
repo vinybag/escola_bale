@@ -408,6 +408,12 @@
         gap: 6px; margin-bottom: 6px; align-items: stretch;
     }
     .maq-grade-cab { font-weight: 600; font-size: 0.9rem; color: #4a235f; padding: 0.2rem 0.1rem; }
+    .maq-grade-cab.destaque { border-bottom: 3px solid #6b2d8f; }
+    .maq-agendadas { margin-top: 1rem; font-size: 0.85rem; color: #4a235f; }
+    .maq-agendadas summary { cursor: pointer; font-weight: 600; margin-bottom: 0.4rem; }
+    .maq-agendadas ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; }
+    .maq-agendadas li { padding: 0.4rem 0.6rem; border-radius: 8px; background: #f4ecfa; }
+    .maq-agendadas li span { color: #6c757d; }
     .maq-grade-hora { font-size: 0.85rem; color: #6c757d; display: flex; align-items: center; }
     .maq-celula {
         min-height: 46px; border-radius: 10px; padding: 0.35rem 0.6rem; font-size: 0.85rem;
@@ -527,6 +533,18 @@
                                         {% endfor %}
                                     </select>
                                 </div>
+
+                                {% if agendadas %}
+                                    <details class="maq-agendadas" open>
+                                        <summary>Já agendadas ({{ agendadas|length }})</summary>
+                                        <ul>
+                                            {% for ag in agendadas %}
+                                                <li><strong>{{ ag.aluna.nome }}</strong><br><span>{{ ag.horario.horario|date:"d/m H:i" }} · {{ ag.horario.agenda.maquiadora }}</span></li>
+                                            {% endfor %}
+                                        </ul>
+                                        <p class="maq-sub" style="margin-top: 0.5rem;">Para mudar uma aluna de horário, remova no × da grade e escolha outro.</p>
+                                    </details>
+                                {% endif %}
                             </div>
 
                             <div>
@@ -535,7 +553,7 @@
                                     <div class="maq-grade-linha" style="--cols: {{ grade.agendas|length }};">
                                         <div></div>
                                         {% for a in grade.agendas %}
-                                            <div class="maq-grade-cab">{{ a.maquiadora }}{% if not a.ativo %} <em style="font-weight: 400;">(desativada)</em>{% endif %}</div>
+                                            <div class="maq-grade-cab {% if agenda_selecionada.id == a.id %}destaque{% endif %}">{{ a.maquiadora }}{% if not a.ativo %} <em style="font-weight: 400;">(desativada)</em>{% endif %}</div>
                                         {% endfor %}
                                     </div>
 
@@ -623,7 +641,7 @@
                         <div class="maq-agendas-lista">
                             {% for agenda in grupo.agendas %}
                                 <a class="maq-agenda-chip {% if agenda_selecionada.id == agenda.id %}ativo{% endif %}"
-                                    href="?agenda_id={{ agenda.id }}"
+                                    href="?turma={{ grupo.turma.pk }}&agenda_id={{ agenda.id }}"
                                 >
                                     <strong>{{ agenda.maquiadora }}</strong>
                                     <span>{{ agenda.total_disponiveis }} livres / {{ agenda.total_horarios }}{% if not agenda.ativo %} · <em>desativada</em>{% endif %}</span>
@@ -666,10 +684,9 @@
                         <button type="submit" class="maq-btn">{% if agenda_selecionada.ativo %}Desativar agenda{% else %}Ativar agenda{% endif %}</button>
                     </form>
 
-                    <a class="maq-btn" style="text-decoration: none;" href="?turma={{ agenda_selecionada.turma_id }}">Agendar alunas desta turma</a>
                 </div>
 
-                <p class="maq-sub">Horários cadastrados (só os livres podem ser removidos)</p>
+                <p class="maq-sub">Horários cadastrados desta maquiadora. Para escolher a aluna de cada horário, use a "Agenda por horário" acima. Aqui só é possível remover horários livres.</p>
                 {% if horarios %}
                     <div class="maq-slots">
                         {% for h in horarios %}
@@ -690,7 +707,7 @@
                         {% endfor %}
                     </div>
                 {% else %}
-                    <div class="maq-empty">Nenhum horário cadastrado para essa agenda ainda. Use "Criar horários de um dia" na agenda por horário.</div>
+                    <div class="maq-empty">Nenhum horário cadastrado para essa agenda ainda. Crie no cartão "Agenda por horário", logo acima.</div>
                 {% endif %}
             </div>
 
