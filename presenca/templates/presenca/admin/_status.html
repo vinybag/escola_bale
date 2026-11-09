@@ -1,0 +1,3 @@
+{% if r.status == 'presente' %}<span class="pr-badge presente">Presente</span>
+{% elif r.status == 'falta' %}<span class="pr-badge falta">Falta{% if r.desmarcada %} (desmarcada){% endif %}</span>
+{% else %}<span class="pr-badge aguardando">Aguardando</span>{% endif %}

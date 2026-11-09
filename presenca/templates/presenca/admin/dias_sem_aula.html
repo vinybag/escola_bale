@@ -1,0 +1,68 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Dias sem aula{% endblock %}
+
+{% block content %}
+{% include 'presenca/admin/_estilo.html' %}
+
+<div class="pr-header">
+    <div>
+        <h2>Dias sem aula</h2>
+        <p>Feriados e recessos. Nesses dias ninguém recebe falta e o QR Code não registra presença.</p>
+    </div>
+</div>
+
+{% include 'presenca/admin/_abas.html' with aba='folgas' %}
+
+<div class="pr-card">
+    <h3>Adicionar dia sem aula</h3>
+    <form method="post" class="pr-form">
+        {% csrf_token %}
+        <div>
+            <label for="d-data">Data</label>
+            <input type="date" id="d-data" name="data" required>
+        </div>
+        <div>
+            <label for="d-turma">Vale para</label>
+            <select id="d-turma" name="turma">
+                <option value="">Todas as turmas</option>
+                {% for t in turmas %}<option value="{{ t.pk }}">{{ t.nome }}</option>{% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="d-motivo">Motivo (opcional)</label>
+            <input type="text" id="d-motivo" name="motivo" maxlength="120" placeholder="Ex.: Feriado, recesso de julho">
+        </div>
+        <div><button type="submit" class="pr-btn principal" style="padding: 0.75rem 1.2rem;">Adicionar</button></div>
+    </form>
+</div>
+
+<div class="pr-card">
+    <h3>Cadastrados</h3>
+    {% if folgas %}
+    <div class="pr-tabela-wrap">
+        <table class="pr-tabela">
+            <thead><tr><th>Data</th><th>Vale para</th><th>Motivo</th><th></th></tr></thead>
+            <tbody>
+            {% for f in folgas %}
+                <tr>
+                    <td><strong>{{ f.data|date:"D, d/m/Y" }}</strong></td>
+                    <td>{% if f.turma %}{{ f.turma.nome }}{% else %}Todas as turmas{% endif %}</td>
+                    <td>{{ f.motivo|default:"—" }}</td>
+                    <td style="text-align: right;">
+                        <form method="post" action="{% url 'admin_dashboard:presenca_dia_sem_aula_excluir' f.pk %}" class="pr-inline"
+                              onsubmit="return confirm('Remover este dia sem aula? As faltas desse dia voltam a valer.');">
+                            {% csrf_token %}
+                            <button type="submit" class="pr-btn perigo">Remover</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+        <p style="color: #8a8490; margin: 0;">Nenhum dia sem aula cadastrado.</p>
+    {% endif %}
+</div>
+{% endblock %}

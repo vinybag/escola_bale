@@ -215,6 +215,22 @@
         cursor: pointer;
     }
 
+    .aluna-faltas {
+        display: inline-block;
+        padding: 0.3rem 0.8rem;
+        border-radius: 999px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        text-decoration: none;
+        background: #e8f5ec;
+        color: #1e7e34;
+    }
+
+    .aluna-faltas.tem-faltas {
+        background: #fde8ef;
+        color: #b02a5b;
+    }
+
     .alunas-vazio {
         background: white;
         border-radius: 18px;
@@ -439,6 +455,19 @@
                     {% endif %}
                 </div>
             </div>
+
+            {% if aluna.faltas_mes is not None %}
+            <div class="aluna-card-item full">
+                <div class="aluna-card-label">Faltas em {{ faltas_mes_rotulo }}</div>
+                <div class="aluna-card-valor">
+                    <a href="{% url 'admin_dashboard:presenca_aluna' aluna.pk %}"
+                       class="aluna-faltas{% if aluna.faltas_mes %} tem-faltas{% endif %}"
+                       title="Ver o histórico de presença desta aluna">
+                        {{ aluna.faltas_mes }} falta{{ aluna.faltas_mes|pluralize }}
+                    </a>
+                </div>
+            </div>
+            {% endif %}
         </div>
 
         <div class="aluna-card-acoes">

@@ -1,0 +1,6 @@
+<nav class="pr-abas">
+    <a href="{% url 'admin_dashboard:presenca_lista' %}" class="{% if aba == 'lista' %}ativa{% endif %}">Aulas e presenças</a>
+    <a href="{% url 'admin_dashboard:presenca_resumo' %}" class="{% if aba == 'resumo' %}ativa{% endif %}">Resumo por aluna</a>
+    <a href="{% url 'admin_dashboard:presenca_dias_sem_aula' %}" class="{% if aba == 'folgas' %}ativa{% endif %}">Dias sem aula</a>
+    <a href="{% url 'admin_dashboard:presenca_ajustes' %}" class="{% if aba == 'ajustes' %}ativa{% endif %}">QR Code e ajustes</a>
+</nav>

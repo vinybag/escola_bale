@@ -67,6 +67,7 @@ INSTALLED_APPS = [
     'calendario_avisos',
     'admin_dashboard',
     'espetaculo',
+    'presenca',
 
 
     # Email

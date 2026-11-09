@@ -1,0 +1,70 @@
+<section style="background: white; border: 1px solid #ece3f2; border-radius: 16px; padding: 1.5rem; min-width: 0;" id="pr-horarios-secao">
+    <div style="margin-bottom: 1.25rem;">
+        <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1rem; font-weight: 700;">Horários das aulas (lista de presença)</h3>
+        <p style="margin: 0; color: #7b7580; font-size: 0.92rem; line-height: 1.5;">
+            Dia da semana e hora de início/fim de cada aula da turma. É isso que libera o registro de presença pelo QR Code
+            e define quando uma aluna recebe falta. Uma aula por dia da semana; para dois dias, adicione duas linhas.
+        </p>
+    </div>
+
+    <input type="hidden" name="horarios_enviados" value="1">
+
+    <style>
+        .pr-hor-linha { display: grid; grid-template-columns: 1.4fr 1fr 1fr auto; gap: 0.75rem; align-items: end; margin-bottom: 0.75rem; }
+        .pr-hor-linha label { display: block; margin-bottom: 0.35rem; font-weight: 600; color: #44384c; font-size: 0.82rem; }
+        .pr-hor-linha select, .pr-hor-linha input[type=time] { width: 100%; box-sizing: border-box; padding: 0.7rem 0.8rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; background: #fff; }
+        .pr-hor-remover { padding: 0.7rem 0.9rem; border-radius: 10px; border: 1px solid #f0dde9; background: #fff; color: #9a4d74; font-weight: 700; cursor: pointer; }
+        .pr-hor-auto { grid-column: 1 / -1; font-size: 0.78rem; color: #9a6b00; margin-top: -0.4rem; }
+        @media (max-width: 640px) { .pr-hor-linha { grid-template-columns: 1fr 1fr; } .pr-hor-linha > :first-child { grid-column: 1 / -1; } }
+    </style>
+
+    <div id="pr-horarios-lista">
+        {% for h in horarios %}
+        <div class="pr-hor-linha">
+            <div>
+                <label>Dia da semana</label>
+                <select name="horario_dia">
+                    {% for numero, nome in dias %}<option value="{{ numero }}" {% if numero == h.dia_semana %}selected{% endif %}>{{ nome }}</option>{% endfor %}
+                </select>
+            </div>
+            <div><label>Início</label><input type="time" name="horario_inicio" value="{{ h.hora_inicio|time:'H:i' }}"></div>
+            <div><label>Fim</label><input type="time" name="horario_fim" value="{{ h.hora_fim|time:'H:i' }}"></div>
+            <button type="button" class="pr-hor-remover" onclick="prRemoverHorario(this)">Remover</button>
+            {% if h.preenchido_automaticamente %}<div class="pr-hor-auto">⚠ Preenchido automaticamente a partir do texto antigo. Confira e salve a turma.</div>{% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <button type="button" onclick="prAdicionarHorario()"
+            style="padding: 0.7rem 1.1rem; border-radius: 10px; border: 1px solid #e5d7f1; background: #f3eafb; color: #6b2d8f; font-weight: 700; cursor: pointer;">
+        + Adicionar horário
+    </button>
+
+    <template id="pr-horario-modelo">
+        <div class="pr-hor-linha">
+            <div>
+                <label>Dia da semana</label>
+                <select name="horario_dia">
+                    {% for numero, nome in dias %}<option value="{{ numero }}">{{ nome }}</option>{% endfor %}
+                </select>
+            </div>
+            <div><label>Início</label><input type="time" name="horario_inicio"></div>
+            <div><label>Fim</label><input type="time" name="horario_fim"></div>
+            <button type="button" class="pr-hor-remover" onclick="prRemoverHorario(this)">Remover</button>
+        </div>
+    </template>
+
+    <script>
+        function prAdicionarHorario() {
+            var modelo = document.getElementById('pr-horario-modelo');
+            document.getElementById('pr-horarios-lista').appendChild(modelo.content.cloneNode(true));
+        }
+        function prRemoverHorario(botao) {
+            var linha = botao.closest('.pr-hor-linha');
+            if (linha) { linha.remove(); }
+        }
+        (function () {
+            if (!document.querySelector('#pr-horarios-lista .pr-hor-linha')) { prAdicionarHorario(); }
+        })();
+    </script>
+</section>

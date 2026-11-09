@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code de presença</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: Arial, Helvetica, sans-serif; color: #35203f; background: #fff; }
+        .folha { max-width: 620px; margin: 0 auto; padding: 2.5rem 1.5rem; text-align: center; }
+        .escola { font-size: 1.1rem; letter-spacing: 0.08em; text-transform: uppercase; color: #6b2d8f; font-weight: 700; }
+        h1 { font-size: 2.2rem; margin: 0.6rem 0 0.4rem 0; color: #4a235f; }
+        p { font-size: 1.15rem; line-height: 1.5; margin: 0.4rem 0; }
+        img { width: 100%; max-width: 420px; height: auto; margin: 1.5rem auto; display: block; border: 3px solid #6b2d8f; border-radius: 18px; padding: 14px; }
+        .passos { text-align: left; display: inline-block; margin-top: 0.5rem; font-size: 1.05rem; line-height: 1.7; }
+        .acoes { margin-top: 2rem; }
+        button { background: #6b2d8f; color: #fff; border: none; border-radius: 10px; padding: 0.8rem 1.6rem; font-size: 1rem; font-weight: 700; cursor: pointer; }
+        @media print { .acoes { display: none; } }
+    </style>
+</head>
+<body>
+    <div class="folha">
+        <div class="escola">{{ SITE_NAME }}</div>
+        <h1>Presença na aula 🩰</h1>
+        <p>Escaneie com a câmera do celular ao chegar.</p>
+        <img src="{% url 'admin_dashboard:presenca_qr_png' %}" alt="QR Code de presença">
+        <div class="passos">
+            1. Abra a câmera do celular e aponte para o código.<br>
+            2. Entre na sua conta, se for pedido.<br>
+            3. Pronto! A presença é registrada.
+        </div>
+        <p style="font-size: 0.9rem; color: #7b7580; margin-top: 1.5rem;">O registro abre {{ minutos_antes }} minutos antes da aula.</p>
+        <div class="acoes"><button type="button" onclick="window.print()">Imprimir</button></div>
+    </div>
+</body>
+</html>

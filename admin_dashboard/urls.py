@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from presenca import admin_views as presenca_views
 
 app_name = 'admin_dashboard'
 
@@ -15,6 +16,19 @@ urlpatterns = [
     path('alunas/<int:pk>/excluir/', views.aluna_excluir, name='aluna_excluir'),
     path('alunas/<int:pk>/definir-senha/', views.aluna_definir_senha, name='aluna_definir_senha'),
     
+    # Lista de presença
+    path('presenca/', presenca_views.lista, name='presenca_lista'),
+    path('presenca/resumo/', presenca_views.resumo, name='presenca_resumo'),
+    path('presenca/aluna/<int:pk>/', presenca_views.aluna_detalhe, name='presenca_aluna'),
+    path('presenca/marcar/', presenca_views.marcar_manual, name='presenca_marcar_manual'),
+    path('presenca/<int:pk>/desmarcar/', presenca_views.desmarcar, name='presenca_desmarcar'),
+    path('presenca/<int:pk>/restaurar/', presenca_views.restaurar, name='presenca_restaurar'),
+    path('presenca/dias-sem-aula/', presenca_views.dias_sem_aula, name='presenca_dias_sem_aula'),
+    path('presenca/dias-sem-aula/<int:pk>/excluir/', presenca_views.dia_sem_aula_excluir, name='presenca_dia_sem_aula_excluir'),
+    path('presenca/ajustes/', presenca_views.ajustes, name='presenca_ajustes'),
+    path('presenca/qr-code.png', presenca_views.qr_png, name='presenca_qr_png'),
+    path('presenca/qr-code/imprimir/', presenca_views.qr_imprimir, name='presenca_qr_imprimir'),
+
     # Turmas - NOVO
     path('turmas/', views.turmas_list, name='turmas_list'),
     path('turmas/criar/', views.turma_criar, name='turma_criar'),

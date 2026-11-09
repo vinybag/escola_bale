@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block title %}Presença{% endblock %}
+
+{% block content %}
+{% include 'presenca/_estilo_publico.html' %}
+<div class="pp-wrap">
+<div class="pp-card">
+
+{% if tipo == 'sucesso' %}
+    <div class="pp-icone">🩰</div>
+    <h1>Presença confirmada!</h1>
+    <p>Cada aula é um passo a mais na sua dança.<br>Parabéns por mais uma presença e até a próxima!</p>
+    <ul class="pp-itens">
+        {% for item in itens %}
+        <li>
+            <strong>{{ aluna.nome }} · {{ item.aula.turma.nome }}</strong>
+            <small>Aula das {{ item.aula.inicio|time:"H:i" }} às {{ item.aula.fim|time:"H:i" }}</small><br>
+            {% if item.estado == 'criada' %}<span class="pp-ok">✔ Presença registrada às {{ item.presenca.registrada_em|time:"H:i" }}</span>
+            {% elif item.estado == 'ja_registrada' %}<span class="pp-ok">✔ Já estava registrada</span>
+            {% else %}<span class="pp-aviso">Esta presença foi desmarcada pela escola. Fale com a secretaria.</span>{% endif %}
+        </li>
+        {% endfor %}
+    </ul>
+
+{% elif tipo == 'ja_registrada' %}
+    <div class="pp-icone">✅</div>
+    <h1>Presença já registrada</h1>
+    <p>Está tudo certo, não precisa escanear de novo. Bom ensaio!</p>
+    <ul class="pp-itens">
+        {% for item in itens %}
+        <li>
+            <strong>{{ aluna.nome }} · {{ item.aula.turma.nome }}</strong>
+            <small>Aula das {{ item.aula.inicio|time:"H:i" }} às {{ item.aula.fim|time:"H:i" }}</small><br>
+            <span class="pp-ok">✔ Registrada às {{ item.presenca.registrada_em|time:"H:i" }}</span>
+        </li>
+        {% endfor %}
+    </ul>
+
+{% elif tipo == 'desmarcada' %}
+    <div class="pp-icone">ℹ️</div>
+    <h1>Presença desmarcada pela escola</h1>
+    <p>A presença de <strong>{{ aluna.nome }}</strong> nesta aula foi desmarcada pela escola e não pode ser registrada de novo pelo QR Code.</p>
+    <p>Se isso foi um engano, fale com a secretaria.</p>
+
+{% elif tipo == 'fora_da_janela' %}
+    <div class="pp-icone">⏰</div>
+    <h1>Ainda não é hora da aula</h1>
+    <p>Neste momento não há aula de <strong>{{ aluna.nome }}</strong> com o registro de presença aberto.</p>
+    <p>O registro abre {{ minutos_antes }} minutos antes do início de cada aula e fecha quando ela termina.</p>
+    {% if proxima %}
+        <ul class="pp-itens">
+            <li>
+                <strong>Próxima aula: {{ proxima.turma.nome }}</strong>
+                <small>{{ proxima.inicio|date:"l, d/m" }} às {{ proxima.inicio|time:"H:i" }}</small>
+            </li>
+        </ul>
+    {% endif %}
+
+{% elif tipo == 'sem_aluna' %}
+    <div class="pp-icone">🔎</div>
+    <h1>Nenhuma aluna encontrada</h1>
+    <p>Esta conta não está vinculada a nenhuma aluna ativa da escola.</p>
+    <p>Entre com a conta da aluna (ou do responsável) ou fale com a secretaria.</p>
+
+{% elif tipo == 'qr_invalido' %}
+    <div class="pp-icone">⚠️</div>
+    <h1>QR Code inválido</h1>
+    <p>Este QR Code não é mais válido. Procure o QR Code atual na entrada da escola ou fale com a secretaria.</p>
+{% endif %}
+
+{% if mais_de_uma_aluna and tipo != 'qr_invalido' and tipo != 'sem_aluna' %}
+    <a class="pp-btn" href="{{ request.path }}">Marcar presença de outra aluna</a>
+{% endif %}
+    <a class="pp-btn sec" href="{% url 'dashboard' %}">Ir para o meu painel</a>
+
+</div>
+</div>
+{% endblock %}

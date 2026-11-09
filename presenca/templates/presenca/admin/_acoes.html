@@ -1,0 +1,25 @@
+{% if r.status == 'presente' %}
+    <form method="post" action="{% url 'admin_dashboard:presenca_desmarcar' r.presenca.pk %}" class="pr-inline"
+          data-nome="{{ r.aluna.nome }}" onsubmit="return prDesmarcar(this);">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ url_atual }}">
+        <input type="hidden" name="motivo" value="">
+        <button type="submit" class="pr-btn perigo">Desmarcar</button>
+    </form>
+{% elif r.desmarcada %}
+    <form method="post" action="{% url 'admin_dashboard:presenca_restaurar' r.presenca.pk %}" class="pr-inline">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ url_atual }}">
+        <button type="submit" class="pr-btn ok">Restaurar presença</button>
+    </form>
+{% else %}
+    <form method="post" action="{% url 'admin_dashboard:presenca_marcar_manual' %}" class="pr-inline"
+          onsubmit="return confirm('Marcar presença de {{ r.aluna.nome|escapejs }} em {{ r.data|date:"d/m" }}?');">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ url_atual }}">
+        <input type="hidden" name="aluna" value="{{ r.aluna.pk }}">
+        <input type="hidden" name="turma" value="{{ r.turma.pk }}">
+        <input type="hidden" name="data" value="{{ r.data|date:'Y-m-d' }}">
+        <button type="submit" class="pr-btn principal">Marcar presença</button>
+    </form>
+{% endif %}

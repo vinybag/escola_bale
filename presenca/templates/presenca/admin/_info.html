@@ -1,0 +1,9 @@
+{% if r.status == 'presente' %}
+    Registrada às {{ r.presenca.registrada_em|time:"H:i" }} · {{ r.presenca.get_origem_display }}{% if r.presenca.origem == 'manual' and r.presenca.registrada_por %} ({{ r.presenca.registrada_por.get_full_name|default:r.presenca.registrada_por.username }}){% endif %}
+{% elif r.desmarcada %}
+    Presença desmarcada{% if r.presenca.anulada_por %} por {{ r.presenca.anulada_por.get_full_name|default:r.presenca.anulada_por.username }}{% endif %}{% if r.presenca.anulada_em %} em {{ r.presenca.anulada_em|date:"d/m H:i" }}{% endif %}{% if r.presenca.motivo_anulacao %} — {{ r.presenca.motivo_anulacao }}{% endif %}
+{% elif r.status == 'aguardando' %}
+    A aula ainda não terminou
+{% else %}
+    Sem registro de presença
+{% endif %}

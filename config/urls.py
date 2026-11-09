@@ -13,6 +13,7 @@ urlpatterns = [
     path('pagamentos/', include('pagamentos.urls')),
     path('avisos/', include('calendario_avisos.urls')),
     path('espetaculo/', include('espetaculo.urls')),  # ← NOVO
+    path('presenca/', include('presenca.urls')),  # registro de presença pelo QR Code
 
     # Redirecionamento de login
     path('dashboard/', redirecionar_dashboard, name='redirecionar_dashboard'),

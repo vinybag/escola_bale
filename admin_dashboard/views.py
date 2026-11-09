@@ -275,6 +275,8 @@ def alunas_list(request):
     if not request.user.is_staff:
         return redirect('home')
 
+    from presenca.services import rotulo_mes_atual
+
     try:
         from usuarios.models import Aluna, Turma
         from django.db.models import Q
@@ -305,6 +307,16 @@ def alunas_list(request):
         alunas = alunas.distinct().order_by('nome')
         turmas = Turma.objects.filter(ativa=True).values_list('nome', flat=True).distinct()
 
+        # Faltas do mês atual (mesmo cálculo da Lista de presença)
+        try:
+            from presenca.services import anexar_faltas_do_mes
+            alunas = anexar_faltas_do_mes(alunas)
+        except Exception as erro_faltas:
+            print(f"Erro ao calcular faltas do mês: {erro_faltas}")
+            alunas = list(alunas)
+            for aluna in alunas:
+                aluna.faltas_mes = None
+
     except Exception as e:
         print(f"Erro ao buscar alunas: {e}")
         import traceback
@@ -322,6 +334,7 @@ def alunas_list(request):
         'turma_filtro': turma,
         'status_filtro': status,
         'total_alunas': len(alunas) if alunas else 0,
+        'faltas_mes_rotulo': rotulo_mes_atual(),
     }
 
     return render(request, 'admin_dashboard/alunas/list.html', context)
@@ -2391,6 +2404,11 @@ def turma_criar(request):
                 dia_semana=dia_semana,
             )
 
+            # Horários das aulas (lista de presença)
+            from presenca.services import salvar_horarios_turma
+            for aviso in salvar_horarios_turma(turma, request.POST):
+                messages.warning(request, aviso)
+
             messages.success(request, f'Turma "{nome}" criada com sucesso!')
             return redirect('admin_dashboard:turmas_list')
 
@@ -2434,6 +2452,11 @@ def turma_editar(request, pk):
             turma.dia_semana = request.POST.get('dia_semana') or None
 
             turma.save()
+
+            # Horários das aulas (lista de presença)
+            from presenca.services import salvar_horarios_turma
+            for aviso in salvar_horarios_turma(turma, request.POST):
+                messages.warning(request, aviso)
 
             messages.success(request, f'Turma "{turma.nome}" atualizada com sucesso!')
             return redirect('admin_dashboard:turmas_list')

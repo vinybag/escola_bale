@@ -1,0 +1,101 @@
+<style>
+    .pr-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+    .pr-header h2 { margin: 0 0 0.35rem 0; color: #4a235f; }
+    .pr-header p { margin: 0; color: #6f6f78; }
+
+    .pr-abas { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+    .pr-abas a { padding: 0.6rem 1.1rem; border-radius: 999px; background: #faf7fc; border: 1px solid #ebe3f1; color: #6b2d8f; font-weight: 600; font-size: 0.9rem; text-decoration: none; }
+    .pr-abas a.ativa { background: #6b2d8f; border-color: #6b2d8f; color: #fff; }
+
+    .pr-card { background: #fff; border: 1px solid #ebe3f1; border-radius: 16px; padding: 1.25rem; box-shadow: 0 8px 20px rgba(107, 45, 143, 0.06); margin-bottom: 1.25rem; }
+    .pr-card h3 { margin: 0 0 0.75rem 0; color: #4a235f; font-size: 1.05rem; }
+
+    .pr-aviso { border-radius: 12px; padding: 0.9rem 1.1rem; margin-bottom: 1rem; font-size: 0.92rem; line-height: 1.5; }
+    .pr-aviso.atencao { background: #fff6e5; border: 1px solid #f3dca8; color: #7a5600; }
+    .pr-aviso.info { background: #f3eafb; border: 1px solid #e5d7f1; color: #4a235f; }
+    .pr-aviso a { color: inherit; font-weight: 700; }
+
+    .pr-filtros { display: grid; grid-template-columns: 1.2fr 1.2fr 1.4fr 1fr auto; gap: 0.85rem; align-items: end; }
+    .pr-filtros label, .pr-form label { display: block; margin-bottom: 0.4rem; font-weight: 600; color: #4a235f; font-size: 0.85rem; }
+    .pr-filtros input, .pr-filtros select, .pr-form input, .pr-form select {
+        width: 100%; padding: 0.7rem 0.8rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 0.95rem; background: #fff; box-sizing: border-box;
+    }
+    .pr-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.9rem; align-items: end; }
+    .pr-form .ajuda { grid-column: 1 / -1; color: #7b7580; font-size: 0.85rem; margin: -0.3rem 0 0 0; }
+
+    .pr-btn { display: inline-block; padding: 0.6rem 1rem; border-radius: 10px; border: 1px solid #e5d7f1; background: #f3eafb; color: #6b2d8f; font-weight: 700; font-size: 0.85rem; cursor: pointer; text-decoration: none; line-height: 1.2; }
+    .pr-btn.principal { background: #6b2d8f; border-color: #6b2d8f; color: #fff; }
+    .pr-btn.perigo { background: #fff; border-color: #f0dde9; color: #9a4d74; }
+    .pr-btn.ok { background: #e8f5ec; border-color: #cfe9d6; color: #1e7e34; }
+    .pr-inline { display: inline; margin: 0; }
+
+    .pr-navperiodo { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1rem; }
+    .pr-segmentado { display: inline-flex; border: 1px solid #ebe3f1; border-radius: 10px; overflow: hidden; background: #fff; }
+    .pr-segmentado a { padding: 0.55rem 1rem; font-weight: 600; font-size: 0.88rem; color: #6b2d8f; text-decoration: none; border-right: 1px solid #ebe3f1; }
+    .pr-segmentado a:last-child { border-right: none; }
+    .pr-segmentado a.ativa { background: #6b2d8f; color: #fff; }
+    .pr-rotulo { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+    .pr-rotulo strong { color: #35203f; font-size: 1.1rem; }
+
+    .pr-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.75rem; margin-bottom: 1.25rem; }
+    .pr-kpi { background: #fff; border: 1px solid #ebe3f1; border-radius: 14px; padding: 0.9rem 1rem; }
+    .pr-kpi small { display: block; color: #7b7580; font-weight: 600; font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.03em; }
+    .pr-kpi strong { font-size: 1.6rem; color: #35203f; }
+    .pr-kpi.verde strong { color: #1e7e34; }
+    .pr-kpi.rosa strong { color: #b02a5b; }
+
+    .pr-dia { margin: 1.5rem 0 0.6rem 0; color: #4a235f; font-size: 1.05rem; text-transform: capitalize; }
+    .pr-aula { background: #fff; border: 1px solid #ebe3f1; border-radius: 16px; margin-bottom: 1rem; overflow: hidden; box-shadow: 0 8px 20px rgba(107, 45, 143, 0.05); }
+    .pr-aula-topo { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; flex-wrap: wrap; padding: 0.9rem 1.1rem; background: linear-gradient(135deg, #ffffff 0%, #f5eff9 100%); border-bottom: 1px solid #ece3f2; }
+    .pr-aula-topo strong { color: #35203f; font-size: 1.02rem; }
+    .pr-aula-topo .horario { color: #6b2d8f; font-weight: 700; margin-left: 0.5rem; }
+    .pr-contagem { font-size: 0.85rem; color: #6f6f78; display: flex; gap: 0.9rem; flex-wrap: wrap; }
+
+    .pr-linha { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; padding: 0.75rem 1.1rem; border-bottom: 1px solid #f2ecf6; }
+    .pr-linha:last-child { border-bottom: none; }
+    .pr-linha .quem { min-width: 180px; flex: 1 1 200px; }
+    .pr-linha .quem a { color: #35203f; font-weight: 700; text-decoration: none; }
+    .pr-linha .quem small { display: block; color: #8a8490; font-size: 0.78rem; margin-top: 0.15rem; }
+    .pr-linha .acoes { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+
+    .pr-badge { display: inline-block; padding: 0.28rem 0.75rem; border-radius: 999px; font-size: 0.78rem; font-weight: 700; white-space: nowrap; }
+    .pr-badge.presente { background: #e8f5ec; color: #1e7e34; }
+    .pr-badge.falta { background: #fde8ef; color: #b02a5b; }
+    .pr-badge.aguardando { background: #f3edf7; color: #8a6a9f; }
+
+    .pr-tabela-wrap { overflow-x: auto; }
+    .pr-tabela { width: 100%; border-collapse: collapse; min-width: 560px; }
+    .pr-tabela th { text-align: left; font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.03em; color: #6b2d8f; padding: 0.7rem 0.75rem; border-bottom: 2px solid #ebe3f1; white-space: nowrap; }
+    .pr-tabela td { padding: 0.75rem; border-bottom: 1px solid #f2ecf6; vertical-align: middle; color: #444; }
+    .pr-tabela td.num, .pr-tabela th.num { text-align: center; }
+    .pr-tabela a { color: #35203f; font-weight: 700; text-decoration: none; }
+    .pr-tabela small { color: #8a8490; display: block; font-size: 0.78rem; }
+    .pr-faltas-num { font-weight: 800; }
+    .pr-faltas-num.tem { color: #b02a5b; }
+
+    .pr-barra { height: 10px; border-radius: 6px; background: #f3edf7; overflow: hidden; min-width: 90px; }
+    .pr-barra span { display: block; height: 100%; background: #c9588a; border-radius: 6px; }
+
+    .pr-vazio { text-align: center; color: #8a8490; padding: 2.5rem 1rem; background: #fff; border: 1px dashed #d9cbe4; border-radius: 16px; }
+    .pr-turmas-tags { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+    .pr-tag { background: #e8d5f2; color: #6b2d8f; padding: 0.25rem 0.65rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; }
+
+    @media (max-width: 900px) { .pr-filtros { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 560px) {
+        .pr-filtros { grid-template-columns: 1fr; }
+        .pr-linha .acoes { width: 100%; }
+        .pr-linha .acoes .pr-btn, .pr-linha .acoes form { flex: 1 1 auto; }
+        .pr-linha .acoes form .pr-btn { width: 100%; }
+    }
+</style>
+<script>
+    function prDesmarcar(form) {
+        var motivo = prompt(
+            'Desmarcar a presença de ' + form.getAttribute('data-nome') + '?\n' +
+            'A aula passará a contar como falta.\n\nMotivo (opcional):', ''
+        );
+        if (motivo === null) { return false; }
+        form.elements['motivo'].value = motivo;
+        return true;
+    }
+</script>

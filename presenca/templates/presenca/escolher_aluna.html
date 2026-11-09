@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block title %}Presença - escolher aluna{% endblock %}
+
+{% block content %}
+{% include 'presenca/_estilo_publico.html' %}
+<div class="pp-wrap">
+<div class="pp-card">
+    <div class="pp-icone">🩰</div>
+    <h1>Presença na aula</h1>
+    <p>Para qual aluna você quer marcar presença?</p>
+
+    <form method="get" class="pp-form">
+        <label for="aluna">Aluna</label>
+        <select name="aluna" id="aluna" required>
+            <option value="" disabled selected>Escolha uma aluna...</option>
+            {% for a in alunas %}<option value="{{ a.pk }}">{{ a.nome }}</option>{% endfor %}
+        </select>
+        <button type="submit" class="pp-btn">Continuar</button>
+    </form>
+</div>
+</div>
+{% endblock %}

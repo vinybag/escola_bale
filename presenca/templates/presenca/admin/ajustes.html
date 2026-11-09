@@ -1,0 +1,98 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}QR Code e ajustes de presença{% endblock %}
+
+{% block content %}
+{% include 'presenca/admin/_estilo.html' %}
+
+<div class="pr-header">
+    <div>
+        <h2>QR Code e ajustes</h2>
+        <p>O QR Code da escola, o horário em que o registro abre e o início do controle.</p>
+    </div>
+</div>
+
+{% include 'presenca/admin/_abas.html' with aba='ajustes' %}
+
+{% if turmas_pendentes %}
+<div class="pr-aviso atencao">
+    <strong>Turmas sem horário cadastrado:</strong>
+    {% for t in turmas_pendentes %}<a href="{% url 'admin_dashboard:turma_editar' t.pk %}">{{ t.nome }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}.
+    Cadastre o dia e a hora de início/fim na edição da turma.
+</div>
+{% endif %}
+
+{% if horarios_automaticos %}
+<div class="pr-aviso info">
+    {{ horarios_automaticos }} horário{{ horarios_automaticos|pluralize }} de turma
+    {{ horarios_automaticos|pluralize:"foi,foram" }} preenchido{{ horarios_automaticos|pluralize }} automaticamente a partir do texto antigo.
+    Confira em <a href="{% url 'admin_dashboard:turmas_list' %}">Turmas</a> (editar) e depois confirme aqui:
+    <form method="post" class="pr-inline" style="margin-left: 0.5rem;">
+        {% csrf_token %}
+        <input type="hidden" name="acao" value="confirmar_horarios">
+        <button type="submit" class="pr-btn ok">Está tudo certo, confirmar</button>
+    </form>
+</div>
+{% endif %}
+
+<div class="pr-card">
+    <h3>QR Code da escola</h3>
+    <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; align-items: center;">
+        <img src="{% url 'admin_dashboard:presenca_qr_png' %}?v={{ config.qr_gerado_em|date:'U' }}" alt="QR Code de presença"
+             style="width: 220px; height: 220px; border: 1px solid #ebe3f1; border-radius: 12px; padding: 8px; background: #fff;">
+        <div style="flex: 1 1 280px; min-width: 0;">
+            <p style="margin-top: 0; color: #444; line-height: 1.55;">
+                Imprima e cole na entrada da escola. Quem escaneia cai direto na página de presença
+                (e, se não estiver logada, entra com a conta e a presença é registrada em seguida).
+            </p>
+            <p style="color: #8a8490; font-size: 0.82rem; word-break: break-all; margin: 0.5rem 0;">{{ url_qr }}</p>
+            <p style="color: #8a8490; font-size: 0.82rem; margin: 0 0 1rem 0;">
+                Gerado em {{ config.qr_gerado_em|date:"d/m/Y H:i" }}.
+            </p>
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                <a href="{% url 'admin_dashboard:presenca_qr_imprimir' %}" target="_blank" class="pr-btn principal">Abrir página para imprimir</a>
+                <a href="{% url 'admin_dashboard:presenca_qr_png' %}?baixar=1" class="pr-btn">Baixar imagem (PNG)</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="pr-aviso atencao" style="margin: 1.25rem 0 0 0;">
+        <strong>Importante:</strong> como o QR Code é fixo, alguém pode fotografá-lo e usar de casa.
+        O registro só funciona de {{ config.minutos_antes }} min antes do início até o fim de cada aula,
+        e você pode <em>desmarcar</em> qualquer presença na aba "Aulas e presenças". Se o código vazar,
+        gere um novo abaixo e troque o impresso.
+        <form method="post" class="pr-inline" style="display: block; margin-top: 0.6rem;"
+              onsubmit="return confirm('Gerar um QR Code novo? O QR Code impresso atual deixará de funcionar até você trocá-lo.');">
+            {% csrf_token %}
+            <input type="hidden" name="acao" value="novo_qr">
+            <button type="submit" class="pr-btn perigo">Gerar QR Code novo</button>
+        </form>
+    </div>
+</div>
+
+<div class="pr-card">
+    <h3>Ajustes</h3>
+    <form method="post" class="pr-form">
+        {% csrf_token %}
+        <input type="hidden" name="acao" value="salvar">
+        <div>
+            <label for="a-antes">Registro abre (minutos antes da aula)</label>
+            <input type="number" id="a-antes" name="minutos_antes" min="0" max="240" value="{{ config.minutos_antes }}">
+        </div>
+        <div>
+            <label for="a-depois">Registro ainda vale (minutos depois do fim)</label>
+            <input type="number" id="a-depois" name="minutos_depois" min="0" max="240" value="{{ config.minutos_depois }}">
+        </div>
+        <div>
+            <label for="a-inicio">Início do controle de presença</label>
+            <input type="date" id="a-inicio" name="data_inicio_controle" value="{{ config.data_inicio_controle|date:'Y-m-d' }}">
+        </div>
+        <p class="ajuda">
+            Aulas anteriores ao "início do controle" nunca contam como falta. Por padrão é o dia em que o sistema
+            foi instalado, para as alunas atuais não receberem faltas antigas.
+            O horário de início/fim de cada turma é cadastrado na edição da turma.
+        </p>
+        <div><button type="submit" class="pr-btn principal" style="padding: 0.75rem 1.2rem;">Salvar ajustes</button></div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,105 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Resumo de presença{% endblock %}
+
+{% block content %}
+{% include 'presenca/admin/_estilo.html' %}
+
+<div class="pr-header">
+    <div>
+        <h2>Resumo por aluna</h2>
+        <p>Quanto cada aluna falta. Clique no nome para ver o detalhe mês a mês.</p>
+    </div>
+</div>
+
+{% include 'presenca/admin/_abas.html' with aba='resumo' %}
+
+<div class="pr-navperiodo">
+    <div class="pr-segmentado">
+        <a href="{{ url_semana }}" class="{% if periodo == 'semana' %}ativa{% endif %}">Semana</a>
+        <a href="{{ url_mes }}" class="{% if periodo == 'mes' %}ativa{% endif %}">Mês</a>
+        <a href="{{ url_tudo }}" class="{% if periodo == 'tudo' %}ativa{% endif %}">Desde o início</a>
+    </div>
+    <div class="pr-rotulo">
+        {% if url_anterior %}<a href="{{ url_anterior }}" class="pr-btn">‹ Anterior</a>{% endif %}
+        <strong>{{ rotulo }}</strong>
+        {% if url_proximo %}<a href="{{ url_proximo }}" class="pr-btn">Próximo ›</a>{% endif %}
+    </div>
+</div>
+
+<div class="pr-card">
+    <form method="get" class="pr-filtros" style="grid-template-columns: 1.6fr 1.2fr 1fr auto;">
+        <input type="hidden" name="periodo" value="{{ periodo }}">
+        <input type="hidden" name="data" value="{{ referencia|date:'Y-m-d' }}">
+        <div>
+            <label for="r-busca">Buscar aluna</label>
+            <input type="text" id="r-busca" name="busca" value="{{ busca }}" placeholder="Nome da aluna...">
+        </div>
+        <div>
+            <label for="r-turma">Turma</label>
+            <select id="r-turma" name="turma">
+                <option value="">Todas</option>
+                {% for t in turmas %}<option value="{{ t.pk }}" {% if t.pk == turma_id %}selected{% endif %}>{{ t.nome }}</option>{% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="r-ordem">Ordenar por</label>
+            <select id="r-ordem" name="ordem">
+                <option value="faltas" {% if ordem == 'faltas' %}selected{% endif %}>Mais faltas</option>
+                <option value="frequencia" {% if ordem == 'frequencia' %}selected{% endif %}>Menor frequência</option>
+                <option value="nome" {% if ordem == 'nome' %}selected{% endif %}>Nome</option>
+            </select>
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+            <button type="submit" class="pr-btn principal" style="padding: 0.75rem 1.1rem;">Filtrar</button>
+            <a href="{% url 'admin_dashboard:presenca_resumo' %}" class="pr-btn" style="padding: 0.75rem 1.1rem;">Limpar</a>
+        </div>
+    </form>
+</div>
+
+<div class="pr-kpis">
+    <div class="pr-kpi verde"><small>Presenças</small><strong>{{ geral.presente }}</strong></div>
+    <div class="pr-kpi rosa"><small>Faltas</small><strong>{{ geral.falta }}</strong></div>
+    <div class="pr-kpi"><small>Alunas com falta</small><strong>{{ alunas_com_falta }}</strong></div>
+    <div class="pr-kpi"><small>Frequência geral</small><strong>{% if geral.frequencia is not None %}{{ geral.frequencia }}%{% else %}—{% endif %}</strong></div>
+</div>
+
+<div class="pr-card">
+    <div class="pr-tabela-wrap">
+        <table class="pr-tabela">
+            <thead>
+                <tr>
+                    <th>Aluna</th>
+                    <th class="num">Aulas</th>
+                    <th class="num">Presenças</th>
+                    <th class="num">Faltas</th>
+                    <th class="num">Frequência</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for l in linhas %}
+                <tr>
+                    <td>
+                        <a href="{% url 'admin_dashboard:presenca_aluna' l.aluna.pk %}">{{ l.aluna.nome }}</a>
+                        <small>{% for t in l.aluna.turmas.all %}{{ t.nome }}{% if not forloop.last %}, {% endif %}{% empty %}Sem turma{% endfor %}</small>
+                    </td>
+                    <td class="num">{{ l.dados.aulas }}</td>
+                    <td class="num">{{ l.dados.presente }}</td>
+                    <td class="num"><span class="pr-faltas-num {% if l.dados.falta %}tem{% endif %}">{{ l.dados.falta }}</span></td>
+                    <td class="num">
+                        {% if l.dados.frequencia is not None %}
+                            <span class="pr-badge {% if l.dados.frequencia >= 75 %}presente{% else %}falta{% endif %}">{{ l.dados.frequencia }}%</span>
+                        {% else %}—{% endif %}
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="5" style="text-align: center; color: #8a8490; padding: 2rem;">Nenhuma aluna encontrada.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <p style="margin: 0.9rem 0 0 0; color: #8a8490; font-size: 0.82rem;">
+        "Aulas" conta só aulas que já terminaram. Frequência abaixo de 75% aparece em vermelho.
+    </p>
+</div>
+{% endblock %}

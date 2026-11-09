@@ -1,0 +1,131 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Lista de presença{% endblock %}
+
+{% block content %}
+{% include 'presenca/admin/_estilo.html' %}
+
+<div class="pr-header">
+    <div>
+        <h2>Lista de presença</h2>
+        <p>Aulas do dia, separadas por turma. Desmarque quem registrou mas não foi à aula.</p>
+    </div>
+</div>
+
+{% include 'presenca/admin/_abas.html' with aba='lista' %}
+
+{% if turmas_pendentes %}
+<div class="pr-aviso atencao">
+    <strong>Turmas sem horário cadastrado:</strong>
+    {% for t in turmas_pendentes %}<a href="{% url 'admin_dashboard:turma_editar' t.pk %}">{{ t.nome }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}.
+    Enquanto não tiverem horário (dia + hora de início e fim), essas turmas não aparecem aqui, não aceitam presença pelo QR Code e não geram falta.
+</div>
+{% endif %}
+
+{% if horarios_automaticos %}
+<div class="pr-aviso info">
+    {{ horarios_automaticos }} horário{{ horarios_automaticos|pluralize:" foi,s foram" }} preenchido{{ horarios_automaticos|pluralize }}
+    automaticamente a partir do texto antigo das turmas. Confira em
+    <a href="{% url 'admin_dashboard:turmas_list' %}">Turmas</a> e depois confirme em
+    <a href="{% url 'admin_dashboard:presenca_ajustes' %}">QR Code e ajustes</a>.
+</div>
+{% endif %}
+
+{% if folgas_periodo %}
+<div class="pr-aviso info">
+    <strong>Dia sem aula:</strong>
+    {% for d, textos in folgas_periodo %}{{ d|date:"d/m" }} — {{ textos|join:"; " }}{% if not forloop.last %} · {% endif %}{% endfor %}
+</div>
+{% endif %}
+
+<div class="pr-navperiodo">
+    <div class="pr-segmentado">
+        <a href="{{ url_dia }}" class="{% if periodo == 'dia' %}ativa{% endif %}">Dia</a>
+        <a href="{{ url_semana }}" class="{% if periodo == 'semana' %}ativa{% endif %}">Semana</a>
+        <a href="{{ url_mes }}" class="{% if periodo == 'mes' %}ativa{% endif %}">Mês</a>
+    </div>
+    <div class="pr-rotulo">
+        <a href="{{ url_anterior }}" class="pr-btn">‹ Anterior</a>
+        <strong>{% if periodo == 'dia' %}{{ referencia|date:"l, d/m/Y" }}{% else %}{{ rotulo_periodo }}{% endif %}</strong>
+        <a href="{{ url_proximo }}" class="pr-btn">Próximo ›</a>
+        <a href="{{ url_hoje }}" class="pr-btn principal">Hoje</a>
+    </div>
+</div>
+
+<div class="pr-card">
+    <form method="get" class="pr-filtros">
+        <input type="hidden" name="periodo" value="{{ periodo }}">
+        <div>
+            <label for="f-data">Data de referência</label>
+            <input type="date" id="f-data" name="data" value="{{ referencia|date:'Y-m-d' }}">
+        </div>
+        <div>
+            <label for="f-turma">Turma</label>
+            <select id="f-turma" name="turma">
+                <option value="">Todas</option>
+                {% for t in turmas %}<option value="{{ t.pk }}" {% if t.pk == turma_id %}selected{% endif %}>{{ t.nome }}</option>{% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="f-aluna">Aluna</label>
+            <select id="f-aluna" name="aluna">
+                <option value="">Todas</option>
+                {% for a in alunas %}<option value="{{ a.pk }}" {% if a.pk == aluna_id %}selected{% endif %}>{{ a.nome }}</option>{% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="f-status">Situação</label>
+            <select id="f-status" name="status">
+                <option value="">Todas</option>
+                <option value="presente" {% if status == 'presente' %}selected{% endif %}>Presentes</option>
+                <option value="falta" {% if status == 'falta' %}selected{% endif %}>Faltas</option>
+                <option value="aguardando" {% if status == 'aguardando' %}selected{% endif %}>Aguardando</option>
+            </select>
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+            <button type="submit" class="pr-btn principal" style="padding: 0.75rem 1.1rem;">Filtrar</button>
+            <a href="{% url 'admin_dashboard:presenca_lista' %}" class="pr-btn" style="padding: 0.75rem 1.1rem;">Limpar</a>
+        </div>
+    </form>
+</div>
+
+<div class="pr-kpis">
+    <div class="pr-kpi verde"><small>Presenças</small><strong>{{ resumo.presente }}</strong></div>
+    <div class="pr-kpi rosa"><small>Faltas</small><strong>{{ resumo.falta }}</strong></div>
+    <div class="pr-kpi"><small>Aguardando</small><strong>{{ resumo.aguardando }}</strong></div>
+    <div class="pr-kpi"><small>Frequência</small><strong>{% if resumo.frequencia is not None %}{{ resumo.frequencia }}%{% else %}—{% endif %}</strong></div>
+</div>
+
+{% for dia in dias %}
+    <h3 class="pr-dia">{{ dia.data|date:"l, d/m/Y" }}</h3>
+
+    {% for bloco in dia.blocos %}
+    <section class="pr-aula">
+        <div class="pr-aula-topo">
+            <div>
+                <strong>{{ bloco.turma.nome }}</strong>
+                <span class="horario">{{ bloco.inicio|time:"H:i" }}–{{ bloco.fim|time:"H:i" }}</span>
+            </div>
+            <div class="pr-contagem">
+                <span>✅ {{ bloco.presentes }} presente{{ bloco.presentes|pluralize }}</span>
+                <span>❌ {{ bloco.faltas }} falta{{ bloco.faltas|pluralize }}</span>
+                {% if bloco.aguardando %}<span>⏳ {{ bloco.aguardando }} aguardando</span>{% endif %}
+            </div>
+        </div>
+
+        {% for r in bloco.linhas %}
+        <div class="pr-linha">
+            <div class="quem">
+                <a href="{% url 'admin_dashboard:presenca_aluna' r.aluna.pk %}">{{ r.aluna.nome }}</a>
+                <small>{% include 'presenca/admin/_info.html' %}</small>
+            </div>
+            <div>{% include 'presenca/admin/_status.html' %}</div>
+            <div class="acoes">{% include 'presenca/admin/_acoes.html' %}</div>
+        </div>
+        {% endfor %}
+    </section>
+    {% endfor %}
+{% empty %}
+    <div class="pr-vazio">{{ vazio }}</div>
+{% endfor %}
+{% endblock %}

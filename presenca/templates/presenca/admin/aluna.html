@@ -1,0 +1,91 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Presença - {{ aluna.nome }}{% endblock %}
+
+{% block content %}
+{% include 'presenca/admin/_estilo.html' %}
+
+<div class="pr-header">
+    <div>
+        <h2>{{ aluna.nome }}</h2>
+        <p>Histórico de presença{% if not aluna.ativa %} · <strong>aluna inativa</strong>{% endif %}</p>
+    </div>
+    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        <a href="{% url 'admin_dashboard:aluna_detalhes' aluna.pk %}" class="pr-btn">Ver cadastro</a>
+        <a href="{% url 'admin_dashboard:presenca_resumo' %}" class="pr-btn">‹ Resumo por aluna</a>
+    </div>
+</div>
+
+{% include 'presenca/admin/_abas.html' with aba='resumo' %}
+
+<div class="pr-card">
+    <h3>Turmas e horários</h3>
+    <div class="pr-turmas-tags">
+        {% for t in turmas %}
+            <span class="pr-tag">
+                {{ t.nome }}{% for h in t.horarios_aula.all %} · {{ h.dia_curto }} {{ h.intervalo_texto }}{% endfor %}
+            </span>
+        {% empty %}
+            <span style="color: #8a8490;">Nenhuma turma com horário cadastrado.</span>
+        {% endfor %}
+    </div>
+    <p style="margin: 0.8rem 0 0 0; color: #8a8490; font-size: 0.82rem;">
+        Controle contado desde {{ inicio_controle|date:"d/m/Y" }}.
+    </p>
+</div>
+
+<div class="pr-kpis">
+    <div class="pr-kpi rosa"><small>Faltas em {{ mes_rotulo }}</small><strong>{{ mes_dados.falta }}</strong></div>
+    <div class="pr-kpi verde"><small>Presenças em {{ mes_rotulo }}</small><strong>{{ mes_dados.presente }}</strong></div>
+    <div class="pr-kpi rosa"><small>Faltas no total</small><strong>{{ geral.falta }}</strong></div>
+    <div class="pr-kpi"><small>Frequência geral</small><strong>{% if geral.frequencia is not None %}{{ geral.frequencia }}%{% else %}—{% endif %}</strong></div>
+    <div class="pr-kpi"><small>Faltas seguidas (agora)</small><strong>{{ sequencia_atual }}</strong></div>
+    <div class="pr-kpi"><small>Maior sequência</small><strong>{{ maior_sequencia }}</strong></div>
+</div>
+
+<div class="pr-card">
+    <h3>Mês a mês</h3>
+    {% if historico %}
+    <div class="pr-tabela-wrap">
+        <table class="pr-tabela">
+            <thead>
+                <tr><th>Mês</th><th class="num">Aulas</th><th class="num">Presenças</th><th class="num">Faltas</th><th></th><th class="num">Frequência</th></tr>
+            </thead>
+            <tbody>
+            {% for h in historico %}
+                <tr {% if h.ativo %}style="background: #faf7fc;"{% endif %}>
+                    <td style="text-transform: capitalize;"><a href="?mes={{ h.chave }}">{{ h.rotulo }}</a></td>
+                    <td class="num">{{ h.dados.aulas }}</td>
+                    <td class="num">{{ h.dados.presente }}</td>
+                    <td class="num"><span class="pr-faltas-num {% if h.dados.falta %}tem{% endif %}">{{ h.dados.falta }}</span></td>
+                    <td style="width: 28%;"><div class="pr-barra"><span style="width: {{ h.largura }}%;"></span></div></td>
+                    <td class="num">{% if h.dados.frequencia is not None %}{{ h.dados.frequencia }}%{% else %}—{% endif %}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+        <p style="color: #8a8490; margin: 0;">Ainda não há aulas registradas no controle.</p>
+    {% endif %}
+</div>
+
+<h3 class="pr-dia">Aulas de {{ mes_rotulo }}</h3>
+{% if registros %}
+<section class="pr-aula">
+    {% for r in registros %}
+    <div class="pr-linha">
+        <div class="quem">
+            <strong style="color: #35203f;">{{ r.data|date:"D, d/m" }}</strong> · {{ r.turma.nome }}
+            <span style="color: #6b2d8f; font-weight: 700;">{{ r.inicio|time:"H:i" }}–{{ r.fim|time:"H:i" }}</span>
+            <small>{% include 'presenca/admin/_info.html' %}</small>
+        </div>
+        <div>{% include 'presenca/admin/_status.html' %}</div>
+        <div class="acoes">{% include 'presenca/admin/_acoes.html' %}</div>
+    </div>
+    {% endfor %}
+</section>
+{% else %}
+    <div class="pr-vazio">Nenhuma aula neste mês.</div>
+{% endif %}
+{% endblock %}

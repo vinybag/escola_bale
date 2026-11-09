@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block title %}Presença - escolher aula{% endblock %}
+
+{% block content %}
+{% include 'presenca/_estilo_publico.html' %}
+<div class="pp-wrap">
+<div class="pp-card">
+    <div class="pp-icone">🩰</div>
+    <h1>Qual aula?</h1>
+    <p><strong>{{ aluna.nome }}</strong> tem mais de uma aula com o registro aberto agora. Marque a(s) aula(s) em que está presente.</p>
+
+    <form method="post" class="pp-form">
+        {% csrf_token %}
+        <input type="hidden" name="aluna" value="{{ aluna.pk }}">
+        {% for aula in aulas %}
+            <label class="pp-check {% if aula.ja_registrada or aula.desmarcada %}desligada{% endif %}">
+                <input type="checkbox" name="aula" value="{{ aula.turma.pk }}"
+                       {% if aula.ja_registrada or aula.desmarcada %}disabled{% else %}checked{% endif %}>
+                <span>
+                    <strong>{{ aula.turma.nome }}</strong>
+                    <small>
+                        {{ aula.inicio|time:"H:i" }} às {{ aula.fim|time:"H:i" }}
+                        {% if aula.ja_registrada %}· já registrada ✔{% elif aula.desmarcada %}· desmarcada pela escola{% endif %}
+                    </small>
+                </span>
+            </label>
+        {% endfor %}
+        <button type="submit" class="pp-btn">Confirmar presença</button>
+    </form>
+
+    {% if mais_de_uma_aluna %}
+        <a class="pp-btn sec" href="{{ request.path }}">Trocar de aluna</a>
+    {% endif %}
+</div>
+</div>
+{% endblock %}

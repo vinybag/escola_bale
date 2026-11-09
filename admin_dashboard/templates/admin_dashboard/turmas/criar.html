@@ -1,4 +1,5 @@
 {% extends 'admin_dashboard/base.html' %}
+{% load presenca_tags %}
 
 {% block title %}Criar Turma{% endblock %}
 
@@ -314,6 +315,9 @@
                         </div>
                     </div>
                 </section>
+
+                <!-- SEÇÃO: Horários das aulas (lista de presença) -->
+                {% horarios_turma_form %}
 
                 <!-- SEÇÃO: Configurações -->
                 <section class="turma-create-section">
