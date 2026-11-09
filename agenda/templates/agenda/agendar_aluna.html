@@ -53,7 +53,7 @@
                         <option value="">Selecione uma aula</option>
                         {% for aula in aulas %}
                             <option value="{{ aula.id }}">
-                                {{ aula.nome }}{% if aula.dia_semana %} – {{ aula.get_dia_semana_display }}{% endif %}{% if aula.horario %} às {{ aula.horario }}{% endif %}
+                                {{ aula.nome }}{% if aula.dia_semana %} – {{ aula.get_dia_semana_display }}{% endif %}{% if aula.horario %} às {{ aula.horario }}{% endif %}{% if aula.faixa_etaria %} – {{ aula.faixa_etaria }}{% endif %}
                             </option>
                         {% endfor %}
                     </select>

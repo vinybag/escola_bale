@@ -307,7 +307,7 @@
                                     class="select-option"
                                     data-value="{{ item.turma.id }}"
                                     data-gratuita="{{ item.gratuita|yesno:'1,0' }}"
-                                    data-text="{{ item.turma.nome }}{% if item.turma.dia_semana %} — {{ item.turma.get_dia_semana_display }}{% endif %}{% if item.turma.horario %} — {{ item.turma.horario }}{% endif %}{% if item.gratuita %} (Gratuita){% else %} (R$ {{ configuracao.valor_aula_experimental|floatformat:2 }}){% endif %}"
+                                    data-text="{{ item.turma.nome }}{% if item.turma.dia_semana %} — {{ item.turma.get_dia_semana_display }}{% endif %}{% if item.turma.horario %} — {{ item.turma.horario }}{% endif %}{% if item.turma.faixa_etaria %} — {{ item.turma.faixa_etaria }}{% endif %}{% if item.gratuita %} (Gratuita){% else %} (R$ {{ configuracao.valor_aula_experimental|floatformat:2 }}){% endif %}"
                                     style="
                                         padding: 0.85rem;
                                         cursor: pointer;
@@ -348,6 +348,16 @@
                                                     Horário a definir
                                                 {% endif %}
                                             </div>
+
+                                            {% if item.turma.faixa_etaria %}
+                                                <div style="
+                                                    margin-top: 0.15rem;
+                                                    font-size: 0.85rem;
+                                                    color: #a8787c;
+                                                ">
+                                                    Faixa etária: {{ item.turma.faixa_etaria }}
+                                                </div>
+                                            {% endif %}
                                         </div>
 
                                         {% if item.gratuita %}

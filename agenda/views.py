@@ -63,6 +63,17 @@ def usuario_pode_agendar_como_responsavel(user):
     return True
 
 
+def numero_ou_none(valor):
+    """
+    Converte o id vindo do formulário em número. Campo vazio ou com lixo vira
+    None, e a tela responde "selecione uma aula" em vez de dar erro 500.
+    """
+    try:
+        return int(valor)
+    except (TypeError, ValueError):
+        return None
+
+
 def calcular_idade(data_nascimento):
     if not data_nascimento:
         return 0
@@ -171,7 +182,7 @@ def agendar(request):
     aulas_com_status = obter_aulas_com_status(configuracao)
 
     if request.method == "POST":
-        aula_id = request.POST.get("aula")
+        aula_id = numero_ou_none(request.POST.get("aula"))
         data_str = request.POST.get("data")
 
         aula = Turma.objects.filter(
@@ -325,7 +336,7 @@ def agendar_aluna(request):
 
     if request.method == "POST":
         opcao_escolhida = request.POST.get("aluna_id")
-        aula_id = request.POST.get("aula")
+        aula_id = numero_ou_none(request.POST.get("aula"))
         data_str = request.POST.get("data")
 
         aula = Turma.objects.filter(
