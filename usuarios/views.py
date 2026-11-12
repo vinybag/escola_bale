@@ -1,4 +1,10 @@
+import logging
+from datetime import datetime
+
+from django.http import Http404
 from django.shortcuts import render, redirect
+from django.utils import timezone
+from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
@@ -6,9 +12,12 @@ from django.contrib import messages
 from django.core.mail import send_mail
 from django.conf import settings
 from .models import Perfil, Aluna, RecuperacaoSenha
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Q
 from django.utils.http import url_has_allowed_host_and_scheme
 from decimal import Decimal, ROUND_HALF_UP
+
+logger = logging.getLogger(__name__)
+
 
 def user_login(request):
     """Pagina de login"""
@@ -66,9 +75,76 @@ def cadastro(request):
 
 @login_required
 def dashboard(request):
-    """Dashboard do responsavel"""
-    alunas = Aluna.objects.filter(responsavel=request.user, ativa=True)
-    return render(request, 'usuarios/dashboard.html', {'alunas': alunas})
+    """Dashboard do responsavel (e da aluna adulta, que tem login proprio)"""
+    alunas = Aluna.objects.filter(
+        Q(responsavel=request.user) | Q(usuario=request.user),
+        ativa=True,
+    )
+    return render(request, 'usuarios/dashboard.html', {
+        'alunas': alunas,
+        'hoje': timezone.localdate().isoformat(),
+    })
+
+
+def _data_do_formulario(texto):
+    """'2015-03-20' (campo de data) ou '20/03/2015' -> date; invalido -> None."""
+    texto = (texto or '').strip()
+
+    for formato in ('%Y-%m-%d', '%d/%m/%Y'):
+        try:
+            return datetime.strptime(texto, formato).date()
+        except ValueError:
+            continue
+
+    return None
+
+
+@login_required
+@require_POST
+def aluna_data_nascimento(request, pk):
+    """
+    A responsavel (ou a propria aluna adulta) informa a data de nascimento que ainda
+    esta em branco. Uma data ja salva NUNCA e sobrescrita por aqui: so a escola altera.
+    """
+    aluna = (
+        Aluna.objects
+        .filter(Q(responsavel=request.user) | Q(usuario=request.user), pk=pk, ativa=True)
+        .first()
+    )
+
+    if aluna is None:
+        raise Http404
+
+    data = _data_do_formulario(request.POST.get('data_nascimento'))
+
+    if data is None:
+        messages.error(request, 'Informe uma data de nascimento válida.')
+    elif data > timezone.localdate() or data.year < 1920:
+        messages.error(request, 'Confira a data de nascimento: ela parece incorreta.')
+    else:
+        # update() condicionado a "ainda em branco": mesmo com dois cliques ao mesmo tempo,
+        # nada que ja foi salvo e sobrescrito.
+        salvas = Aluna.objects.filter(pk=aluna.pk, data_nascimento__isnull=True).update(
+            data_nascimento=data,
+        )
+
+        if salvas:
+            logger.info(
+                'Data de nascimento da aluna %s (id %s) informada pelo usuario %s',
+                aluna.nome, aluna.pk, request.user.pk,
+            )
+            messages.success(
+                request,
+                f'Data de nascimento de {aluna.nome} salva: {data:%d/%m/%Y}.',
+            )
+        else:
+            messages.info(
+                request,
+                f'{aluna.nome} já tem a data de nascimento cadastrada. '
+                'Para alterá-la, fale com a escola.',
+            )
+
+    return redirect('dashboard')
 
 @login_required
 def perfil(request):

@@ -321,6 +321,19 @@
     <div>
         <h2 style="margin: 0 0 0.35rem 0; color: #4a235f;">Alunas</h2>
         <p style="margin: 0; color: #6f6f78;">{{ total_alunas }} aluna{{ total_alunas|pluralize }}</p>
+        {% if nascimento_filtro == 'sem' %}
+            <p style="margin: 0.6rem 0 0 0;">
+                <span style="display: inline-block; padding: 0.35rem 0.8rem; background: #fff8e6; color: #7a5b00; border-radius: 999px; font-size: 0.85rem; font-weight: 600;">Mostrando só alunas sem data de nascimento</span>
+                <a href="{% url 'admin_dashboard:alunas_list' %}" style="margin-left: 0.5rem; font-size: 0.85rem;">mostrar todas</a>
+            </p>
+        {% elif sem_nascimento_total %}
+            <p style="margin: 0.6rem 0 0 0;">
+                <a href="{% url 'admin_dashboard:alunas_list' %}?status=ativas&nascimento=sem"
+                   style="display: inline-block; padding: 0.35rem 0.8rem; background: #fff8e6; color: #7a5b00; border: 1px solid #f0dca8; border-radius: 999px; font-size: 0.85rem; font-weight: 600; text-decoration: none;">
+                    ⚠ {{ sem_nascimento_total }} aluna{{ sem_nascimento_total|pluralize }} ativa{{ sem_nascimento_total|pluralize }} sem data de nascimento — ver quais
+                </a>
+            </p>
+        {% endif %}
     </div>
     <a href="{% url 'admin_dashboard:aluna_criar' %}"
        style="padding: 0.85rem 1.35rem; background: linear-gradient(135deg, #6b2d8f 0%, #7e3aa5 100%); color: white; text-decoration: none; border-radius: 10px; font-weight: 700; box-shadow: 0 8px 18px rgba(107, 45, 143, 0.18);">
@@ -357,6 +370,8 @@
                 <option value="inativas" {% if status_filtro == 'inativas' %}selected{% endif %}>Inativas</option>
             </select>
         </div>
+
+        {% if nascimento_filtro %}<input type="hidden" name="nascimento" value="{{ nascimento_filtro }}">{% endif %}
 
         <div class="alunas-filter-actions" style="display: flex; gap: 0.5rem;">
             <button type="submit"
@@ -437,10 +452,10 @@
             <div class="aluna-card-item">
                 <div class="aluna-card-label">Idade</div>
                 <div class="aluna-card-valor">
-                    {% if aluna.idade %}
-                        {{ aluna.idade }} anos
+                    {% if aluna.data_nascimento %}
+                        {% if aluna.idade < 1 %}menos de 1 ano{% else %}{{ aluna.idade }} ano{{ aluna.idade|pluralize }}{% endif %}
                     {% else %}
-                        <span style="color: #999;">-</span>
+                        <span style="color: #a15c00; font-weight: 600;">sem data de nascimento</span>
                     {% endif %}
                 </div>
             </div>

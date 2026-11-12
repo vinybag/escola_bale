@@ -304,6 +304,13 @@ def alunas_list(request):
         elif status == 'inativas':
             alunas = alunas.filter(ativa=False)
 
+        # Acompanhar quem ainda falta: filtro "sem data de nascimento" + contagem das ativas
+        nascimento = request.GET.get('nascimento', '')
+        if nascimento == 'sem':
+            alunas = alunas.filter(data_nascimento__isnull=True)
+
+        sem_nascimento_total = Aluna.objects.filter(ativa=True, data_nascimento__isnull=True).count()
+
         alunas = alunas.distinct().order_by('nome')
         turmas = Turma.objects.filter(ativa=True).values_list('nome', flat=True).distinct()
 
@@ -326,6 +333,8 @@ def alunas_list(request):
         busca = ''
         turma = ''
         status = ''
+        nascimento = ''
+        sem_nascimento_total = 0
 
     context = {
         'alunas': alunas,
@@ -333,6 +342,8 @@ def alunas_list(request):
         'busca': busca,
         'turma_filtro': turma,
         'status_filtro': status,
+        'nascimento_filtro': nascimento,
+        'sem_nascimento_total': sem_nascimento_total,
         'total_alunas': len(alunas) if alunas else 0,
         'faltas_mes_rotulo': rotulo_mes_atual(),
     }

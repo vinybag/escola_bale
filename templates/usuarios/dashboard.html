@@ -4,6 +4,16 @@
 {% block title %}Dashboard - Área dos Pais{% endblock %}
 
 {% block content %}
+<style>
+    .alunas-list .nasc-falta { color: #a15c00; font-weight: 600; }
+    .alunas-list .nasc-form { margin-top: .6rem; padding: .75rem .85rem; background: #fff8e6; border: 1px solid #f0dca8; border-radius: 10px; }
+    .alunas-list .nasc-form label { display: block; margin: 0 0 .4rem; font-size: .88rem; color: #6b5300; font-weight: 600; }
+    .alunas-list .nasc-linha { display: flex; gap: .5rem; align-items: stretch; flex-wrap: wrap; }
+    .alunas-list .nasc-linha input[type="date"] { flex: 1 1 150px; min-width: 0; padding: .55rem .6rem; border: 1px solid #d9cbe4; border-radius: 8px; font-size: 1rem; background: #fff; }
+    /* o CSS global do site estiliza todo button[type=submit]; aqui reforçamos para o botão ficar legível */
+    .alunas-list .nasc-form button[type="submit"] { margin-top: 0; padding: .55rem 1.1rem; background: #6b2d8f; color: #fff; border: 0; border-radius: 8px; font-size: .95rem; font-weight: 700; cursor: pointer; }
+    .alunas-list .nasc-form button[type="submit"]:hover { background: #7e3aa5; }
+</style>
 <div class="container dashboard">
     <h1>Bem-vindo(a), {{ user.get_full_name|default:user.username }}!</h1>
     
@@ -14,9 +24,27 @@
                 <ul class="alunas-list">
                     {% for aluna in alunas %}
                         <li>
-                            <strong>{{ aluna.nome }}</strong> - {% if aluna.idade %}{{ aluna.idade }} anos{% else %}-{% endif %}
+                            <strong>{{ aluna.nome }}</strong> -
+                            {% if aluna.data_nascimento %}
+                                {% if aluna.idade < 1 %}menos de 1 ano{% else %}{{ aluna.idade }} ano{{ aluna.idade|pluralize }}{% endif %}
+                            {% else %}
+                                <span class="nasc-falta">data de nascimento não informada</span>
+                            {% endif %}
                             {% if aluna.turma_atual %}
                                 <br><small>Turma: {{ aluna.turma_atual }}</small>
+                            {% endif %}
+
+                            {% if not aluna.data_nascimento %}
+                                <form method="post" action="{% url 'aluna_data_nascimento' aluna.pk %}"
+                                      class="nasc-form" data-aluna="{{ aluna.nome }}" onsubmit="return confirmarNascimento(this);">
+                                    {% csrf_token %}
+                                    <label for="nasc-{{ aluna.pk }}">Informe a data de nascimento:</label>
+                                    <div class="nasc-linha">
+                                        <input type="date" id="nasc-{{ aluna.pk }}" name="data_nascimento"
+                                               required min="1920-01-01" max="{{ hoje }}">
+                                        <button type="submit">Salvar</button>
+                                    </div>
+                                </form>
                             {% endif %}
                         </li>
                     {% endfor %}
@@ -39,4 +67,14 @@
         </div>
     </div>
 </div>
+<script>
+    // Mostra a data escolhida e pede confirmação antes de salvar (só a escola poderá alterar depois).
+    function confirmarNascimento(form) {
+        var valor = form.data_nascimento.value;
+        if (!valor) { return true; }
+        var p = valor.split('-');
+        return confirm('Confirmar a data de nascimento de ' + form.getAttribute('data-aluna') + ': ' +
+                       p[2] + '/' + p[1] + '/' + p[0] + '?\n\nDepois de salva, só a escola poderá alterá-la.');
+    }
+</script>
 {% endblock %}
