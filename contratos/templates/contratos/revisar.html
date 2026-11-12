@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block title %}Conferir contrato{% endblock %}
+
+{% block content %}
+{% include 'contratos/_estilo_familia.html' %}
+<div class="cf-wrap">
+    <h1>Conferir o contrato</h1>
+    <p class="cf-sub">Contrato {{ contrato.ano }} de <strong>{{ contrato.aluna_nome }}</strong>{% if contrato.tipo == 'bolsista' %} (bolsista){% endif %}. Leia o contrato com atenção antes de assinar.</p>
+
+    <div class="cf-card">
+        <h2>Seus dados no contrato</h2>
+        <dl class="cf-dl" style="margin-top:1rem;">
+            <div><dt>Nome</dt><dd>{{ dados.nome }}</dd></div>
+            <div><dt>Data de nascimento da aluna</dt><dd>{{ nascimento }}</dd></div>
+            <div><dt>CPF</dt><dd>{{ cpf }}</dd></div>
+            <div><dt>RG</dt><dd>{{ dados.rg }}</dd></div>
+            <div><dt>Telefone</dt><dd>{{ dados.telefone }}</dd></div>
+            <div style="grid-column: 1 / -1;"><dt>Endereço</dt><dd>{{ dados.endereco }}</dd></div>
+            <div style="grid-column: 1 / -1;"><dt>E-mail</dt><dd>{{ dados.email }}</dd></div>
+            <div style="grid-column: 1 / -1;"><dt>Uso de imagem da aluna</dt><dd>{% if nao_autoriza_imagem %}Não autorizo{% else %}Autorizo{% endif %}</dd></div>
+        </dl>
+        <p style="margin:1rem 0 0;"><a href="{% url 'contratos:dados' contrato.pk %}">Corrigir meus dados</a></p>
+    </div>
+
+    <div class="cf-card">
+        <h2>1. Leia o contrato</h2>
+        <p style="color:#6f6f78; margin:.3rem 0 1rem;">O contrato abre em outra aba, já preenchido com os seus dados.</p>
+        <a class="cf-btn cf-btn-p cf-btn-b" target="_blank" rel="noopener" href="{% url 'contratos:pdf' contrato.pk 'previa' %}">Ver o contrato (PDF)</a>
+    </div>
+
+    <div class="cf-card">
+        <h2>2. Como você quer assinar?</h2>
+
+        <div class="cf-opcao destaque" style="margin-top:1rem;">
+            <h3>Assinar digitalmente</h3>
+            <p>Mais rápido: enviamos um código de 6 dígitos para <strong>{{ email_mascarado }}</strong> e você assina na hora. Uma cópia do contrato assinado chega no seu e-mail.</p>
+            <form method="post" action="{% url 'contratos:enviar_codigo' contrato.pk %}">
+                {% csrf_token %}
+                <button type="submit" class="cf-btn cf-btn-p cf-btn-b">Assinar digitalmente</button>
+            </form>
+        </div>
+
+        <div class="cf-opcao">
+            <h3>Imprimir para assinar em papel</h3>
+            <p>Imprima, assine à mão e entregue na escola. Importante: leve o contrato <strong>assinado</strong> e guarde uma cópia com você.</p>
+            <a class="cf-btn cf-btn-l cf-btn-b" target="_blank" rel="noopener" href="{% url 'contratos:pdf' contrato.pk 'imprimir' %}">Imprimir o contrato</a>
+        </div>
+    </div>
+
+    <p><a href="{% url 'contratos:lista' %}">← Voltar</a></p>
+</div>
+{% endblock %}

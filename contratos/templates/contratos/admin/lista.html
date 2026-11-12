@@ -1,0 +1,99 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Contratos{% endblock %}
+
+{% block content %}
+<div class="ctr-page">
+{% include 'contratos/admin/_cabecalho.html' %}
+
+{% if not tem_modelo %}
+    <div class="ctr-alerta ctr-alerta-y">
+        <strong>Nenhum modelo de contrato está ativo.</strong>
+        Envie o PDF do contrato na aba <a href="{% url 'contratos_admin:modelos' %}">Modelos (PDF)</a> e ative-o.
+        Enquanto isso, as alunas novas não recebem contrato pendente.
+    </div>
+{% endif %}
+
+<div class="ctr-card">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap;">
+        <div>
+            <h3 style="margin-bottom:.2rem;">Contratos de {{ ano|default:"—" }}</h3>
+            <p class="ctr-sub" style="margin:0;">
+                Alunas que já existiam não ganham contrato sozinhas: use o botão ao lado quando quiser liberar os contratos para as famílias.
+            </p>
+        </div>
+        <form method="post" action="{% url 'contratos_admin:gerar_pendentes' %}"
+              onsubmit="return confirm('Criar o contrato pendente de todas as alunas ativas que ainda não têm? As famílias passarão a ver o contrato no painel.');">
+            {% csrf_token %}
+            <button type="submit" class="ctr-btn ctr-btn-p">Gerar contratos pendentes</button>
+        </form>
+    </div>
+</div>
+
+<div class="ctr-resumo">
+    {% for rotulo, total, chave in resumo %}
+        <a href="?ano={{ ano }}&status={{ chave }}"><strong>{{ total }}</strong>{{ rotulo }}</a>
+    {% endfor %}
+    {% if total_anulados %}<a href="?ano={{ ano }}&status=anulado"><strong>{{ total_anulados }}</strong>Anulados</a>{% endif %}
+</div>
+
+<form method="get" class="ctr-card">
+    <div class="ctr-grid-form">
+        <div>
+            <label class="ctr-lab">Ano</label>
+            <select name="ano" class="ctr-input">
+                {% for a in anos %}<option value="{{ a }}" {% if a == ano %}selected{% endif %}>{{ a }}</option>{% empty %}<option value="">—</option>{% endfor %}
+            </select>
+        </div>
+        <div>
+            <label class="ctr-lab">Situação</label>
+            <select name="status" class="ctr-input">
+                <option value="">Todas (menos anulados)</option>
+                {% for chave, rotulo in status_opcoes %}<option value="{{ chave }}" {% if chave == status %}selected{% endif %}>{{ rotulo }}</option>{% endfor %}
+            </select>
+        </div>
+        <div>
+            <label class="ctr-lab">Tipo</label>
+            <select name="tipo" class="ctr-input">
+                <option value="">Todos</option>
+                <option value="padrao" {% if tipo == 'padrao' %}selected{% endif %}>Padrão</option>
+                <option value="bolsista" {% if tipo == 'bolsista' %}selected{% endif %}>Bolsista</option>
+            </select>
+        </div>
+        <div>
+            <label class="ctr-lab">Buscar</label>
+            <input type="text" name="q" value="{{ busca }}" class="ctr-input" placeholder="Aluna, responsável ou e-mail">
+        </div>
+        <div><button type="submit" class="ctr-btn ctr-btn-l" style="width:100%;">Filtrar</button></div>
+    </div>
+</form>
+
+<div class="ctr-card ctr-scroll">
+    <table class="ctr-table">
+        <thead><tr><th>Aluna</th><th>Contratante</th><th>Tipo</th><th>Situação</th><th>Assinado em</th><th></th></tr></thead>
+        <tbody>
+        {% for c in pagina %}
+            <tr>
+                <td><strong>{{ c.aluna_nome }}</strong></td>
+                <td>{% if c.contratante %}{{ c.contratante.get_full_name|default:c.contratante.username }}<br><span style="color:#8a8390; font-size:.82rem;">{{ c.contratante.email }}</span>{% else %}—{% endif %}</td>
+                <td>{% if c.tipo %}{{ c.get_tipo_display }}{% elif c.eh_bolsista %}Bolsista{% else %}Padrão{% endif %}</td>
+                <td><span class="ctr-badge st-{{ c.status }}">{{ c.get_status_display }}</span></td>
+                <td>{% if c.assinado_em %}{{ c.assinado_em|date:"d/m/Y H:i" }}{% elif c.scan_enviado_em %}{{ c.scan_enviado_em|date:"d/m/Y" }} (papel){% else %}—{% endif %}</td>
+                <td><a href="{% url 'contratos_admin:detalhe' c.pk %}" class="ctr-btn ctr-btn-l ctr-btn-s">Abrir</a></td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="6" style="text-align:center; color:#8a8390; padding:2rem;">Nenhum contrato encontrado com esses filtros.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    {% if pagina.paginator.num_pages > 1 %}
+        <div style="display:flex; gap:.6rem; justify-content:center; margin-top:1rem; align-items:center;">
+            {% if pagina.has_previous %}<a class="ctr-btn ctr-btn-l ctr-btn-s" href="?ano={{ ano }}&status={{ status }}&tipo={{ tipo }}&q={{ busca }}&pagina={{ pagina.previous_page_number }}">← Anterior</a>{% endif %}
+            <span style="color:#6f6f78;">Página {{ pagina.number }} de {{ pagina.paginator.num_pages }}</span>
+            {% if pagina.has_next %}<a class="ctr-btn ctr-btn-l ctr-btn-s" href="?ano={{ ano }}&status={{ status }}&tipo={{ tipo }}&q={{ busca }}&pagina={{ pagina.next_page_number }}">Próxima →</a>{% endif %}
+        </div>
+    {% endif %}
+</div>
+</div>
+{% endblock %}

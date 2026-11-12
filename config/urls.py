@@ -6,6 +6,7 @@ from usuarios.views import redirecionar_dashboard
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('admin-dashboard/contratos/', include('contratos.urls_admin')),
     path('admin-dashboard/', include('admin_dashboard.urls')),  # NOVO
     path('', include('core.urls')),
     path('conta/', include('usuarios.urls')),
@@ -13,6 +14,7 @@ urlpatterns = [
     path('pagamentos/', include('pagamentos.urls')),
     path('avisos/', include('calendario_avisos.urls')),
     path('espetaculo/', include('espetaculo.urls')),  # ← NOVO
+    path('contratos/', include('contratos.urls')),  # contratos da família
     path('presenca/', include('presenca.urls')),  # registro de presença pelo QR Code
 
     # Redirecionamento de login

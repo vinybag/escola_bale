@@ -1,0 +1,55 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Modelos de contrato{% endblock %}
+
+{% block content %}
+<div class="ctr-page">
+{% include 'contratos/admin/_cabecalho.html' %}
+
+<div class="ctr-card">
+    <h3>Enviar um modelo de contrato (PDF)</h3>
+    <p class="ctr-sub">
+        Envie o contrato em PDF com os marcadores <span class="ctr-code">[[NOME_RESPONSAVEL]]</span>, <span class="ctr-code">[[CPF]]</span> etc.
+        no lugar dos espaços em branco. O PDF precisa ter texto selecionável (exportado do Google Docs ou do Word, e não uma foto).
+        Depois do envio, o sistema mostra quais marcadores encontrou. O contrato só passa a valer quando você <strong>ativa</strong> o modelo.
+    </p>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="ctr-grid-form">
+            <div>
+                <label class="ctr-lab">Tipo</label>
+                <select name="tipo" class="ctr-input" required>
+                    {% for chave, rotulo in tipos %}<option value="{{ chave }}">{{ rotulo }}</option>{% endfor %}
+                </select>
+            </div>
+            <div><label class="ctr-lab">Ano</label><input type="number" name="ano" class="ctr-input" value="{{ ano_sugerido }}" min="2000" max="2100" required></div>
+            <div><label class="ctr-lab">Nome (opcional)</label><input type="text" name="nome" class="ctr-input" placeholder="Ex.: Contrato {{ ano_sugerido }}"></div>
+            <div><label class="ctr-lab">Arquivo PDF</label><input type="file" name="arquivo" accept=".pdf,application/pdf" class="ctr-input" required></div>
+            <div><button type="submit" class="ctr-btn ctr-btn-p" style="width:100%;">Enviar e analisar</button></div>
+        </div>
+    </form>
+</div>
+
+<div class="ctr-card ctr-scroll">
+    <h3>Modelos enviados</h3>
+    <table class="ctr-table">
+        <thead><tr><th>Modelo</th><th>Tipo</th><th>Ano</th><th>Situação</th><th>Contratos</th><th>Enviado em</th><th></th></tr></thead>
+        <tbody>
+        {% for m in modelos %}
+            <tr>
+                <td><strong>{{ m.nome }}</strong></td>
+                <td>{{ m.get_tipo_display }}</td>
+                <td>{{ m.ano }}</td>
+                <td>{% if m.ativo %}<span class="ctr-badge ctr-ok">Ativo</span>{% else %}<span class="ctr-badge ctr-off">Inativo</span>{% endif %}</td>
+                <td>{{ m.total }}</td>
+                <td>{{ m.criado_em|date:"d/m/Y" }}</td>
+                <td><a href="{% url 'contratos_admin:modelo_detalhe' m.pk %}" class="ctr-btn ctr-btn-l ctr-btn-s">Abrir</a></td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="7" style="text-align:center; color:#8a8390; padding:2rem;">Nenhum modelo enviado ainda.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+</div>
+{% endblock %}

@@ -68,6 +68,7 @@ INSTALLED_APPS = [
     'admin_dashboard',
     'espetaculo',
     'presenca',
+    'contratos',  # contratos, assinatura digital e bolsistas
 
 
     # Email

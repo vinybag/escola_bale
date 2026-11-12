@@ -1,0 +1,66 @@
+<div class="aluna-card" style="margin-bottom: 1.5rem;">
+    <div class="aluna-card-head" style="display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap;">
+        <h3 style="margin: 0; color: #4a235f;">Contrato</h3>
+        {% if bolsa %}<span style="background:#f4eefa; color:#6b2d8f; padding:.25rem .7rem; border-radius:999px; font-size:.78rem; font-weight:700;">Bolsista · {{ bolsa.opcao }}</span>{% endif %}
+    </div>
+    <div class="aluna-card-body" style="padding: 1.25rem 1.5rem;">
+        {% if indisponivel %}
+            <p style="margin:0; padding:.8rem 1rem; background:#fdecea; border-radius:10px; color:#8e1c1c; font-size:.9rem;">Os contratos ainda não estão disponíveis: as atualizações do banco de dados não foram aplicadas.</p>
+        {% else %}
+        {% if contrato %}
+            <div style="display:flex; gap:.7rem; align-items:center; flex-wrap:wrap; margin-bottom:.9rem;">
+                <strong style="color:#2f2438;">Contrato {{ contrato.ano }}</strong>
+                <span style="padding:.22rem .65rem; border-radius:999px; font-size:.76rem; font-weight:700;
+                    {% if contrato.status == 'assinado_digital' %}background:#e6f7eb; color:#1d6b36;
+                    {% elif contrato.status == 'assinado_papel' %}background:#e0f5f3; color:#14665e;
+                    {% elif contrato.status == 'aguardando_papel' %}background:#fff8cc; color:#7a6a00;
+                    {% elif contrato.status == 'dados_preenchidos' %}background:#e8f1fd; color:#1a4f8b;
+                    {% else %}background:#fff4e0; color:#8a5a00;{% endif %}">{{ contrato.get_status_display }}</span>
+                {% if contrato.assinado_em %}<span style="color:#6f6f78; font-size:.88rem;">em {{ contrato.assinado_em|date:"d/m/Y H:i" }}</span>{% endif %}
+            </div>
+
+            <div style="display:flex; gap:.5rem; flex-wrap:wrap; margin-bottom:1rem;">
+                <a href="{% url 'contratos_admin:detalhe' contrato.pk %}" style="padding:.5rem .9rem; background:#f3f0f8; color:#4a235f; border:1px solid #e2d6f0; border-radius:10px; text-decoration:none; font-weight:700; font-size:.85rem;">Ver detalhes</a>
+                {% if contrato.status == 'assinado_digital' %}
+                    <a href="{% url 'contratos_admin:download' contrato.pk 'assinado' %}" target="_blank" style="padding:.5rem .9rem; background:#6b2d8f; color:#fff; border-radius:10px; text-decoration:none; font-weight:700; font-size:.85rem;">Baixar contrato assinado</a>
+                {% endif %}
+                {% if contrato.tem_scan %}
+                    <a href="{% url 'contratos_admin:download' contrato.pk 'scan' %}" target="_blank" style="padding:.5rem .9rem; background:#6b2d8f; color:#fff; border-radius:10px; text-decoration:none; font-weight:700; font-size:.85rem;">Ver contrato escaneado</a>
+                {% endif %}
+            </div>
+
+            {% if contrato.status != 'assinado_digital' %}
+                <form method="post" action="{% url 'contratos_admin:acao' contrato.pk %}" enctype="multipart/form-data">
+                    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                    <input type="hidden" name="acao" value="scan">
+                    <input type="hidden" name="voltar" value="aluna">
+                    <label style="display:block; font-size:.78rem; font-weight:700; color:#7a7280; text-transform:uppercase; margin-bottom:.3rem;">
+                        {% if contrato.tem_scan %}Substituir o contrato assinado em papel{% else %}Contrato assinado em papel (PDF, JPG ou PNG, até 8 MB){% endif %}
+                    </label>
+                    <div style="display:flex; gap:.6rem; flex-wrap:wrap;">
+                        <input type="file" name="arquivo" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" required
+                               style="flex:1; min-width:220px; padding:.55rem; border:1px solid #d9cbe4; border-radius:10px; background:#fff;">
+                        <button type="submit" style="padding:.65rem 1.1rem; background:linear-gradient(135deg,#6b2d8f,#7e3aa5); color:#fff; border:0; border-radius:10px; font-weight:700; cursor:pointer;">Enviar</button>
+                    </div>
+                    <p style="margin:.5rem 0 0; color:#8a8390; font-size:.82rem;">Guarde o original em papel: este arquivo é uma cópia digitalizada.</p>
+                </form>
+            {% endif %}
+        {% else %}
+            <p style="margin:0 0 .8rem; color:#6f6f78;">Esta aluna ainda não tem contrato{% if ano_ativo %} de {{ ano_ativo }}{% endif %}.</p>
+            {% if ano_ativo %}
+                <form method="post" action="{% url 'contratos_admin:gerar_para_aluna' aluna.pk %}">
+                    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                    <button type="submit" style="padding:.65rem 1.1rem; background:linear-gradient(135deg,#6b2d8f,#7e3aa5); color:#fff; border:0; border-radius:10px; font-weight:700; cursor:pointer;">Gerar contrato pendente</button>
+                </form>
+            {% else %}
+                <p style="margin:0; color:#7a5b00; background:#fff8e6; padding:.8rem 1rem; border-radius:10px; font-size:.9rem;">Ative um modelo de contrato em <a href="{% url 'contratos_admin:modelos' %}">Contratos → Modelos</a> para poder gerar o contrato.</p>
+            {% endif %}
+        {% endif %}
+
+        {% if anulados %}
+            <p style="margin:1rem 0 0; color:#8a8390; font-size:.82rem;">Contratos anulados:
+                {% for a in anulados %}<a href="{% url 'contratos_admin:detalhe' a.pk %}">{{ a.ano }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}</p>
+        {% endif %}
+        {% endif %}
+    </div>
+</div>

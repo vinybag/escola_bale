@@ -1382,6 +1382,15 @@
 
 
                 <a
+                    href="{% url 'contratos_admin:lista' %}"
+                    class="{% if '/contratos' in request.path %}active{% endif %}"
+                >
+                    Contratos
+                </a>
+
+
+
+                <a
                     href="{% url 'admin_dashboard:agendamentos_list' %}"
                     class="{% if 'agendamentos' in request.path %}active{% endif %}"
                 >

@@ -1,0 +1,84 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}{{ modelo.nome }}{% endblock %}
+
+{% block content %}
+<div class="ctr-page">
+{% include 'contratos/admin/_cabecalho.html' %}
+
+<p><a href="{% url 'contratos_admin:modelos' %}" class="ctr-btn ctr-btn-l ctr-btn-s">← Voltar para os modelos</a></p>
+
+<div class="ctr-card">
+    <div style="display:flex; justify-content:space-between; gap:1rem; flex-wrap:wrap; align-items:center;">
+        <div>
+            <h3 style="margin:0 0 .25rem;">{{ modelo.nome }} <span style="color:#8a8390; font-weight:500;">({{ modelo.ano }})</span></h3>
+            <p class="ctr-sub" style="margin:0;">{{ modelo.get_tipo_display }} · {{ total_contratos }} contrato(s) usando este modelo ·
+                {% if modelo.ativo %}<span class="ctr-badge ctr-ok">Ativo</span>{% else %}<span class="ctr-badge ctr-off">Inativo</span>{% endif %}</p>
+        </div>
+        <div style="display:flex; gap:.5rem; flex-wrap:wrap;">
+            <a class="ctr-btn ctr-btn-l" target="_blank" href="{% url 'contratos_admin:modelo_pdf' modelo.pk %}">Ver o PDF enviado</a>
+            <form method="post">
+                {% csrf_token %}
+                {% if modelo.ativo %}
+                    <input type="hidden" name="acao" value="desativar">
+                    <button type="submit" class="ctr-btn ctr-btn-d" onclick="return confirm('Desativar este modelo? Novos contratos deixarão de usar este PDF.');">Desativar</button>
+                {% else %}
+                    <input type="hidden" name="acao" value="ativar">
+                    <button type="submit" class="ctr-btn ctr-btn-p">Ativar este modelo</button>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+</div>
+
+{% if problemas %}
+<div class="ctr-alerta ctr-alerta-r">
+    <strong>Para ativar, ainda falta resolver:</strong>
+    <ul>{% for p in problemas %}<li>{{ p }}</li>{% endfor %}</ul>
+</div>
+{% elif not modelo.ativo %}
+<div class="ctr-alerta ctr-alerta-b">Tudo certo com este modelo. Quando quiser, clique em <strong>Ativar este modelo</strong>.</div>
+{% endif %}
+
+{% if avisos_espaco %}
+<div class="ctr-alerta ctr-alerta-y">
+    <strong>Atenção ao espaço no PDF:</strong>
+    <ul>{% for a in avisos_espaco %}<li>{{ a }}</li>{% endfor %}</ul>
+</div>
+{% endif %}
+
+<form method="post" class="ctr-card ctr-scroll">
+    {% csrf_token %}
+    <input type="hidden" name="acao" value="salvar_valores">
+    <h3>Marcadores encontrados no PDF</h3>
+    <p class="ctr-sub">
+        Os marcadores de dados pessoais, bolsa e assinatura são preenchidos pelo sistema. Os <strong>campos do ano</strong>
+        (como <span class="ctr-code">ANO</span> e os <span class="ctr-code">VALOR_...</span>) você preenche aqui.
+        Nos campos de valor, digite só o número (ex.: <span class="ctr-code">110</span> ou <span class="ctr-code">110,00</span>):
+        o contrato escreve "R$ 110,00 (cento e dez reais)".
+    </p>
+    <table class="ctr-table">
+        <thead><tr><th>Marcador</th><th>Tipo</th><th>Onde aparece no contrato</th><th>Valor</th></tr></thead>
+        <tbody>
+        {% for l in linhas %}
+            <tr>
+                <td><span class="ctr-code">[[{{ l.nome }}]]</span>{% if l.ocorrencias|length > 1 %}<br><span style="color:#8a8390; font-size:.78rem;">{{ l.ocorrencias|length }} vezes</span>{% endif %}</td>
+                <td style="font-size:.85rem; color:#6f6f78;">{{ l.rotulo }}</td>
+                <td style="font-size:.85rem; color:#555;">{% for o in l.ocorrencias %}<div>p. {{ o.pagina }}: “{{ o.contexto }}”</div>{% endfor %}</td>
+                <td style="min-width:190px;">
+                    {% if l.editavel %}
+                        <input type="text" name="valor_{{ l.nome }}" value="{{ l.valor }}" class="ctr-input"
+                               placeholder="{% if l.padrao %}{{ l.padrao }}{% elif l.dinheiro %}Ex.: 110,00{% else %}Preencha{% endif %}">
+                        {% if l.padrao %}<span style="font-size:.75rem; color:#8a8390;">Se ficar em branco, usa o texto padrão acima.</span>{% endif %}
+                    {% else %}<span style="color:#8a8390;">—</span>{% endif %}
+                </td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="4" style="text-align:center; color:#8a8390; padding:2rem;">Nenhum marcador foi encontrado neste PDF.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% if tem_editaveis %}<p style="margin-top:1rem;"><button type="submit" class="ctr-btn ctr-btn-p">Salvar valores</button></p>{% endif %}
+</form>
+</div>
+{% endblock %}

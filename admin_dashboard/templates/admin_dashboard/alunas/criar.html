@@ -1,4 +1,5 @@
 {% extends 'admin_dashboard/base.html' %}
+{% load contratos_tags %}
 
 {% block title %}Nova Aluna{% endblock %}
 
@@ -359,6 +360,8 @@
                         </div>
                     </div>
                 </section>
+
+                {% campos_bolsa %}
 
                 <div class="aluna-create-footer">
                     <a href="{% url 'admin_dashboard:alunas_list' %}"

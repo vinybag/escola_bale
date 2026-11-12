@@ -1,0 +1,106 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Contrato {{ contrato.ano }} - {{ contrato.aluna_nome }}{% endblock %}
+
+{% block content %}
+<div class="ctr-page">
+{% include 'contratos/admin/_cabecalho.html' %}
+
+<p><a href="{% url 'contratos_admin:lista' %}?ano={{ contrato.ano }}" class="ctr-btn ctr-btn-l ctr-btn-s">← Voltar para os contratos</a></p>
+
+<div class="ctr-card">
+    <div style="display:flex; justify-content:space-between; gap:1rem; flex-wrap:wrap; align-items:center; margin-bottom:1rem;">
+        <h3 style="margin:0;">Contrato {{ contrato.ano }} — {{ contrato.aluna_nome }}</h3>
+        <span class="ctr-badge st-{{ contrato.status }}">{{ contrato.get_status_display }}</span>
+    </div>
+    <div class="ctr-grid">
+        <div><span class="ctr-lab">Aluna</span><span class="ctr-val">{% if contrato.aluna %}<a href="{% url 'admin_dashboard:aluna_detalhes' contrato.aluna_id %}">{{ contrato.aluna_nome }}</a>{% else %}{{ contrato.aluna_nome }} (cadastro removido){% endif %}</span></div>
+        <div><span class="ctr-lab">Contratante</span><span class="ctr-val">{% if contrato.contratante %}{{ contrato.contratante.get_full_name|default:contrato.contratante.username }}<br>{{ contrato.contratante.email }}{% else %}—{% endif %}</span></div>
+        <div><span class="ctr-lab">Tipo</span><span class="ctr-val">{% if contrato.tipo %}{{ contrato.get_tipo_display }}{% else %}A definir quando a família abrir{% endif %}</span></div>
+        <div><span class="ctr-lab">Modelo usado</span><span class="ctr-val">{% if contrato.modelo %}{{ contrato.modelo.nome }} ({{ contrato.modelo.ano }}){% else %}—{% endif %}</span></div>
+        <div><span class="ctr-lab">Criado em</span><span class="ctr-val">{{ contrato.criado_em|date:"d/m/Y H:i" }}</span></div>
+    </div>
+    {% if contrato.status == 'anulado' %}
+        <div class="ctr-alerta ctr-alerta-y" style="margin-top:1rem;">Anulado em {{ contrato.anulado_em|date:"d/m/Y H:i" }}. Motivo: {{ contrato.anulado_motivo }}</div>
+    {% endif %}
+</div>
+
+{% if tem_dados %}
+<div class="ctr-card">
+    <h3>Dados informados pela família</h3>
+    <div class="ctr-grid">
+        <div><span class="ctr-lab">Nome</span><span class="ctr-val">{{ dados.nome }}</span></div>
+        <div><span class="ctr-lab">CPF</span><span class="ctr-val">{{ cpf }}</span></div>
+        <div><span class="ctr-lab">RG</span><span class="ctr-val">{{ dados.rg }}</span></div>
+        <div><span class="ctr-lab">Telefone</span><span class="ctr-val">{{ dados.telefone }}</span></div>
+        <div><span class="ctr-lab">E-mail</span><span class="ctr-val">{{ dados.email }}</span></div>
+        <div><span class="ctr-lab">Endereço</span><span class="ctr-val">{{ dados.endereco }}</span></div>
+        <div><span class="ctr-lab">Nascimento da aluna</span><span class="ctr-val">{{ nascimento_informado|date:"d/m/Y"|default:"—" }}</span></div>
+        <div><span class="ctr-lab">Uso de imagem</span><span class="ctr-val">{% if nao_autoriza_imagem %}NÃO autoriza{% else %}Autoriza{% endif %}</span></div>
+    </div>
+    {% if nascimento_difere %}
+        <div class="ctr-alerta ctr-alerta-y" style="margin-top:1rem;">A data de nascimento informada pela família ({{ nascimento_informado|date:"d/m/Y" }}) é <strong>diferente da que está no cadastro da aluna</strong> ({{ nascimento_cadastro|date:"d/m/Y" }}). O contrato usa a informada pela família. Se a do cadastro estiver errada, corrija-a na edição da aluna.</div>
+    {% endif %}
+    {% if campos_ano %}
+        <p class="ctr-sub" style="margin-top:1rem;"><strong>Valores do contrato no momento da assinatura:</strong>
+        {% for nome, valor in campos_ano.items %}<br>{{ nome }}: {{ valor }}{% endfor %}</p>
+    {% endif %}
+</div>
+{% endif %}
+
+{% if contrato.status == 'assinado_digital' %}
+<div class="ctr-card">
+    <h3>Assinatura digital</h3>
+    <div class="ctr-grid">
+        <div><span class="ctr-lab">Assinado em</span><span class="ctr-val">{{ contrato.assinado_em|date:"d/m/Y H:i:s" }}</span></div>
+        <div><span class="ctr-lab">IP</span><span class="ctr-val">{{ contrato.assinado_ip|default:"—" }}</span></div>
+        <div><span class="ctr-lab">Código de verificação</span><span class="ctr-val ctr-code">{{ contrato.codigo_verificacao }}</span></div>
+        <div style="grid-column: 1 / -1;"><span class="ctr-lab">Impressão digital do contrato (SHA-256)</span><span class="ctr-val ctr-code">{{ contrato.hash_conteudo }}</span></div>
+        <div style="grid-column: 1 / -1;"><span class="ctr-lab">Navegador</span><span class="ctr-val">{{ contrato.assinado_user_agent|default:"—" }}</span></div>
+    </div>
+    <p style="margin-top:1rem;"><a class="ctr-btn ctr-btn-p" target="_blank" href="{% url 'contratos_admin:download' contrato.pk 'assinado' %}">Baixar contrato assinado (PDF)</a></p>
+</div>
+{% endif %}
+
+{% if contrato.impresso_em or contrato.tem_scan or pode_scan %}
+<div class="ctr-card">
+    <h3>Assinatura em papel</h3>
+    {% if contrato.impresso_em %}<p class="ctr-sub">A família imprimiu o contrato em {{ contrato.impresso_em|date:"d/m/Y H:i" }}.</p>{% endif %}
+    {% if contrato.tem_scan %}
+        <p class="ctr-sub">Contrato assinado em papel registrado em {{ contrato.scan_enviado_em|date:"d/m/Y H:i" }}{% if contrato.scan_enviado_por %} por {{ contrato.scan_enviado_por.get_full_name|default:contrato.scan_enviado_por.username }}{% endif %}.
+        <strong>Guarde o contrato original em papel</strong>: o arquivo aqui é uma cópia digitalizada.</p>
+        <p><a class="ctr-btn ctr-btn-l" target="_blank" href="{% url 'contratos_admin:download' contrato.pk 'scan' %}">Ver/baixar o contrato escaneado</a></p>
+    {% endif %}
+    {% if pode_scan %}
+        <form method="post" action="{% url 'contratos_admin:acao' contrato.pk %}" enctype="multipart/form-data" style="margin-top:.5rem;">
+            {% csrf_token %}
+            <input type="hidden" name="acao" value="scan">
+            <label class="ctr-lab">{% if contrato.tem_scan %}Substituir o arquivo escaneado{% else %}Enviar o contrato assinado (PDF, JPG ou PNG, até 8 MB){% endif %}</label>
+            <div style="display:flex; gap:.6rem; flex-wrap:wrap;">
+                <input type="file" name="arquivo" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" class="ctr-input" style="flex:1; min-width:220px;" required>
+                <button type="submit" class="ctr-btn ctr-btn-p">Enviar</button>
+            </div>
+        </form>
+    {% endif %}
+</div>
+{% endif %}
+
+<div class="ctr-card">
+    <h3>Ações</h3>
+    <div style="display:flex; gap:.6rem; flex-wrap:wrap; align-items:flex-start;">
+        {% if contrato.esta_aberto and tem_dados %}
+            <a class="ctr-btn ctr-btn-l" target="_blank" href="{% url 'contratos_admin:download' contrato.pk 'impresso' %}">Ver a versão para imprimir (PDF)</a>
+        {% endif %}
+        {% if pode_anular %}
+            <form method="post" action="{% url 'contratos_admin:acao' contrato.pk %}" style="display:flex; gap:.5rem; flex-wrap:wrap; flex:1; min-width:260px;"
+                  onsubmit="return confirm('Anular este contrato? Esta ação não apaga os arquivos, mas o contrato deixa de valer.');">
+                {% csrf_token %}
+                <input type="hidden" name="acao" value="anular">
+                <input type="text" name="motivo" class="ctr-input" style="flex:1; min-width:180px;" placeholder="Motivo da anulação" required>
+                <button type="submit" class="ctr-btn ctr-btn-d">Anular contrato</button>
+            </form>
+        {% endif %}
+    </div>
+</div>
+</div>
+{% endblock %}

@@ -1,0 +1,57 @@
+<style>
+    .ctr-page { max-width: 1100px; }
+    .ctr-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+    .ctr-top h2 { margin: 0 0 .3rem; color: #4a235f; }
+    .ctr-top p { margin: 0; color: #6f6f78; }
+    .ctr-tabs { display: flex; gap: .4rem; flex-wrap: wrap; margin-bottom: 1.5rem; border-bottom: 1px solid #ece3f2; }
+    .ctr-tabs a { padding: .7rem 1.1rem; border-radius: 10px 10px 0 0; text-decoration: none; color: #6f6f78; font-weight: 600; }
+    .ctr-tabs a.ativa { background: #6b2d8f; color: #fff; }
+    .ctr-card { background: #fff; border: 1px solid #ebe3f1; border-radius: 16px; padding: 1.4rem; margin-bottom: 1.25rem; box-shadow: 0 6px 18px rgba(107,45,143,.06); }
+    .ctr-card h3 { margin: 0 0 .75rem; color: #4a235f; font-size: 1.05rem; }
+    .ctr-sub { color: #7b7580; font-size: .9rem; margin: 0 0 1rem; line-height: 1.5; }
+    .ctr-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1rem; }
+    .ctr-grid-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; align-items: end; }
+    .ctr-lab { display: block; font-size: .78rem; font-weight: 700; color: #7a7280; text-transform: uppercase; letter-spacing: .03em; margin-bottom: .25rem; }
+    .ctr-val { color: #2f2438; font-size: .95rem; word-break: break-word; }
+    .ctr-input { width: 100%; box-sizing: border-box; padding: .7rem .85rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: .95rem; font-family: inherit; background: #fff; }
+    .ctr-input:focus { outline: none; border-color: #6b2d8f; box-shadow: 0 0 0 3px rgba(107,45,143,.1); }
+    .ctr-btn { display: inline-flex; align-items: center; justify-content: center; padding: .7rem 1.2rem; border: 0; border-radius: 10px; font-weight: 700; font-size: .9rem; cursor: pointer; text-decoration: none; font-family: inherit; }
+    .ctr-btn-p { background: linear-gradient(135deg, #6b2d8f, #7e3aa5); color: #fff; }
+    .ctr-btn-l { background: #f3f0f8; color: #4a235f; border: 1px solid #e2d6f0; }
+    .ctr-btn-d { background: #fdecea; color: #b71c1c; border: 1px solid #f3c6c2; }
+    .ctr-btn-s { padding: .4rem .8rem; font-size: .82rem; }
+    .ctr-table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+    .ctr-table th { text-align: left; padding: .65rem .7rem; color: #7a7280; font-size: .75rem; text-transform: uppercase; letter-spacing: .03em; border-bottom: 2px solid #ece3f2; }
+    .ctr-table td { padding: .7rem; border-bottom: 1px solid #f1eaf6; vertical-align: top; }
+    .ctr-scroll { overflow-x: auto; }
+    .ctr-badge { display: inline-block; padding: .22rem .65rem; border-radius: 999px; font-size: .76rem; font-weight: 700; white-space: nowrap; }
+    .st-pendente { background: #fff4e0; color: #8a5a00; }
+    .st-dados_preenchidos { background: #e8f1fd; color: #1a4f8b; }
+    .st-aguardando_papel { background: #fff8cc; color: #7a6a00; }
+    .st-assinado_digital { background: #e6f7eb; color: #1d6b36; }
+    .st-assinado_papel { background: #e0f5f3; color: #14665e; }
+    .st-anulado { background: #eeeeee; color: #666; }
+    .ctr-ok { background: #e6f7eb; color: #1d6b36; } .ctr-off { background: #eeeeee; color: #666; }
+    .ctr-alerta { padding: .9rem 1.1rem; border-radius: 12px; margin-bottom: 1rem; font-size: .92rem; line-height: 1.5; }
+    .ctr-alerta-r { background: #fdecea; color: #8e1c1c; } .ctr-alerta-y { background: #fff8e6; color: #7a5b00; } .ctr-alerta-b { background: #eef6ff; color: #1f4f82; }
+    .ctr-alerta ul { margin: .4rem 0 0 1.1rem; padding: 0; }
+    .ctr-resumo { display: flex; flex-wrap: wrap; gap: .6rem; margin-bottom: 1.2rem; }
+    .ctr-resumo a { text-decoration: none; padding: .55rem .9rem; border-radius: 12px; background: #faf7fc; border: 1px solid #ece3f2; color: #4a235f; font-size: .85rem; }
+    .ctr-resumo strong { font-size: 1.1rem; margin-right: .3rem; }
+    .ctr-code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .82rem; background: #f6f2fa; padding: .15rem .4rem; border-radius: 6px; }
+    @media (max-width: 640px) { .ctr-card { padding: 1rem; } }
+</style>
+
+<div class="ctr-top">
+    <div>
+        <h2>Contratos</h2>
+        <p>Modelos em PDF, contratos das alunas e assinaturas.</p>
+    </div>
+    {% block ctr_acoes %}{% endblock %}
+</div>
+
+<nav class="ctr-tabs">
+    <a href="{% url 'contratos_admin:lista' %}" class="{% if aba == 'contratos' %}ativa{% endif %}">Contratos</a>
+    <a href="{% url 'contratos_admin:modelos' %}" class="{% if aba == 'modelos' %}ativa{% endif %}">Modelos (PDF)</a>
+    <a href="{% url 'contratos_admin:bolsas' %}" class="{% if aba == 'bolsas' %}ativa{% endif %}">Opções de bolsa</a>
+</nav>

@@ -1,0 +1,47 @@
+<section style="padding: 1.5rem; border: 1px solid #ece3f2; border-radius: 16px; background: #fff; margin-top: 1.5rem;">
+    <div style="margin-bottom: 1rem;">
+        <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1rem; font-weight: 700;">Bolsa</h3>
+        <p style="margin: 0; color: #7b7580; font-size: 0.92rem;">
+            Alunas bolsistas assinam o contrato de bolsista, que mostra o percentual da bolsa e o valor a pagar.
+            O valor cheio vem do campo "Valor da mensalidade" acima.
+        </p>
+    </div>
+
+    {% if indisponivel %}
+        <p style="margin: 0; padding: 0.9rem 1rem; background: #fdecea; border-radius: 10px; color: #8e1c1c; font-size: 0.92rem;">
+            O recurso de bolsas ainda não está disponível: as atualizações do banco de dados não foram aplicadas.
+        </p>
+    {% elif opcoes %}
+        <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer; margin-bottom: 0.9rem;">
+            <input type="checkbox" name="e_bolsista" id="e_bolsista" {% if bolsista %}checked{% endif %} style="accent-color: #6b2d8f;">
+            <span style="font-weight: 600; color: #4a235f;">É bolsista?</span>
+        </label>
+
+        <div id="bolsa_opcao_box" style="{% if not bolsista %}display: none;{% endif %}">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Qual é a bolsa?</label>
+            <select name="opcao_bolsa" id="opcao_bolsa" style="width: 100%; max-width: 360px; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 0.95rem; background: #fff;">
+                <option value="">Selecione</option>
+                {% for o in opcoes %}
+                    <option value="{{ o.pk }}" {% if o.pk == opcao_id %}selected{% endif %}>{{ o }}{% if not o.ativa %} — inativa{% endif %}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <script>
+            (function () {
+                var caixa = document.getElementById('e_bolsista');
+                var bloco = document.getElementById('bolsa_opcao_box');
+                if (!caixa || !bloco) { return; }
+                caixa.addEventListener('change', function () {
+                    bloco.style.display = caixa.checked ? 'block' : 'none';
+                });
+            })();
+        </script>
+    {% else %}
+        <p style="margin: 0; padding: 0.9rem 1rem; background: #fff8e6; border-radius: 10px; color: #7a5b00; font-size: 0.92rem;">
+            Ainda não há opções de bolsa cadastradas. Cadastre em
+            <a href="{% url 'contratos_admin:bolsas' %}" target="_blank">Contratos → Opções de bolsa</a>
+            e depois volte aqui.
+        </p>
+    {% endif %}
+</section>

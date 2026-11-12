@@ -17,6 +17,7 @@ class Perfil(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='perfil')
     telefone = models.CharField(max_length=20, blank=True, null=True)
     cpf = models.CharField(max_length=14, blank=True, null=True)
+    rg = models.CharField(max_length=30, blank=True, null=True)
     data_nascimento = models.DateField(null=True, blank=True)
     endereco = models.CharField(max_length=200, blank=True, null=True)
     criado_em = models.DateTimeField(auto_now_add=True)

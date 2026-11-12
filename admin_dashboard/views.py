@@ -394,6 +394,16 @@ def aluna_criar(request):
                 messages.error(request, 'Informe um dia de vencimento válido!')
                 return redirect('admin_dashboard:aluna_criar')
 
+            from contratos import servicos as contratos_servicos
+
+            erro_bolsa = contratos_servicos.validar_bolsa_post(
+                request.POST, valor_mensalidade_decimal
+            )
+
+            if erro_bolsa:
+                messages.error(request, erro_bolsa)
+                return redirect('admin_dashboard:aluna_criar')
+
             responsavel = None
             usuario = None
 
@@ -473,6 +483,7 @@ def aluna_criar(request):
             )
 
             aluna.turmas.set(turmas_selecionadas)
+            contratos_servicos.salvar_bolsa_da_aluna(aluna, request.POST)
 
             messages.success(request, f'Aluna {nome} criada com sucesso!')
             return redirect('admin_dashboard:alunas_list')
@@ -651,6 +662,16 @@ def aluna_editar(request, pk):
                     pk=pk
                 )
 
+            from contratos import servicos as contratos_servicos
+
+            erro_bolsa = contratos_servicos.validar_bolsa_post(
+                request.POST, aluna.valor_mensalidade, aluna=aluna
+            )
+
+            if erro_bolsa:
+                messages.error(request, erro_bolsa)
+                return redirect('admin_dashboard:aluna_editar', pk=pk)
+
             aluna.gerar_mensalidade_automatica = (
                 gerar_mensalidade_automatica
             )
@@ -765,6 +786,7 @@ def aluna_editar(request, pk):
 
             aluna.save()
             aluna.turmas.set(turmas_selecionadas)
+            contratos_servicos.salvar_bolsa_da_aluna(aluna, request.POST)
 
             messages.success(
                 request,

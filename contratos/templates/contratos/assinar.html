@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block title %}Assinar contrato{% endblock %}
+
+{% block content %}
+{% include 'contratos/_estilo_familia.html' %}
+<div class="cf-wrap">
+    <h1>Assinar o contrato</h1>
+    <p class="cf-sub">Contrato {{ contrato.ano }} de <strong>{{ contrato.aluna_nome }}</strong>. Enviamos um código de 6 dígitos para <strong>{{ email_mascarado }}</strong>. Ele vale por 15 minutos.</p>
+
+    <form method="post" class="cf-card" novalidate>
+        {% csrf_token %}
+
+        <div class="cf-campo">
+            <label class="cf-lab" for="codigo">Código recebido por e-mail</label>
+            <input class="cf-input" id="codigo" name="codigo" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000" style="font-size:1.5rem; letter-spacing:.35rem; text-align:center;" required autofocus>
+        </div>
+
+        <div class="cf-campo">
+            <label class="cf-caixa">
+                <input type="checkbox" name="concordo" required>
+                <span>Li o contrato e concordo com todas as cláusulas. Reconheço esta assinatura eletrônica como válida.</span>
+            </label>
+        </div>
+
+        <button type="submit" class="cf-btn cf-btn-p cf-btn-b">Assinar contrato</button>
+    </form>
+
+    <div class="cf-card">
+        <p style="margin:0 0 .8rem; color:#6f6f78;">Não recebeu o e-mail? Confira a caixa de spam ou peça um novo código.</p>
+        <form method="post" action="{% url 'contratos:enviar_codigo' contrato.pk %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="cf-btn cf-btn-l">Enviar novo código</button>
+        </form>
+        <a href="{% url 'contratos:revisar' contrato.pk %}" class="cf-btn cf-btn-l">← Voltar</a>
+    </div>
+</div>
+{% endblock %}

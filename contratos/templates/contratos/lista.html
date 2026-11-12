@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}Contrato{% endblock %}
+
+{% block content %}
+{% include 'contratos/_estilo_familia.html' %}
+<div class="cf-wrap">
+    <h1>Contrato</h1>
+    <p class="cf-sub">Aqui você preenche seus dados, confere o contrato e assina, tudo pelo site. Se preferir, também pode imprimir e assinar em papel.</p>
+
+    {% for c in contratos %}
+        <div class="cf-card">
+            <div class="cf-row">
+                <div>
+                    <h2>{{ c.aluna_nome }}</h2>
+                    <span style="color:#6f6f78; font-size:.92rem;">Contrato {{ c.ano }}{% if c.tipo == 'bolsista' %} · Bolsista{% endif %}</span>
+                </div>
+                <span class="cf-badge st-{{ c.status }}">{{ c.get_status_display }}</span>
+            </div>
+
+            <div style="margin-top:1rem; display:flex; gap:.6rem; flex-wrap:wrap;">
+                {% if c.status == 'pendente' %}
+                    <a class="cf-btn cf-btn-p cf-btn-b" href="{% url 'contratos:dados' c.pk %}">Preencher e assinar</a>
+                {% elif c.status == 'dados_preenchidos' %}
+                    <a class="cf-btn cf-btn-p cf-btn-b" href="{% url 'contratos:revisar' c.pk %}">Conferir e assinar</a>
+                    <a class="cf-btn cf-btn-l cf-btn-b" href="{% url 'contratos:dados' c.pk %}">Corrigir meus dados</a>
+                {% elif c.status == 'aguardando_papel' %}
+                    <p style="margin:0; width:100%; color:#6f6f78; font-size:.92rem;">Você imprimiu este contrato. Entregue-o assinado na escola, ou assine digitalmente se preferir.</p>
+                    <a class="cf-btn cf-btn-p cf-btn-b" href="{% url 'contratos:revisar' c.pk %}">Assinar digitalmente</a>
+                    <a class="cf-btn cf-btn-l cf-btn-b" target="_blank" href="{% url 'contratos:pdf' c.pk 'imprimir' %}">Imprimir de novo</a>
+                {% elif c.status == 'assinado_digital' %}
+                    <p style="margin:0; width:100%; color:#6f6f78; font-size:.92rem;">Assinado em {{ c.assinado_em|date:"d/m/Y \à\s H:i" }}. Código de verificação: <strong>{{ c.codigo_verificacao }}</strong></p>
+                    <a class="cf-btn cf-btn-p cf-btn-b" href="{% url 'contratos:pdf' c.pk 'assinado' %}">Baixar contrato assinado</a>
+                {% elif c.status == 'assinado_papel' %}
+                    <p style="margin:0; color:#14665e;">Recebemos o seu contrato assinado em papel. Obrigado!</p>
+                {% endif %}
+            </div>
+        </div>
+    {% empty %}
+        <div class="cf-card"><p style="margin:0; color:#6f6f78;">Não há nenhum contrato disponível para você agora. Quando houver, ele aparecerá aqui.</p></div>
+    {% endfor %}
+
+    <p><a href="{% url 'dashboard' %}">← Voltar ao painel</a></p>
+</div>
+{% endblock %}

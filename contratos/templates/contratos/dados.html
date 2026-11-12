@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}Dados para o contrato{% endblock %}
+
+{% block content %}
+{% include 'contratos/_estilo_familia.html' %}
+<div class="cf-wrap">
+    <h1>Dados para o contrato</h1>
+    <p class="cf-sub">Contrato {{ contrato.ano }} de <strong>{{ contrato.aluna_nome }}</strong>. Confira ou preencha seus dados: eles serão escritos no contrato e ficarão salvos para o próximo ano.</p>
+
+    <form method="post" class="cf-card" novalidate>
+        {% csrf_token %}
+
+        <div class="cf-campo">
+            <label class="cf-lab" for="nome">Nome completo</label>
+            <input class="cf-input" id="nome" name="nome" type="text" value="{{ valores.nome }}" autocomplete="name" required>
+            {% if erros.nome %}<span class="cf-erro">{{ erros.nome }}</span>{% endif %}
+        </div>
+
+        <div class="cf-campo">
+            <label class="cf-lab" for="data_nascimento">Data de nascimento da aluna</label>
+            <input class="cf-input" id="data_nascimento" name="data_nascimento" type="date" value="{{ valores.data_nascimento }}" min="1920-01-01" max="{{ hoje }}" required>
+            <span class="cf-dica">Da aluna ({{ contrato.aluna_nome }}), e não da responsável.</span>
+            {% if erros.data_nascimento %}<span class="cf-erro">{{ erros.data_nascimento }}</span>{% endif %}
+        </div>
+
+        <div class="cf-campo">
+            <label class="cf-lab" for="cpf">CPF</label>
+            <input class="cf-input" id="cpf" name="cpf" type="text" inputmode="numeric" value="{{ valores.cpf }}" placeholder="000.000.000-00" maxlength="14" required>
+            {% if erros.cpf %}<span class="cf-erro">{{ erros.cpf }}</span>{% endif %}
+        </div>
+
+        <div class="cf-campo">
+            <label class="cf-lab" for="rg">RG</label>
+            <input class="cf-input" id="rg" name="rg" type="text" value="{{ valores.rg }}" maxlength="30" required>
+            {% if erros.rg %}<span class="cf-erro">{{ erros.rg }}</span>{% endif %}
+        </div>
+
+        <div class="cf-campo">
+            <label class="cf-lab" for="endereco">Endereço completo</label>
+            <input class="cf-input" id="endereco" name="endereco" type="text" value="{{ valores.endereco }}" maxlength="200" placeholder="Rua, número, bairro, cidade - UF" autocomplete="street-address" required>
+            {% if erros.endereco %}<span class="cf-erro">{{ erros.endereco }}</span>{% endif %}
+        </div>
+
+        <div class="cf-campo">
+            <label class="cf-lab" for="telefone">Telefone (com DDD)</label>
+            <input class="cf-input" id="telefone" name="telefone" type="tel" value="{{ valores.telefone }}" placeholder="(15) 99999-9999" maxlength="20" autocomplete="tel" required>
+            {% if erros.telefone %}<span class="cf-erro">{{ erros.telefone }}</span>{% endif %}
+        </div>
+
+        <div class="cf-campo">
+            <label class="cf-lab" for="email">E-mail</label>
+            <input class="cf-input" id="email" type="email" value="{{ email }}" readonly>
+            <span class="cf-dica">É o e-mail do seu login. Enviaremos para ele o código de confirmação da assinatura e a cópia do contrato.</span>
+            {% if erros.email %}<span class="cf-erro">{{ erros.email }}</span>{% endif %}
+        </div>
+
+        <div class="cf-campo">
+            <label class="cf-caixa">
+                <input type="checkbox" name="nao_autoriza_imagem" {% if valores.nao_autoriza_imagem %}checked{% endif %}>
+                <span><strong>Não autorizo</strong> o uso da imagem da aluna<br>
+                <span style="color:#6f6f78; font-size:.88rem;">Deixe desmarcado se você autoriza o uso da imagem para divulgação da escola (cláusula de uso de imagem do contrato).</span></span>
+            </label>
+        </div>
+
+        <div style="display:flex; gap:.6rem; flex-wrap:wrap;">
+            <button type="submit" class="cf-btn cf-btn-p cf-btn-b">Salvar e ver o contrato</button>
+            <a href="{% url 'contratos:lista' %}" class="cf-btn cf-btn-l cf-btn-b">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

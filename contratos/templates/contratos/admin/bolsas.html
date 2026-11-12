@@ -1,0 +1,53 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Opções de bolsa{% endblock %}
+
+{% block content %}
+<div class="ctr-page">
+{% include 'contratos/admin/_cabecalho.html' %}
+
+<div class="ctr-card">
+    <h3>Nova opção de bolsa</h3>
+    <p class="ctr-sub">Cadastre as bolsas que a escola oferece (por percentual de desconto). Depois, ao criar ou editar uma aluna, é só marcar "É bolsista?" e escolher uma delas.</p>
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="acao" value="criar">
+        <div class="ctr-grid-form">
+            <div><label class="ctr-lab">Nome</label><input type="text" name="nome" class="ctr-input" placeholder="Ex.: Bolsa 50%" required></div>
+            <div><label class="ctr-lab">Percentual de desconto</label><input type="text" name="percentual" class="ctr-input" placeholder="Ex.: 50" inputmode="decimal" required></div>
+            <div><button type="submit" class="ctr-btn ctr-btn-p" style="width:100%;">Adicionar</button></div>
+        </div>
+    </form>
+</div>
+
+<div class="ctr-card ctr-scroll">
+    <h3>Opções cadastradas</h3>
+    <table class="ctr-table">
+        <thead><tr><th>Nome</th><th>Percentual</th><th>Bolsistas</th><th>Situação</th><th></th></tr></thead>
+        <tbody>
+        {% for o in opcoes %}
+            <tr>
+                <td colspan="2">
+                    <form method="post" style="display:flex; gap:.5rem; flex-wrap:wrap; align-items:center;">
+                        {% csrf_token %}
+                        <input type="hidden" name="acao" value="editar"><input type="hidden" name="id" value="{{ o.pk }}">
+                        <input type="text" name="nome" value="{{ o.nome }}" class="ctr-input" style="flex:2; min-width:150px;">
+                        <input type="text" name="percentual" value="{{ o.percentual|floatformat:"-2" }}" class="ctr-input" style="flex:1; min-width:90px;" inputmode="decimal">
+                        <button type="submit" class="ctr-btn ctr-btn-l ctr-btn-s">Salvar</button>
+                    </form>
+                </td>
+                <td>{{ o.total }}</td>
+                <td>{% if o.ativa %}<span class="ctr-badge ctr-ok">Ativa</span>{% else %}<span class="ctr-badge ctr-off">Inativa</span>{% endif %}</td>
+                <td>
+                    <form method="post">{% csrf_token %}<input type="hidden" name="acao" value="alternar"><input type="hidden" name="id" value="{{ o.pk }}">
+                        <button type="submit" class="ctr-btn ctr-btn-l ctr-btn-s">{% if o.ativa %}Desativar{% else %}Ativar{% endif %}</button></form>
+                </td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="5" style="text-align:center; color:#8a8390; padding:2rem;">Nenhuma opção de bolsa cadastrada ainda.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+</div>
+{% endblock %}

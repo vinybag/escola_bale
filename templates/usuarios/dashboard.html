@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load contratos_tags %}
 
 {% block title %}Dashboard - Área dos Pais{% endblock %}
 
@@ -29,6 +30,8 @@
             <h3>Atalhos Rápidos</h3>
             <ul class="quick-links">
                 <li><a href="{% url 'mensalidades' %}">💳 Ver Mensalidades</a></li>
+                {% contratos_pendentes user as n_contratos %}
+                <li><a href="{% url 'contratos:lista' %}">📄 Contrato{% if n_contratos %} <span style="background:#fff4e0; color:#8a5a00; padding:.1rem .55rem; border-radius:999px; font-size:.78rem; font-weight:700;">{{ n_contratos }} pendente{{ n_contratos|pluralize }}</span>{% endif %}</a></li>
                 <li><a href="{% url 'cobrancas_espetaculos' %}">🎭 Cobranças de Espetáculos</a></li>
                 <li><a href="{% url 'calendario' %}">📅 Avisos e Calendário</a></li>
                 <li><a href="{% url 'perfil' %}">👤 Meu Perfil</a></li>
