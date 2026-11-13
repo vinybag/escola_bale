@@ -1,0 +1,42 @@
+{% extends 'admin_dashboard/base.html' %}
+{% block title %}Preços e descontos{% endblock %}
+{% block content %}
+<div class="pr-page">
+{% include 'precos/admin/_cabecalho.html' %}
+
+{% if turmas_sem_valor %}
+<div class="pr-alerta"><strong>{{ turmas_sem_valor }} turma{{ turmas_sem_valor|pluralize }} sem valor de mensalidade.</strong> Cadastre o valor na edição de cada turma, senão o cálculo não consegue fechar para as alunas que a fazem.</div>
+{% endif %}
+
+<div class="pr-card pr-scroll">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap; margin-bottom:1rem;">
+        <div>
+            <h3 style="margin:0 0 .2rem;">Descontos e campanhas</h3>
+            <p class="pr-sub" style="margin:0;">Cada linha é uma regra. Os percentuais são somados sobre o valor cheio da turma. Você pode ligar, desligar e excluir quando quiser.</p>
+        </div>
+        <a href="{% url 'precos_admin:regra_nova' %}" class="pr-btn pr-btn-p">+ Nova regra</a>
+    </div>
+    <table class="pr-table">
+        <thead><tr><th>Nome</th><th>O que faz</th><th>Situação</th><th></th></tr></thead>
+        <tbody>
+        {% for r in regras %}
+            <tr>
+                <td><strong>{{ r.nome }}</strong>{% if r.observacao %}<br><span class="pr-dica">{{ r.observacao }}</span>{% endif %}</td>
+                <td style="font-size:.88rem;">{{ r.resumo }}{% if r.turmas.all %}<br><span class="pr-dica">Só nas turmas: {% for t in r.turmas.all %}{{ t.nome }}{% if not forloop.last %}, {% endif %}{% endfor %}</span>{% endif %}</td>
+                <td><span class="pr-badge pr-{{ r.situacao_chave }}">{{ r.situacao_texto }}</span></td>
+                <td>
+                    <div class="pr-acoes">
+                        <a href="{% url 'precos_admin:regra_editar' r.pk %}" class="pr-btn pr-btn-l pr-btn-s">Editar</a>
+                        <form method="post" action="{% url 'precos_admin:regra_alternar' r.pk %}">{% csrf_token %}<button type="submit" class="pr-btn pr-btn-l pr-btn-s">{% if r.ativa %}Desligar{% else %}Ligar{% endif %}</button></form>
+                        <form method="post" action="{% url 'precos_admin:regra_excluir' r.pk %}" onsubmit="return confirm('Excluir a regra &quot;{{ r.nome|escapejs }}&quot;? Alunas que já tiveram o valor calculado não mudam.');">{% csrf_token %}<button type="submit" class="pr-btn pr-btn-d pr-btn-s">Excluir</button></form>
+                    </div>
+                </td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="4" style="text-align:center; color:#8a8390; padding:2rem;">Nenhuma regra criada ainda. Clique em "+ Nova regra".</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+</div>
+{% endblock %}

@@ -61,6 +61,20 @@ class Turma(models.Model):
     professor = models.CharField(max_length=100, blank=True)
     capacidade_maxima = models.IntegerField(default=20, help_text="Número máximo de alunas")
     ativa = models.BooleanField(default=True)
+
+    REGIMES_PRECO = [
+        ('normal', 'Normal (recebe descontos e campanhas)'),
+        ('fixo', 'Preço fixo (não recebe descontos e não conta como modalidade)'),
+        ('fixo_conta', 'Preço fixo (não recebe descontos, mas conta como modalidade)'),
+    ]
+    valor_mensalidade = models.DecimalField(
+        max_digits=8, decimal_places=2, null=True, blank=True,
+        verbose_name='Valor da mensalidade',
+        help_text='Valor cheio da mensalidade desta turma (usado no cálculo automático).',
+    )
+    regime_preco = models.CharField(
+        max_length=12, choices=REGIMES_PRECO, default='normal', verbose_name='Preço e descontos',
+    )
     disponivel_experimental = models.BooleanField(
         default=True,
         verbose_name='Disponível para aula experimental'

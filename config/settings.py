@@ -69,6 +69,7 @@ INSTALLED_APPS = [
     'espetaculo',
     'presenca',
     'contratos',  # contratos, assinatura digital e bolsistas
+    'precos',  # valores das turmas, descontos e campanhas
 
 
     # Email

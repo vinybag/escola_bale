@@ -1391,6 +1391,15 @@
 
 
                 <a
+                    href="{% url 'precos_admin:regras' %}"
+                    class="{% if '/admin-dashboard/precos' in request.path %}active{% endif %}"
+                >
+                    Preços e descontos
+                </a>
+
+
+
+                <a
                     href="{% url 'admin_dashboard:agendamentos_list' %}"
                     class="{% if 'agendamentos' in request.path %}active{% endif %}"
                 >

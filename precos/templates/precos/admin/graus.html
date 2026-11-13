@@ -1,0 +1,24 @@
+{% extends 'admin_dashboard/base.html' %}
+{% block title %}Graus de parentesco{% endblock %}
+{% block content %}
+<div class="pr-page">
+{% include 'precos/admin/_cabecalho.html' %}
+<div class="pr-card">
+    <h3>Novo grau de parentesco</h3>
+    <p class="pr-sub">Os graus aparecem na ficha da aluna ("É parente de alguma aluna?") e podem ter descontos próprios, criados na aba "Descontos e campanhas". Ex.: Prima, Irmã (adulta), Tia.</p>
+    <form method="post" class="pr-grid" style="align-items:end;">{% csrf_token %}<input type="hidden" name="acao" value="criar">
+        <div><label class="pr-lab">Nome</label><input class="pr-input" name="nome" maxlength="60" placeholder="Ex.: Prima" required></div>
+        <div><button type="submit" class="pr-btn pr-btn-p">Criar</button></div>
+    </form>
+</div>
+<div class="pr-card pr-scroll">
+    <h3>Graus cadastrados</h3>
+    <table class="pr-table"><thead><tr><th>Grau</th><th>Regras ligadas</th><th></th></tr></thead><tbody>
+    {% for g in graus %}
+        <tr><td><strong>{{ g.nome }}</strong></td><td>{{ g.total_regras }}</td>
+            <td><form method="post" onsubmit="return confirm('Excluir este grau? As regras ligadas a ele também serão excluídas.');">{% csrf_token %}<input type="hidden" name="acao" value="excluir"><input type="hidden" name="id" value="{{ g.pk }}"><button type="submit" class="pr-btn pr-btn-d pr-btn-s">Excluir</button></form></td></tr>
+    {% empty %}<tr><td colspan="3" style="text-align:center; color:#8a8390; padding:2rem;">Nenhum grau criado ainda.</td></tr>{% endfor %}
+    </tbody></table>
+</div>
+</div>
+{% endblock %}

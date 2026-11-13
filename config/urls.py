@@ -7,6 +7,7 @@ from usuarios.views import redirecionar_dashboard
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('admin-dashboard/contratos/', include('contratos.urls_admin')),
+    path('admin-dashboard/precos/', include('precos.urls_admin')),
     path('admin-dashboard/', include('admin_dashboard.urls')),  # NOVO
     path('', include('core.urls')),
     path('conta/', include('usuarios.urls')),

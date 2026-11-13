@@ -1,0 +1,29 @@
+{% load precos_tags %}
+<div class="pr-card">
+    <h3>Cálculo</h3>
+    {% for aviso in resultado.avisos %}<div class="pr-alerta">{{ aviso }}</div>{% endfor %}
+    <div class="pr-scroll"><table class="pr-table">
+        <thead><tr><th>Turma</th><th>Valor cheio</th><th>Descontos</th><th style="text-align:right;">Fica</th></tr></thead>
+        <tbody>
+        {% for l in resultado.linhas %}
+            <tr>
+                <td><strong>{{ l.nome }}</strong><br><span class="pr-dica">{% if l.posicao %}{{ l.posicao }}ª turma{% if l.combinacao %} (combinação){% endif %}{% else %}preço fixo (não conta como modalidade){% endif %}{% if l.posicao and l.sem_descontos %} · preço fixo, sem descontos{% endif %}</span></td>
+                <td>{{ l.preco_cheio|moeda }}</td>
+                <td style="font-size:.88rem;">
+                    {% for d in l.descontos %}
+                        {% if d.tipo == 'preco_fixo' or d.tipo == 'combinacao' %}{{ d.nome }}: passa a custar {{ l.preco_base|moeda }}<br>
+                        {% else %}{{ d.nome }} ({{ d.percentual|floatformat:"-2" }}%): − {{ d.valor|moeda }}<br>{% endif %}
+                    {% empty %}<span class="pr-dica">nenhum</span>{% endfor %}
+                </td>
+                <td style="text-align:right;"><strong>{{ l.final|moeda }}</strong></td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table></div>
+    {% if resultado.linhas %}
+    <p style="text-align:right; margin:1rem 0 0;">
+        {% if resultado.ajuste_arredondamento %}<span class="pr-dica">Arredondamento para baixo: − {{ resultado.ajuste_arredondamento|floatformat:2 }}</span><br>{% endif %}
+        Mensalidade: <span class="pr-total">{{ resultado.total|moeda }}</span>
+    </p>
+    {% endif %}
+</div>

@@ -1,0 +1,37 @@
+{% extends 'admin_dashboard/base.html' %}
+{% block title %}Combinações de turmas{% endblock %}
+{% block content %}
+<div class="pr-page">
+{% include 'precos/admin/_cabecalho.html' %}
+<div class="pr-card pr-scroll">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap; margin-bottom:1rem;">
+        <div>
+            <h3 style="margin:0 0 .2rem;">Combinações de turmas</h3>
+            <p class="pr-sub" style="margin:0;">Preço especial para quem faz certas turmas <strong>juntas</strong> (ex.: balé + ginástica). O conjunto conta como uma modalidade só, e o preço de cada turma é o que você cadastra aqui.</p>
+        </div>
+        <a href="{% url 'precos_admin:combinacao_nova' %}" class="pr-btn pr-btn-p">+ Nova combinação</a>
+    </div>
+    <table class="pr-table">
+        <thead><tr><th>Nome</th><th>O que faz</th><th>Situação</th><th></th></tr></thead>
+        <tbody>
+        {% for c in combinacoes %}
+            <tr>
+                <td><strong>{{ c.nome }}</strong>{% if c.observacao %}<br><span class="pr-dica">{{ c.observacao }}</span>{% endif %}</td>
+                <td style="font-size:.88rem;">{{ c.resumo }}</td>
+                <td><span class="pr-badge pr-{{ c.situacao_chave }}">{{ c.situacao_texto }}</span></td>
+                <td>
+                    <div class="pr-acoes">
+                        <a href="{% url 'precos_admin:combinacao_editar' c.pk %}" class="pr-btn pr-btn-l pr-btn-s">Editar</a>
+                        <form method="post" action="{% url 'precos_admin:combinacao_alternar' c.pk %}">{% csrf_token %}<button type="submit" class="pr-btn pr-btn-l pr-btn-s">{% if c.ativa %}Desligar{% else %}Ligar{% endif %}</button></form>
+                        <form method="post" action="{% url 'precos_admin:combinacao_excluir' c.pk %}" onsubmit="return confirm('Excluir a combinação &quot;{{ c.nome|escapejs }}&quot;? Alunas que já tiveram o valor calculado não mudam.');">{% csrf_token %}<button type="submit" class="pr-btn pr-btn-d pr-btn-s">Excluir</button></form>
+                    </div>
+                </td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="4" style="text-align:center; color:#8a8390; padding:2rem;">Nenhuma combinação criada ainda.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+</div>
+{% endblock %}

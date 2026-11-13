@@ -2421,6 +2421,13 @@ def turma_criar(request):
             disponivel_experimental = request.POST.get('disponivel_experimental') == 'on'
             dia_semana = request.POST.get('dia_semana') or None
 
+            from precos.util import ler_preco_da_turma
+            valor_mensalidade, regime_preco, erro_preco = ler_preco_da_turma(request.POST)
+
+            if erro_preco:
+                messages.error(request, erro_preco)
+                return redirect('admin_dashboard:turma_criar')
+
             if not nome:
                 messages.error(request, 'O nome da turma é obrigatório!')
                 return redirect('admin_dashboard:turma_criar')
@@ -2435,6 +2442,8 @@ def turma_criar(request):
                 ativa=ativa,
                 disponivel_experimental=disponivel_experimental,
                 dia_semana=dia_semana,
+                valor_mensalidade=valor_mensalidade,
+                regime_preco=regime_preco,
             )
 
             # Horários das aulas (lista de presença)
@@ -2483,6 +2492,16 @@ def turma_editar(request, pk):
             turma.ativa = request.POST.get('ativa') == 'on'
             turma.disponivel_experimental = request.POST.get('disponivel_experimental') == 'on'
             turma.dia_semana = request.POST.get('dia_semana') or None
+
+            from precos.util import ler_preco_da_turma
+            valor_mensalidade, regime_preco, erro_preco = ler_preco_da_turma(request.POST)
+
+            if erro_preco:
+                messages.error(request, erro_preco)
+                return redirect('admin_dashboard:turma_editar', pk=pk)
+
+            turma.valor_mensalidade = valor_mensalidade
+            turma.regime_preco = regime_preco
 
             turma.save()
 

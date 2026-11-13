@@ -1,0 +1,15 @@
+{% extends 'admin_dashboard/base.html' %}
+{% block title %}Arredondamento{% endblock %}
+{% block content %}
+<div class="pr-page">
+{% include 'precos/admin/_cabecalho.html' %}
+<form method="post" class="pr-card" style="max-width:560px;">
+    {% csrf_token %}
+    <h3>Arredondamento do valor final</h3>
+    <p class="pr-sub">O valor final da mensalidade é arredondado <strong>para baixo</strong> em múltiplos deste valor. Com 0,10, um valor de 125,33 vira 125,30. Use 0,01 para não arredondar.</p>
+    <label class="pr-lab">Arredondar para baixo em múltiplos de R$</label>
+    <input class="pr-input" name="passo_arredondamento" value="{{ passo_texto }}" inputmode="decimal" style="max-width:160px;">
+    <p style="margin-top:1rem;"><button type="submit" class="pr-btn pr-btn-p">Salvar</button></p>
+</form>
+</div>
+{% endblock %}

@@ -1,5 +1,6 @@
 {% extends 'admin_dashboard/base.html' %}
 {% load presenca_tags %}
+{% load precos_tags %}
 
 {% block title %}Editar Turma - {{ turma.nome }}{% endblock %}
 
@@ -328,6 +329,8 @@
                 </section>
 
                 {% horarios_turma_form turma %}
+
+                {% campos_preco_turma turma %}
 
                 <section class="turma-edit-section">
                     <div style="margin-bottom: 1.25rem;">

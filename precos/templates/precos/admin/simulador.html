@@ -1,0 +1,42 @@
+{% extends 'admin_dashboard/base.html' %}
+{% block title %}Simulador{% endblock %}
+{% block content %}
+<div class="pr-page">
+{% include 'precos/admin/_cabecalho.html' %}
+<form method="post" class="pr-card">
+    {% csrf_token %}
+    <h3>Simulador (não grava nada)</h3>
+    <p class="pr-sub">Escolha as turmas <strong>na ordem em que a aluna entrou</strong> (a 1ª em cima) e veja quanto ela pagaria. Serve para conferir suas regras sem mexer em nenhuma aluna.</p>
+    {% if erro %}<div class="pr-alerta">{{ erro }}</div>{% endif %}
+
+    <div class="pr-scroll"><table class="pr-table">
+        <thead><tr><th></th><th>Turma</th><th>Quando entrou</th><th>Data de entrada</th></tr></thead>
+        <tbody>
+        {% for s in espacos %}
+            <tr>
+                <td><strong>{{ s.n }}ª</strong></td>
+                <td><select class="pr-input" name="turma_{{ s.n }}"><option value="">—</option>{% for t in turmas %}<option value="{{ t.pk }}" {% if s.turma == t.pk|stringformat:"s" %}selected{% endif %}>{{ t.nome }}</option>{% endfor %}</select></td>
+                <td><select class="pr-input" name="apos_{{ s.n }}"><option value="0" {% if s.apos != '1' %}selected{% endif %}>No primeiro cadastro (aluna nova)</option><option value="1" {% if s.apos == '1' %}selected{% endif %}>Depois (já era aluna)</option></select></td>
+                <td><input class="pr-input" type="date" name="data_{{ s.n }}" value="{{ s.data }}"></td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table></div>
+
+    <div class="pr-grid" style="margin-top:1rem;">
+        <div class="pr-campo"><label class="pr-lab">Calcular para o dia</label><input class="pr-input" type="date" name="quando" value="{{ e.quando }}">
+            <span class="pr-dica">Regras com período só valem dentro dele.</span></div>
+        <div class="pr-campo"><label class="pr-lab">Grupos</label>
+            <div class="pr-checks">{% for g in grupos %}<label class="pr-check"><input type="checkbox" name="grupos" value="{{ g.pk }}" {% if g.pk in e.grupos %}checked{% endif %}> {{ g.nome }}</label>{% empty %}<span class="pr-dica">Nenhum grupo.</span>{% endfor %}</div></div>
+        <div class="pr-campo"><label class="pr-lab">Família</label>
+            <div class="pr-checks" style="flex-direction:column;">
+                <label class="pr-check"><input type="checkbox" name="irma_anterior" {% if e.irma_anterior %}checked{% endif %}> Tem irmã (mesma responsável) que entrou antes</label>
+                <label class="pr-check"><input type="checkbox" name="responsavel_aluna" {% if e.responsavel_aluna %}checked{% endif %}> É responsável que também é aluna</label>
+                {% for g in graus %}<label class="pr-check"><input type="checkbox" name="graus" value="{{ g.pk }}" {% if g.pk in e.graus %}checked{% endif %}> Parentesco marcado: {{ g.nome }}</label>{% endfor %}
+            </div></div>
+    </div>
+    <button type="submit" class="pr-btn pr-btn-p">Calcular</button>
+</form>
+{% if resultado %}{% include 'precos/admin/_resultado.html' %}{% endif %}
+</div>
+{% endblock %}

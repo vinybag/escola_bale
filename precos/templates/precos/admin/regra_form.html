@@ -1,0 +1,84 @@
+{% extends 'admin_dashboard/base.html' %}
+{% block title %}{% if regra %}Editar regra{% else %}Nova regra{% endif %}{% endblock %}
+{% block content %}
+<div class="pr-page">
+{% include 'precos/admin/_cabecalho.html' %}
+<p><a href="{% url 'precos_admin:regras' %}" class="pr-btn pr-btn-l pr-btn-s">← Voltar</a></p>
+
+<form method="post" class="pr-card">
+    {% csrf_token %}
+    <h3>{% if regra %}Editar regra{% else %}Nova regra{% endif %}</h3>
+
+    <div class="pr-grid">
+        <div class="pr-campo"><label class="pr-lab">Nome da regra *</label>
+            <input class="pr-input" name="nome" value="{{ v.nome }}" maxlength="120" placeholder="Ex.: Desconto da 2ª modalidade" required></div>
+        <div class="pr-campo"><label class="pr-lab">Anotação (opcional)</label>
+            <input class="pr-input" name="observacao" value="{{ v.observacao }}" maxlength="300" placeholder="Só para você lembrar"></div>
+    </div>
+
+    <h3 style="margin-top:1rem;">O que a regra faz</h3>
+    <div class="pr-grid">
+        <div class="pr-campo"><label class="pr-lab">Efeito *</label>
+            <select class="pr-input" name="efeito" id="efeito">{% for chave, rotulo in efeitos %}<option value="{{ chave }}" {% if v.efeito == chave %}selected{% endif %}>{{ rotulo }}</option>{% endfor %}</select></div>
+        <div class="pr-campo"><label class="pr-lab" id="rotulo_valor">Valor *</label>
+            <input class="pr-input" name="valor" value="{{ v.valor }}" inputmode="decimal" placeholder="Ex.: 15" required>
+            <span class="pr-dica" id="dica_valor"></span></div>
+        <div class="pr-campo"><label class="pr-lab">Em qual turma da aluna *</label>
+            <select class="pr-input" name="incide_em">{% for chave, rotulo in incide_em_opcoes %}<option value="{{ chave }}" {% if v.incide_em == chave %}selected{% endif %}>{{ rotulo }}</option>{% endfor %}</select>
+            <span class="pr-dica">A "2ª turma" é a que a aluna entrou depois da primeira. Turmas de preço fixo não contam.</span></div>
+    </div>
+
+    <h3 style="margin-top:1rem;">Para quem vale</h3>
+    <div class="pr-grid">
+        <div class="pr-campo"><label class="pr-lab">Quando a aluna entrou na turma</label>
+            <select class="pr-input" name="publico">{% for chave, rotulo in publicos %}<option value="{{ chave }}" {% if v.publico == chave %}selected{% endif %}>{{ rotulo }}</option>{% endfor %}</select></div>
+        <div class="pr-campo"><label class="pr-lab">Só para quem está no grupo</label>
+            <select class="pr-input" name="grupo"><option value="">Qualquer aluna</option>{% for g in grupos %}<option value="{{ g.pk }}" {% if v.grupo == g.pk %}selected{% endif %}>{{ g.nome }}</option>{% endfor %}</select>
+            <span class="pr-dica">Os grupos (como o Golden) são criados na aba "Grupos".</span></div>
+        <div class="pr-campo"><label class="pr-lab">Parentesco</label>
+            <select class="pr-input" name="familia" id="familia">{% for chave, rotulo in familias %}<option value="{{ chave }}" {% if v.familia == chave %}selected{% endif %}>{{ rotulo }}</option>{% endfor %}</select></div>
+        <div class="pr-campo" id="campo_grau"><label class="pr-lab">Qual grau de parentesco</label>
+            <select class="pr-input" name="grau"><option value="">Escolha…</option>{% for g in graus %}<option value="{{ g.pk }}" {% if v.grau == g.pk %}selected{% endif %}>{{ g.nome }}</option>{% endfor %}</select>
+            <span class="pr-dica">Os graus são criados na aba "Parentescos".</span></div>
+    </div>
+
+    <div class="pr-campo"><label class="pr-lab">Não vale para quem está nestes grupos</label>
+        <div class="pr-checks">{% for g in grupos %}<label class="pr-check"><input type="checkbox" name="grupos_excecao" value="{{ g.pk }}" {% if g.pk in v.grupos_excecao %}checked{% endif %}> {{ g.nome }}</label>{% empty %}<span class="pr-dica">Ainda não há grupos.</span>{% endfor %}</div>
+        <span class="pr-dica">Ex.: o desconto de irmã não vale para o grupo Golden.</span></div>
+
+    <div class="pr-campo"><label class="pr-lab">Vale somente nestas turmas (deixe tudo desmarcado para valer em todas)</label>
+        <div class="pr-checks">{% for t in turmas %}<label class="pr-check"><input type="checkbox" name="turmas" value="{{ t.pk }}" {% if t.pk in v.turmas %}checked{% endif %}> {{ t.nome }}</label>{% endfor %}</div></div>
+
+    <h3 style="margin-top:1rem;">Período (para campanhas)</h3>
+    <div class="pr-grid">
+        <div class="pr-campo"><label class="pr-lab">Vale a partir de</label><input class="pr-input" type="date" name="inicio" value="{{ v.inicio }}"></div>
+        <div class="pr-campo"><label class="pr-lab">Vale até</label><input class="pr-input" type="date" name="fim" value="{{ v.fim }}">
+            <span class="pr-dica">Depois desta data a regra para de valer sozinha.</span></div>
+    </div>
+    <div class="pr-campo pr-checks" style="flex-direction:column; gap:.6rem;">
+        <label class="pr-check"><input type="checkbox" name="so_turmas_entradas_no_periodo" {% if v.so_turmas_entradas_no_periodo %}checked{% endif %}> Só vale para turmas em que a aluna entrou dentro do período (campanha de turma nova)</label>
+        <label class="pr-check"><input type="checkbox" name="substitui_outros" {% if v.substitui_outros %}checked{% endif %}> Nas turmas em que esta regra vale, nenhum outro desconto é aplicado</label>
+        <label class="pr-check"><input type="checkbox" name="ativa" {% if v.ativa %}checked{% endif %}> Regra ligada</label>
+    </div>
+
+    <div class="pr-acoes" style="margin-top:1.2rem;">
+        <button type="submit" class="pr-btn pr-btn-p">Salvar regra</button>
+        <a href="{% url 'precos_admin:regras' %}" class="pr-btn pr-btn-l">Cancelar</a>
+    </div>
+</form>
+
+<script>
+    (function () {
+        var efeito = document.getElementById('efeito'), rotulo = document.getElementById('rotulo_valor'), dica = document.getElementById('dica_valor');
+        var familia = document.getElementById('familia'), campoGrau = document.getElementById('campo_grau');
+        function atualizar() {
+            var fixo = efeito.value === 'preco_fixo';
+            rotulo.textContent = fixo ? 'Valor da turma (R$) *' : 'Desconto (%) *';
+            dica.textContent = fixo ? 'A turma passa a custar este valor (ex.: 50 para R$ 50,00).' : 'Porcentagem sobre o valor cheio da turma (ex.: 15 para 15%).';
+            campoGrau.style.display = familia.value === 'parentesco' ? 'block' : 'none';
+        }
+        efeito.addEventListener('change', atualizar); familia.addEventListener('change', atualizar); atualizar();
+    })();
+</script>
+</div>
+{% endblock %}

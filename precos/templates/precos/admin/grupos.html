@@ -1,0 +1,35 @@
+{% extends 'admin_dashboard/base.html' %}
+{% block title %}Grupos de desconto{% endblock %}
+{% block content %}
+<div class="pr-page">
+{% include 'precos/admin/_cabecalho.html' %}
+<div class="pr-card">
+    <h3>Novo grupo</h3>
+    <p class="pr-sub">Um grupo é um conjunto de alunas que você escolhe (ex.: Golden, desde 2024). Depois, numa regra, você diz que o desconto vale só para aquele grupo.</p>
+    <form method="post" class="pr-grid" style="align-items:end;">
+        {% csrf_token %}
+        <div><label class="pr-lab">Nome do grupo</label><input class="pr-input" name="nome" maxlength="80" placeholder="Ex.: Golden" required></div>
+        <div><label class="pr-lab">Descrição (opcional)</label><input class="pr-input" name="descricao" maxlength="200" placeholder="Ex.: Alunas desde 2024"></div>
+        <div><button type="submit" class="pr-btn pr-btn-p">Criar grupo</button></div>
+    </form>
+</div>
+<div class="pr-card pr-scroll">
+    <h3>Grupos</h3>
+    <table class="pr-table">
+        <thead><tr><th>Grupo</th><th>Alunas</th><th>Regras ligadas</th><th>Situação</th><th></th></tr></thead>
+        <tbody>
+        {% for g in grupos %}
+            <tr>
+                <td><strong>{{ g.nome }}</strong>{% if g.descricao %}<br><span class="pr-dica">{{ g.descricao }}</span>{% endif %}</td>
+                <td>{{ g.total }}</td><td>{{ g.total_regras }}</td>
+                <td>{% if g.ativo %}<span class="pr-badge pr-ativa">Ativo</span>{% else %}<span class="pr-badge pr-desligada">Desligado</span>{% endif %}</td>
+                <td><a href="{% url 'precos_admin:grupo_detalhe' g.pk %}" class="pr-btn pr-btn-l pr-btn-s">Abrir</a></td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="5" style="text-align:center; color:#8a8390; padding:2rem;">Nenhum grupo criado ainda.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+</div>
+{% endblock %}

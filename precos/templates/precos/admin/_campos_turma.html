@@ -1,0 +1,20 @@
+<section style="padding: 1.5rem; border: 1px solid #ece3f2; border-radius: 16px; background: #fff; margin-top: 1.5rem;">
+    <div style="margin-bottom: 1.25rem;">
+        <h3 style="margin: 0 0 0.35rem 0; color: #4a235f; font-size: 1rem; font-weight: 700;">Mensalidade</h3>
+        <p style="margin: 0; color: #7b7580; font-size: 0.92rem;">Valor cheio da turma. As regras de desconto ficam em "Preços e descontos".</p>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem;">
+        <div>
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Valor da mensalidade (R$)</label>
+            <input type="text" name="valor_mensalidade" value="{{ valor_texto }}" inputmode="decimal" placeholder="Ex.: 110,00"
+                   style="width: 100%; box-sizing: border-box; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 1rem; background: #fff;">
+        </div>
+        <div style="grid-column: 1 / -1;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #44384c;">Preço e descontos</label>
+            <select name="regime_preco" style="width: 100%; box-sizing: border-box; padding: 0.82rem 0.95rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: 0.95rem; background: #fff;">
+                {% for chave, rotulo in regimes %}<option value="{{ chave }}" {% if regime == chave %}selected{% endif %}>{{ rotulo }}</option>{% endfor %}
+            </select>
+            <small style="display: block; margin-top: 0.45rem; color: #8a8390;">"Preço fixo": a turma custa sempre o valor acima, sem descontos de modalidade, de parentes, de grupos nem campanhas (ex.: técnica vocal em grupo).</small>
+        </div>
+    </div>
+</section>

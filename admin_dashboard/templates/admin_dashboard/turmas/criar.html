@@ -1,5 +1,6 @@
 {% extends 'admin_dashboard/base.html' %}
 {% load presenca_tags %}
+{% load precos_tags %}
 
 {% block title %}Criar Turma{% endblock %}
 
@@ -318,6 +319,8 @@
 
                 <!-- SEÇÃO: Horários das aulas (lista de presença) -->
                 {% horarios_turma_form %}
+
+                {% campos_preco_turma %}
 
                 <!-- SEÇÃO: Configurações -->
                 <section class="turma-create-section">

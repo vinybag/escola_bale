@@ -1,0 +1,67 @@
+{% extends 'admin_dashboard/base.html' %}
+{% block title %}{% if combinacao %}Editar combinação{% else %}Nova combinação{% endif %}{% endblock %}
+{% block content %}
+<div class="pr-page">
+{% include 'precos/admin/_cabecalho.html' %}
+<p><a href="{% url 'precos_admin:combinacoes' %}" class="pr-btn pr-btn-l pr-btn-s">← Voltar</a></p>
+
+<form method="post">
+    {% csrf_token %}
+    <div class="pr-card">
+        <h3>{% if combinacao %}Editar combinação{% else %}Nova combinação{% endif %}</h3>
+        <div class="pr-grid">
+            <div class="pr-campo"><label class="pr-lab">Nome *</label><input class="pr-input" name="nome" value="{{ v.nome }}" maxlength="120" placeholder="Ex.: Balé + Ginástica" required></div>
+            <div class="pr-campo"><label class="pr-lab">Anotação (opcional)</label><input class="pr-input" name="observacao" value="{{ v.observacao }}" maxlength="300"></div>
+            <div class="pr-campo"><label class="pr-lab">Vale a partir de</label><input class="pr-input" type="date" name="inicio" value="{{ v.inicio }}"></div>
+            <div class="pr-campo"><label class="pr-lab">Vale até</label><input class="pr-input" type="date" name="fim" value="{{ v.fim }}"></div>
+        </div>
+        <label class="pr-check"><input type="checkbox" name="ativa" {% if v.ativa %}checked{% endif %}> Combinação ligada</label>
+    </div>
+
+    <div class="pr-card">
+        <h3>Itens da combinação</h3>
+        <p class="pr-sub">A aluna ganha a combinação quando faz, <strong>ao mesmo tempo, uma turma de cada item</strong>, em qualquer ordem de entrada. Preencha pelo menos 2 itens. Cada item tem o preço que <strong>cada turma dele</strong> passa a custar. Ex.: item "Balé" (todas as turmas de balé) a R$ 100 e item "Ginástica" a R$ 100. Nenhum outro desconto soma nessas turmas.</p>
+        <div class="pr-grid">
+        {% for item in itens %}
+            <div style="border:1px solid #ece3f2; border-radius:12px; padding:1rem;">
+                <div class="pr-campo"><label class="pr-lab">Item {{ item.n }}: nome</label><input class="pr-input item-nome" data-n="{{ item.n }}" name="item_{{ item.n }}_nome" value="{{ item.nome }}" maxlength="80" placeholder="{% if item.n == 1 %}Ex.: Balé{% elif item.n == 2 %}Ex.: Ginástica{% else %}(opcional){% endif %}"></div>
+                <div class="pr-campo"><label class="pr-lab">Preço de cada turma (R$)</label><input class="pr-input" name="item_{{ item.n }}_preco" value="{{ item.preco }}" inputmode="decimal" placeholder="Ex.: 100"></div>
+                <label class="pr-lab">Turmas deste item</label>
+                <div style="max-height:170px; overflow:auto;">{% for t in turmas %}<label class="pr-check" style="margin-bottom:.3rem;"><input type="checkbox" name="item_{{ item.n }}_turmas" value="{{ t.pk }}" {% if t.pk in item.turmas %}checked{% endif %}> {{ t.nome }}</label>{% endfor %}</div>
+            </div>
+        {% endfor %}
+        </div>
+    </div>
+
+    <div class="pr-card pr-scroll">
+        <h3>Preço especial para um grupo (opcional)</h3>
+        <p class="pr-sub">Se uma aluna de um grupo (como o Golden) paga um valor diferente no par, digite aqui o preço <strong>de cada item para esse grupo</strong>. Deixe em branco para usar o preço normal da combinação. Ex.: Golden: Balé 99 e Ginástica 100.</p>
+        {% if grupos_precos %}
+        <table class="pr-table">
+            <thead><tr><th>Grupo</th>{% for item in itens %}<th>Item {{ item.n }} <span class="item-rotulo" data-n="{{ item.n }}">{% if item.nome %}({{ item.nome }}){% endif %}</span></th>{% endfor %}</tr></thead>
+            <tbody>
+            {% for linha in grupos_precos %}
+                <tr><td><strong>{{ linha.grupo.nome }}</strong></td>
+                {% for preco in linha.precos %}<td><input class="pr-input" style="max-width:120px;" name="grupo_{{ linha.grupo.pk }}_item_{{ forloop.counter }}" value="{{ preco }}" inputmode="decimal" placeholder="—"></td>{% endfor %}</tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}<p class="pr-dica">Ainda não há grupos. Crie na aba "Grupos".</p>{% endif %}
+    </div>
+
+    <div class="pr-acoes">
+        <button type="submit" class="pr-btn pr-btn-p">Salvar combinação</button>
+        <a href="{% url 'precos_admin:combinacoes' %}" class="pr-btn pr-btn-l">Cancelar</a>
+    </div>
+</form>
+
+<script>
+    document.querySelectorAll('.item-nome').forEach(function (campo) {
+        campo.addEventListener('input', function () {
+            var rotulo = document.querySelector('.item-rotulo[data-n="' + campo.dataset.n + '"]');
+            if (rotulo) { rotulo.textContent = campo.value ? '(' + campo.value + ')' : ''; }
+        });
+    });
+</script>
+</div>
+{% endblock %}

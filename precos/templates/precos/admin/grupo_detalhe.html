@@ -1,0 +1,45 @@
+{% extends 'admin_dashboard/base.html' %}
+{% block title %}Grupo {{ grupo.nome }}{% endblock %}
+{% block content %}
+<div class="pr-page">
+{% include 'precos/admin/_cabecalho.html' %}
+<p><a href="{% url 'precos_admin:grupos' %}" class="pr-btn pr-btn-l pr-btn-s">← Voltar para os grupos</a></p>
+
+<form method="post" class="pr-card">
+    {% csrf_token %}<input type="hidden" name="acao" value="salvar">
+    <h3>Grupo {{ grupo.nome }}</h3>
+    <div class="pr-grid" style="align-items:end;">
+        <div><label class="pr-lab">Nome</label><input class="pr-input" name="nome" value="{{ grupo.nome }}" maxlength="80" required></div>
+        <div><label class="pr-lab">Descrição</label><input class="pr-input" name="descricao" value="{{ grupo.descricao }}" maxlength="200"></div>
+        <div><label class="pr-check"><input type="checkbox" name="ativo" {% if grupo.ativo %}checked{% endif %}> Grupo ativo (desligado, ninguém dele recebe os descontos do grupo)</label></div>
+        <div><button type="submit" class="pr-btn pr-btn-p">Salvar</button></div>
+    </div>
+</form>
+
+<div class="pr-card">
+    <h3>Adicionar alunas ao grupo</h3>
+    <form method="post">
+        {% csrf_token %}<input type="hidden" name="acao" value="adicionar">
+        <select name="alunas" multiple size="8" class="pr-input">{% for a in candidatas %}<option value="{{ a.pk }}">{{ a.nome }}</option>{% endfor %}</select>
+        <span class="pr-dica">Segure Ctrl (ou Cmd no Mac) para escolher várias alunas.</span>
+        <p><button type="submit" class="pr-btn pr-btn-p">Adicionar selecionadas</button></p>
+    </form>
+</div>
+
+<div class="pr-card pr-scroll">
+    <h3>Quem está no grupo ({{ membros|length }})</h3>
+    <table class="pr-table"><tbody>
+    {% for a in membros %}
+        <tr><td>{{ a.nome }}{% if not a.ativa %} <span class="pr-dica">(inativa)</span>{% endif %}</td>
+            <td style="text-align:right;"><form method="post" style="margin:0;">{% csrf_token %}<input type="hidden" name="acao" value="remover"><input type="hidden" name="aluna" value="{{ a.pk }}"><button type="submit" class="pr-btn pr-btn-l pr-btn-s">Tirar do grupo</button></form></td></tr>
+    {% empty %}<tr><td style="color:#8a8390; padding:1.5rem; text-align:center;">Ninguém neste grupo ainda.</td></tr>{% endfor %}
+    </tbody></table>
+</div>
+
+<div class="pr-card">
+    <h3>Excluir grupo</h3>
+    <p class="pr-sub">Excluir o grupo também exclui as {{ regras_do_grupo|length }} regra(s) feitas só para ele{% if regras_do_grupo %}: {% for r in regras_do_grupo %}{{ r.nome }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}{% if total_precos_combinacao %}, além de {{ total_precos_combinacao }} preço(s) especial(is) do grupo em combinações{% endif %}.</p>
+    <form method="post" onsubmit="return confirm('Excluir o grupo e as regras ligadas a ele?');">{% csrf_token %}<input type="hidden" name="acao" value="excluir"><button type="submit" class="pr-btn pr-btn-d">Excluir grupo</button></form>
+</div>
+</div>
+{% endblock %}
