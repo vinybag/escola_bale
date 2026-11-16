@@ -774,6 +774,32 @@
                         </div>
                     </div>
 
+                    <!-- Filmagem -->
+                    <div class="esp-check-box">
+                        <span style="font-weight: 600; color: #4a235f; display: block; margin-bottom: 0.4rem;">
+                            Filmagem
+                        </span>
+
+                        <small class="esp-help">
+                            Cadastre o link da filmagem deste dia e escolha quais logins podem
+                            acessá-la. Só quem for marcado vê a filmagem na área logada.
+                            {% if espetaculo.link_filmagem %}
+                                <strong style="display: block; margin-top: 0.35rem;">
+                                    Link cadastrado &middot; {{ espetaculo.usuarios_filmagem.count }} login(s) com acesso.
+                                </strong>
+                            {% endif %}
+                        </small>
+
+                        <div class="esp-map-actions">
+                            <a
+                                href="{% url 'admin_dashboard:espetaculo_filmagens' espetaculo.pk %}"
+                                class="esp-map-button esp-map-button-secondary"
+                            >
+                                Gerenciar filmagem
+                            </a>
+                        </div>
+                    </div>
+
                     <!-- Login obrigatório -->
                     <div class="esp-check-box" style="margin-bottom: 0;">
                         <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer;">

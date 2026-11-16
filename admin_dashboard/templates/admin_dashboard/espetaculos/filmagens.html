@@ -1,0 +1,301 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Filmagem - {{ espetaculo.titulo }}{% endblock %}
+
+{% block content %}
+<style>
+    .film-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 1.5rem;
+    }
+
+    .film-shell {
+        width: 100%;
+        max-width: 900px;
+    }
+
+    .film-card {
+        margin-bottom: 1.5rem;
+        padding: 1.5rem 1.8rem;
+        border: 1px solid #ebe3f1;
+        border-radius: 18px;
+        background: #fff;
+        box-shadow: 0 8px 24px rgba(107, 45, 143, 0.08);
+    }
+
+    .film-card h3 {
+        margin: 0 0 0.4rem;
+        color: #4a235f;
+        font-size: 1.1rem;
+    }
+
+    .film-help {
+        display: block;
+        margin-bottom: 0.9rem;
+        color: #6f6a75;
+        font-size: 0.86rem;
+        line-height: 1.45;
+    }
+
+    .film-input {
+        width: 100%;
+        padding: 0.7rem 0.9rem;
+        border: 1px solid #d9cfe2;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        box-sizing: border-box;
+    }
+
+    .film-btn {
+        display: inline-block;
+        padding: 0.65rem 1.2rem;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .film-btn-light {
+        border: 1px solid #ddd;
+        background: #f3f3f3;
+        color: #444;
+    }
+
+    .film-btn-primary {
+        background: #6b2d8f;
+        color: #fff;
+    }
+
+    .film-toolbar {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        flex-wrap: wrap;
+        margin-bottom: 0.8rem;
+    }
+
+    .film-toolbar .film-input {
+        flex: 1 1 240px;
+        width: auto;
+    }
+
+    .film-contador {
+        margin-left: auto;
+        color: #4a235f;
+        font-weight: 600;
+        font-size: 0.88rem;
+    }
+
+    .film-lista {
+        max-height: 460px;
+        overflow-y: auto;
+        border: 1px solid #ece3f2;
+        border-radius: 12px;
+    }
+
+    .film-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        padding: 0.7rem 1rem;
+        border-bottom: 1px solid #f1ebf5;
+        cursor: pointer;
+    }
+
+    .film-item:last-child {
+        border-bottom: none;
+    }
+
+    .film-item:hover {
+        background: #faf6fc;
+    }
+
+    .film-item input[type="checkbox"] {
+        width: 1.1rem;
+        height: 1.1rem;
+        margin-top: 0.2rem;
+        flex-shrink: 0;
+    }
+
+    .film-item-nome {
+        color: #2c2c2c;
+        font-weight: 600;
+        font-size: 0.93rem;
+    }
+
+    .film-item-detalhe {
+        color: #6f6a75;
+        font-size: 0.8rem;
+        line-height: 1.4;
+    }
+
+    .film-tipo {
+        display: inline-block;
+        margin-left: 0.4rem;
+        padding: 0.05rem 0.5rem;
+        border-radius: 999px;
+        background: #f1e9f6;
+        color: #6b2d8f;
+        font-size: 0.7rem;
+        font-weight: 600;
+        vertical-align: middle;
+    }
+
+    .film-vazio {
+        padding: 1.2rem;
+        color: #6f6a75;
+        text-align: center;
+        font-size: 0.9rem;
+    }
+
+    .film-aviso {
+        padding: 0.8rem 1rem;
+        border-left: 4px solid #b07a84;
+        border-radius: 8px;
+        background: #fbf4f6;
+        color: #5a4b50;
+        font-size: 0.84rem;
+        line-height: 1.5;
+    }
+</style>
+
+<div class="film-shell">
+    <div class="film-header">
+        <div>
+            <h2 style="margin: 0; color: #2c3e50;">Filmagem</h2>
+            <p style="margin: 0.2rem 0 0; color: #6f6a75;">
+                {{ espetaculo.titulo }} &middot; {{ espetaculo.data_apresentacao|date:"d/m/Y" }}
+            </p>
+        </div>
+        <a href="{% url 'admin_dashboard:espetaculo_editar' espetaculo.pk %}" class="film-btn film-btn-light">
+            &larr; Voltar ao espetáculo
+        </a>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="film-card">
+            <h3>Link da filmagem</h3>
+            <small class="film-help">
+                Cada dia do evento tem o seu próprio link. Cole o endereço completo
+                do Google Drive (começando com https://). Ele <strong>não aparece</strong>
+                nas páginas do site: quem tem acesso entra por um botão que confere o login.
+            </small>
+            <input
+                type="url"
+                name="link_filmagem"
+                class="film-input"
+                value="{{ link_filmagem }}"
+                placeholder="https://drive.google.com/..."
+                maxlength="500"
+            >
+        </div>
+
+        <div class="film-card">
+            <h3>Quem pode acessar</h3>
+            <small class="film-help">
+                Marque os logins de quem comprou a filmagem deste dia. Aparecem os
+                responsáveis e as alunas adultas. Quem não estiver marcado não vê
+                nem consegue abrir a filmagem (a equipe sempre consegue).
+            </small>
+
+            <div class="film-toolbar">
+                <input
+                    type="search"
+                    id="film-busca"
+                    class="film-input"
+                    placeholder="Buscar por nome, aluna, usuário ou e-mail..."
+                    autocomplete="off"
+                >
+                <button type="button" class="film-btn film-btn-light" id="film-marcar">Marcar visíveis</button>
+                <button type="button" class="film-btn film-btn-light" id="film-desmarcar">Desmarcar visíveis</button>
+                <span class="film-contador"><span id="film-total">{{ total_marcados }}</span> marcado(s)</span>
+            </div>
+
+            <div class="film-lista">
+                {% for u in usuarios %}
+                <label class="film-item" data-busca="{{ u.busca }}">
+                    <input type="checkbox" name="usuarios" value="{{ u.id }}" {% if u.marcado %}checked{% endif %}>
+                    <span>
+                        <span class="film-item-nome">{{ u.nome }}</span>
+                        <span class="film-tipo">{{ u.tipo }}</span>
+                        <span class="film-item-detalhe" style="display: block;">
+                            {% if u.alunas %}Aluna(s): {{ u.alunas }} &middot; {% endif %}{{ u.username }}{% if u.email %} &middot; {{ u.email }}{% endif %}
+                        </span>
+                    </span>
+                </label>
+                {% empty %}
+                <div class="film-vazio">Nenhum responsável ou aluna adulta com login encontrado.</div>
+                {% endfor %}
+                <div class="film-vazio" id="film-sem-resultado" style="display: none;">Nenhum login encontrado para essa busca.</div>
+            </div>
+        </div>
+
+        <div class="film-card">
+            <div class="film-aviso">
+                No Google Drive, deixe o compartilhamento como <strong>"qualquer pessoa com o link"</strong>.
+                O site esconde o endereço de quem não comprou, mas quem tem acesso pode baixar e repassar
+                o vídeo ou o link. A página de acesso avisa que o uso é pessoal e que a divulgação é proibida.
+            </div>
+        </div>
+
+        <button type="submit" class="film-btn film-btn-primary">Salvar filmagem</button>
+    </form>
+</div>
+
+<script>
+(function () {
+    var busca = document.getElementById('film-busca');
+    var itens = Array.prototype.slice.call(document.querySelectorAll('.film-item'));
+    var total = document.getElementById('film-total');
+    var semResultado = document.getElementById('film-sem-resultado');
+
+    function visivel(item) {
+        return item.style.display !== 'none';
+    }
+
+    function atualizarTotal() {
+        var marcados = itens.filter(function (item) {
+            return item.querySelector('input').checked;
+        }).length;
+        total.textContent = marcados;
+    }
+
+    function filtrar() {
+        var termo = (busca.value || '').toLowerCase().trim();
+        var algum = false;
+
+        itens.forEach(function (item) {
+            var combina = !termo || item.getAttribute('data-busca').indexOf(termo) !== -1;
+            item.style.display = combina ? '' : 'none';
+            if (combina) { algum = true; }
+        });
+
+        if (semResultado) {
+            semResultado.style.display = (!algum && itens.length) ? '' : 'none';
+        }
+    }
+
+    function marcarVisiveis(valor) {
+        itens.filter(visivel).forEach(function (item) {
+            item.querySelector('input').checked = valor;
+        });
+        atualizarTotal();
+    }
+
+    if (busca) { busca.addEventListener('input', filtrar); }
+    document.getElementById('film-marcar').addEventListener('click', function () { marcarVisiveis(true); });
+    document.getElementById('film-desmarcar').addEventListener('click', function () { marcarVisiveis(false); });
+    itens.forEach(function (item) {
+        item.querySelector('input').addEventListener('change', atualizarTotal);
+    });
+})();
+</script>
+{% endblock %}

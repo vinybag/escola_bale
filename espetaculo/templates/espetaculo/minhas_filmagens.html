@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block title %}Minhas filmagens - {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 2rem auto; padding: 0 1rem;">
+
+    <h1 style="color: #2c3e50; text-align: center; margin-bottom: 0.5rem; font-size: 1.75rem;">Minhas filmagens</h1>
+    <p style="text-align: center; color: #777; margin-bottom: 2rem; font-size: 0.95rem;">
+        Aqui estão as filmagens liberadas para o seu login.
+    </p>
+
+    {% if filmagens %}
+        <div style="display: grid; gap: 1rem; margin-bottom: 2rem;">
+            {% for filmagem in filmagens %}
+            <div style="background: white; padding: 1.25rem 1.5rem; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
+                <div>
+                    <h3 style="margin: 0 0 0.25rem; color: #2c3e50; font-size: 1.05rem;">{{ filmagem.titulo }}</h3>
+                    <p style="margin: 0; color: #666; font-size: 0.85rem;">
+                        {{ filmagem.data_apresentacao|date:"d/m/Y" }}{% if filmagem.local %} &middot; {{ filmagem.local }}{% endif %}
+                    </p>
+                </div>
+                <a href="{% url 'espetaculo:filmagem_acessar' filmagem.pk %}" target="_blank" rel="noopener noreferrer"
+                   style="display: inline-block; padding: 0.6rem 1.2rem; background: #b07a84; color: white; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.9rem;">
+                    Abrir filmagem
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div style="background: #fbf4f6; border-left: 4px solid #b07a84; padding: 1rem 1.25rem; border-radius: 8px; color: #5a4b50; font-size: 0.85rem; line-height: 1.5;">
+            <strong>Uso pessoal.</strong> A filmagem é exclusiva de quem a adquiriu e destina-se a uso
+            pessoal e familiar. É proibido divulgar, compartilhar o link ou repassar o arquivo a terceiros.
+        </div>
+    {% else %}
+        <div style="background: white; padding: 2.5rem 1.5rem; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); text-align: center;">
+            <p style="margin: 0 0 0.5rem; color: #2c3e50; font-weight: 600;">Nenhuma filmagem liberada para o seu login.</p>
+            <p style="margin: 0; color: #777; font-size: 0.9rem;">
+                Se você adquiriu a filmagem e ela não apareceu, fale com a secretaria da escola
+                informando o e-mail ou usuário que você usa para entrar no site.
+            </p>
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}

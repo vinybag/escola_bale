@@ -9,9 +9,10 @@ from django.db import models, transaction
 
 from django.conf import settings
 from django.contrib import messages
-from django.http import FileResponse, Http404, JsonResponse
+from django.http import FileResponse, Http404, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 from functools import wraps
 from django.http import HttpResponseForbidden
@@ -80,6 +81,76 @@ def patrocinadores_para(local):
     return patrocinadores
 
 
+def filmagens_do_usuario(user):
+    """
+    Espetáculos/dias cuja filmagem a pessoa pode abrir: os que têm link
+    cadastrado e em que o login dela foi marcado no admin. A equipe
+    (staff) enxerga todos que têm link. Anônimo não enxerga nenhum.
+
+    Não filtra por `ativo` de propósito: a liberação é explícita (o admin
+    marcou o login), então a filmagem continua acessível mesmo depois que
+    o espetáculo sai da vitrine do site.
+    """
+    if not getattr(user, 'is_authenticated', False):
+        return Espetaculo.objects.none()
+
+    filmagens = Espetaculo.objects.exclude(link_filmagem='')
+
+    if not user.is_staff:
+        filmagens = filmagens.filter(usuarios_filmagem=user)
+
+    return filmagens.order_by('data_apresentacao', 'pk')
+
+
+def _pode_ver_filmagem(user, espetaculo):
+    if not getattr(user, 'is_authenticated', False):
+        return False
+    if user.is_staff:
+        return True
+    return espetaculo.usuarios_filmagem.filter(pk=user.pk).exists()
+
+
+def _tem_filmagens(user):
+    """Defensivo: se algo falhar, a home/listagem continuam abrindo."""
+    try:
+        return filmagens_do_usuario(user).exists()
+    except Exception:
+        return False
+
+
+@login_required
+def minhas_filmagens(request):
+    """Lista as filmagens liberadas para a pessoa logada, uma por dia."""
+    return render(
+        request,
+        'espetaculo/minhas_filmagens.html',
+        {'filmagens': filmagens_do_usuario(request.user)},
+    )
+
+
+@login_required
+@never_cache
+def filmagem_acessar(request, pk):
+    """
+    Leva a pessoa até o link da filmagem, mas só se ela estiver autorizada.
+
+    O link do Drive nunca é escrito em nenhuma página: o botão aponta para
+    esta rota, que confere o login e só então redireciona. A autorização é
+    conferida aqui (no servidor), não apenas escondida na tela.
+    """
+    espetaculo = get_object_or_404(Espetaculo, pk=pk)
+
+    if not _pode_ver_filmagem(request.user, espetaculo):
+        return HttpResponseForbidden(
+            'Você não tem acesso à filmagem deste evento.'
+        )
+
+    if not espetaculo.link_filmagem:
+        raise Http404('Filmagem ainda não disponível.')
+
+    return HttpResponseRedirect(espetaculo.link_filmagem)
+
+
 def espetaculo_home(request):
     """Página inicial do espetáculo"""
     try:
@@ -92,6 +163,7 @@ def espetaculo_home(request):
 
     context = {
         'espetaculo': espetaculo,
+        'tem_filmagens': _tem_filmagens(request.user),
     }
 
     return render(request, 'espetaculo/home.html', context)
@@ -120,6 +192,7 @@ def espetaculos_lista_publica(request):
             'espetaculos': espetaculos,
             'ids_com_maquiagem': ids_com_maquiagem,
             'patrocinadores': patrocinadores_para('listagem'),
+            'tem_filmagens': _tem_filmagens(request.user),
         },
     )
 

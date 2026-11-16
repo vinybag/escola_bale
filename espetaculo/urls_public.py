@@ -31,6 +31,10 @@ urlpatterns = [
     path('ingresso/verificar-pix/<str:payment_id>/', views.verificar_pagamento_ingresso_pix, name='verificar_pagamento_ingresso_pix'),
     path('ingresso/sucesso/<int:pedido_id>/', views.ingresso_sucesso, name='ingresso_sucesso'),
     path('meus-ingressos/', views.meus_ingressos, name='meus_ingressos'),
+
+    # Filmagens (só para logins liberados no admin)
+    path('minhas-filmagens/', views.minhas_filmagens, name='minhas_filmagens'),
+    path('<int:pk>/filmagem/', views.filmagem_acessar, name='filmagem_acessar'),
     path('ingressos/<int:ingresso_id>/imagem/', views.ver_imagem_ingresso, name='ver_imagem_ingresso'),
     path('ingressos/<int:ingresso_id>/baixar/', views.baixar_ingresso, name='baixar_ingresso'),
     path('ingressos/<int:ingresso_id>/baixar-qr/', views.baixar_qrcode_ingresso, name='baixar_qrcode_ingresso'),

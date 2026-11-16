@@ -59,6 +59,13 @@
         </a>
         {% endif %}
 
+        {% if tem_filmagens %}
+        <a href="{% url 'espetaculo:minhas_filmagens' %}" style="background: white; padding: 1.25rem; border-radius: 10px; text-align: center; text-decoration: none; box-shadow: 0 2px 10px rgba(0,0,0,0.1); transition: transform 0.3s;">
+            <h3 style="color: #2c3e50; margin-bottom: 0.25rem; font-size: 1rem;">Filmagens</h3>
+            <p style="color: #666; font-size: 0.75rem;">Assista ou baixe a filmagem</p>
+        </a>
+        {% endif %}
+
     </div>
 
     <!-- Informacoes Gerais -->

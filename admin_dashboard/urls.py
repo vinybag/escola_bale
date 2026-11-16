@@ -62,6 +62,7 @@ urlpatterns = [
     path('espetaculos/<int:pk>/ingressos-vendidos/', views.espetaculo_ingressos_vendidos, name='espetaculo_ingressos_vendidos'),
     path('espetaculos/<int:pk>/ingressos-vendidos/contatos/', views.espetaculo_contatos_ingressos, name='espetaculo_contatos_ingressos'),
     path('espetaculos/<int:pk>/maquiagens/', views.espetaculo_maquiagens, name='espetaculo_maquiagens'),
+    path('espetaculos/<int:pk>/filmagens/', views.espetaculo_filmagens, name='espetaculo_filmagens'),
     path('maquiagens/agenda/<int:agenda_id>/horario/adicionar/', views.adicionar_horario_maquiagem, name='adicionar_horario_maquiagem'),
     path('maquiagens/horario/<int:horario_id>/excluir/', views.excluir_horario_maquiagem, name='excluir_horario_maquiagem'),
     path('maquiagens/horario/<int:horario_id>/agendar/', views.agendar_maquiagem_admin, name='agendar_maquiagem_admin'),

@@ -12,6 +12,15 @@
         Confira os espetáculos, eventos, audições e ingressos disponíveis.
     </p>
 
+    {% if tem_filmagens %}
+        <div style="margin: 0 0 2rem 0; text-align: center;">
+            <a href="{% url 'espetaculo:minhas_filmagens' %}"
+               style="display: inline-block; padding: 0.7rem 1.4rem; background: #b07a84; color: white; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.95rem;">
+                Minhas filmagens
+            </a>
+        </div>
+    {% endif %}
+
 
     {% if patrocinadores %}
         <div style="margin: 0 0 2rem 0; padding: 1.5rem; background: #fff; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); text-align: center;">

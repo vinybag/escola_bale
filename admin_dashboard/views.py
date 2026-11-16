@@ -6538,6 +6538,143 @@ def espetaculo_patrocinadores(request, pk):
     )
 
 
+@login_required
+def espetaculo_filmagens(request, pk):
+    """
+    Cadastra o link da filmagem de UM espetáculo/dia e escolhe quais
+    logins podem acessá-lo.
+
+    Cada dia do evento é um registro de Espetáculo, então cada um tem o
+    seu próprio link e a sua própria lista de logins.
+
+    Quem aparece para ser marcado: responsáveis (que têm alunas) e
+    alunas adultas com login próprio. Quem já estava marcado continua
+    aparecendo mesmo que tenha deixado de se encaixar nisso, para poder
+    ser desmarcado.
+    """
+    if not request.user.is_staff:
+        return redirect('home')
+
+    from django.contrib.auth import get_user_model
+    from django.core.exceptions import ValidationError
+    from django.core.validators import URLValidator
+
+    User = get_user_model()
+    espetaculo = get_object_or_404(Espetaculo, pk=pk)
+
+    link_valor = espetaculo.link_filmagem
+    selecionados_ids = set(
+        espetaculo.usuarios_filmagem.values_list('pk', flat=True)
+    )
+
+    if request.method == 'POST':
+        link = (request.POST.get('link_filmagem') or '').strip()
+
+        ids_enviados = set()
+        for valor in request.POST.getlist('usuarios'):
+            try:
+                ids_enviados.add(int(valor))
+            except (TypeError, ValueError):
+                continue
+
+        erro_link = ''
+        if link:
+            if len(link) > 500:
+                erro_link = 'O link é grande demais (máximo de 500 caracteres).'
+            else:
+                try:
+                    URLValidator(schemes=['http', 'https'])(link)
+                except ValidationError:
+                    erro_link = (
+                        'O link informado não é válido. Use o endereço '
+                        'completo, começando com https://'
+                    )
+
+        if erro_link:
+            # Não perde o que foi digitado/marcado: mostra a tela de novo.
+            messages.error(request, erro_link)
+            link_valor = link
+            selecionados_ids = ids_enviados
+        else:
+            usuarios_validos = User.objects.filter(pk__in=ids_enviados)
+
+            espetaculo.link_filmagem = link
+            espetaculo.save(update_fields=['link_filmagem', 'atualizado_em'])
+            espetaculo.usuarios_filmagem.set(usuarios_validos)
+
+            total = usuarios_validos.count()
+            if not link:
+                messages.warning(
+                    request,
+                    'Salvo, mas sem link: ninguém verá a filmagem até você '
+                    'informar o link.',
+                )
+            else:
+                messages.success(
+                    request,
+                    f'Filmagem salva. {total} login(s) com acesso.',
+                )
+            return redirect('admin_dashboard:espetaculo_filmagens', pk=pk)
+
+    candidatos = (
+        User.objects.filter(
+            Q(is_active=True, alunas__isnull=False)
+            | Q(is_active=True, aluna_vinculada__isnull=False)
+            | Q(pk__in=selecionados_ids)
+        )
+        .distinct()
+        .select_related('aluna_vinculada')
+        .prefetch_related('alunas')
+        .order_by('first_name', 'last_name', 'username')
+    )
+
+    usuarios = []
+    for usuario in candidatos:
+        nomes_alunas = [aluna.nome for aluna in usuario.alunas.all()]
+        aluna_propria = getattr(usuario, 'aluna_vinculada', None)
+
+        if aluna_propria and aluna_propria.nome not in nomes_alunas:
+            nomes_alunas.append(aluna_propria.nome)
+
+        if usuario.alunas.all() and aluna_propria:
+            tipo = 'Responsável e aluna'
+        elif aluna_propria:
+            tipo = 'Aluna adulta'
+        elif nomes_alunas:
+            tipo = 'Responsável'
+        else:
+            tipo = 'Sem aluna vinculada'
+
+        nome = usuario.get_full_name() or usuario.username
+        alunas_texto = ', '.join(nomes_alunas)
+
+        usuarios.append({
+            'id': usuario.pk,
+            'nome': nome,
+            'username': usuario.username,
+            'email': usuario.email,
+            'tipo': tipo,
+            'alunas': alunas_texto,
+            'marcado': usuario.pk in selecionados_ids,
+            'busca': ' '.join(
+                [nome, usuario.username, usuario.email, alunas_texto]
+            ).lower(),
+        })
+
+    context = {
+        'espetaculo': espetaculo,
+        'link_filmagem': link_valor,
+        'usuarios': usuarios,
+        'total_marcados': sum(1 for u in usuarios if u['marcado']),
+    }
+
+    return render(
+        request,
+        'admin_dashboard/espetaculos/filmagens.html',
+        context,
+    )
+
+
 def _nome_maquiadora(valor):
     """Normaliza o nome digitado: tira espaços sobrando no começo, no fim e no meio."""
     return ' '.join((valor or '').split())

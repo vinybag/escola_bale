@@ -5,6 +5,7 @@ from io import BytesIO
 import qrcode
 from PIL import Image, ImageDraw, ImageFont
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.core.validators import FileExtensionValidator
@@ -130,6 +131,23 @@ class Espetaculo(models.Model):
             'horário marcado para ela. Marcado: a família escolhe o próprio '
             'horário entre os livres.'
         ),
+    )
+
+    # Filmagem do espetáculo (vendida separadamente): link do Drive e
+    # quais logins podem acessá-lo. O link nunca é exibido em páginas
+    # abertas; quem tem acesso entra por uma rota do site que confere
+    # o login (ver views.filmagem_acessar).
+    link_filmagem = models.URLField(
+        max_length=500,
+        blank=True,
+        verbose_name='Link da filmagem',
+        help_text='Link do Google Drive (ou outro) com a filmagem deste dia.',
+    )
+    usuarios_filmagem = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        blank=True,
+        related_name='filmagens_liberadas',
+        verbose_name='Logins com acesso à filmagem',
     )
 
     # Controle
