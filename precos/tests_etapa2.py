@@ -3,6 +3,7 @@
 from datetime import date, timedelta
 from decimal import Decimal
 from io import StringIO
+from unittest import mock
 
 from django.contrib.auth.models import User
 from django.core.management import call_command
@@ -418,3 +419,65 @@ class RegraQuemRecebeTelaTests(BaseAlunas):
         })
 
         self.assertEqual(RegraDesconto.objects.get(nome='Geral').quem_recebe, 'automatico')
+
+
+@ESTATICOS_SIMPLES
+class ConferirRobustezTests(BaseAlunas):
+    def setUp(self):
+        super().setUp()
+        self.c = Client()
+        self.c.force_login(User.objects.create_user('adm', email='a@x.com', password='x', is_staff=True))
+
+    def test_abrir_a_conferencia_nao_grava_nada(self):
+        aluna = self.nova_aluna('Ana', [self.ballet], valor_mensalidade=D('100'))
+        EntradaTurma.objects.all().delete()
+
+        resposta = self.c.get(reverse('precos_admin:conferir') + '?ver=todas')
+
+        self.assertEqual(resposta.status_code, 200)
+        self.assertContains(resposta, 'Ana')
+        self.assertEqual(EntradaTurma.objects.count(), 0)
+        self.assertFalse(PrecoAluna.objects.exists())
+
+    def test_aluna_com_dado_estranho_nao_derruba_a_tela(self):
+        self.nova_aluna('Ana', [self.ballet], valor_mensalidade=D('100'))
+        bia = self.nova_aluna('Bia', [self.ballet], valor_mensalidade=D('100'))
+        original = servico.calcular_para_aluna
+
+        def quebra_na_bia(aluna, *args, **kwargs):
+            if aluna.pk == bia.pk:
+                raise ValueError('dado estranho')
+
+            return original(aluna, *args, **kwargs)
+
+        with mock.patch('precos.admin_views.servico.calcular_para_aluna', side_effect=quebra_na_bia):
+            resposta = self.c.get(reverse('precos_admin:conferir') + '?ver=todas')
+
+        self.assertEqual(resposta.status_code, 200)
+        self.assertContains(resposta, 'Ana')
+        self.assertContains(resposta, 'erro ao calcular')
+        self.assertContains(resposta, 'dado estranho')
+
+    def test_numero_de_consultas_nao_explode_com_muitas_alunas(self):
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+
+        for i in range(30):
+            self.nova_aluna(f'Aluna {i}', [self.ballet, self.jazz], valor_mensalidade=D('100'))
+
+        with CaptureQueriesContext(connection) as consultas:
+            self.c.get(reverse('precos_admin:conferir') + '?ver=todas')
+
+        self.assertLess(len(consultas), 30 * 12)  # antes eram ~16 por aluna
+
+
+    def test_mesma_conta_com_leitura_e_com_gravacao(self):
+        velha = self.nova_aluna('Velha', [self.ballet], matricula=date(2025, 1, 1))
+        nova = self.nova_aluna('Nova', [self.ballet, self.jazz], matricula=date(2026, 2, 1))
+
+        for aluna in (velha, nova):
+            lida = servico.calcular_para_aluna(
+                Aluna.objects.prefetch_related('turmas', 'entradas_turma', 'grupos_desconto').get(pk=aluna.pk),
+                escrever=False,
+            )
+            self.assertEqual(lida.total, servico.calcular_para_aluna(aluna).total)

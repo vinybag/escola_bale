@@ -44,22 +44,41 @@ def garantir_entradas(aluna):
     EntradaTurma.objects.filter(aluna=aluna).exclude(turma_id__in=turmas_ids).delete()
 
 
-def entradas_da_aluna(aluna):
-    """Entradas gravadas da aluna, na ordem em que ela entrou."""
-    garantir_entradas(aluna)
-    entradas = EntradaTurma.objects.filter(aluna=aluna, turma__tipo='turma').select_related('turma')
+def entradas_da_aluna(aluna, escrever=True):
+    """
+    Entradas da aluna nas turmas, na ordem em que ela entrou.
 
-    return [
-        Entrada(turma=e.turma, data=e.data_entrada, apos_cadastro=e.data_entrada > aluna.data_matricula)
-        for e in entradas
-    ]
+    escrever=False: só lê (usa o que foi carregado antes com prefetch_related) e, para turma sem
+    entrada gravada, considera a data da matrícula, sem gravar nada. Usado nas telas de conferência.
+    """
+    if escrever:
+        garantir_entradas(aluna)
+        entradas = EntradaTurma.objects.filter(aluna=aluna, turma__tipo='turma').select_related('turma')
+
+        return [
+            Entrada(turma=e.turma, data=e.data_entrada, apos_cadastro=e.data_entrada > aluna.data_matricula)
+            for e in entradas
+        ]
+
+    turmas = {t.pk: t for t in aluna.turmas.all() if t.tipo == 'turma'}
+    gravadas = {e.turma_id: e for e in aluna.entradas_turma.all() if e.turma_id in turmas}
+    linhas = []
+
+    for turma in turmas.values():
+        gravada = gravadas.get(turma.pk)
+        data = gravada.data_entrada if gravada else aluna.data_matricula
+        chave = (data, gravada.ordem if gravada else 0, gravada.pk if gravada else SEM_PK,
+                 -(turma.valor_mensalidade or Decimal('0')), turma.nome)
+        linhas.append((chave, Entrada(turma=turma, data=data, apos_cadastro=data > aluna.data_matricula)))
+
+    return [entrada for _, entrada in sorted(linhas, key=lambda x: x[0])]
 
 
 def grupos_da_aluna(aluna):
     if aluna is None or aluna.pk is None:
         return set()
 
-    return set(aluna.grupos_desconto.filter(ativo=True).values_list('pk', flat=True))
+    return {g.pk for g in aluna.grupos_desconto.all() if g.ativo}
 
 
 def _chave(aluna_ou_none, data_matricula=None):
@@ -127,13 +146,23 @@ def montar_familia(*, aluna=None, responsavel_id=None, usuario_id=None, ligacoes
     )
 
 
-def calcular_para_aluna(aluna, quando=None):
+def carregar_contexto():
+    """Regras, combinações e arredondamento carregados UMA vez, para calcular muitas alunas de seguida."""
+    return {
+        'regras': motor.regras_ativas(),
+        'combinacoes': motor.combinacoes_ativas(),
+        'passo': motor.Configuracao.atual().passo_arredondamento,
+    }
+
+
+def calcular_para_aluna(aluna, quando=None, *, contexto=None, escrever=True):
     """Cálculo da aluna gravada, com os dados que estão no banco."""
     return motor.calcular(
-        entradas_da_aluna(aluna),
+        entradas_da_aluna(aluna, escrever=escrever),
         grupos=grupos_da_aluna(aluna),
         familia=montar_familia(aluna=aluna, marcada=marcada_para_receber(aluna)),
         quando=quando,
+        **(contexto or {}),
     )
 
 

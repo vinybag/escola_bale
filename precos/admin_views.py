@@ -3,6 +3,8 @@
 from datetime import date
 from functools import wraps
 
+import logging
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count
@@ -694,21 +696,47 @@ def calcular_aluna(request):
 
 # ------------------------------------------------------ conferir todas as alunas
 
+logger = logging.getLogger(__name__)
+
+
 def _linhas_de_conferencia():
+    """
+    Uma linha por aluna ativa: valor da ficha x valor pelo cálculo.
+
+    Só lê (não grava nada) e carrega tudo de uma vez, para a tela abrir rápido mesmo com muitas
+    alunas. Se o cálculo de UMA aluna falhar, a linha mostra o erro e as demais continuam.
+    """
     hoje = timezone.localdate()
+    contexto = servico.carregar_contexto()
     linhas = []
 
-    for aluna in Aluna.objects.filter(ativa=True).select_related('responsavel').order_by('nome'):
-        resultado = servico.calcular_para_aluna(aluna, quando=hoje)
-        manual = servico.valor_e_manual(aluna)
+    alunas = (
+        Aluna.objects.filter(ativa=True)
+        .select_related('responsavel')
+        .prefetch_related('turmas', 'entradas_turma', 'grupos_desconto')
+        .order_by('nome')
+    )
+
+    for aluna in alunas:
         atual = aluna.valor_mensalidade
-        calculado = resultado.total if resultado.ok else None
+        manual = servico.valor_e_manual(aluna)
+        turmas = ', '.join(t.nome for t in aluna.turmas.all() if t.tipo == 'turma')
+        erro = ''
+
+        try:
+            resultado = servico.calcular_para_aluna(aluna, quando=hoje, contexto=contexto, escrever=False)
+            calculado = resultado.total if resultado.ok else None
+            avisos = resultado.avisos
+        except Exception as e:  # uma aluna com dado estranho não derruba a tela inteira
+            logger.exception('Conferir alunas: erro ao calcular a aluna %s', aluna.pk)
+            calculado, avisos, erro = None, [], f'{type(e).__name__}: {e}'
+
         diferenca = (calculado - atual) if (calculado is not None and atual is not None) else None
         linhas.append({
             'aluna': aluna, 'manual': manual, 'atual': atual, 'calculado': calculado,
-            'diferenca': diferenca, 'avisos': resultado.avisos,
+            'diferenca': diferenca, 'avisos': avisos, 'erro': erro,
             'igual': diferenca is not None and diferenca == 0,
-            'turmas': ', '.join(t.nome for t in aluna.turmas.filter(tipo='turma')),
+            'turmas': turmas,
         })
 
     return linhas
@@ -736,8 +764,14 @@ def conferir_aplicar(request):
     aplicadas = 0
     hoje = timezone.localdate()
 
+    contexto = servico.carregar_contexto()
+
     for aluna in Aluna.objects.filter(pk__in=ids, ativa=True):
-        resultado = servico.calcular_para_aluna(aluna, quando=hoje)
+        try:
+            resultado = servico.calcular_para_aluna(aluna, quando=hoje, contexto=contexto)
+        except Exception:
+            logger.exception('Conferir alunas: erro ao aplicar na aluna %s', aluna.pk)
+            continue
 
         if not resultado.ok:
             continue

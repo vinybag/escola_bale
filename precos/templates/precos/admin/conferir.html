@@ -27,7 +27,7 @@
                     <td><a href="{% url 'admin_dashboard:aluna_editar' l.aluna.pk %}"><strong>{{ l.aluna.nome }}</strong></a></td>
                     <td style="font-size:.85rem;">{{ l.turmas|default:"—" }}</td>
                     <td>{{ l.atual|moeda }}</td>
-                    <td>{% if l.calculado is not None %}{{ l.calculado|moeda }}{% else %}<span class="pr-dica">{{ l.avisos|first|default:"não dá para calcular" }}</span>{% endif %}</td>
+                    <td>{% if l.calculado is not None %}{{ l.calculado|moeda }}{% elif l.erro %}<span class="pr-dica" style="color:#b71c1c;">erro ao calcular ({{ l.erro }})</span>{% else %}<span class="pr-dica">{{ l.avisos|first|default:"não dá para calcular" }}</span>{% endif %}</td>
                     <td>{% if l.diferenca is None %}—{% elif l.igual %}<span class="pr-badge pr-ativa">igual</span>{% else %}<strong>{{ l.diferenca|floatformat:2 }}</strong>{% endif %}</td>
                     <td>{% if l.manual %}<span class="pr-badge pr-desligada">valor manual</span>{% else %}<span class="pr-badge pr-futura">calculado</span>{% endif %}</td>
                 </tr>
