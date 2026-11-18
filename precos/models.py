@@ -133,6 +133,17 @@ class RegraDesconto(models.Model):
     familia = models.CharField(max_length=24, choices=FAMILIAS, default='nenhuma')
     grau = models.ForeignKey(GrauParentesco, null=True, blank=True, on_delete=models.CASCADE, related_name='regras')
 
+    QUEM_RECEBE = [
+        ('automatico', 'Automático (irmãs: a que entrou depois · parentes: todas as marcadas)'),
+        ('depois', 'Só a que entrou depois'),
+        ('ambas', 'As duas (todas as ligadas)'),
+        ('marcada', 'Só a que eu marcar na ficha da aluna'),
+    ]
+    quem_recebe = models.CharField(
+        max_length=12, choices=QUEM_RECEBE, default='automatico',
+        help_text='Vale para regras de irmãs e de parentesco: quem, entre as ligadas, recebe o desconto.',
+    )
+
     turmas = models.ManyToManyField(
         'usuarios.Turma', blank=True, related_name='regras_desconto',
         help_text='Se escolher turmas, a regra só vale para elas. Vazio = todas.',
@@ -181,6 +192,9 @@ class RegraDesconto(models.Model):
             partes.append('responsável que é aluna')
         elif self.familia == 'parentesco' and self.grau_id:
             partes.append(f'parentesco: {self.grau.nome}')
+
+        if self.familia in ('irma_mesma_responsavel', 'parentesco') and self.quem_recebe != 'automatico':
+            partes.append(f'recebe: {dict(self.QUEM_RECEBE)[self.quem_recebe].lower()}')
 
         if self.inicio or self.fim:
             de = self.inicio.strftime('%d/%m/%Y') if self.inicio else '…'
@@ -256,3 +270,70 @@ class CombinacaoPrecoGrupo(models.Model):
 
     class Meta:
         unique_together = [('item', 'grupo')]
+
+
+
+class EntradaTurma(models.Model):
+    """
+    Quando a aluna entrou em cada turma (guarda a ORDEM de entrada, que define 1ª/2ª/3ª turma).
+
+    É mantida sozinha: quando uma turma é marcada na ficha da aluna, nasce uma entrada com a
+    data de hoje; quando é desmarcada, a entrada some. "Já era aluna" = entrou depois do dia
+    do primeiro cadastro da aluna.
+    """
+
+    aluna = models.ForeignKey('usuarios.Aluna', on_delete=models.CASCADE, related_name='entradas_turma')
+    turma = models.ForeignKey('usuarios.Turma', on_delete=models.CASCADE, related_name='entradas_aluna')
+    data_entrada = models.DateField()
+    ordem = models.PositiveSmallIntegerField(
+        default=0, help_text='Desempata turmas que entraram no mesmo dia (1 = conta primeiro).',
+    )
+
+    class Meta:
+        unique_together = [('aluna', 'turma')]
+        ordering = ['data_entrada', 'ordem', 'pk']
+        verbose_name = 'Entrada em turma'
+        verbose_name_plural = 'Entradas em turmas'
+
+    def __str__(self):
+        return f'{self.aluna} → {self.turma} ({self.data_entrada:%d/%m/%Y})'
+
+
+class PrecoAluna(models.Model):
+    """
+    Como a mensalidade de uma aluna é definida. Sem registro = valor MANUAL (alunas antigas).
+
+    valor_manual=True: o valor digitado na ficha é o que vale; nada é recalculado sozinho.
+    valor_manual=False: o valor vem do cálculo (turmas + descontos) e acompanha o mês cobrado.
+    """
+
+    aluna = models.OneToOneField('usuarios.Aluna', on_delete=models.CASCADE, related_name='preco')
+    valor_manual = models.BooleanField(default=True, verbose_name='Valor manual')
+    recebe_desconto_familiar = models.BooleanField(
+        default=False, verbose_name='Marcada para receber o desconto de irmã/parentesco',
+        help_text='Vale nas regras configuradas como "só a que eu marcar".',
+    )
+    atualizado_em = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Preço da aluna'
+        verbose_name_plural = 'Preços das alunas'
+
+    def __str__(self):
+        return f'{self.aluna} ({"manual" if self.valor_manual else "calculado"})'
+
+
+class LigacaoFamiliar(models.Model):
+    """Parentesco marcado entre duas alunas (ex.: primas, irmãs adultas). Vale nos dois sentidos."""
+
+    aluna = models.ForeignKey('usuarios.Aluna', on_delete=models.CASCADE, related_name='ligacoes_familiares')
+    parente = models.ForeignKey('usuarios.Aluna', on_delete=models.CASCADE, related_name='ligacoes_como_parente')
+    grau = models.ForeignKey(GrauParentesco, on_delete=models.CASCADE, related_name='ligacoes')
+
+    class Meta:
+        unique_together = [('aluna', 'parente', 'grau')]
+        verbose_name = 'Ligação familiar'
+        verbose_name_plural = 'Ligações familiares'
+
+    def __str__(self):
+        return f'{self.aluna} — {self.parente} ({self.grau})'

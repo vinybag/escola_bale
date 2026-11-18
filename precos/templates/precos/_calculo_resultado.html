@@ -1,0 +1,30 @@
+{% load precos_tags %}
+{% for erro in erros %}<div style="padding:.6rem .8rem; background:#fdecea; color:#8e1c1c; border-radius:10px; margin-bottom:.6rem; font-size:.9rem;">{{ erro }}</div>{% endfor %}
+{% for aviso in resultado.avisos %}{% if not sem_turmas %}<div style="padding:.6rem .8rem; background:#fff8e6; color:#7a5b00; border-radius:10px; margin-bottom:.6rem; font-size:.9rem;">{{ aviso }}</div>{% endif %}{% endfor %}
+{% if sem_turmas %}
+    <p style="margin:0; color:#8a8390; font-size:.92rem;">Escolha as turmas da aluna para ver o cálculo.</p>
+{% else %}
+<div style="overflow-x:auto;"><table style="width:100%; border-collapse:collapse; font-size:.9rem;">
+    <thead><tr style="text-align:left; color:#7a7280; font-size:.75rem; text-transform:uppercase;"><th style="padding:.4rem .5rem;">Turma</th><th style="padding:.4rem .5rem;">Valor cheio</th><th style="padding:.4rem .5rem;">Descontos</th><th style="padding:.4rem .5rem; text-align:right;">Fica</th></tr></thead>
+    <tbody>
+    {% for l in resultado.linhas %}
+        <tr style="border-top:1px solid #f1eaf6; vertical-align:top;">
+            <td style="padding:.5rem;"><strong>{{ l.nome }}</strong><br><span style="color:#8a8390; font-size:.8rem;">{% if l.posicao %}{{ l.posicao }}ª turma{% if l.combinacao %} (combinação){% endif %}{% else %}preço fixo (não conta como modalidade){% endif %}{% if l.posicao and l.sem_descontos %} · preço fixo, sem descontos{% endif %}</span></td>
+            <td style="padding:.5rem;">{{ l.preco_cheio|moeda }}</td>
+            <td style="padding:.5rem; font-size:.85rem;">
+                {% for d in l.descontos %}
+                    {% if d.tipo == 'preco_fixo' or d.tipo == 'combinacao' %}{{ d.nome }}: passa a custar {{ l.preco_base|moeda }}<br>
+                    {% else %}{{ d.nome }} ({{ d.percentual|floatformat:"-2" }}%): − {{ d.valor|moeda }}<br>{% endif %}
+                {% empty %}<span style="color:#8a8390;">nenhum</span>{% endfor %}
+            </td>
+            <td style="padding:.5rem; text-align:right;"><strong>{{ l.final|moeda }}</strong></td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table></div>
+<p style="text-align:right; margin:.8rem 0 0;">
+    {% if resultado.ajuste_arredondamento %}<span style="color:#8a8390; font-size:.82rem;">Arredondamento para baixo: − {{ resultado.ajuste_arredondamento|floatformat:2 }}</span><br>{% endif %}
+    Mensalidade pelo cálculo: <strong style="font-size:1.3rem; color:#4a235f;">{{ resultado.total|moeda }}</strong>
+</p>
+{% if tem_aluna and atual is not None and resultado.ok %}<p style="text-align:right; margin:.2rem 0 0; color:#6f6875; font-size:.88rem;">Valor que está na ficha hoje: <strong>{{ atual|moeda }}</strong></p>{% endif %}
+{% endif %}

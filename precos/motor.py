@@ -48,8 +48,11 @@ class Familia:
     """O que o sistema sabe sobre a família da aluna (preenchido por quem chama o motor)."""
 
     irma_anterior: bool = False       # tem irmã (mesma responsável) que entrou antes
+    tem_irma: bool = False            # tem irmã (mesma responsável), entrando antes ou depois
     responsavel_aluna: bool = False   # é responsável por alguma aluna
-    graus: frozenset = frozenset()    # graus de parentesco em que ela recebe desconto
+    graus: frozenset = frozenset()    # graus de parentesco marcados com alguma parente
+    graus_antes: frozenset = frozenset()  # desses, os em que a parente entrou antes dela
+    marcada: bool = False             # foi marcada na ficha para receber o desconto de família
 
 
 @dataclass
@@ -105,6 +108,43 @@ def _posicao_confere(incide_em, posicao):
     }[incide_em]
 
 
+def _familia_confere(regra, familia):
+    """
+    Regras de irmã e de parentesco: quem, entre as ligadas, recebe.
+
+    automatico: irmãs → só a que entrou depois; parentes → todas as marcadas (como sempre foi).
+    depois:     só a que entrou depois da parente.
+    ambas:      todas as ligadas.
+    marcada:    só a aluna marcada na ficha ("recebe o desconto de família").
+    """
+    modo = regra.quem_recebe
+
+    if regra.familia == 'responsavel_aluna':
+        return familia.responsavel_aluna
+
+    if regra.familia == 'irma_mesma_responsavel':
+        ligada = familia.tem_irma or familia.irma_anterior
+        modo = 'depois' if modo == 'automatico' else modo
+
+        if modo == 'depois':
+            return familia.irma_anterior
+
+        return ligada and (modo == 'ambas' or familia.marcada)
+
+    if regra.familia == 'parentesco':
+        if regra.grau_id not in familia.graus:
+            return False
+
+        modo = 'ambas' if modo == 'automatico' else modo
+
+        if modo == 'depois':
+            return regra.grau_id in familia.graus_antes
+
+        return modo == 'ambas' or familia.marcada
+
+    return True
+
+
 def _regra_se_aplica(regra, entrada, posicao, grupos, familia, quando):
     if not regra.ativa or not _esta_no_periodo(regra, quando):
         return False
@@ -133,16 +173,7 @@ def _regra_se_aplica(regra, entrada, posicao, grupos, familia, quando):
     if {g.pk for g in regra.grupos_excecao.all()} & grupos:
         return False
 
-    if regra.familia == 'irma_mesma_responsavel' and not familia.irma_anterior:
-        return False
-
-    if regra.familia == 'responsavel_aluna' and not familia.responsavel_aluna:
-        return False
-
-    if regra.familia == 'parentesco' and regra.grau_id not in familia.graus:
-        return False
-
-    return True
+    return _familia_confere(regra, familia)
 
 
 def _arredondar_para_baixo(valor, passo):

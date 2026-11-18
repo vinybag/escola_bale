@@ -6,6 +6,7 @@ from django.db import IntegrityError
 
 from usuarios.models import Aluna
 from pagamentos.models import Mensalidade
+from precos import servico as precos_servico
 
 
 class Command(BaseCommand):
@@ -55,7 +56,10 @@ class Command(BaseCommand):
                 puladas_sem_pagador += 1
                 continue
 
-            if aluna.valor_mensalidade is None:
+            # Valor manual: o da ficha. Valor calculado: o cálculo do mês (campanhas valem só no período).
+            valor_do_mes = precos_servico.valor_para_cobrar(aluna, mes_referencia)
+
+            if valor_do_mes is None:
                 self.stdout.write(
                     self.style.WARNING(
                         f"[PULADA] {aluna.nome}: sem valor_mensalidade definido."
@@ -95,7 +99,7 @@ class Command(BaseCommand):
                     aluna=aluna,
                     responsavel=pagador,
                     mes_referencia=mes_referencia,
-                    valor=aluna.valor_mensalidade,
+                    valor=valor_do_mes,
                     data_vencimento=data_vencimento,
                     status="pendente",
                 )

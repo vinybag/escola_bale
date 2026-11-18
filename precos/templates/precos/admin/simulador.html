@@ -31,8 +31,11 @@
         <div class="pr-campo"><label class="pr-lab">Família</label>
             <div class="pr-checks" style="flex-direction:column;">
                 <label class="pr-check"><input type="checkbox" name="irma_anterior" {% if e.irma_anterior %}checked{% endif %}> Tem irmã (mesma responsável) que entrou antes</label>
+                <label class="pr-check"><input type="checkbox" name="tem_irma" {% if e.tem_irma %}checked{% endif %}> Tem irmã (mesma responsável), entrou antes ou depois</label>
                 <label class="pr-check"><input type="checkbox" name="responsavel_aluna" {% if e.responsavel_aluna %}checked{% endif %}> É responsável que também é aluna</label>
                 {% for g in graus %}<label class="pr-check"><input type="checkbox" name="graus" value="{{ g.pk }}" {% if g.pk in e.graus %}checked{% endif %}> Parentesco marcado: {{ g.nome }}</label>{% endfor %}
+                <label class="pr-check"><input type="checkbox" name="parente_antes" {% if e.parente_antes %}checked{% endif %}> A parente marcada entrou antes dela</label>
+                <label class="pr-check"><input type="checkbox" name="marcada" {% if e.marcada %}checked{% endif %}> Foi marcada para receber o desconto (regras "só a que eu marcar")</label>
             </div></div>
     </div>
     <button type="submit" class="pr-btn pr-btn-p">Calcular</button>

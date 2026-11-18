@@ -6,15 +6,18 @@ from functools import wraps
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count
+from django.http import JsonResponse
+from django.template.loader import render_to_string
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from usuarios.models import Aluna, Turma
 
-from . import motor
+from . import motor, servico
 from .models import (
-    Combinacao, CombinacaoItem, CombinacaoPrecoGrupo, Configuracao, GrauParentesco, GrupoDesconto, RegraDesconto,
+    Combinacao, CombinacaoItem, CombinacaoPrecoGrupo, Configuracao, GrauParentesco, GrupoDesconto, PrecoAluna,
+    RegraDesconto,
 )
 from .motor import Entrada, Familia
 from .util import ler_data, ler_decimal
@@ -75,7 +78,7 @@ def _valores_da_regra(regra):
         return {
             'nome': '', 'ativa': True, 'efeito': RegraDesconto.PERCENTUAL, 'valor': '',
             'incide_em': 'segunda', 'publico': 'todas', 'grupo': '', 'grupos_excecao': [],
-            'familia': 'nenhuma', 'grau': '', 'turmas': [], 'inicio': '', 'fim': '',
+            'familia': 'nenhuma', 'grau': '', 'quem_recebe': 'automatico', 'turmas': [], 'inicio': '', 'fim': '',
             'so_turmas_entradas_no_periodo': False, 'substitui_outros': False, 'observacao': '',
         }
 
@@ -84,7 +87,8 @@ def _valores_da_regra(regra):
         'valor': f'{regra.valor:.2f}'.replace('.', ',').replace(',00', ''),
         'incide_em': regra.incide_em, 'publico': regra.publico,
         'grupo': regra.grupo_id or '', 'grupos_excecao': [g.pk for g in regra.grupos_excecao.all()],
-        'familia': regra.familia, 'grau': regra.grau_id or '', 'turmas': [t.pk for t in regra.turmas.all()],
+        'familia': regra.familia, 'grau': regra.grau_id or '', 'quem_recebe': regra.quem_recebe,
+        'turmas': [t.pk for t in regra.turmas.all()],
         'inicio': regra.inicio.isoformat() if regra.inicio else '',
         'fim': regra.fim.isoformat() if regra.fim else '',
         'so_turmas_entradas_no_periodo': regra.so_turmas_entradas_no_periodo,
@@ -98,7 +102,7 @@ def _valores_do_post(post):
         'efeito': post.get('efeito', ''), 'valor': post.get('valor', '').strip(),
         'incide_em': post.get('incide_em', ''), 'publico': post.get('publico', ''),
         'grupo': post.get('grupo', ''), 'grupos_excecao': [int(x) for x in post.getlist('grupos_excecao') if x.isdigit()],
-        'familia': post.get('familia', ''), 'grau': post.get('grau', ''),
+        'familia': post.get('familia', ''), 'grau': post.get('grau', ''), 'quem_recebe': post.get('quem_recebe', 'automatico'),
         'turmas': [int(x) for x in post.getlist('turmas') if x.isdigit()],
         'inicio': post.get('inicio', '').strip(), 'fim': post.get('fim', '').strip(),
         'so_turmas_entradas_no_periodo': post.get('so_turmas_entradas_no_periodo') == 'on',
@@ -131,6 +135,9 @@ def _validar_regra(v):
         if v[campo] not in dict(rotulos):
             erros.append(f'Escolha uma opção válida em "{campo}".')
 
+    if v['quem_recebe'] not in dict(RegraDesconto.QUEM_RECEBE):
+        erros.append('Escolha quem recebe o desconto de família.')
+
     if v['familia'] == 'parentesco' and not str(v['grau']).isdigit():
         erros.append('Escolha qual grau de parentesco vale para esta regra.')
 
@@ -152,6 +159,7 @@ def _validar_regra(v):
             'incide_em': v['incide_em'], 'publico': v['publico'],
             'grupo': GrupoDesconto.objects.filter(pk=v['grupo']).first() if str(v['grupo']).isdigit() else None,
             'familia': v['familia'],
+            'quem_recebe': v['quem_recebe'] if v['familia'] in ('irma_mesma_responsavel', 'parentesco') else 'automatico',
             'grau': GrauParentesco.objects.filter(pk=v['grau']).first() if v['familia'] == 'parentesco' and str(v['grau']).isdigit() else None,
             'inicio': inicio, 'fim': fim,
             'so_turmas_entradas_no_periodo': v['so_turmas_entradas_no_periodo'],
@@ -196,6 +204,7 @@ def _tela_regra(request, regra):
         'incide_em_opcoes': RegraDesconto.INCIDE_EM,
         'publicos': RegraDesconto.PUBLICOS,
         'familias': RegraDesconto.FAMILIAS,
+        'quem_recebe_opcoes': RegraDesconto.QUEM_RECEBE,
     })
 
 
@@ -605,10 +614,14 @@ def simulador(request):
             quando = hoje
             erro = 'Data inválida: usei a de hoje.'
 
+        graus_marcados = frozenset(int(x) for x in post.getlist('graus') if x.isdigit())
         familia = Familia(
             irma_anterior=post.get('irma_anterior') == 'on',
+            tem_irma=post.get('tem_irma') == 'on',
             responsavel_aluna=post.get('responsavel_aluna') == 'on',
-            graus=frozenset(int(x) for x in post.getlist('graus') if x.isdigit()),
+            graus=graus_marcados,
+            graus_antes=graus_marcados if post.get('parente_antes') == 'on' else frozenset(),
+            marcada=post.get('marcada') == 'on',
         )
         grupos_escolhidos = {int(x) for x in post.getlist('grupos') if x.isdigit()}
         resultado = motor.calcular(entradas, grupos=grupos_escolhidos, familia=familia, quando=quando)
@@ -619,11 +632,13 @@ def simulador(request):
             'datas': [post.get(f'data_{i}', '') for i in range(1, QTD_TURMAS_SIMULADOR + 1)],
             'quando': quando.isoformat(), 'grupos': grupos_escolhidos,
             'irma_anterior': familia.irma_anterior, 'responsavel_aluna': familia.responsavel_aluna, 'graus': familia.graus,
+            'tem_irma': familia.tem_irma, 'parente_antes': bool(familia.graus_antes), 'marcada': familia.marcada,
         }
     else:
         escolhido = {
             'turmas': [''] * QTD_TURMAS_SIMULADOR, 'apos': ['0'] * QTD_TURMAS_SIMULADOR, 'datas': [''] * QTD_TURMAS_SIMULADOR,
             'quando': hoje.isoformat(), 'grupos': set(), 'irma_anterior': False, 'responsavel_aluna': False, 'graus': frozenset(),
+            'tem_irma': False, 'parente_antes': False, 'marcada': False,
         }
 
     espacos = [
@@ -641,3 +656,102 @@ def simulador(request):
         'resultado': resultado,
         'erro': erro,
     })
+
+
+# ------------------------------------------------- cálculo na ficha da aluna
+
+@somente_staff
+@require_POST
+def calcular_aluna(request):
+    """
+    Cálculo ao vivo da ficha da aluna (não grava nada).
+
+    Recebe o mesmo formulário da ficha e devolve o passo a passo e o total.
+    """
+    aluna = None
+
+    if request.POST.get('aluna_id', '').isdigit():
+        aluna = Aluna.objects.filter(pk=int(request.POST['aluna_id'])).first()
+
+    try:
+        quando = ler_data(request.POST.get('quando'))
+    except ValueError:
+        quando = None
+
+    resultado, dados = servico.calcular_do_formulario(request.POST, aluna, quando=quando)
+    atual = aluna.valor_mensalidade if aluna is not None else None
+    html = render_to_string('precos/_calculo_resultado.html', {
+        'resultado': resultado, 'erros': dados.erros, 'sem_turmas': not dados.entradas,
+        'atual': atual, 'tem_aluna': aluna is not None,
+    }, request=request)
+
+    return JsonResponse({
+        'ok': resultado.ok and not dados.erros,
+        'total': f'{resultado.total:.2f}' if resultado.ok else '',
+        'html': html,
+    })
+
+
+# ------------------------------------------------------ conferir todas as alunas
+
+def _linhas_de_conferencia():
+    hoje = timezone.localdate()
+    linhas = []
+
+    for aluna in Aluna.objects.filter(ativa=True).select_related('responsavel').order_by('nome'):
+        resultado = servico.calcular_para_aluna(aluna, quando=hoje)
+        manual = servico.valor_e_manual(aluna)
+        atual = aluna.valor_mensalidade
+        calculado = resultado.total if resultado.ok else None
+        diferenca = (calculado - atual) if (calculado is not None and atual is not None) else None
+        linhas.append({
+            'aluna': aluna, 'manual': manual, 'atual': atual, 'calculado': calculado,
+            'diferenca': diferenca, 'avisos': resultado.avisos,
+            'igual': diferenca is not None and diferenca == 0,
+            'turmas': ', '.join(t.nome for t in aluna.turmas.filter(tipo='turma')),
+        })
+
+    return linhas
+
+
+@somente_staff
+def conferir(request):
+    """Compara, aluna por aluna, o valor da ficha com o valor do cálculo. Não muda nada sozinha."""
+    linhas = _linhas_de_conferencia()
+    filtro = request.GET.get('ver', 'diferentes')
+
+    if filtro == 'diferentes':
+        linhas = [l for l in linhas if not l['igual']]
+
+    return render(request, 'precos/admin/conferir.html', {
+        'aba': 'conferir', 'linhas': linhas, 'filtro': filtro,
+    })
+
+
+@somente_staff
+@require_POST
+def conferir_aplicar(request):
+    """Troca para o valor calculado SÓ nas alunas que a dona marcou (e passa a recalcular sozinho)."""
+    ids = [int(x) for x in request.POST.getlist('alunas') if x.isdigit()]
+    aplicadas = 0
+    hoje = timezone.localdate()
+
+    for aluna in Aluna.objects.filter(pk__in=ids, ativa=True):
+        resultado = servico.calcular_para_aluna(aluna, quando=hoje)
+
+        if not resultado.ok:
+            continue
+
+        aluna.valor_mensalidade = resultado.total
+        aluna.save(update_fields=['valor_mensalidade'])
+        preco, _ = PrecoAluna.objects.get_or_create(aluna=aluna)
+        preco.valor_manual = False
+        preco.save(update_fields=['valor_manual'])
+        aplicadas += 1
+
+    if aplicadas:
+        messages.success(request, f'{aplicadas} aluna(s) passaram a usar o valor calculado.')
+    else:
+        messages.warning(request, 'Nenhuma aluna foi alterada.')
+
+    return redirect('precos_admin:conferir')

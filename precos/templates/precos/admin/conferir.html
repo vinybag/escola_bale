@@ -1,0 +1,43 @@
+{% extends 'admin_dashboard/base.html' %}
+{% load precos_tags %}
+{% block title %}Conferir alunas{% endblock %}
+{% block content %}
+<div class="pr-page">
+{% include 'precos/admin/_cabecalho.html' %}
+<div class="pr-card">
+    <h3>Conferir o valor de cada aluna</h3>
+    <p class="pr-sub">
+        Compara o valor que está na ficha com o valor que o cálculo daria hoje. <strong>Nada muda sozinho:</strong>
+        só as alunas que você marcar e confirmar passam a usar o valor calculado (e a ser recalculadas a cada mês).
+        As demais continuam com o valor manual.
+    </p>
+    <div class="pr-acoes" style="margin-bottom:1rem;">
+        <a class="pr-btn pr-btn-s {% if filtro == 'diferentes' %}pr-btn-p{% else %}pr-btn-l{% endif %}" href="?ver=diferentes">Só as diferentes</a>
+        <a class="pr-btn pr-btn-s {% if filtro == 'todas' %}pr-btn-p{% else %}pr-btn-l{% endif %}" href="?ver=todas">Todas</a>
+    </div>
+
+    <form method="post" action="{% url 'precos_admin:conferir_aplicar' %}" onsubmit="return confirm('Trocar o valor das alunas marcadas pelo valor calculado? Elas passam a ser recalculadas todo mês.');">
+        {% csrf_token %}
+        <div class="pr-scroll"><table class="pr-table">
+            <thead><tr><th></th><th>Aluna</th><th>Turmas</th><th>Na ficha</th><th>Pelo cálculo</th><th>Diferença</th><th>Como está</th></tr></thead>
+            <tbody>
+            {% for l in linhas %}
+                <tr>
+                    <td>{% if l.calculado is not None %}<input type="checkbox" name="alunas" value="{{ l.aluna.pk }}" style="accent-color:#6b2d8f;">{% endif %}</td>
+                    <td><a href="{% url 'admin_dashboard:aluna_editar' l.aluna.pk %}"><strong>{{ l.aluna.nome }}</strong></a></td>
+                    <td style="font-size:.85rem;">{{ l.turmas|default:"—" }}</td>
+                    <td>{{ l.atual|moeda }}</td>
+                    <td>{% if l.calculado is not None %}{{ l.calculado|moeda }}{% else %}<span class="pr-dica">{{ l.avisos|first|default:"não dá para calcular" }}</span>{% endif %}</td>
+                    <td>{% if l.diferenca is None %}—{% elif l.igual %}<span class="pr-badge pr-ativa">igual</span>{% else %}<strong>{{ l.diferenca|floatformat:2 }}</strong>{% endif %}</td>
+                    <td>{% if l.manual %}<span class="pr-badge pr-desligada">valor manual</span>{% else %}<span class="pr-badge pr-futura">calculado</span>{% endif %}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="7" class="pr-dica">Nenhuma aluna para mostrar.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table></div>
+        {% if linhas %}<button type="submit" class="pr-btn pr-btn-p" style="margin-top:1rem;">Usar o valor calculado nas alunas marcadas</button>{% endif %}
+    </form>
+</div>
+</div>
+{% endblock %}

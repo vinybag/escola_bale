@@ -1,5 +1,5 @@
 {% extends 'admin_dashboard/base.html' %}
-{% load contratos_tags %}
+{% load contratos_tags precos_tags %}
 
 {% block title %}Nova Aluna{% endblock %}
 
@@ -360,6 +360,8 @@
                         </div>
                     </div>
                 </section>
+
+                {% calculo_aluna %}
 
                 {% campos_bolsa %}
 

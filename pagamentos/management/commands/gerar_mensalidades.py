@@ -3,6 +3,7 @@ from datetime import date
 from django.core.management.base import BaseCommand
 from django.db import IntegrityError
 from pagamentos.models import Mensalidade
+from precos import servico as precos_servico
 from usuarios.models import Aluna
 
 
@@ -52,6 +53,13 @@ class Command(BaseCommand):
                     ignoradas += 1
                     continue
 
+                # Valor manual: o da ficha. Valor calculado: o cálculo do mês (campanhas valem só no período).
+                valor_do_mes = precos_servico.valor_para_cobrar(aluna, mes_referencia)
+
+                if valor_do_mes is None:
+                    ignoradas += 1
+                    continue
+
                 ultimo_dia_mes = monthrange(mes_referencia.year, mes_referencia.month)[1]
                 dia_vencimento = min(aluna.dia_vencimento or 10, ultimo_dia_mes)
 
@@ -65,7 +73,7 @@ class Command(BaseCommand):
                     aluna=aluna,
                     responsavel=aluna.responsavel,
                     mes_referencia=mes_referencia,
-                    valor=aluna.valor_mensalidade,
+                    valor=valor_do_mes,
                     data_vencimento=data_vencimento,
                     status='pendente'
                 )

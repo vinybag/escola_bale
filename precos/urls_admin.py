@@ -19,5 +19,8 @@ urlpatterns = [
     path('grupos/<int:pk>/', v.grupo_detalhe, name='grupo_detalhe'),
     path('parentescos/', v.graus, name='graus'),
     path('simulador/', v.simulador, name='simulador'),
+    path('conferir/', v.conferir, name='conferir'),
+    path('conferir/aplicar/', v.conferir_aplicar, name='conferir_aplicar'),
+    path('calcular-aluna/', v.calcular_aluna, name='calcular_aluna'),
     path('configuracao/', v.configuracao, name='configuracao'),
 ]

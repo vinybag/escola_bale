@@ -396,6 +396,18 @@ def aluna_criar(request):
                     messages.error(request, 'Informe um valor de mensalidade válido!')
                     return redirect('admin_dashboard:aluna_criar')
 
+            # Cálculo automático (a menos que "Valor manual" esteja marcado)
+            from precos import servico as precos_servico
+
+            dados_preco, valor_calculado, erro_preco = precos_servico.valor_calculado_do_formulario(request.POST)
+
+            if erro_preco:
+                messages.error(request, erro_preco)
+                return redirect('admin_dashboard:aluna_criar')
+
+            if valor_calculado is not None:
+                valor_mensalidade_decimal = valor_calculado
+
             try:
                 dia_vencimento = int(dia_vencimento)
                 if dia_vencimento < 1 or dia_vencimento > 31:
@@ -494,6 +506,7 @@ def aluna_criar(request):
             )
 
             aluna.turmas.set(turmas_selecionadas)
+            precos_servico.salvar_formulario(aluna, dados_preco, valor=valor_calculado)
             contratos_servicos.salvar_bolsa_da_aluna(aluna, request.POST)
 
             messages.success(request, f'Aluna {nome} criada com sucesso!')
@@ -673,6 +686,20 @@ def aluna_editar(request, pk):
                     pk=pk
                 )
 
+            # Cálculo automático (a menos que "Valor manual" esteja marcado)
+            from precos import servico as precos_servico
+
+            dados_preco, valor_calculado, erro_preco = precos_servico.valor_calculado_do_formulario(
+                request.POST, aluna
+            )
+
+            if erro_preco:
+                messages.error(request, erro_preco)
+                return redirect('admin_dashboard:aluna_editar', pk=pk)
+
+            if valor_calculado is not None:
+                aluna.valor_mensalidade = valor_calculado
+
             from contratos import servicos as contratos_servicos
 
             erro_bolsa = contratos_servicos.validar_bolsa_post(
@@ -797,6 +824,7 @@ def aluna_editar(request, pk):
 
             aluna.save()
             aluna.turmas.set(turmas_selecionadas)
+            precos_servico.salvar_formulario(aluna, dados_preco)
             contratos_servicos.salvar_bolsa_da_aluna(aluna, request.POST)
 
             messages.success(

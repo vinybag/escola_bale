@@ -1,5 +1,5 @@
 {% extends 'admin_dashboard/base.html' %}
-{% load contratos_tags %}
+{% load contratos_tags precos_tags %}
 
 {% block title %}Editar {{ aluna.nome }}{% endblock %}
 
@@ -531,6 +531,8 @@
                         </div>
                     </div>
                 </section>
+
+                {% calculo_aluna aluna %}
 
                 {% campos_bolsa aluna %}
 

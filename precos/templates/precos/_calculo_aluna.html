@@ -1,0 +1,168 @@
+<section class="aluna-create-section" id="calc-aluna" data-url="{% url 'precos_admin:calcular_aluna' %}" data-aluna="{{ aluna.pk|default:'' }}">
+    <div style="margin-bottom:1rem;">
+        <h3 style="margin:0 0 .35rem 0; color:#4a235f; font-size:1rem; font-weight:700;">Cálculo da mensalidade</h3>
+        <p style="margin:0; color:#7b7580; font-size:.92rem;">
+            O sistema calcula pelas turmas e pelos descontos cadastrados em "Preços e descontos". Marque "Valor manual" para digitar o valor você mesma.
+        </p>
+    </div>
+
+    <div style="padding:.95rem 1rem; background:#faf7fc; border:1px solid #ece3f2; border-radius:12px; margin-bottom:1rem;">
+        <label style="display:flex; align-items:flex-start; gap:.6rem; cursor:pointer;">
+            <input type="checkbox" name="valor_manual" id="calc-manual" {% if manual %}checked{% endif %} style="accent-color:#6b2d8f; margin-top:.2rem;">
+            <span><strong style="color:#4a235f;">Valor manual</strong><br>
+            <span style="color:#7b7580; font-size:.88rem;">Marcado: vale o valor digitado em "Valor da mensalidade" e nada é recalculado sozinho. Desmarcado: o valor vem do cálculo e acompanha as campanhas mês a mês.</span></span>
+        </label>
+    </div>
+
+    <h4 style="margin:0 0 .5rem; color:#4a235f; font-size:.92rem;">Ordem e data de entrada nas turmas</h4>
+    <p style="margin:0 0 .6rem; color:#7b7580; font-size:.85rem;">A ordem define a 1ª, 2ª e 3ª turma. Quando as turmas entram no mesmo dia, a mais cara conta como 1ª (você pode trocar o número). Turmas adicionadas depois do cadastro contam como "já era aluna".</p>
+    <div id="calc-linhas" style="margin-bottom:1rem;"></div>
+
+    <h4 style="margin:0 0 .5rem; color:#4a235f; font-size:.92rem;">Parentes (primas, irmãs adultas…)</h4>
+    <p style="margin:0 0 .6rem; color:#7b7580; font-size:.85rem;">Irmãs com a mesma responsável são encontradas sozinhas. Aqui você liga alunas de pais diferentes.</p>
+    <div id="calc-parentes"></div>
+    {% for texto in ligadas_pela_outra %}<div style="color:#6f6875; font-size:.85rem; margin:.25rem 0;">Marcada na ficha de {{ texto }}.</div>{% endfor %}
+    <button type="button" id="calc-add-parente" style="margin:.4rem 0 1rem; padding:.45rem .9rem; border:1px solid #e2d6f0; background:#f3f0f8; color:#4a235f; border-radius:10px; font-weight:600; cursor:pointer;">+ Adicionar parente</button>
+
+    <div style="padding:.95rem 1rem; background:#faf7fc; border:1px solid #ece3f2; border-radius:12px; margin-bottom:1rem;">
+        <label style="display:flex; align-items:flex-start; gap:.6rem; cursor:pointer;">
+            <input type="checkbox" name="recebe_desconto_familiar" id="calc-marcada" {% if marcada %}checked{% endif %} style="accent-color:#6b2d8f; margin-top:.2rem;">
+            <span><strong style="color:#4a235f;">Esta aluna recebe o desconto de irmã/parentesco</strong><br>
+            <span style="color:#7b7580; font-size:.88rem;">Vale nas regras configuradas como "só a que eu marcar". Marque em uma irmã, ou nas duas.</span></span>
+        </label>
+    </div>
+
+    <div id="calc-resultado" style="padding:1rem; border:1px solid #ece3f2; border-radius:12px; background:#fff;"></div>
+    <div style="margin-top:.8rem;">
+        <button type="button" id="calc-usar" style="display:none; padding:.55rem 1rem; border:0; border-radius:10px; background:linear-gradient(135deg,#6b2d8f,#7e3aa5); color:#fff; font-weight:700; cursor:pointer;">Usar o valor calculado</button>
+        <span id="calc-usar-dica" style="display:none; color:#7b7580; font-size:.85rem; margin-left:.4rem;">Troca o valor da ficha pelo calculado só quando você salvar.</span>
+    </div>
+
+    <template id="calc-modelo-parente">
+        <div class="calc-parente" style="display:flex; gap:.5rem; flex-wrap:wrap; margin-bottom:.5rem;">
+            <select name="lig_parente" class="aluna-select" style="flex:2; min-width:200px;">
+                <option value="">Escolha a aluna…</option>
+                {% for a in outras_alunas %}<option value="{{ a.pk }}">{{ a.nome }}</option>{% endfor %}
+            </select>
+            <select name="lig_grau" class="aluna-select" style="flex:1; min-width:140px;">
+                <option value="">Grau…</option>
+                {% for g in graus %}<option value="{{ g.pk }}">{{ g.nome }}</option>{% endfor %}
+            </select>
+            <button type="button" class="calc-remover" style="padding:.45rem .8rem; border:1px solid #f3c6c2; background:#fdecea; color:#b71c1c; border-radius:10px; cursor:pointer;">Remover</button>
+        </div>
+    </template>
+</section>
+
+<script>
+(function () {
+    var caixa = document.getElementById('calc-aluna');
+    var form = caixa.closest('form');
+    var url = caixa.dataset.url, alunaId = caixa.dataset.aluna;
+    var turmas = document.getElementById('turmas');
+    var manual = document.getElementById('calc-manual');
+    var valor = form.querySelector('[name="valor_mensalidade"]');
+    var linhas = document.getElementById('calc-linhas');
+    var resultado = document.getElementById('calc-resultado');
+    var usar = document.getElementById('calc-usar'), usarDica = document.getElementById('calc-usar-dica');
+    var iniciais = {{ iniciais_json|safe }};
+    var ligacoes = {{ ligacoes_json|safe }};
+    var digitados = {};
+    var ultimoTotal = '';
+    var temporizador = null;
+
+    function guardarDigitados() {
+        linhas.querySelectorAll('[data-turma]').forEach(function (l) {
+            var id = l.dataset.turma;
+            digitados[id] = {
+                ordem: l.querySelector('input[type=number]').value,
+                data: l.querySelector('input[type=date]').value
+            };
+        });
+    }
+
+    function desenharLinhas() {
+        guardarDigitados();
+        linhas.innerHTML = '';
+        var escolhidas = Array.prototype.filter.call(turmas.options, function (o) { return o.selected; });
+
+        if (!escolhidas.length) {
+            linhas.innerHTML = '<span style="color:#8a8390; font-size:.88rem;">Nenhuma turma escolhida.</span>';
+            return;
+        }
+
+        escolhidas.forEach(function (o) {
+            var id = o.value, d = digitados[id] || iniciais[id] || {};
+            var linha = document.createElement('div');
+            linha.dataset.turma = id;
+            linha.style.cssText = 'display:flex; gap:.6rem; flex-wrap:wrap; align-items:center; margin-bottom:.4rem;';
+            linha.innerHTML = '<span style="flex:2; min-width:160px; font-weight:600; color:#44384c;"></span>' +
+                '<label style="font-size:.82rem; color:#6f6875;">Ordem <input type="number" min="1" max="20" style="width:70px; padding:.45rem; border:1px solid #d9cbe4; border-radius:8px;"></label>' +
+                '<label style="font-size:.82rem; color:#6f6875;">Entrou em <input type="date" style="padding:.45rem; border:1px solid #d9cbe4; border-radius:8px;"></label>';
+            linha.firstChild.textContent = o.textContent.replace(/\s*\(\d+\/\d+ vagas\)\s*$/, '');
+            var ordem = linha.querySelector('input[type=number]'), data = linha.querySelector('input[type=date]');
+            ordem.name = 'entrada_ordem_' + id; data.name = 'entrada_data_' + id;
+            ordem.value = d.ordem || ''; data.value = d.data || '';
+            ordem.placeholder = 'auto'; 
+            linhas.appendChild(linha);
+        });
+    }
+
+    function adicionarParente(inicial) {
+        var no = document.getElementById('calc-modelo-parente').content.firstElementChild.cloneNode(true);
+
+        if (inicial) {
+            no.querySelector('[name=lig_parente]').value = inicial.parente;
+            no.querySelector('[name=lig_grau]').value = inicial.grau;
+        }
+
+        no.querySelector('.calc-remover').addEventListener('click', function () { no.remove(); agendar(); });
+        document.getElementById('calc-parentes').appendChild(no);
+    }
+
+    function atualizarModo() {
+        if (valor) {
+            valor.readOnly = !manual.checked;
+            valor.style.background = manual.checked ? '' : '#f3f0f8';
+        }
+    }
+
+    function calcular() {
+        var dados = new FormData(form);
+        if (alunaId) { dados.set('aluna_id', alunaId); }
+
+        fetch(url, { method: 'POST', body: dados, credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(function (r) { return r.json(); })
+            .then(function (j) {
+                resultado.innerHTML = j.html;
+                ultimoTotal = j.ok ? j.total : '';
+
+                if (valor && !manual.checked && j.ok) { valor.value = j.total; }
+
+                var mostrar = manual.checked && j.ok && valor && valor.value !== j.total;
+                usar.style.display = mostrar ? 'inline-block' : 'none';
+                usarDica.style.display = mostrar ? 'inline' : 'none';
+            })
+            .catch(function () { resultado.textContent = 'Não consegui calcular agora. Você pode digitar o valor (marque "Valor manual").'; });
+    }
+
+    function agendar() { clearTimeout(temporizador); temporizador = setTimeout(calcular, 350); }
+
+    turmas.addEventListener('change', function () { desenharLinhas(); agendar(); });
+    document.getElementById('calc-add-parente').addEventListener('click', function () { adicionarParente(null); });
+    manual.addEventListener('change', function () { atualizarModo(); agendar(); });
+    usar.addEventListener('click', function () {
+        manual.checked = false; atualizarModo();
+        if (valor && ultimoTotal) { valor.value = ultimoTotal; }
+        usar.style.display = 'none'; usarDica.style.display = 'none';
+        agendar();
+    });
+    form.addEventListener('change', function (ev) {
+        var n = ev.target.name || '';
+        if (/^(turmas|responsavel|usuario|tipo_aluna|entrada_|lig_|recebe_desconto_familiar)/.test(n)) { agendar(); }
+    });
+    if (valor) { valor.addEventListener('input', function () { if (manual.checked) { agendar(); } }); }
+
+    ligacoes.forEach(adicionarParente);
+    desenharLinhas(); atualizarModo(); calcular();
+})();
+</script>
