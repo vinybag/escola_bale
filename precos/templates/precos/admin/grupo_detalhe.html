@@ -14,6 +14,15 @@
         <div><label class="pr-check"><input type="checkbox" name="ativo" {% if grupo.ativo %}checked{% endif %}> Grupo ativo (desligado, ninguém dele recebe os descontos do grupo)</label></div>
         <div><button type="submit" class="pr-btn pr-btn-p">Salvar</button></div>
     </div>
+    <div style="margin-top:1rem; padding:.9rem 1rem; background:#faf7fc; border:1px solid #ece3f2; border-radius:12px;">
+        <label class="pr-check"><input type="checkbox" name="eh_familia" id="eh_familia" {% if grupo.eh_familia %}checked{% endif %}> <strong>Este é um grupo de família</strong></label>
+        <p class="pr-sub" style="margin:.3rem 0 .6rem;">As mensalidades de todas as integrantes são geradas no login do representante, uma para cada aluna (com o valor de cada ficha), e a família as vê como uma cobrança só. Vale para as mensalidades geradas daqui para a frente; as que já existem não mudam. A escolha feita na ficha de uma aluna tem prioridade sobre o grupo.</p>
+        <label class="pr-lab">Representante da família (login que recebe as mensalidades)</label>
+        <select class="pr-input" name="representante">
+            <option value="">— escolha —</option>
+            {% for u in logins %}<option value="{{ u.pk }}" {% if grupo.representante_id == u.pk %}selected{% endif %}>{{ u.get_full_name|default:u.username }} ({{ u.email|default:u.username }})</option>{% endfor %}
+        </select>
+    </div>
 </form>
 
 <div class="pr-card">

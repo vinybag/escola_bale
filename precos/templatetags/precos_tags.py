@@ -55,12 +55,27 @@ def calculo_aluna(context, aluna=None):
             for l in LigacaoFamiliar.objects.filter(parente=aluna).select_related('aluna', 'grau')
         ]
 
+    from django.contrib.auth.models import User
+
     outras = Aluna.objects.filter(ativa=True)
 
     if gravada:
         outras = outras.exclude(pk=aluna.pk)
 
+    pagador_atual = None
+    grupo_familia = None
+
+    if gravada:
+        from ..models import PrecoAluna
+
+        preco_gravado = PrecoAluna.objects.filter(aluna=aluna).first()
+        pagador_atual = preco_gravado.pagador_id if preco_gravado else None
+        grupo_familia = servico.grupo_familia_da_aluna(aluna)
+
     return {
+        'logins': User.objects.filter(is_staff=False).order_by('first_name', 'last_name', 'username'),
+        'pagador_atual': pagador_atual,
+        'grupo_familia': grupo_familia,
         'aluna': aluna if gravada else None,
         'manual': manual,
         'marcada': servico.marcada_para_receber(aluna) if gravada else False,

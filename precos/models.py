@@ -49,6 +49,14 @@ class GrupoDesconto(models.Model):
     descricao = models.CharField(max_length=200, blank=True)
     ativo = models.BooleanField(default=True)
     alunas = models.ManyToManyField('usuarios.Aluna', blank=True, related_name='grupos_desconto')
+    eh_familia = models.BooleanField(
+        default=False, verbose_name='Grupo de família',
+        help_text='As mensalidades das integrantes são geradas no login do representante.',
+    )
+    representante = models.ForeignKey(
+        'auth.User', null=True, blank=True, on_delete=models.SET_NULL, related_name='+',
+        verbose_name='Representante da família',
+    )
     criado_em = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -312,6 +320,11 @@ class PrecoAluna(models.Model):
     recebe_desconto_familiar = models.BooleanField(
         default=False, verbose_name='Marcada para receber o desconto de irmã/parentesco',
         help_text='Vale nas regras configuradas como "só a que eu marcar".',
+    )
+    pagador = models.ForeignKey(
+        'auth.User', null=True, blank=True, on_delete=models.SET_NULL, related_name='+',
+        verbose_name='Gerar a mensalidade no login de',
+        help_text='Vazio = automático (responsável da ficha ou grupo de família).',
     )
     atualizado_em = models.DateTimeField(auto_now=True)
 

@@ -35,8 +35,7 @@ class Command(BaseCommand):
             ativa=True,
             gerar_mensalidade_automatica=True,
             valor_mensalidade__isnull=False,
-            responsavel__isnull=False,
-        ).select_related('responsavel')
+        ).select_related('responsavel').prefetch_related('grupos_desconto')
 
         criadas = 0
         ignoradas = 0
@@ -44,6 +43,13 @@ class Command(BaseCommand):
 
         for aluna in alunas:
             try:
+                # Login escolhido na ficha, representante do grupo de família ou responsável da ficha
+                pagador = precos_servico.pagador_da_aluna(aluna, usar_login_proprio=False)
+
+                if pagador is None:
+                    ignoradas += 1
+                    continue
+
                 ja_existe = Mensalidade.objects.filter(
                     aluna=aluna,
                     mes_referencia=mes_referencia
@@ -71,7 +77,7 @@ class Command(BaseCommand):
 
                 Mensalidade.objects.create(
                     aluna=aluna,
-                    responsavel=aluna.responsavel,
+                    responsavel=pagador,
                     mes_referencia=mes_referencia,
                     valor=valor_do_mes,
                     data_vencimento=data_vencimento,

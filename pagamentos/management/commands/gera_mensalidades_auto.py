@@ -34,7 +34,7 @@ class Command(BaseCommand):
         alunas = Aluna.objects.filter(
             ativa=True,
             gerar_mensalidade_automatica=True,
-        ).select_related("responsavel", "usuario").order_by("nome")
+        ).select_related("responsavel", "usuario").prefetch_related("grupos_desconto__representante").order_by("nome")
 
         geradas = 0
         puladas_sem_pagador = 0
@@ -45,7 +45,8 @@ class Command(BaseCommand):
         ultimo_dia_mes = calendar.monthrange(mes_referencia.year, mes_referencia.month)[1]
 
         for aluna in alunas:
-            pagador = aluna.responsavel or aluna.usuario
+            # Login escolhido na ficha, representante do grupo de família, responsável ou o próprio login
+            pagador = precos_servico.pagador_da_aluna(aluna)
 
             if not pagador:
                 self.stdout.write(

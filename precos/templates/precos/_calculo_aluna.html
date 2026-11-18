@@ -32,6 +32,15 @@
         </label>
     </div>
 
+    <div style="padding:.95rem 1rem; background:#faf7fc; border:1px solid #ece3f2; border-radius:12px; margin-bottom:1rem;">
+        <label for="calc-pagador" style="display:block; font-weight:700; color:#4a235f; margin-bottom:.3rem;">Gerar a mensalidade no login de</label>
+        <select name="pagador" id="calc-pagador" class="aluna-select" style="width:100%;">
+            <option value="">Automático{% if grupo_familia %} (grupo de família "{{ grupo_familia.nome }}": {{ grupo_familia.representante.get_full_name|default:grupo_familia.representante.username }}){% else %} (responsável desta ficha, ou o login da própria aluna){% endif %}</option>
+            {% for u in logins %}<option value="{{ u.pk }}" {% if pagador_atual == u.pk %}selected{% endif %}>{{ u.get_full_name|default:u.username }} ({{ u.email|default:u.username }})</option>{% endfor %}
+        </select>
+        <span style="color:#7b7580; font-size:.85rem;">Para famílias: escolha o login do representante e as mensalidades de todas as integrantes caem nele, cada uma com o seu valor, e a família vê uma cobrança só. Vale para as mensalidades geradas daqui para a frente.</span>
+    </div>
+
     <div id="calc-resultado" style="padding:1rem; border:1px solid #ece3f2; border-radius:12px; background:#fff;"></div>
     <div style="margin-top:.8rem;">
         <button type="button" id="calc-usar" style="display:none; padding:.55rem 1rem; border:0; border-radius:10px; background:linear-gradient(135deg,#6b2d8f,#7e3aa5); color:#fff; font-weight:700; cursor:pointer;">Usar o valor calculado</button>

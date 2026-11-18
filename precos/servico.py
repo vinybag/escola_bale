@@ -7,6 +7,7 @@ Nada aqui muda as alunas antigas sozinho: sem registro em `PrecoAluna` o valor �
 from dataclasses import dataclass, field
 from decimal import Decimal
 
+from django.contrib.auth.models import User
 from django.db.models import Q
 from django.utils import timezone
 
@@ -31,6 +32,36 @@ def valor_e_manual(aluna):
 def marcada_para_receber(aluna):
     preco = PrecoAluna.objects.filter(aluna=aluna).first()
     return bool(preco and preco.recebe_desconto_familiar)
+
+
+def grupo_familia_da_aluna(aluna):
+    """Grupo de família ativo (com representante) em que a aluna está, ou None."""
+    for grupo in aluna.grupos_desconto.all():
+        if grupo.ativo and grupo.eh_familia and grupo.representante_id:
+            return grupo
+
+    return None
+
+
+def pagador_da_aluna(aluna, usar_login_proprio=True):
+    """
+    Em qual login a mensalidade da aluna é gerada.
+
+    1) o login escolhido na ficha ("Gerar a mensalidade no login de");
+    2) o representante do grupo de família em que ela está;
+    3) o responsável da ficha e, para adultas, o login da própria aluna.
+    """
+    preco = PrecoAluna.objects.filter(aluna=aluna).select_related('pagador').first()
+
+    if preco is not None and preco.pagador_id:
+        return preco.pagador
+
+    grupo = grupo_familia_da_aluna(aluna)
+
+    if grupo is not None:
+        return grupo.representante
+
+    return aluna.responsavel or (aluna.usuario if usar_login_proprio else None)
 
 
 def garantir_entradas(aluna):
@@ -206,6 +237,7 @@ class DadosFormulario:
     ligacoes: list = field(default_factory=list)      # (parente_id, grau_id)
     manual: bool = False
     marcada: bool = False
+    pagador_id: int | None = None
     responsavel_id: int | None = None
     usuario_id: int | None = None
     erros: list = field(default_factory=list)
@@ -318,6 +350,9 @@ def ler_formulario(post, aluna=None):
 
     dados.manual = post.get('valor_manual') == 'on'
     dados.marcada = post.get('recebe_desconto_familiar') == 'on'
+
+    pagador = _inteiro(post.get('pagador'))
+    dados.pagador_id = pagador if pagador and User.objects.filter(pk=pagador).exists() else None
     dados.responsavel_id = _inteiro(post.get('responsavel'))
     dados.usuario_id = _inteiro(post.get('usuario'))
 
@@ -362,6 +397,7 @@ def salvar_formulario(aluna, dados, *, valor=None):
 
     PrecoAluna.objects.update_or_create(aluna=aluna, defaults={
         'valor_manual': dados.manual, 'recebe_desconto_familiar': dados.marcada,
+        'pagador_id': dados.pagador_id,
     })
 
     if valor is not None and aluna.valor_mensalidade != valor:

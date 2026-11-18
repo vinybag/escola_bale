@@ -6,6 +6,7 @@ from functools import wraps
 import logging
 
 from django.contrib import messages
+from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count
 from django.http import JsonResponse
@@ -484,6 +485,19 @@ def grupo_detalhe(request, pk):
                 grupo.nome = nome
                 grupo.descricao = request.POST.get('descricao', '').strip()[:200]
                 grupo.ativo = request.POST.get('ativo') == 'on'
+                eh_familia = request.POST.get('eh_familia') == 'on'
+                representante = User.objects.filter(pk=request.POST.get('representante')).first() if (
+                    request.POST.get('representante', '').isdigit()
+                ) else None
+
+                if eh_familia and representante is None:
+                    messages.error(
+                        request, 'Para um grupo de família, escolha o representante (o login que recebe as mensalidades).',
+                    )
+                    return redirect('precos_admin:grupo_detalhe', pk=grupo.pk)
+
+                grupo.eh_familia = eh_familia
+                grupo.representante = representante if eh_familia else None
                 grupo.save()
                 messages.success(request, 'Grupo salvo.')
 
@@ -517,6 +531,7 @@ def grupo_detalhe(request, pk):
         'candidatas': Aluna.objects.filter(ativa=True).exclude(pk__in=membros.values('pk')).order_by('nome'),
         'regras_do_grupo': grupo.regras.all(),
         'total_precos_combinacao': grupo.precos_combinacao.count(),
+        'logins': User.objects.filter(is_staff=False).order_by('first_name', 'last_name', 'username'),
     })
 
 
