@@ -11,7 +11,7 @@
             {% for mensalidade in mensalidades %}
                 <div class="card mensalidade-card">
                     <div class="mensalidade-header">
-                        <h3>{{ mensalidade.aluna.nome }}</h3>
+                        <h3>{{ mensalidade.nomes_alunas }}</h3>
                         <span class="status-badge status-{{ mensalidade.status_atual }}">
                             {% if mensalidade.status_atual == 'pago' %}
                                 ✅ Pago
@@ -27,7 +27,12 @@
                     
                     <div class="mensalidade-info">
                         <p><strong>Mês de referência:</strong> {{ mensalidade.mes_referencia|date:"m/Y" }}</p>
-                        <p><strong>Valor:</strong> R$ {{ mensalidade.valor_atualizado }}</p>
+                        {% if mensalidade.varias %}
+                            <p><strong>Mensalidades:</strong>
+                                {% for item in mensalidade.itens %}{{ item.aluna.nome }} (R$ {{ item.valor }}){% if not forloop.last %}, {% endif %}{% endfor %}
+                            </p>
+                        {% endif %}
+                        <p><strong>Valor{% if mensalidade.varias %} total{% endif %}:</strong> R$ {{ mensalidade.valor_atualizado }}</p>
                         <p><strong>Vencimento:</strong> {{ mensalidade.data_vencimento|date:"d/m/Y" }}</p>
 
                         {% if mensalidade.esta_atrasada %}

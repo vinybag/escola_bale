@@ -5,6 +5,7 @@ from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from .models import Mensalidade
 from .asaas_helper import AsaasAPI
+from . import cobranca as cobranca_unica
 from datetime import datetime
 from django.utils import timezone
 import json
@@ -26,6 +27,25 @@ def marcar_mensalidade_como_paga(mensalidade, forma_pagamento, comprovante):
         mensalidade.save()
 
 
+def marcar_cobranca_como_paga(itens, forma_pagamento, comprovante):
+    """Baixa TODAS as mensalidades da cobrança (um único pix paga as filhas juntas)."""
+    for mensalidade in itens:
+        marcar_mensalidade_como_paga(mensalidade, forma_pagamento, comprovante)
+
+
+def guardar_pagamento_na_cobranca(cobranca, payment_id, customer_id=None):
+    """Grava o número do pagamento do Asaas em cada mensalidade da cobrança."""
+    for mensalidade in cobranca.itens:
+        mensalidade.asaas_payment_id = payment_id
+        campos = ['asaas_payment_id']
+
+        if customer_id:
+            mensalidade.asaas_customer_id = customer_id
+            campos.append('asaas_customer_id')
+
+        mensalidade.save(update_fields=campos)
+
+
 def extrair_pix_data(qrcode_data):
     if not qrcode_data:
         return None
@@ -36,52 +56,63 @@ def extrair_pix_data(qrcode_data):
     }
 
 
-def montar_pix_contexto(mensalidade, payment_id, pix_data, valor):
+def montar_pix_contexto(mensalidade, payment_id, pix_data, valor, cobranca=None):
     return {
         'mensalidade': mensalidade,
+        'cobranca': cobranca or cobranca_unica.Cobranca([mensalidade]),
         'payment_id': payment_id,
         'pix_data': pix_data,
         'valor': valor,
     }
 
 
-def localizar_mensalidade_por_payment(payment_id, external_reference, customer_id=None):
-    mensalidade = None
+def localizar_mensalidades_por_payment(payment_id, external_reference, customer_id=None):
+    """
+    Todas as mensalidades pagas por um pix do Asaas.
 
-    try:
-        mensalidade = Mensalidade.objects.get(asaas_payment_id=payment_id)
-        print(f"[WEBHOOK] Mensalidade encontrada por asaas_payment_id: {mensalidade.id}")
-        return mensalidade
-    except Mensalidade.DoesNotExist:
-        print(f"[WEBHOOK] Nenhuma mensalidade encontrada por payment_id {payment_id}")
+    Acha pelo número do pagamento e, se ainda não estiver gravado, pela referência
+    ("mensalidade:7" ou "mensalidades:7,9"), gravando o número nas mensalidades achadas.
+    """
+    itens = cobranca_unica.itens_do_pagamento(payment_id)
 
-    if external_reference and external_reference.startswith('mensalidade:'):
-        try:
-            mensalidade_id_ref = external_reference.split(':', 1)[1]
-            mensalidade = Mensalidade.objects.get(id=mensalidade_id_ref)
-            mensalidade.asaas_payment_id = payment_id
-            if customer_id:
-                mensalidade.asaas_customer_id = customer_id
-                mensalidade.save(update_fields=['asaas_payment_id', 'asaas_customer_id'])
-            else:
-                mensalidade.save(update_fields=['asaas_payment_id'])
+    if itens:
+        print(f"[WEBHOOK] Mensalidades encontradas por asaas_payment_id: {[m.id for m in itens]}")
+        return itens
 
-            print(f"[WEBHOOK] Mensalidade localizada por externalReference: {mensalidade.id}")
-            return mensalidade
-        except Mensalidade.DoesNotExist:
-            print(f"[WEBHOOK] Nenhuma mensalidade encontrada para externalReference {external_reference}")
-        except Exception as e:
-            print(f"[WEBHOOK] Erro ao buscar por externalReference: {e}")
+    ids = cobranca_unica.ids_da_referencia(external_reference)
 
-    return None
+    if not ids:
+        return []
+
+    itens = list(Mensalidade.objects.filter(id__in=ids).select_related('aluna', 'responsavel'))
+
+    for mensalidade in itens:
+        mensalidade.asaas_payment_id = payment_id
+        campos = ['asaas_payment_id']
+
+        if customer_id:
+            mensalidade.asaas_customer_id = customer_id
+            campos.append('asaas_customer_id')
+
+        mensalidade.save(update_fields=campos)
+
+    print(f"[WEBHOOK] Mensalidades localizadas por externalReference: {[m.id for m in itens]}")
+    return itens
 
 
 # ==================== VIEWS ====================
 
 @login_required
 def mensalidades(request):
-    mensalidades = Mensalidade.objects.filter(responsavel=request.user).order_by('-mes_referencia')
-    return render(request, 'pagamentos/mensalidades.html', {'mensalidades': mensalidades})
+    mensalidades = (
+        Mensalidade.objects.filter(responsavel=request.user)
+        .select_related('aluna', 'responsavel')
+        .order_by('-mes_referencia', 'data_vencimento', 'aluna__nome')
+    )
+    # Filhas (e mãe aluna) do mesmo mês e vencimento aparecem como uma cobrança só.
+    return render(request, 'pagamentos/mensalidades.html', {
+        'mensalidades': cobranca_unica.agrupar(mensalidades),
+    })
 
 
 @login_required
@@ -97,6 +128,7 @@ def pagar(request, mensalidade_id):
 
     context = {
         'mensalidade': mensalidade,
+        'cobranca': cobranca_unica.cobranca_da_mensalidade(mensalidade),
     }
     return render(request, 'pagamentos/pagar.html', context)
 
@@ -125,14 +157,16 @@ def pagar_pix(request, mensalidade_id):
             'cpfCnpj': cpf_cliente,
         }
 
-        valor_cobranca = mensalidade.valor_atualizado
-        descricao = f"Mensalidade {mensalidade.aluna.nome} - {mensalidade.mes_referencia.strftime('%m/%Y')}"
-        external_reference = f"mensalidade:{mensalidade.id}"
-        payment_id_existente = mensalidade.asaas_payment_id
+        # Um único pix para todas as mensalidades em aberto do mesmo login, mês e vencimento
+        cobranca = cobranca_unica.cobranca_da_mensalidade(mensalidade)
+        valor_cobranca = cobranca.valor_atualizado
+        descricao = cobranca.descricao
+        external_reference = cobranca.referencia_externa
+        payment_id_existente = cobranca.payment_id_existente
 
         if payment_id_existente:
             cobranca_existente = asaas.consultar_cobranca(payment_id_existente)
-            print(f"[PIX] Cobrança existente para mensalidade {mensalidade.id}: {cobranca_existente}")
+            print(f"[PIX] Cobrança existente para mensalidades {cobranca.ids}: {cobranca_existente}")
 
             if cobranca_existente:
                 status_existente = cobranca_existente.get('status')
@@ -140,11 +174,13 @@ def pagar_pix(request, mensalidade_id):
                 valor_atual = Decimal(str(valor_cobranca)).quantize(Decimal('0.01'))
 
                 if status_existente == 'RECEIVED':
-                    marcar_mensalidade_como_paga(mensalidade, 'pix', payment_id_existente)
-                    return redirect(f'/pagamentos/sucesso/?mensalidade_id={mensalidade.id}')
+                    marcar_cobranca_como_paga(cobranca.itens, 'pix', payment_id_existente)
+                    return redirect(f'/pagamentos/sucesso/?mensalidade_id={cobranca.id}')
 
                 if status_existente in ['PENDING', 'OVERDUE']:
                     if valor_existente == valor_atual:
+                        # só reaproveita se o pix cobre exatamente estas mensalidades
+                        guardar_pagamento_na_cobranca(cobranca, payment_id_existente)
                         qrcode_data = asaas.obter_qrcode_pix(payment_id_existente)
                         pix_data = extrair_pix_data(qrcode_data)
                         context = montar_pix_contexto(
@@ -152,6 +188,7 @@ def pagar_pix(request, mensalidade_id):
                             payment_id=payment_id_existente,
                             pix_data=pix_data,
                             valor=valor_existente,
+                            cobranca=cobranca,
                         )
                         return render(request, 'pagamentos/pix.html', context)
 
@@ -179,18 +216,16 @@ def pagar_pix(request, mensalidade_id):
 
             return render(request, 'pagamentos/pagar.html', {
                 'mensalidade': mensalidade,
+                'cobranca': cobranca,
                 'erro': f'Erro Asaas: {mensagem_erro}'
             })
 
         if resultado and 'id' in resultado:
-            mensalidade.asaas_payment_id = resultado['id']
-            if 'customer' in resultado:
-                mensalidade.asaas_customer_id = resultado['customer']
-            mensalidade.save(update_fields=['asaas_payment_id', 'asaas_customer_id'] if 'customer' in resultado else ['asaas_payment_id'])
+            guardar_pagamento_na_cobranca(cobranca, resultado['id'], resultado.get('customer'))
 
             if resultado.get('status') == 'RECEIVED':
-                marcar_mensalidade_como_paga(mensalidade, 'pix', resultado['id'])
-                return redirect(f'/pagamentos/sucesso/?mensalidade_id={mensalidade.id}')
+                marcar_cobranca_como_paga(cobranca.itens, 'pix', resultado['id'])
+                return redirect(f'/pagamentos/sucesso/?mensalidade_id={cobranca.id}')
 
             qrcode_data = asaas.obter_qrcode_pix(resultado['id'])
             pix_data = extrair_pix_data(qrcode_data)
@@ -199,11 +234,13 @@ def pagar_pix(request, mensalidade_id):
                 payment_id=resultado['id'],
                 pix_data=pix_data,
                 valor=resultado.get('value', valor_cobranca),
+                cobranca=cobranca,
             )
             return render(request, 'pagamentos/pix.html', context)
 
         return render(request, 'pagamentos/pagar.html', {
             'mensalidade': mensalidade,
+            'cobranca': cobranca,
             'erro': f'Resposta inesperada do Asaas: {resultado}'
         })
 
@@ -213,6 +250,7 @@ def pagar_pix(request, mensalidade_id):
 
         return render(request, 'pagamentos/pagar.html', {
             'mensalidade': mensalidade,
+            'cobranca': cobranca_unica.cobranca_da_mensalidade(mensalidade),
             'erro': f'Erro ao gerar PIX: {str(e)}'
         })
 
@@ -227,12 +265,16 @@ def verificar_pagamento_pix(request, payment_id):
         print(f"[Verificação] Status: {resultado.get('status') if resultado else 'ERRO'}")
 
         if resultado and resultado.get('status') == 'RECEIVED':
-            mensalidade = Mensalidade.objects.get(asaas_payment_id=payment_id)
-            marcar_mensalidade_como_paga(mensalidade, 'pix', payment_id)
+            itens = cobranca_unica.itens_do_pagamento(payment_id)
+
+            if not itens:
+                return JsonResponse({'error': 'Pagamento não encontrado'}, status=404)
+
+            marcar_cobranca_como_paga(itens, 'pix', payment_id)
 
             return JsonResponse({
                 'status': 'paid',
-                'redirect': f'/pagamentos/sucesso/?mensalidade_id={mensalidade.id}'
+                'redirect': f'/pagamentos/sucesso/?mensalidade_id={itens[0].id}'
             })
 
         status = resultado.get('status', 'PENDING') if resultado else 'ERROR'
@@ -256,7 +298,13 @@ def pagamento_sucesso(request):
             pass
 
     if mensalidade:
-        return render(request, 'pagamentos/sucesso.html', {'mensalidade': mensalidade})
+        # Se o pix pagou várias mensalidades de uma vez, mostra todas juntas.
+        itens = cobranca_unica.itens_do_pagamento(mensalidade.asaas_payment_id) or [mensalidade]
+        itens = [m for m in itens if m.responsavel_id == mensalidade.responsavel_id]
+        return render(request, 'pagamentos/sucesso.html', {
+            'mensalidade': mensalidade,
+            'cobranca': cobranca_unica.Cobranca(itens),
+        })
     else:
         return redirect('mensalidades')
 
@@ -415,15 +463,15 @@ def webhook_asaas(request):
 
             if evento in eventos_confirmacao and payment_id and payment_status in status_confirmados:
 
-                mensalidade = localizar_mensalidade_por_payment(
+                mensalidades_pagas = localizar_mensalidades_por_payment(
                     payment_id=payment_id,
                     external_reference=external_reference,
                     customer_id=customer_id,
                 )
 
-                if mensalidade:
-                    marcar_mensalidade_como_paga(mensalidade, 'pix', payment_id)
-                    print(f"[WEBHOOK] Mensalidade {mensalidade.id} atualizada para PAGO")
+                if mensalidades_pagas:
+                    marcar_cobranca_como_paga(mensalidades_pagas, 'pix', payment_id)
+                    print(f"[WEBHOOK] Mensalidades {[m.id for m in mensalidades_pagas]} atualizadas para PAGO")
                     return HttpResponse(status=200)
 
                 agendamento = localizar_agendamento_por_payment(

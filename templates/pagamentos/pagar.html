@@ -8,10 +8,18 @@
     
     <div class="card">
         <h3>Detalhes da Mensalidade</h3>
+        {% if cobranca.varias %}
+            <p><strong>Alunas:</strong> {{ cobranca.nomes_alunas }}</p>
+            {% for item in cobranca.itens %}<p style="margin-left:1rem;">{{ item.aluna.nome }}: R$ {{ item.valor }}</p>{% endfor %}
+            <p><strong>Mês:</strong> {{ cobranca.mes_referencia|date:"m/Y" }}</p>
+            <p><strong>Valor total:</strong> R$ {{ cobranca.valor_atualizado }}</p>
+            <p><strong>Vencimento:</strong> {{ cobranca.data_vencimento|date:"d/m/Y" }}</p>
+        {% else %}
         <p><strong>Aluna:</strong> {{ mensalidade.aluna.nome }}</p>
         <p><strong>Mês:</strong> {{ mensalidade.mes_referencia|date:"m/Y" }}</p>
         <p><strong>Valor:</strong> R$ {{ mensalidade.valor }}</p>
         <p><strong>Vencimento:</strong> {{ mensalidade.data_vencimento|date:"d/m/Y" }}</p>
+        {% endif %}
     </div>
 
     {% if erro %}

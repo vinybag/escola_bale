@@ -8,11 +8,11 @@
         <h1 style="color: #28a745; font-size: 3rem;">✅</h1>
         <h2 style="color: #28a745;">Pagamento Aprovado!</h2>
         <p style="font-size: 1.2rem; margin: 2rem 0;">
-            A mensalidade de <strong>{{ mensalidade.aluna.nome }}</strong> foi paga com sucesso!
+            {% if cobranca.varias %}A mensalidade de <strong>{{ cobranca.nomes_alunas }}</strong> foi paga com sucesso!{% else %}A mensalidade de <strong>{{ mensalidade.aluna.nome }}</strong> foi paga com sucesso!{% endif %}
         </p>
         
         <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 10px; margin: 2rem 0;">
-            <p><strong>Valor pago:</strong> R$ {{ mensalidade.valor }}</p>
+            <p><strong>Valor pago:</strong> R$ {% if cobranca.varias %}{{ cobranca.valor }}{% else %}{{ mensalidade.valor }}{% endif %}</p>
             <p><strong>Data:</strong> {{ mensalidade.data_pagamento|date:"d/m/Y às H:i" }}</p>
             <p><strong>Referente a:</strong> {{ mensalidade.mes_referencia|date:"m/Y" }}</p>
         </div>

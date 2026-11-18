@@ -1,5 +1,6 @@
 from datetime import date, timedelta
 from django.core.management.base import BaseCommand
+from pagamentos.cobranca import agrupar
 from pagamentos.models import Mensalidade
 from pagamentos.services_whatsapp import enviar_whatsapp_template
 
@@ -31,7 +32,8 @@ class Command(BaseCommand):
             data_ultimo_aviso=hoje
         ).select_related('aluna', 'responsavel__perfil')
 
-        for m in mensalidades_amanha:
+        # Filhas (e mãe aluna) do mesmo login, mês e vencimento recebem UM aviso só.
+        for m in agrupar(mensalidades_amanha):
             if self._enviar_vencimento(m, 'aviso_vencimento_amanha', 'vencimento_amanha'):
                 enviados += 1
             else:
@@ -45,7 +47,7 @@ class Command(BaseCommand):
             data_ultimo_aviso=hoje
         ).select_related('aluna', 'responsavel__perfil')
 
-        for m in mensalidades_hoje:
+        for m in agrupar(mensalidades_hoje):
             if self._enviar_vencimento(m, 'aviso_vencimento_hoje', 'vencimento_hoje'):
                 enviados += 1
             else:
@@ -56,13 +58,13 @@ class Command(BaseCommand):
             data_pagamento__isnull=True
         ).exclude(status='cancelado').select_related('aluna', 'responsavel__perfil')
 
-        for m in mensalidades_atrasadas:
+        for m in agrupar(mensalidades_atrasadas):
             dias = m.dias_atraso
 
             if dias in REGRA_ATRASO:
                 codigo = REGRA_ATRASO[dias]
 
-                if m.ultimo_aviso_enviado == codigo and m.data_ultimo_aviso == hoje:
+                if all(i.ultimo_aviso_enviado == codigo and i.data_ultimo_aviso == hoje for i in m.itens):
                     continue
 
                 if self._enviar_atraso(m, codigo):
@@ -106,16 +108,17 @@ class Command(BaseCommand):
             nome_responsavel,
             mensalidade.data_vencimento.strftime('%d/%m/%Y'),
             mensalidade.mes_referencia.strftime('%m/%Y'),
-            mensalidade.aluna.nome,
+            mensalidade.nomes_alunas,
             f'{mensalidade.valor:.2f}'.replace('.', ','),
         ]
 
         status, _ = enviar_whatsapp_template(numero, nome_template, parametros)
 
         if status == 200:
-            mensalidade.ultimo_aviso_enviado = codigo_aviso
-            mensalidade.data_ultimo_aviso = date.today()
-            mensalidade.save(update_fields=['ultimo_aviso_enviado', 'data_ultimo_aviso'])
+            for item in mensalidade.itens:
+                item.ultimo_aviso_enviado = codigo_aviso
+                item.data_ultimo_aviso = date.today()
+                item.save(update_fields=['ultimo_aviso_enviado', 'data_ultimo_aviso'])
             return True
 
         return False
@@ -137,7 +140,7 @@ class Command(BaseCommand):
         parametros = [
             nome_responsavel,
             mensalidade.mes_referencia.strftime('%m/%Y'),
-            mensalidade.aluna.nome,
+            mensalidade.nomes_alunas,
             str(mensalidade.dias_atraso),
             mensalidade.data_vencimento.strftime('%d/%m/%Y'),
             f'{mensalidade.valor_atualizado:.2f}'.replace('.', ','),
@@ -146,9 +149,10 @@ class Command(BaseCommand):
         status, _ = enviar_whatsapp_template(numero, 'aviso_atraso', parametros)
 
         if status == 200:
-            mensalidade.ultimo_aviso_enviado = codigo_aviso
-            mensalidade.data_ultimo_aviso = date.today()
-            mensalidade.save(update_fields=['ultimo_aviso_enviado', 'data_ultimo_aviso'])
+            for item in mensalidade.itens:
+                item.ultimo_aviso_enviado = codigo_aviso
+                item.data_ultimo_aviso = date.today()
+                item.save(update_fields=['ultimo_aviso_enviado', 'data_ultimo_aviso'])
             return True
 
         return False
