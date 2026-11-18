@@ -31,6 +31,7 @@ from .models import Combinacao, Configuracao, RegraDesconto
 
 ZERO = Decimal('0')
 CEM = Decimal('100')
+FAMILIA_TOTAL = 'total_grupo_familia'
 
 
 @dataclass
@@ -75,6 +76,7 @@ class LinhaTurma:
     final: Decimal = ZERO
     sem_descontos: bool = False
     combinacao: str | None = None
+    travada: bool = False   # uma campanha de preço fixo "sem outros descontos" vale nesta turma
 
 
 @dataclass
@@ -148,6 +150,9 @@ def _familia_confere(regra, familia):
 def _regra_se_aplica(regra, entrada, posicao, grupos, familia, quando):
     if not regra.ativa or not _esta_no_periodo(regra, quando):
         return False
+
+    if regra.familia == FAMILIA_TOTAL:
+        return False  # vale só sobre o total do grupo de família (ver `ratear_familia`)
 
     if not _posicao_confere(regra.incide_em, posicao):
         return False
@@ -328,6 +333,7 @@ def calcular(entradas, *, grupos=(), familia=None, quando=None, regras=None, pas
 
                 if escolhida.substitui_outros:
                     percentuais = []
+                    linha.travada = True
 
             for regra in percentuais:
                 linha.descontos.append(LinhaDesconto(
@@ -356,3 +362,54 @@ def calcular(entradas, *, grupos=(), familia=None, quando=None, regras=None, pas
         ajuste_arredondamento=total_exato - total,
         avisos=avisos,
     )
+
+
+# ----------------------------------------------------- desconto do grupo de família
+
+def parte_descontavel(resultado):
+    """
+    Quanto do cálculo da aluna pode receber o desconto da família.
+
+    Ficam de fora (valor fixo, sem nenhum desconto): turmas de preço fixo (ex.: técnica vocal),
+    turmas dentro de uma combinação e turmas com campanha "sem outros descontos".
+    Devolve (descontável, fixa) — a soma dos dois é o total exato da aluna.
+    """
+    descontavel = ZERO
+    fixa = ZERO
+
+    for linha in resultado.linhas:
+        if linha.sem_descontos or linha.combinacao or linha.travada:
+            fixa += linha.final
+        else:
+            descontavel += linha.final
+
+    return descontavel, fixa
+
+
+def ratear_familia(partes, percentual, arredondar_para):
+    """
+    Desconto de família sobre o TOTAL.
+
+    partes: lista de (descontável, fixa) — uma por integrante, na ordem.
+    Devolve (total_final, [valor de cada integrante]). O total é arredondado para baixo em
+    múltiplos de `arredondar_para` e dividido na proporção de cada uma, em centavos, sem
+    perder nem criar nenhum centavo (o último centavo vai para quem tem a maior sobra).
+    """
+    cent = Decimal('0.01')
+    exatos = [fixa + desc * (CEM - percentual) / CEM for desc, fixa in partes]
+    total = _arredondar_para_baixo(sum(exatos, ZERO), arredondar_para or cent)
+    total_cent = int((total / cent).to_integral_value())
+    soma_exatos = sum(exatos, ZERO)
+
+    if soma_exatos <= 0:
+        return total, [ZERO for _ in partes]
+
+    brutos = [Decimal(total_cent) * e / soma_exatos for e in exatos]
+    baixos = [int(b.to_integral_value(rounding=ROUND_FLOOR)) for b in brutos]
+    faltam = total_cent - sum(baixos)
+    ordem = sorted(range(len(partes)), key=lambda i: (brutos[i] - baixos[i], i), reverse=True)
+
+    for i in ordem[:faltam]:
+        baixos[i] += 1
+
+    return total, [Decimal(b) * cent for b in baixos]

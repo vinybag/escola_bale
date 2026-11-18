@@ -197,20 +197,90 @@ def calcular_para_aluna(aluna, quando=None, *, contexto=None, escrever=True):
     )
 
 
-def valor_para_mes(aluna, mes_referencia):
+def ajuste_familia(aluna, mes_referencia, *, contexto=None):
+    """
+    Desconto de família sobre o TOTAL do grupo de família em que a aluna está.
+
+    Devolve None quando não se aplica (aluna fora de grupo de família, valor manual, menos
+    integrantes que o mínimo, nenhuma regra "sobre o total" ativa). Senão, um dict com
+    `percentual`, `total_sem_desconto`, `total_final`, `minha_parte` e `integrantes`
+    (lista de (aluna, parte)). Só entram alunas ativas com valor CALCULADO; as de valor manual
+    ficam de fora e mantêm o valor digitado. Turmas de preço fixo (ex.: técnica vocal) não
+    recebem desconto.
+    """
+    grupo = grupo_familia_da_aluna(aluna)
+
+    if grupo is None or valor_e_manual(aluna):
+        return None
+
+    regras_todas = (contexto or {}).get('regras')
+    regras_todas = motor.regras_ativas() if regras_todas is None else regras_todas
+    regras = [
+        r for r in regras_todas
+        if r.familia == motor.FAMILIA_TOTAL and r.ativa and r.efeito == 'percentual'
+        and motor._esta_no_periodo(r, mes_referencia)
+        and (not r.grupo_id or r.grupo_id == grupo.pk)
+    ]
+
+    if not regras:
+        return None
+
+    contexto = contexto or carregar_contexto()
+    integrantes = []
+
+    for membro in grupo.alunas.filter(ativa=True).order_by('pk'):
+        if membro.pk != aluna.pk and valor_e_manual(membro):
+            continue
+
+        resultado = calcular_para_aluna(membro, quando=mes_referencia, contexto=contexto, escrever=False)
+
+        if resultado.ok:
+            integrantes.append((membro, resultado))
+
+    if aluna.pk not in [m.pk for m, _ in integrantes]:
+        return None
+
+    if len(integrantes) < max(r.minimo_integrantes for r in regras):
+        return None
+
+    percentual = min(Decimal('100'), sum((r.valor for r in regras), Decimal('0')))
+    arredondar = max(r.arredondar_total_para for r in regras)
+    partes = [motor.parte_descontavel(res) for _, res in integrantes]
+    total_final, valores = motor.ratear_familia(partes, percentual, arredondar)
+    cheio = sum((res.total_exato for _, res in integrantes), Decimal('0'))
+    por_aluna = [(m, v) for (m, _), v in zip(integrantes, valores)]
+    minha = next(v for m, v in por_aluna if m.pk == aluna.pk)
+
+    return {
+        'grupo': grupo, 'regras': regras, 'percentual': percentual,
+        'total_sem_desconto': cheio, 'total_final': total_final,
+        'minha_parte': minha, 'integrantes': por_aluna,
+    }
+
+
+def calcular_valor(aluna, quando=None, *, contexto=None, escrever=True):
+    """(resultado, valor, ajuste): o cálculo da aluna e o valor final (com o desconto de família, se houver)."""
+    resultado = calcular_para_aluna(aluna, quando=quando, contexto=contexto, escrever=escrever)
+
+    if not resultado.ok:
+        return resultado, None, None
+
+    ajuste = ajuste_familia(aluna, quando or timezone.localdate(), contexto=contexto)
+    return resultado, (ajuste['minha_parte'] if ajuste else resultado.total), ajuste
+
+
+def valor_para_mes(aluna, mes_referencia, *, contexto=None):
     """
     Valor a cobrar da aluna no mês. Manual (ou cálculo impossível): o valor da ficha.
-    Calculado: o cálculo para aquele mês (campanhas valem só dentro do período).
+    Calculado: o cálculo para aquele mês (campanhas valem só dentro do período), já com o
+    desconto de família sobre o total do grupo, quando existir.
     """
     if valor_e_manual(aluna):
         return aluna.valor_mensalidade
 
-    resultado = calcular_para_aluna(aluna, quando=mes_referencia)
+    _, valor, _ = calcular_valor(aluna, quando=mes_referencia, contexto=contexto)
 
-    if not resultado.ok:
-        return aluna.valor_mensalidade
-
-    return resultado.total
+    return aluna.valor_mensalidade if valor is None else valor
 
 
 def valor_para_cobrar(aluna, mes_referencia):
@@ -222,6 +292,20 @@ def valor_para_cobrar(aluna, mes_referencia):
         aluna.save(update_fields=['valor_mensalidade'])
 
     return valor
+
+
+def atualizar_valores_da_familia(aluna, mes_referencia=None):
+    """Depois de mexer numa ficha: deixa gravado o valor de cada integrante do grupo de família."""
+    mes = mes_referencia or timezone.localdate()
+    ajuste = ajuste_familia(aluna, mes)
+
+    if not ajuste:
+        return
+
+    for membro, valor in ajuste['integrantes']:
+        if membro.valor_mensalidade != valor:
+            membro.valor_mensalidade = valor
+            membro.save(update_fields=['valor_mensalidade'])
 
 
 # --------------------------------------------------------------- formulário

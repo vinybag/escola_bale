@@ -1,4 +1,5 @@
 from django import template
+from django.utils import timezone
 
 from ..models import formatar_moeda
 
@@ -72,7 +73,16 @@ def calculo_aluna(context, aluna=None):
         pagador_atual = preco_gravado.pagador_id if preco_gravado else None
         grupo_familia = servico.grupo_familia_da_aluna(aluna)
 
+    ajuste_familia = None
+
+    if gravada and not manual:
+        try:
+            ajuste_familia = servico.ajuste_familia(aluna, timezone.localdate())
+        except Exception:
+            ajuste_familia = None
+
     return {
+        'ajuste_familia': ajuste_familia,
         'logins': User.objects.filter(is_staff=False).order_by('first_name', 'last_name', 'username'),
         'pagador_atual': pagador_atual,
         'grupo_familia': grupo_familia,

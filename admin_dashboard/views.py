@@ -507,6 +507,7 @@ def aluna_criar(request):
 
             aluna.turmas.set(turmas_selecionadas)
             precos_servico.salvar_formulario(aluna, dados_preco, valor=valor_calculado)
+            precos_servico.atualizar_valores_da_familia(aluna)
             contratos_servicos.salvar_bolsa_da_aluna(aluna, request.POST)
 
             messages.success(request, f'Aluna {nome} criada com sucesso!')
@@ -825,6 +826,7 @@ def aluna_editar(request, pk):
             aluna.save()
             aluna.turmas.set(turmas_selecionadas)
             precos_servico.salvar_formulario(aluna, dados_preco)
+            precos_servico.atualizar_valores_da_familia(aluna)
             contratos_servicos.salvar_bolsa_da_aluna(aluna, request.POST)
 
             messages.success(

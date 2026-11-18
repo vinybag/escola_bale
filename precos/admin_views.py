@@ -4,6 +4,7 @@ from datetime import date
 from functools import wraps
 
 import logging
+from decimal import Decimal
 
 from django.contrib import messages
 from django.contrib.auth.models import User
@@ -83,6 +84,7 @@ def _valores_da_regra(regra):
             'incide_em': 'segunda', 'publico': 'todas', 'grupo': '', 'grupos_excecao': [],
             'familia': 'nenhuma', 'grau': '', 'quem_recebe': 'automatico', 'turmas': [], 'inicio': '', 'fim': '',
             'so_turmas_entradas_no_periodo': False, 'substitui_outros': False, 'observacao': '',
+            'minimo_integrantes': '2', 'arredondar_total_para': '1',
         }
 
     return {
@@ -96,6 +98,8 @@ def _valores_da_regra(regra):
         'fim': regra.fim.isoformat() if regra.fim else '',
         'so_turmas_entradas_no_periodo': regra.so_turmas_entradas_no_periodo,
         'substitui_outros': regra.substitui_outros, 'observacao': regra.observacao,
+        'minimo_integrantes': str(regra.minimo_integrantes),
+        'arredondar_total_para': f'{regra.arredondar_total_para:.2f}'.replace('.', ',').replace(',00', ''),
     }
 
 
@@ -110,6 +114,8 @@ def _valores_do_post(post):
         'inicio': post.get('inicio', '').strip(), 'fim': post.get('fim', '').strip(),
         'so_turmas_entradas_no_periodo': post.get('so_turmas_entradas_no_periodo') == 'on',
         'substitui_outros': post.get('substitui_outros') == 'on', 'observacao': post.get('observacao', '').strip(),
+        'minimo_integrantes': post.get('minimo_integrantes', '2').strip(),
+        'arredondar_total_para': post.get('arredondar_total_para', '1').strip(),
     }
 
 
@@ -141,6 +147,26 @@ def _validar_regra(v):
     if v['quem_recebe'] not in dict(RegraDesconto.QUEM_RECEBE):
         erros.append('Escolha quem recebe o desconto de família.')
 
+    minimo, arredondar = 2, Decimal('1')
+
+    if v['familia'] == 'total_grupo_familia':
+        if v['efeito'] != RegraDesconto.PERCENTUAL:
+            erros.append('O desconto sobre o total do grupo de família é em porcentagem.')
+
+        if not str(v['minimo_integrantes']).isdigit() or int(v['minimo_integrantes']) < 2:
+            erros.append('O mínimo de integrantes da família deve ser 2 ou mais.')
+        else:
+            minimo = int(v['minimo_integrantes'])
+
+        try:
+            arredondar = ler_decimal(v['arredondar_total_para'])
+        except ValueError:
+            arredondar = None
+
+        if arredondar is None or arredondar <= 0:
+            erros.append('Informe o arredondamento do total (ex.: 1 para reais inteiros, 0,10 para centavos).')
+            arredondar = Decimal('1')
+
     if v['familia'] == 'parentesco' and not str(v['grau']).isdigit():
         erros.append('Escolha qual grau de parentesco vale para esta regra.')
 
@@ -164,6 +190,7 @@ def _validar_regra(v):
             'familia': v['familia'],
             'quem_recebe': v['quem_recebe'] if v['familia'] in ('irma_mesma_responsavel', 'parentesco') else 'automatico',
             'grau': GrauParentesco.objects.filter(pk=v['grau']).first() if v['familia'] == 'parentesco' and str(v['grau']).isdigit() else None,
+            'minimo_integrantes': minimo, 'arredondar_total_para': arredondar,
             'inicio': inicio, 'fim': fim,
             'so_turmas_entradas_no_periodo': v['so_turmas_entradas_no_periodo'],
             'substitui_outros': v['substitui_outros'], 'observacao': v['observacao'][:300],
@@ -467,6 +494,20 @@ def grupos(request):
     })
 
 
+def _atualizar_familia_do_grupo(grupo):
+    """Grupo de família mudou: deixa gravado o valor de cada integrante (com o desconto sobre o total)."""
+    if not (grupo.ativo and grupo.eh_familia):
+        return
+
+    primeira = grupo.alunas.filter(ativa=True).first()
+
+    if primeira is not None:
+        try:
+            servico.atualizar_valores_da_familia(primeira)
+        except Exception:
+            logger.exception('Grupo de família %s: erro ao atualizar os valores', grupo.pk)
+
+
 @somente_staff
 def grupo_detalhe(request, pk):
     grupo = get_object_or_404(GrupoDesconto, pk=pk)
@@ -499,12 +540,14 @@ def grupo_detalhe(request, pk):
                 grupo.eh_familia = eh_familia
                 grupo.representante = representante if eh_familia else None
                 grupo.save()
+                _atualizar_familia_do_grupo(grupo)
                 messages.success(request, 'Grupo salvo.')
 
         elif acao == 'adicionar':
             ids = [int(x) for x in request.POST.getlist('alunas') if x.isdigit()]
             alunas = Aluna.objects.filter(pk__in=ids)
             grupo.alunas.add(*alunas)
+            _atualizar_familia_do_grupo(grupo)
             messages.success(request, f'{alunas.count()} aluna(s) adicionada(s) ao grupo.')
 
         elif acao == 'remover':
@@ -512,6 +555,8 @@ def grupo_detalhe(request, pk):
 
             if aluna:
                 grupo.alunas.remove(aluna)
+                _atualizar_familia_do_grupo(grupo)
+                servico.atualizar_valores_da_familia(aluna)
                 messages.success(request, f'{aluna.nome} saiu do grupo.')
 
         elif acao == 'excluir':
@@ -739,8 +784,7 @@ def _linhas_de_conferencia():
         erro = ''
 
         try:
-            resultado = servico.calcular_para_aluna(aluna, quando=hoje, contexto=contexto, escrever=False)
-            calculado = resultado.total if resultado.ok else None
+            resultado, calculado, _ = servico.calcular_valor(aluna, quando=hoje, contexto=contexto, escrever=False)
             avisos = resultado.avisos
         except Exception as e:  # uma aluna com dado estranho não derruba a tela inteira
             logger.exception('Conferir alunas: erro ao calcular a aluna %s', aluna.pk)
@@ -783,15 +827,15 @@ def conferir_aplicar(request):
 
     for aluna in Aluna.objects.filter(pk__in=ids, ativa=True):
         try:
-            resultado = servico.calcular_para_aluna(aluna, quando=hoje, contexto=contexto)
+            resultado, valor, _ = servico.calcular_valor(aluna, quando=hoje, contexto=contexto)
         except Exception:
             logger.exception('Conferir alunas: erro ao aplicar na aluna %s', aluna.pk)
             continue
 
-        if not resultado.ok:
+        if not resultado.ok or valor is None:
             continue
 
-        aluna.valor_mensalidade = resultado.total
+        aluna.valor_mensalidade = valor
         aluna.save(update_fields=['valor_mensalidade'])
         preco, _ = PrecoAluna.objects.get_or_create(aluna=aluna)
         preco.valor_manual = False

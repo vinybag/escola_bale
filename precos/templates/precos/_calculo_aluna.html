@@ -1,3 +1,4 @@
+{% load precos_tags %}
 <section class="aluna-create-section" id="calc-aluna" data-url="{% url 'precos_admin:calcular_aluna' %}" data-aluna="{{ aluna.pk|default:'' }}">
     <div style="margin-bottom:1rem;">
         <h3 style="margin:0 0 .35rem 0; color:#4a235f; font-size:1rem; font-weight:700;">Cálculo da mensalidade</h3>
@@ -41,6 +42,14 @@
         <span style="color:#7b7580; font-size:.85rem;">Para famílias: escolha o login do representante e as mensalidades de todas as integrantes caem nele, cada uma com o seu valor, e a família vê uma cobrança só. Vale para as mensalidades geradas daqui para a frente.</span>
     </div>
 
+    {% if ajuste_familia %}
+    <div style="margin-bottom:.8rem; padding:.8rem 1rem; border:1px solid #d9c3e8; border-radius:12px; background:#f6effb; color:#4a235f;">
+        <strong>Desconto de família ({{ ajuste_familia.grupo.nome }}): {{ ajuste_familia.percentual|floatformat:"-2" }}% sobre o total</strong><br>
+        Total das integrantes sem o desconto: {{ ajuste_familia.total_sem_desconto|moeda }} → com o desconto: <strong>{{ ajuste_familia.total_final|moeda }}</strong>.<br>
+        Parte desta aluna na mensalidade: <strong>{{ ajuste_familia.minha_parte|moeda }}</strong>
+        <span style="color:#7b7580;">(o cálculo abaixo é o valor dela sozinha, antes do desconto de família)</span>
+    </div>
+    {% endif %}
     <div id="calc-resultado" style="padding:1rem; border:1px solid #ece3f2; border-radius:12px; background:#fff;"></div>
     <div style="margin-top:.8rem;">
         <button type="button" id="calc-usar" style="display:none; padding:.55rem 1rem; border:0; border-radius:10px; background:linear-gradient(135deg,#6b2d8f,#7e3aa5); color:#fff; font-weight:700; cursor:pointer;">Usar o valor calculado</button>

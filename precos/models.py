@@ -117,6 +117,7 @@ class RegraDesconto(models.Model):
         ('irma_mesma_responsavel', 'Irmãs com a mesma responsável (recebe a que entrou depois)'),
         ('responsavel_aluna', 'Responsável que também é aluna (recebe a responsável)'),
         ('parentesco', 'Parentesco marcado na ficha da aluna'),
+        ('total_grupo_familia', 'Desconto sobre o TOTAL das mensalidades do grupo de família'),
     ]
 
     nome = models.CharField(max_length=120)
@@ -150,6 +151,15 @@ class RegraDesconto(models.Model):
     quem_recebe = models.CharField(
         max_length=12, choices=QUEM_RECEBE, default='automatico',
         help_text='Vale para regras de irmãs e de parentesco: quem, entre as ligadas, recebe o desconto.',
+    )
+
+    minimo_integrantes = models.PositiveSmallIntegerField(
+        default=2,
+        help_text='Só para "desconto sobre o total do grupo de família": mínimo de integrantes (com valor calculado).',
+    )
+    arredondar_total_para = models.DecimalField(
+        max_digits=6, decimal_places=2, default=Decimal('1.00'),
+        help_text='Só para "desconto sobre o total do grupo de família": o total da família é arredondado para baixo neste valor (ex.: 1 = reais inteiros).',
     )
 
     turmas = models.ManyToManyField(
@@ -198,6 +208,8 @@ class RegraDesconto(models.Model):
             partes.append('irmã (mesma responsável)')
         elif self.familia == 'responsavel_aluna':
             partes.append('responsável que é aluna')
+        elif self.familia == 'total_grupo_familia':
+            partes.append(f'sobre o total do grupo de família (mín. {self.minimo_integrantes} integrantes)')
         elif self.familia == 'parentesco' and self.grau_id:
             partes.append(f'parentesco: {self.grau.nome}')
 
