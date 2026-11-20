@@ -26,6 +26,7 @@
             <div style="border:1px solid #ece3f2; border-radius:12px; padding:1rem;">
                 <div class="pr-campo"><label class="pr-lab">Item {{ item.n }}: nome</label><input class="pr-input item-nome" data-n="{{ item.n }}" name="item_{{ item.n }}_nome" value="{{ item.nome }}" maxlength="80" placeholder="{% if item.n == 1 %}Ex.: Balé{% elif item.n == 2 %}Ex.: Ginástica{% else %}(opcional){% endif %}"></div>
                 <div class="pr-campo"><label class="pr-lab">Preço de cada turma (R$)</label><input class="pr-input" name="item_{{ item.n }}_preco" value="{{ item.preco }}" inputmode="decimal" placeholder="Ex.: 100"></div>
+                <label class="pr-check" style="margin-bottom:.6rem;"><input type="checkbox" name="item_{{ item.n }}_familia" {% if item.familia %}checked{% endif %}> Recebe o desconto de família (sobre o total do grupo de família)</label>
                 <label class="pr-lab">Turmas deste item</label>
                 <div style="max-height:170px; overflow:auto;">{% for t in turmas %}<label class="pr-check" style="margin-bottom:.3rem;"><input type="checkbox" name="item_{{ item.n }}_turmas" value="{{ t.pk }}" {% if t.pk in item.turmas %}checked{% endif %}> {{ t.nome }}</label>{% endfor %}</div>
             </div>

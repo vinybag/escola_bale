@@ -219,7 +219,7 @@ def ajuste_familia(aluna, mes_referencia, *, contexto=None):
         r for r in regras_todas
         if r.familia == motor.FAMILIA_TOTAL and r.ativa and r.efeito == 'percentual'
         and motor._esta_no_periodo(r, mes_referencia)
-        and (not r.grupo_id or r.grupo_id == grupo.pk)
+        and (not r.familias_desconto.all() or grupo.pk in {g.pk for g in r.familias_desconto.all()})
     ]
 
     if not regras:

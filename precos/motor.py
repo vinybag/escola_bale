@@ -76,6 +76,7 @@ class LinhaTurma:
     final: Decimal = ZERO
     sem_descontos: bool = False
     combinacao: str | None = None
+    familia_aceita: bool = False   # turma de combinação que entra na base do desconto de família
     travada: bool = False   # uma campanha de preço fixo "sem outros descontos" vale nesta turma
 
 
@@ -237,7 +238,7 @@ def _casar_combinacoes(entradas, grupos, quando, combinacoes):
 
         for posicao_da_entrada, item in escolhidas:
             do_grupo = [p.preco for p in item.precos_grupo.all() if p.grupo_id in grupos]
-            usadas[posicao_da_entrada] = (combinacao, min(do_grupo) if do_grupo else item.preco, numero)
+            usadas[posicao_da_entrada] = (combinacao, min(do_grupo) if do_grupo else item.preco, numero, item)
 
     return usadas
 
@@ -246,7 +247,7 @@ def regras_ativas():
     return list(
         RegraDesconto.objects.filter(ativa=True)
         .select_related('grupo', 'grau')
-        .prefetch_related('turmas', 'grupos_excecao')
+        .prefetch_related('turmas', 'grupos_excecao', 'familias_desconto')
     )
 
 
@@ -276,7 +277,7 @@ def calcular(entradas, *, grupos=(), familia=None, quando=None, regras=None, pas
         conta = turma.regime_preco in ('normal', 'fixo_conta')
 
         if indice in em_combinacao:
-            combinacao, preco_combinacao, numero = em_combinacao[indice]
+            combinacao, preco_combinacao, numero, item_combinacao = em_combinacao[indice]
 
             if numero not in posicao_da_combinacao:
                 posicao += 1  # a combinação inteira conta como UMA modalidade
@@ -286,6 +287,7 @@ def calcular(entradas, *, grupos=(), familia=None, quando=None, regras=None, pas
                 turma_id=turma.pk, nome=turma.nome, posicao=posicao_da_combinacao[numero],
                 preco_cheio=preco, preco_base=preco_combinacao, final=preco_combinacao,
                 combinacao=combinacao.nome,
+                familia_aceita=item_combinacao.aceita_desconto_familia,
             )
             linha.descontos.append(LinhaDesconto(
                 regra_id=combinacao.pk, nome=f'Combinação: {combinacao.nome}', tipo='combinacao',
@@ -371,14 +373,14 @@ def parte_descontavel(resultado):
     Quanto do cálculo da aluna pode receber o desconto da família.
 
     Ficam de fora (valor fixo, sem nenhum desconto): turmas de preço fixo (ex.: técnica vocal),
-    turmas dentro de uma combinação e turmas com campanha "sem outros descontos".
+    turmas de combinação (a menos que o item da combinação aceite o desconto de família) e turmas com campanha "sem outros descontos".
     Devolve (descontável, fixa) — a soma dos dois é o total exato da aluna.
     """
     descontavel = ZERO
     fixa = ZERO
 
     for linha in resultado.linhas:
-        if linha.sem_descontos or linha.combinacao or linha.travada:
+        if linha.sem_descontos or linha.travada or (linha.combinacao and not linha.familia_aceita):
             fixa += linha.final
         else:
             descontavel += linha.final

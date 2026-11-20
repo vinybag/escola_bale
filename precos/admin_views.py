@@ -84,7 +84,7 @@ def _valores_da_regra(regra):
             'incide_em': 'segunda', 'publico': 'todas', 'grupo': '', 'grupos_excecao': [],
             'familia': 'nenhuma', 'grau': '', 'quem_recebe': 'automatico', 'turmas': [], 'inicio': '', 'fim': '',
             'so_turmas_entradas_no_periodo': False, 'substitui_outros': False, 'observacao': '',
-            'minimo_integrantes': '2', 'arredondar_total_para': '1',
+            'minimo_integrantes': '2', 'arredondar_total_para': '1', 'familias_desconto': [],
         }
 
     return {
@@ -98,6 +98,7 @@ def _valores_da_regra(regra):
         'fim': regra.fim.isoformat() if regra.fim else '',
         'so_turmas_entradas_no_periodo': regra.so_turmas_entradas_no_periodo,
         'substitui_outros': regra.substitui_outros, 'observacao': regra.observacao,
+        'familias_desconto': [g.pk for g in regra.familias_desconto.all()],
         'minimo_integrantes': str(regra.minimo_integrantes),
         'arredondar_total_para': f'{regra.arredondar_total_para:.2f}'.replace('.', ',').replace(',00', ''),
     }
@@ -114,6 +115,7 @@ def _valores_do_post(post):
         'inicio': post.get('inicio', '').strip(), 'fim': post.get('fim', '').strip(),
         'so_turmas_entradas_no_periodo': post.get('so_turmas_entradas_no_periodo') == 'on',
         'substitui_outros': post.get('substitui_outros') == 'on', 'observacao': post.get('observacao', '').strip(),
+        'familias_desconto': [int(x) for x in post.getlist('familias_desconto') if x.isdigit()],
         'minimo_integrantes': post.get('minimo_integrantes', '2').strip(),
         'arredondar_total_para': post.get('arredondar_total_para', '1').strip(),
     }
@@ -152,6 +154,9 @@ def _validar_regra(v):
     if v['familia'] == 'total_grupo_familia':
         if v['efeito'] != RegraDesconto.PERCENTUAL:
             erros.append('O desconto sobre o total do grupo de família é em porcentagem.')
+
+        if not v['familias_desconto']:
+            erros.append('Marque para quais famílias vale este desconto.')
 
         if not str(v['minimo_integrantes']).isdigit() or int(v['minimo_integrantes']) < 2:
             erros.append('O mínimo de integrantes da família deve ser 2 ou mais.')
@@ -215,6 +220,10 @@ def _tela_regra(request, regra):
 
             regra.grupos_excecao.set(GrupoDesconto.objects.filter(pk__in=valores['grupos_excecao']))
             regra.turmas.set(Turma.objects.filter(pk__in=valores['turmas']))
+            regra.familias_desconto.set(
+                GrupoDesconto.objects.filter(pk__in=valores['familias_desconto'], eh_familia=True)
+                if regra.familia == 'total_grupo_familia' else [],
+            )
             messages.success(request, f'Regra "{regra.nome}" salva.')
             return redirect('precos_admin:regras')
 
@@ -228,6 +237,7 @@ def _tela_regra(request, regra):
         'regra': regra,
         'v': valores,
         'grupos': GrupoDesconto.objects.all(),
+        'grupos_familia': GrupoDesconto.objects.filter(eh_familia=True),
         'graus': GrauParentesco.objects.all(),
         'turmas': _turmas_com_mensalidade(),
         'efeitos': RegraDesconto.EFEITOS,
@@ -289,7 +299,7 @@ def combinacoes(request):
 def _formulario_da_combinacao(combinacao, grupos):
     """Valores iniciais do formulário a partir de uma combinação existente (ou vazio)."""
     itens = [
-        {'n': i, 'nome': '', 'turmas': [], 'preco': ''} for i in range(1, MAX_ITENS_COMBINACAO + 1)
+        {'n': i, 'nome': '', 'turmas': [], 'preco': '', 'familia': False} for i in range(1, MAX_ITENS_COMBINACAO + 1)
     ]
     especiais = {g.pk: [''] * MAX_ITENS_COMBINACAO for g in grupos}
     valores = {'nome': '', 'ativa': True, 'inicio': '', 'fim': '', 'observacao': ''}
@@ -304,6 +314,7 @@ def _formulario_da_combinacao(combinacao, grupos):
         for posicao, item in enumerate(combinacao.itens.all()[:MAX_ITENS_COMBINACAO]):
             itens[posicao].update({
                 'nome': item.nome, 'turmas': [t.pk for t in item.turmas.all()],
+                'familia': item.aceita_desconto_familia,
                 'preco': f'{item.preco:.2f}'.replace('.', ',').replace(',00', ''),
             })
 
@@ -332,6 +343,7 @@ def _ler_combinacao(post, grupos):
             'n': i, 'nome': post.get(f'item_{i}_nome', '').strip(),
             'turmas': [int(x) for x in post.getlist(f'item_{i}_turmas') if x.isdigit()],
             'preco': post.get(f'item_{i}_preco', '').strip(),
+            'familia': post.get(f'item_{i}_familia') == 'on',
         }
         itens.append(item)
 
@@ -355,7 +367,7 @@ def _ler_combinacao(post, grupos):
             erros.append(f'Item {i}: informe o preço da turma na combinação (ex.: 100).')
 
         turmas_vistas |= set(item['turmas'])
-        validos.append({'n': i, 'nome': item['nome'] or f'Item {i}', 'turmas': item['turmas'], 'preco': preco})
+        validos.append({'n': i, 'nome': item['nome'] or f'Item {i}', 'turmas': item['turmas'], 'preco': preco, 'familia': item['familia']})
 
     if not valores['nome']:
         erros.append('Dê um nome para a combinação.')
@@ -411,6 +423,7 @@ def _tela_combinacao(request, combinacao):
             for ordem, dados in enumerate(validos):
                 item = CombinacaoItem.objects.create(
                     combinacao=combinacao, nome=dados['nome'][:80], preco=dados['preco'], ordem=ordem,
+                    aceita_desconto_familia=dados['familia'],
                 )
                 item.turmas.set(Turma.objects.filter(pk__in=dados['turmas']))
 

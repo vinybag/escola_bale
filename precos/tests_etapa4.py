@@ -11,6 +11,7 @@ from usuarios.models import Aluna, Turma
 
 from . import motor, servico
 from .models import GrupoDesconto, PrecoAluna, RegraDesconto
+from .tests import ESTATICOS_SIMPLES
 
 D = Decimal
 HOJE = timezone.localdate()
@@ -137,10 +138,14 @@ class FamiliaTests(Base):
 
     def test_regra_presa_a_outro_grupo_de_familia_nao_vale(self):
         outro = GrupoDesconto.objects.create(nome='Outra', eh_familia=True, representante=self.rep)
-        self.regra.grupo = outro
-        self.regra.save()
+        self.regra.familias_desconto.set([outro])
 
         self.assertEqual(self.valor(self.alunas[0]), D('99'))
+
+    def test_regra_marcada_para_esta_familia_vale(self):
+        self.regra.familias_desconto.set([self.familia])
+
+        self.assertEqual(sum(self.valor(a) for a in self.alunas), D('274'))
 
     def test_arredondamento_configuravel(self):
         self.regra.arredondar_total_para = D('0.10')
@@ -164,3 +169,69 @@ class FamiliaTests(Base):
         self.familia.delete()
 
         self.assertEqual(self.valor(self.alunas[0]), D('99'))
+
+
+@ESTATICOS_SIMPLES
+class FormularioDaRegraTests(Base):
+    def setUp(self):
+        super().setUp()
+        from django.test import Client
+        from django.urls import reverse
+        staff = User.objects.create_user('adm', password='x', is_staff=True)
+        self.c = Client()
+        self.c.force_login(staff)
+        self.url = reverse('precos_admin:regra_nova')
+
+    def dados(self, **extra):
+        d = {'nome': 'Família nova', 'ativa': 'on', 'efeito': 'percentual', 'valor': '7,5', 'incide_em': 'todas',
+             'publico': 'todas', 'familia': 'total_grupo_familia', 'quem_recebe': 'automatico',
+             'minimo_integrantes': '2', 'arredondar_total_para': '1'}
+        d.update(extra)
+        return d
+
+    def test_exige_marcar_a_familia(self):
+        self.c.post(self.url, self.dados())
+
+        self.assertFalse(RegraDesconto.objects.filter(nome='Família nova').exists())
+
+    def test_salva_com_a_familia_marcada(self):
+        self.c.post(self.url, self.dados(familias_desconto=[str(self.familia.pk)]))
+        regra = RegraDesconto.objects.get(nome='Família nova')
+
+        self.assertEqual(list(regra.familias_desconto.all()), [self.familia])
+        self.assertIn('Família', regra.resumo())
+
+
+class CombinacaoComFamiliaTests(Base):
+    """Dança + ginástica = 100 cada; Golden paga 99 na dança; só a dança recebe o desconto de família."""
+
+    def setUp(self):
+        super().setUp()
+        from .models import Combinacao, CombinacaoItem, CombinacaoPrecoGrupo
+        self.ginastica = Turma.objects.create(nome='Ginástica', valor_mensalidade=D('120'))
+        comb = Combinacao.objects.create(nome='Dança + ginástica')
+        self.item_danca = CombinacaoItem.objects.create(combinacao=comb, nome='Dança', preco=D('100'), ordem=0)
+        self.item_danca.turmas.set([self.balé])
+        item_gin = CombinacaoItem.objects.create(combinacao=comb, nome='Ginástica', preco=D('100'), ordem=1)
+        item_gin.turmas.set([self.ginastica])
+        CombinacaoPrecoGrupo.objects.create(item=self.item_danca, grupo=self.golden, preco=D('99'))
+        for a in self.alunas[:2]:
+            Aluna.objects.filter(pk=a.pk).update()
+        self.alunas[0].turmas.add(self.ginastica)
+
+    def test_sem_marcar_ninguem_a_combinacao_fica_fora_do_desconto(self):
+        # a aluna da combinação (99 + 100) não entra na base; as outras duas (2 × 99) sim:
+        # 199 + 198 × 0,925 = 382,15 → 382
+        self.assertEqual(sum(self.valor(a) for a in self.alunas), D('382'))
+
+    def test_so_a_danca_recebe_o_desconto_da_familia(self):
+        self.item_danca.aceita_desconto_familia = True
+        self.item_danca.save()
+
+        a0 = self.valor(self.alunas[0])
+        total = sum(self.valor(a) for a in self.alunas)
+
+        # base descontável: 3 × 99 = 297 → 274,72 ; + 100 da ginástica = 374,72 → 374
+        self.assertEqual(total, D('374'))
+        self.assertGreater(a0, D('100'))
+        self.assertLess(a0, D('199'))

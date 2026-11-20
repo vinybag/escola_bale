@@ -153,6 +153,10 @@ class RegraDesconto(models.Model):
         help_text='Vale para regras de irmãs e de parentesco: quem, entre as ligadas, recebe o desconto.',
     )
 
+    familias_desconto = models.ManyToManyField(
+        GrupoDesconto, blank=True, related_name='regras_total_familia',
+        help_text='Só para "desconto sobre o total do grupo de família": quais famílias (grupos de família) recebem.',
+    )
     minimo_integrantes = models.PositiveSmallIntegerField(
         default=2,
         help_text='Só para "desconto sobre o total do grupo de família": mínimo de integrantes (com valor calculado).',
@@ -209,7 +213,8 @@ class RegraDesconto(models.Model):
         elif self.familia == 'responsavel_aluna':
             partes.append('responsável que é aluna')
         elif self.familia == 'total_grupo_familia':
-            partes.append(f'sobre o total do grupo de família (mín. {self.minimo_integrantes} integrantes)')
+            nomes = ', '.join(g.nome for g in self.familias_desconto.all()) or 'todas as famílias'
+            partes.append(f'sobre o total da família: {nomes} (mín. {self.minimo_integrantes} integrantes)')
         elif self.familia == 'parentesco' and self.grau_id:
             partes.append(f'parentesco: {self.grau.nome}')
 
@@ -273,6 +278,10 @@ class CombinacaoItem(models.Model):
     turmas = models.ManyToManyField('usuarios.Turma', related_name='itens_de_combinacao')
     preco = models.DecimalField(max_digits=8, decimal_places=2)
     ordem = models.PositiveSmallIntegerField(default=0)
+    aceita_desconto_familia = models.BooleanField(
+        default=False,
+        help_text='A turma deste item entra na base do desconto sobre o total do grupo de família.',
+    )
 
     class Meta:
         ordering = ['ordem', 'pk']

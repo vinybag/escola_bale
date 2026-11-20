@@ -43,12 +43,14 @@
         <div class="pr-campo" id="campo_quem_recebe"><label class="pr-lab">Quem recebe o desconto</label>
             <select class="pr-input" name="quem_recebe">{% for chave, rotulo in quem_recebe_opcoes %}<option value="{{ chave }}" {% if v.quem_recebe == chave %}selected{% endif %}>{{ rotulo }}</option>{% endfor %}</select>
             <span class="pr-dica">"Só a que eu marcar": na ficha da aluna você marca quem recebe (uma das irmãs, ou as duas).</span></div>
+        <div class="pr-campo" id="campo_total_familia0"><label class="pr-lab">Quais famílias recebem este desconto *</label>
+            <div class="pr-checks">{% for g in grupos_familia %}<label class="pr-check"><input type="checkbox" name="familias_desconto" value="{{ g.pk }}" {% if g.pk in v.familias_desconto %}checked{% endif %}> {{ g.nome }}</label>{% empty %}<span class="pr-dica">Ainda não há grupos de família. Crie na aba "Grupos" e marque "Grupo de família".</span>{% endfor %}</div></div>
         <div class="pr-campo" id="campo_total_familia"><label class="pr-lab">Mínimo de integrantes</label>
             <input class="pr-input" type="number" min="2" name="minimo_integrantes" value="{{ v.minimo_integrantes }}">
             <span class="pr-dica">O desconto vale a partir de quantas alunas do grupo de família (com valor calculado). Ex.: 2.</span></div>
         <div class="pr-campo" id="campo_total_familia2"><label class="pr-lab">Arredondar o total da família para baixo (R$)</label>
             <input class="pr-input" type="text" name="arredondar_total_para" value="{{ v.arredondar_total_para }}">
-            <span class="pr-dica">1 = reais inteiros (297 − 7,5% = 274,72 vira 274). Use 0,10 para múltiplos de 10 centavos. Turmas de valor fixo (ex.: técnica vocal) ficam de fora do desconto. "Só para quem está no grupo" aqui escolhe qual grupo de família recebe; vazio = todos os grupos de família.</span></div>
+            <span class="pr-dica">1 = reais inteiros (297 − 7,5% = 274,72 vira 274). Use 0,10 para múltiplos de 10 centavos. Turmas de valor fixo (ex.: técnica vocal) ficam de fora do desconto.</span></div>
     </div>
 
     <div class="pr-campo"><label class="pr-lab">Não vale para quem está nestes grupos</label>
@@ -85,6 +87,7 @@
             rotulo.textContent = fixo ? 'Valor da turma (R$) *' : 'Desconto (%) *';
             dica.textContent = fixo ? 'A turma passa a custar este valor (ex.: 50 para R$ 50,00).' : 'Porcentagem sobre o valor cheio da turma (ex.: 15 para 15%).';
             var total = familia.value === 'total_grupo_familia';
+            document.getElementById('campo_total_familia0').style.display = total ? 'block' : 'none';
             document.getElementById('campo_total_familia').style.display = total ? 'block' : 'none';
             document.getElementById('campo_total_familia2').style.display = total ? 'block' : 'none';
             campoGrau.style.display = familia.value === 'parentesco' ? 'block' : 'none';
