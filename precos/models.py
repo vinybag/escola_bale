@@ -176,6 +176,10 @@ class RegraDesconto(models.Model):
         default=False,
         help_text='Só vale para turmas em que a aluna entrou dentro do período (campanhas).',
     )
+    em_sequencia = models.BooleanField(
+        default=False,
+        help_text='Só para desconto em porcentagem: calcula sobre o valor que já ficou com os outros descontos (em vez de somar sobre o preço cheio).',
+    )
     substitui_outros = models.BooleanField(
         default=False,
         help_text='Nas turmas em que esta regra vale, nenhum outro desconto é aplicado.',
@@ -225,6 +229,9 @@ class RegraDesconto(models.Model):
             de = self.inicio.strftime('%d/%m/%Y') if self.inicio else '…'
             ate = self.fim.strftime('%d/%m/%Y') if self.fim else '…'
             partes.append(f'de {de} a {ate}')
+
+        if self.em_sequencia and self.efeito == self.PERCENTUAL:
+            partes.append('sobre o valor já com desconto')
 
         if self.substitui_outros:
             partes.append('sem outros descontos')

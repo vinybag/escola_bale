@@ -84,7 +84,7 @@ def _valores_da_regra(regra):
             'incide_em': 'segunda', 'publico': 'todas', 'grupo': '', 'grupos_excecao': [],
             'familia': 'nenhuma', 'grau': '', 'quem_recebe': 'automatico', 'turmas': [], 'inicio': '', 'fim': '',
             'so_turmas_entradas_no_periodo': False, 'substitui_outros': False, 'observacao': '',
-            'minimo_integrantes': '2', 'arredondar_total_para': '1', 'familias_desconto': [],
+            'minimo_integrantes': '2', 'arredondar_total_para': '1', 'familias_desconto': [], 'em_sequencia': False,
         }
 
     return {
@@ -99,6 +99,7 @@ def _valores_da_regra(regra):
         'so_turmas_entradas_no_periodo': regra.so_turmas_entradas_no_periodo,
         'substitui_outros': regra.substitui_outros, 'observacao': regra.observacao,
         'familias_desconto': [g.pk for g in regra.familias_desconto.all()],
+        'em_sequencia': regra.em_sequencia,
         'minimo_integrantes': str(regra.minimo_integrantes),
         'arredondar_total_para': f'{regra.arredondar_total_para:.2f}'.replace('.', ',').replace(',00', ''),
     }
@@ -116,6 +117,7 @@ def _valores_do_post(post):
         'so_turmas_entradas_no_periodo': post.get('so_turmas_entradas_no_periodo') == 'on',
         'substitui_outros': post.get('substitui_outros') == 'on', 'observacao': post.get('observacao', '').strip(),
         'familias_desconto': [int(x) for x in post.getlist('familias_desconto') if x.isdigit()],
+        'em_sequencia': post.get('em_sequencia') == 'on',
         'minimo_integrantes': post.get('minimo_integrantes', '2').strip(),
         'arredondar_total_para': post.get('arredondar_total_para', '1').strip(),
     }
@@ -198,6 +200,7 @@ def _validar_regra(v):
             'minimo_integrantes': minimo, 'arredondar_total_para': arredondar,
             'inicio': inicio, 'fim': fim,
             'so_turmas_entradas_no_periodo': v['so_turmas_entradas_no_periodo'],
+            'em_sequencia': v['em_sequencia'] and v['efeito'] == RegraDesconto.PERCENTUAL,
             'substitui_outros': v['substitui_outros'], 'observacao': v['observacao'][:300],
         }
 

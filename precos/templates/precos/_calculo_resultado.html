@@ -14,7 +14,7 @@
             <td style="padding:.5rem; font-size:.85rem;">
                 {% for d in l.descontos %}
                     {% if d.tipo == 'preco_fixo' or d.tipo == 'combinacao' %}{{ d.nome }}: passa a custar {{ l.preco_base|moeda }}<br>
-                    {% else %}{{ d.nome }} ({{ d.percentual|floatformat:"-2" }}%): − {{ d.valor|moeda }}<br>{% endif %}
+                    {% else %}{{ d.nome }} ({{ d.percentual|floatformat:"-2" }}%{% if d.em_sequencia %} sobre o valor já com desconto{% endif %}): − {{ d.valor|moeda }}<br>{% endif %}
                 {% empty %}<span style="color:#8a8390;">nenhum</span>{% endfor %}
             </td>
             <td style="padding:.5rem; text-align:right;"><strong>{{ l.final|moeda }}</strong></td>

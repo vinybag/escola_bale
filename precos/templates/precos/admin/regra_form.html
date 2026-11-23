@@ -68,6 +68,7 @@
     </div>
     <div class="pr-campo pr-checks" style="flex-direction:column; gap:.6rem;">
         <label class="pr-check"><input type="checkbox" name="so_turmas_entradas_no_periodo" {% if v.so_turmas_entradas_no_periodo %}checked{% endif %}> Só vale para turmas em que a aluna entrou dentro do período (campanha de turma nova)</label>
+        <label class="pr-check" id="campo_em_sequencia"><input type="checkbox" name="em_sequencia" {% if v.em_sequencia %}checked{% endif %}> Calcular sobre o valor que já ficou com os outros descontos (em vez de somar sobre o preço cheio). Ex.: Golden 10% e família 7,5% → 110 − 10% = 99, e 99 − 7,5% = 91,575.</label>
         <label class="pr-check"><input type="checkbox" name="substitui_outros" {% if v.substitui_outros %}checked{% endif %}> Nas turmas em que esta regra vale, nenhum outro desconto é aplicado</label>
         <label class="pr-check"><input type="checkbox" name="ativa" {% if v.ativa %}checked{% endif %}> Regra ligada</label>
     </div>
@@ -86,6 +87,7 @@
             var fixo = efeito.value === 'preco_fixo';
             rotulo.textContent = fixo ? 'Valor da turma (R$) *' : 'Desconto (%) *';
             dica.textContent = fixo ? 'A turma passa a custar este valor (ex.: 50 para R$ 50,00).' : 'Porcentagem sobre o valor cheio da turma (ex.: 15 para 15%).';
+            document.getElementById('campo_em_sequencia').style.display = fixo ? 'none' : 'block';
             var total = familia.value === 'total_grupo_familia';
             document.getElementById('campo_total_familia0').style.display = total ? 'block' : 'none';
             document.getElementById('campo_total_familia').style.display = total ? 'block' : 'none';

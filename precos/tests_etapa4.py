@@ -235,3 +235,41 @@ class CombinacaoComFamiliaTests(Base):
         self.assertEqual(total, D('374'))
         self.assertGreater(a0, D('100'))
         self.assertLess(a0, D('199'))
+
+
+class EmSequenciaTests(Base):
+    def setUp(self):
+        super().setUp()
+        self.regra.delete()  # sem desconto sobre o total: aqui o desconto é por aluna
+        self.individual = RegraDesconto.objects.create(
+            nome='Desconto família', efeito='percentual', valor=D('7.5'), incide_em='todas', grupo=self.familia,
+        )
+
+    def test_somando_o_valor_fica_em_90_70(self):
+        self.assertEqual(servico.calcular_para_aluna(self.alunas[0]).total, D('90.70'))   # 110 − 11 − 8,25
+
+    def test_em_sequencia_fica_em_91_50(self):
+        self.individual.em_sequencia = True
+        self.individual.save()
+        resultado = servico.calcular_para_aluna(self.alunas[0])
+
+        self.assertEqual(resultado.total, D('91.50'))    # 99 − 7,5% = 91,575
+        self.assertTrue(resultado.linhas[0].descontos[-1].em_sequencia)
+
+    def test_tecnica_vocal_continua_sem_desconto(self):
+        self.individual.em_sequencia = True
+        self.individual.save()
+        self.alunas[0].turmas.add(self.vocal)
+
+        self.assertEqual(servico.calcular_para_aluna(self.alunas[0]).total, D('141.50'))
+
+    def test_duas_em_sequencia_e_uma_somada(self):
+        outra = RegraDesconto.objects.create(
+            nome='Extra', efeito='percentual', valor=D('10'), incide_em='todas', grupo=self.familia, em_sequencia=True,
+        )
+        self.individual.em_sequencia = True
+        self.individual.save()
+        self.assertEqual(outra.pk is not None, True)
+
+        # 110 − 11 (Golden) = 99 ; −7,5% = 91,575 ; −10% = 82,4175
+        self.assertEqual(servico.calcular_para_aluna(self.alunas[0]).total, D('82.40'))

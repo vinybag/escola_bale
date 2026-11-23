@@ -63,6 +63,7 @@ class LinhaDesconto:
     tipo: str          # 'percentual' ou 'preco_fixo'
     percentual: Decimal | None
     valor: Decimal     # quanto sai do preço da turma (positivo)
+    em_sequencia: bool = False  # calculado sobre o valor que já tinha os outros descontos
 
 
 @dataclass
@@ -337,16 +338,26 @@ def calcular(entradas, *, grupos=(), familia=None, quando=None, regras=None, pas
                     percentuais = []
                     linha.travada = True
 
-            for regra in percentuais:
+            somados = [r for r in percentuais if not r.em_sequencia]
+            em_sequencia = [r for r in percentuais if r.em_sequencia]
+
+            for regra in somados:
                 linha.descontos.append(LinhaDesconto(
                     regra_id=regra.pk, nome=regra.nome, tipo=RegraDesconto.PERCENTUAL,
                     percentual=regra.valor, valor=base * regra.valor / CEM,
                 ))
 
-            descontos_percentuais = sum(
-                (d.valor for d in linha.descontos if d.tipo == RegraDesconto.PERCENTUAL), ZERO,
-            )
-            linha.final = max(ZERO, base - descontos_percentuais)
+            atual = max(ZERO, base - sum((d.valor for d in linha.descontos if d.tipo == RegraDesconto.PERCENTUAL), ZERO))
+
+            for regra in em_sequencia:  # cada uma sobre o valor que sobrou dos descontos anteriores
+                valor = atual * regra.valor / CEM
+                linha.descontos.append(LinhaDesconto(
+                    regra_id=regra.pk, nome=regra.nome, tipo=RegraDesconto.PERCENTUAL,
+                    percentual=regra.valor, valor=valor, em_sequencia=True,
+                ))
+                atual -= valor
+
+            linha.final = max(ZERO, atual)
 
         linhas.append(linha)
 
