@@ -1,0 +1,62 @@
+{% extends 'admin_dashboard/base.html' %}
+{% load cantina_tags %}
+{% block title %}Cantina{% endblock %}
+{% block content %}
+<div class="ct-page">
+{% include 'cantina/admin/_cabecalho.html' %}
+
+<div class="ct-kpis">
+    <div class="ct-kpi"><span>Produtos ativos</span><strong>{{ total_ativos }}</strong></div>
+    <div class="ct-kpi"><span>Valor em estoque (a preço de venda)</span><strong>{{ valor_em_estoque|reais }}</strong></div>
+    <div class="ct-kpi"><span>Zerados ou acabando</span><strong>{{ precisam_atencao }}</strong></div>
+</div>
+
+<div class="ct-card">
+    <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:1rem; flex-wrap:wrap;">
+        <form method="get" action="{% url 'cantina_admin:buscar_codigo' %}" style="flex:1; min-width:260px; max-width:420px;">
+            <label class="ct-lab" for="codigo">Ler código de barras</label>
+            <input class="ct-input" id="codigo" name="codigo" placeholder="Aponte o leitor aqui e leia o produto" autocomplete="off" autofocus>
+            <span class="ct-dica">Abre o produto, ou começa um cadastro novo já com o código.</span>
+        </form>
+        <a href="{% url 'cantina_admin:novo' %}" class="ct-btn ct-btn-p">+ Novo produto</a>
+    </div>
+</div>
+
+<div class="ct-card ct-scroll">
+    <form method="get" style="display:flex; gap:.6rem; flex-wrap:wrap; margin-bottom:1rem;">
+        <input class="ct-input" name="q" value="{{ busca }}" placeholder="Buscar por nome, categoria ou código" style="max-width:340px;">
+        <select class="ct-input" name="filtro" style="max-width:240px;">
+            <option value="" {% if not filtro %}selected{% endif %}>Produtos ativos</option>
+            <option value="baixo" {% if filtro == 'baixo' %}selected{% endif %}>Zerados ou acabando</option>
+            <option value="inativos" {% if filtro == 'inativos' %}selected{% endif %}>Desativados</option>
+        </select>
+        <button class="ct-btn ct-btn-l" type="submit">Filtrar</button>
+    </form>
+
+    <table class="ct-table">
+        <thead><tr><th>Produto</th><th>Código</th><th>Preço</th><th>Estoque</th><th></th></tr></thead>
+        <tbody>
+        {% for p in produtos %}
+            <tr>
+                <td><strong>{{ p.nome }}</strong>{% if p.categoria %}<br><span class="ct-dica">{{ p.categoria }}</span>{% endif %}</td>
+                <td class="ct-mono">{{ p.codigo_barras|default:"—" }}</td>
+                <td>{{ p.preco|reais }}</td>
+                <td>
+                    {% if not p.ativo %}<span class="ct-badge ct-off">desativado</span>
+                    {% else %}<span class="ct-badge ct-{{ p.situacao_estoque }}">{{ p.quantidade }}{% if p.situacao_estoque == 'zerado' %} · zerado{% elif p.situacao_estoque == 'baixo' %} · acabando{% endif %}</span>{% endif %}
+                </td>
+                <td>
+                    <div class="ct-acoes">
+                        <a href="{% url 'cantina_admin:editar' p.pk %}" class="ct-btn ct-btn-l ct-btn-s">Editar / estoque</a>
+                        <form method="post" action="{% url 'cantina_admin:alternar' p.pk %}">{% csrf_token %}<button type="submit" class="ct-btn ct-btn-l ct-btn-s">{% if p.ativo %}Desativar{% else %}Reativar{% endif %}</button></form>
+                    </div>
+                </td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="5" class="ct-dica" style="padding:1.2rem;">Nenhum produto aqui ainda. Clique em "+ Novo produto" para cadastrar o primeiro.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+</div>
+{% endblock %}

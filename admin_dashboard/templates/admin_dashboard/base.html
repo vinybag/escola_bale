@@ -1400,6 +1400,15 @@
 
 
                 <a
+                    href="{% url 'cantina_admin:lista' %}"
+                    class="{% if '/admin-dashboard/cantina' in request.path %}active{% endif %}"
+                >
+                    Cantina
+                </a>
+
+
+
+                <a
                     href="{% url 'admin_dashboard:agendamentos_list' %}"
                     class="{% if 'agendamentos' in request.path %}active{% endif %}"
                 >

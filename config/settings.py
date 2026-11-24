@@ -70,6 +70,7 @@ INSTALLED_APPS = [
     'presenca',
     'contratos',  # contratos, assinatura digital e bolsistas
     'precos',  # valores das turmas, descontos e campanhas
+    'cantina',  # produtos e estoque da cantina
 
 
     # Email

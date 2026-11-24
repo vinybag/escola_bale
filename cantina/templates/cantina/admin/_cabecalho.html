@@ -1,0 +1,50 @@
+<style>
+    .ct-page { max-width: 1100px; }
+    .ct-top h2 { margin: 0 0 .3rem; color: #4a235f; }
+    .ct-top p { margin: 0 0 1.1rem; color: #6f6f78; }
+    .ct-tabs { display: flex; gap: .4rem; flex-wrap: wrap; margin-bottom: 1.5rem; border-bottom: 1px solid #ece3f2; }
+    .ct-tabs a { padding: .7rem 1.1rem; border-radius: 10px 10px 0 0; text-decoration: none; color: #6f6f78; font-weight: 600; }
+    .ct-tabs a.ativa { background: #6b2d8f; color: #fff; }
+    .ct-card { background: #fff; border: 1px solid #ebe3f1; border-radius: 16px; padding: 1.4rem; margin-bottom: 1.25rem; box-shadow: 0 6px 18px rgba(107,45,143,.06); }
+    .ct-card h3 { margin: 0 0 .75rem; color: #4a235f; font-size: 1.05rem; }
+    .ct-sub { color: #7b7580; font-size: .9rem; margin: 0 0 1rem; line-height: 1.5; }
+    .ct-lab { display: block; font-weight: 600; color: #44384c; margin: 0 0 .35rem; }
+    .ct-dica { display: block; color: #8a8390; font-size: .82rem; margin-top: .3rem; line-height: 1.4; }
+    .ct-input { width: 100%; box-sizing: border-box; padding: .7rem .85rem; border: 1px solid #d9cbe4; border-radius: 10px; font-size: .95rem; font-family: inherit; background: #fff; }
+    .ct-input:focus { outline: none; border-color: #6b2d8f; box-shadow: 0 0 0 3px rgba(107,45,143,.1); }
+    .ct-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.1rem; }
+    .ct-campo { margin-bottom: 1.1rem; }
+    .ct-btn { display: inline-flex; align-items: center; justify-content: center; padding: .7rem 1.2rem; border: 0; border-radius: 10px; font-weight: 700; font-size: .9rem; cursor: pointer; text-decoration: none; font-family: inherit; }
+    .ct-btn-p { background: linear-gradient(135deg, #6b2d8f, #7e3aa5); color: #fff; }
+    .ct-btn-l { background: #f3f0f8; color: #4a235f; border: 1px solid #e2d6f0; }
+    .ct-btn-d { background: #fdecea; color: #b71c1c; border: 1px solid #f3c6c2; }
+    .ct-btn-s { padding: .4rem .8rem; font-size: .82rem; }
+    .ct-table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+    .ct-table th { text-align: left; padding: .65rem .7rem; color: #7a7280; font-size: .75rem; text-transform: uppercase; letter-spacing: .03em; border-bottom: 2px solid #ece3f2; }
+    .ct-table td { padding: .75rem .7rem; border-bottom: 1px solid #f1eaf6; vertical-align: middle; }
+    .ct-scroll { overflow-x: auto; }
+    .ct-badge { display: inline-block; padding: .22rem .65rem; border-radius: 999px; font-size: .78rem; font-weight: 700; white-space: nowrap; }
+    .ct-ok { background: #e6f7eb; color: #1d6b36; } .ct-baixo { background: #fff3d6; color: #7a5b00; }
+    .ct-zerado { background: #fdecea; color: #8e1c1c; } .ct-off { background: #eeeeee; color: #666; }
+    .ct-acoes { display: flex; gap: .4rem; flex-wrap: wrap; align-items: center; }
+    .ct-acoes form { margin: 0; }
+    .ct-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
+    .ct-kpi { background: #fff; border: 1px solid #ebe3f1; border-radius: 14px; padding: 1rem 1.2rem; }
+    .ct-kpi span { display: block; color: #7a7280; font-size: .8rem; }
+    .ct-kpi strong { display: block; color: #4a235f; font-size: 1.5rem; margin-top: .2rem; }
+    .ct-msg { padding: .8rem 1rem; border-radius: 12px; margin-bottom: .6rem; font-size: .92rem; }
+    .ct-msg-error { background: #fdecea; color: #8e1c1c; } .ct-msg-success { background: #e6f7eb; color: #1d6b36; }
+    .ct-msg-info, .ct-msg-warning { background: #e8f1fd; color: #1a4f8b; }
+    .ct-mono { font-family: ui-monospace, Consolas, monospace; font-size: .85rem; }
+</style>
+
+<div class="ct-top">
+    <h2>Cantina</h2>
+    <p>Produtos, preços e estoque da cantina. Controle interno.</p>
+</div>
+
+<div class="ct-tabs">
+    <a href="{% url 'cantina_admin:lista' %}" class="{% if aba == 'produtos' %}ativa{% endif %}">Produtos</a>
+    <a href="{% url 'cantina_admin:movimentacoes' %}" class="{% if aba == 'movimentacoes' %}ativa{% endif %}">Movimentações de estoque</a>
+</div>
+

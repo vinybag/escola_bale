@@ -1,0 +1,18 @@
+{% extends 'admin_dashboard/base.html' %}
+{% block title %}Movimentações da cantina{% endblock %}
+{% block content %}
+<div class="ct-page">
+{% include 'cantina/admin/_cabecalho.html' %}
+<div class="ct-card ct-scroll">
+    <h3>Últimas 200 movimentações</h3>
+    <table class="ct-table">
+        <thead><tr><th>Quando</th><th>Produto</th><th>Tipo</th><th>Variação</th><th>Saldo</th><th>Motivo</th><th>Quem</th></tr></thead>
+        <tbody>
+        {% for m in movimentos %}
+            <tr><td>{{ m.criado_em|date:"d/m/Y H:i" }}</td><td><a href="{% url 'cantina_admin:editar' m.produto.pk %}">{{ m.produto.nome }}</a></td><td>{{ m.get_tipo_display }}</td><td><strong>{{ m.variacao|stringformat:"+d" }}</strong></td><td>{{ m.saldo_depois }}</td><td>{{ m.motivo|default:"—" }}</td><td>{{ m.usuario.get_username|default:"—" }}</td></tr>
+        {% empty %}<tr><td colspan="7" class="ct-dica">Nenhuma movimentação ainda.</td></tr>{% endfor %}
+        </tbody>
+    </table>
+</div>
+</div>
+{% endblock %}

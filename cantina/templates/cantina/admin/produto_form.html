@@ -1,0 +1,73 @@
+{% extends 'admin_dashboard/base.html' %}
+{% load cantina_tags %}
+{% block title %}{% if produto %}{{ produto.nome }}{% else %}Novo produto{% endif %}{% endblock %}
+{% block content %}
+<div class="ct-page">
+{% include 'cantina/admin/_cabecalho.html' %}
+
+<form method="post" class="ct-card" id="form-produto">
+    {% csrf_token %}
+    <h3>{% if produto %}Editar produto{% else %}Novo produto{% endif %}</h3>
+    <div class="ct-grid">
+        <div class="ct-campo"><label class="ct-lab">Nome *</label><input class="ct-input" name="nome" value="{{ v.nome }}" maxlength="120" required autofocus placeholder="Ex.: Suco de uva 200 ml"></div>
+        <div class="ct-campo"><label class="ct-lab">Categoria</label><input class="ct-input" name="categoria" value="{{ v.categoria }}" maxlength="60" list="categorias" placeholder="Ex.: Bebidas"><datalist id="categorias">{% for c in categorias %}<option value="{{ c }}">{% endfor %}</datalist></div>
+        <div class="ct-campo"><label class="ct-lab">Preço de venda (R$) *</label><input class="ct-input" name="preco" value="{{ v.preco }}" inputmode="decimal" required placeholder="Ex.: 5,50"></div>
+        <div class="ct-campo"><label class="ct-lab">Preço de custo (R$)</label><input class="ct-input" name="custo" value="{{ v.custo }}" inputmode="decimal" placeholder="Opcional"><span class="ct-dica">Quanto você paga. Serve para calcular o lucro depois.</span></div>
+        {% if not produto %}
+        <div class="ct-campo"><label class="ct-lab">Quantidade em estoque agora</label><input class="ct-input" name="quantidade" value="{{ v.quantidade }}" inputmode="numeric" placeholder="Ex.: 24"></div>
+        {% else %}
+        <div class="ct-campo"><label class="ct-lab">Estoque atual</label><div style="padding:.7rem 0;"><span class="ct-badge ct-{{ produto.situacao_estoque }}">{{ produto.quantidade }}</span> <span class="ct-dica" style="display:inline;">para mexer, use "Entrada / saída de estoque" abaixo</span></div></div>
+        {% endif %}
+        <div class="ct-campo"><label class="ct-lab">Avisar quando chegar em</label><input class="ct-input" name="estoque_minimo" value="{{ v.estoque_minimo }}" inputmode="numeric"><span class="ct-dica">Estoque mínimo. 0 = sem aviso.</span></div>
+        <div class="ct-campo"><label class="ct-lab">Código de barras</label><input class="ct-input ct-mono" id="codigo_barras" name="codigo_barras" value="{{ v.codigo_barras }}" maxlength="64" autocomplete="off" placeholder="Opcional: leia com o leitor"><span class="ct-dica">Com o leitor, é só clicar aqui e ler o produto. O Enter do leitor não envia o formulário.</span></div>
+    </div>
+    <div class="ct-campo"><label class="ct-lab">Observação</label><input class="ct-input" name="observacao" value="{{ v.observacao }}" maxlength="300"></div>
+    <label style="display:flex; gap:.5rem; align-items:center; margin-bottom:1.2rem;"><input type="checkbox" name="ativo" {% if v.ativo %}checked{% endif %}> Produto ativo (aparece na lista e na venda)</label>
+    <div class="ct-acoes"><button type="submit" class="ct-btn ct-btn-p">Salvar</button><a href="{% url 'cantina_admin:lista' %}" class="ct-btn ct-btn-l">Voltar</a></div>
+</form>
+
+{% if produto %}
+<div class="ct-card">
+    <h3>Entrada / saída de estoque</h3>
+    <p class="ct-sub">Chegou mercadoria? Registre a entrada. Vendeu fora do sistema, perdeu ou consumiu? Registre a saída. Estoque atual: <strong>{{ produto.quantidade }}</strong>.</p>
+    <form method="post" action="{% url 'cantina_admin:ajustar' produto.pk %}">
+        {% csrf_token %}
+        <div class="ct-grid">
+            <div class="ct-campo"><label class="ct-lab">O que aconteceu</label><select class="ct-input" name="tipo">{% for valor, nome in tipos %}{% if valor != 'venda' %}<option value="{{ valor }}">{{ nome }}</option>{% endif %}{% endfor %}</select></div>
+            <div class="ct-campo"><label class="ct-lab">Quantidade</label><input class="ct-input" name="quantidade" inputmode="numeric" required placeholder="Ex.: 12"><span class="ct-dica">Na "Contagem" é o número certo que está na prateleira.</span></div>
+            <div class="ct-campo"><label class="ct-lab">Motivo (opcional)</label><input class="ct-input" name="motivo" maxlength="200" placeholder="Ex.: compra no atacado"></div>
+        </div>
+        <button type="submit" class="ct-btn ct-btn-p">Registrar</button>
+    </form>
+</div>
+
+<div class="ct-card ct-scroll">
+    <h3>Últimas movimentações</h3>
+    <table class="ct-table">
+        <thead><tr><th>Quando</th><th>Tipo</th><th>Variação</th><th>Saldo</th><th>Motivo</th><th>Quem</th></tr></thead>
+        <tbody>
+        {% for m in movimentos %}
+            <tr><td>{{ m.criado_em|date:"d/m/Y H:i" }}</td><td>{{ m.get_tipo_display }}</td><td><strong>{{ m.variacao|stringformat:"+d" }}</strong></td><td>{{ m.saldo_depois }}</td><td>{{ m.motivo|default:"—" }}</td><td>{{ m.usuario.get_username|default:"—" }}</td></tr>
+        {% empty %}<tr><td colspan="6" class="ct-dica">Nenhuma movimentação ainda.</td></tr>{% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="ct-card" style="border-color:#f3c6c2;">
+    <h3 style="color:#8e1c1c;">Excluir produto</h3>
+    <p class="ct-sub">Apaga o produto e o histórico dele. Para só tirar da lista, use "Desativar".</p>
+    <form method="post" action="{% url 'cantina_admin:excluir' produto.pk %}" onsubmit="return confirm('Excluir {{ produto.nome|escapejs }} e todo o histórico dele?');">{% csrf_token %}<button type="submit" class="ct-btn ct-btn-d">Excluir produto</button></form>
+</div>
+{% endif %}
+</div>
+
+<script>
+    // O leitor de código de barras "digita" o código e aperta Enter: não deixa isso enviar o formulário.
+    var campoCodigo = document.getElementById('codigo_barras');
+    if (campoCodigo) {
+        campoCodigo.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') { e.preventDefault(); }
+        });
+    }
+</script>
+{% endblock %}
