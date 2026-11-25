@@ -14,3 +14,8 @@ def marca(request):
     return {
         'SITE_NAME': settings.SITE_NAME,
     }
+
+
+def demonstracao(request):
+    """{{ DEMO_MODE }} nos templates: mostra a faixa de demonstração e os botões de entrada."""
+    return {'DEMO_MODE': bool(getattr(settings, 'DEMO_MODE', False))}

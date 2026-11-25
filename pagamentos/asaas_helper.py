@@ -27,6 +27,10 @@ class AsaasAPI:
         return headers
 
     def criar_cobranca_pix(self, valor, descricao, customer_id=None, customer_data=None, external_reference=None):
+        if settings.DEMO_MODE:
+            from core import demo
+            return {'id': demo.id_pagamento_demo(valor), 'status': 'PENDING', 'value': float(valor), 'customer': 'cus_demo'}
+
         if not customer_id and customer_data:
             customer = self.criar_cliente(customer_data)
             if customer and 'id' in customer:
@@ -70,6 +74,9 @@ class AsaasAPI:
             return {'error': str(e)}
 
     def criar_cliente(self, customer_data):
+        if settings.DEMO_MODE:
+            return {'id': 'cus_demo'}
+
         url = f"{self.base_url}/customers"
         customer_payload = customer_data.copy()
         customer_payload['notificationDisabled'] = True
@@ -153,6 +160,18 @@ class AsaasAPI:
             return False
 
     def consultar_cobranca(self, payment_id):
+        if settings.DEMO_MODE:
+            from django.utils import timezone
+            from core import demo
+            lido = demo.ler_id_pagamento_demo(payment_id)
+
+            if lido is None:
+                return None
+
+            instante, valor = lido
+            pago = timezone.now().timestamp() - instante >= demo.SEGUNDOS_PARA_PAGAR
+            return {'id': payment_id, 'value': float(valor), 'status': 'RECEIVED' if pago else 'PENDING'}
+
         url = f"{self.base_url}/payments/{payment_id}"
 
         try:
@@ -166,6 +185,10 @@ class AsaasAPI:
             return None
 
     def obter_qrcode_pix(self, payment_id):
+        if settings.DEMO_MODE:
+            return {'payload': f'DEMONSTRACAO-{payment_id} (pagamento simulado: nenhum valor é cobrado)',
+                    'encodedImage': '', 'expirationDate': ''}
+
         url = f"{self.base_url}/payments/{payment_id}/pixQrCode"
 
         try:

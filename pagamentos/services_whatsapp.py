@@ -14,6 +14,9 @@ def enviar_whatsapp_template(numero_destino, nome_template, parametros):
     a resposta_json contém o motivo retornado pela Meta (chave "error"),
     que é registrado no log para facilitar o diagnóstico.
     """
+    if settings.DEMO_MODE:  # demonstração: nada é enviado de verdade
+        return 200, {'demo': True}
+
     phone_number_id = settings.WHATSAPP_PHONE_NUMBER_ID
     access_token = settings.WHATSAPP_ACCESS_TOKEN
 
@@ -87,6 +90,9 @@ def enviar_whatsapp_texto(numero_destino, texto):
     Retorna (status_code, resposta_json), no mesmo formato de
     enviar_whatsapp_template.
     """
+    if settings.DEMO_MODE:  # demonstração: nada é enviado de verdade
+        return 200, {'demo': True}
+
     phone_number_id = settings.WHATSAPP_PHONE_NUMBER_ID
     access_token = settings.WHATSAPP_ACCESS_TOKEN
 

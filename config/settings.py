@@ -155,6 +155,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'core.context_processors.marca',
+                'core.context_processors.demonstracao',
             ],
         },
     },
@@ -395,3 +396,16 @@ AVISOS_ENSAIO_ENVIO_ATRASADO_ATIVO = (
     os.environ.get('AVISOS_ENSAIO_ENVIO_ATRASADO_ATIVO', 'true').strip().lower()
     not in ('0', 'false', 'no', 'nao', 'não', 'off')
 )
+
+
+# ----------------------------------------------------------------------------
+# MODO DEMONSTRAÇÃO
+# Ligado só na instalação de demonstração (DEMO_MODE=1). Dados fictícios, sem
+# envio real de e-mail, WhatsApp ou cobrança. Na instalação de verdade NÃO existe.
+# ----------------------------------------------------------------------------
+DEMO_MODE = config('DEMO_MODE', default=False, cast=bool)
+
+if DEMO_MODE:
+    EMAIL_BACKEND = 'django.core.mail.backends.dummy.EmailBackend'
+    MIDDLEWARE.insert(MIDDLEWARE.index('django.contrib.messages.middleware.MessageMiddleware') + 1,
+                      'core.demo.DemoMiddleware')
