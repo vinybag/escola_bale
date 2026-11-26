@@ -7403,7 +7403,59 @@ def configuracoes_site(request):
         messages.success(request, 'Configurações do site atualizadas com sucesso!')
         return redirect('admin_dashboard:configuracoes_site')
 
-    return render(request, 'admin_dashboard/configuracoes/site.html', {'config': config})
+    from core import aparencia
+
+    paletas = [{'nome': nome, 'cor': cor, 'mostrar': cor or '#b07a84', 'ativa': cor == config.cor_principal}
+               for nome, cor in aparencia.PALETAS]
+    propria = bool(config.cor_principal) and config.cor_principal not in [c for _, c in aparencia.PALETAS]
+
+    return render(request, 'admin_dashboard/configuracoes/site.html', {
+        'config': config, 'paletas': paletas, 'cor_propria_ativa': propria,
+        'tem_logo': bool(config.logo_tipo), 'logo_url': f'/escola/logo/?v={config.logo_versao}',
+    })
+
+
+@login_required
+def configuracoes_aparencia(request):
+    """Logo e cor das telas das famílias e do site público. A administração não muda."""
+    if not request.user.is_staff:
+        return redirect('home')
+
+    if request.method != 'POST':
+        return redirect('admin_dashboard:configuracoes_site')
+
+    from core import aparencia
+    from core.models import ConfiguracaoEscola
+
+    config = ConfiguracaoEscola.obter()
+    acao = request.POST.get('acao')
+
+    try:
+        if acao == 'cor':
+            escolhida = request.POST.get('paleta', '')
+            texto = request.POST.get('cor_propria', '') if escolhida == 'propria' else escolhida
+            config.cor_principal = aparencia.validar_cor(texto)
+            config.save(update_fields=['cor_principal'])
+            messages.success(request, 'Cor atualizada. Ela já vale nas telas das famílias e no site.')
+        elif acao == 'logo':
+            arquivo = request.FILES.get('logo')
+
+            if arquivo is None:
+                raise ValueError('Escolha uma imagem para enviar.')
+
+            config.logo_dados, config.logo_tipo = aparencia.processar_logo(arquivo)
+            config.logo_versao += 1
+            config.save(update_fields=['logo_dados', 'logo_tipo', 'logo_versao'])
+            messages.success(request, 'Logo atualizada.')
+        elif acao == 'remover_logo':
+            config.logo_dados, config.logo_tipo = None, ''
+            config.logo_versao += 1
+            config.save(update_fields=['logo_dados', 'logo_tipo', 'logo_versao'])
+            messages.success(request, 'Logo removida.')
+    except ValueError as erro:
+        messages.error(request, str(erro))
+
+    return redirect('admin_dashboard:configuracoes_site')
 
 
 @login_required

@@ -77,3 +77,20 @@ def configuracao_inicial(request, token):
             return redirect('admin_dashboard:dashboard')
 
     return render(request, 'core/setup_inicial.html', {'erro': erro})
+
+
+def logo_escola(request):
+    """Entrega a logo enviada pela escola (guardada no banco; sem depender de armazenamento externo)."""
+    from django.http import Http404, HttpResponse
+
+    from .models import ConfiguracaoEscola
+
+    config = ConfiguracaoEscola.objects.filter(pk=1).first()
+
+    if config is None or not config.logo_tipo or not config.logo_dados:
+        raise Http404
+
+    resposta = HttpResponse(bytes(config.logo_dados), content_type=config.logo_tipo)
+    resposta['Cache-Control'] = 'public, max-age=86400'
+    resposta['X-Content-Type-Options'] = 'nosniff'
+    return resposta

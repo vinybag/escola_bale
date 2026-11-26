@@ -70,6 +70,7 @@ urlpatterns = [
     path('maquiagens/<int:pk>/excluir/', views.maquiagem_excluir, name='maquiagem_excluir'),
     # Configurações do site público
     path('configuracoes/site/', views.configuracoes_site, name='configuracoes_site'),
+    path('configuracoes/aparencia/', views.configuracoes_aparencia, name='configuracoes_aparencia'),
 
     # Personagens e Elenco
     path('personagens/', views.personagens_list, name='personagens_list'),

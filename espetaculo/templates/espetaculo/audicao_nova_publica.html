@@ -14,7 +14,7 @@
     .audicao-back {
         display: inline-block;
         margin-bottom: 1rem;
-        color: #b07a84;
+        color: var(--cor-principal, #b07a84);
         text-decoration: none;
         font-weight: 500;
     }
@@ -74,7 +74,7 @@
 
     .audicao-highlight {
         background: #faf7f8;
-        border-left: 4px solid #b07a84;
+        border-left: 4px solid var(--cor-principal, #b07a84);
         padding: 1rem 1rem 1rem 1.25rem;
         border-radius: 10px;
         margin-bottom: 1.25rem;
@@ -95,7 +95,7 @@
     }
 
     .audicao-summary {
-        background: linear-gradient(135deg, #2c3e50, #b07a84);
+        background: linear-gradient(135deg, #2c3e50, var(--cor-principal, #b07a84));
         color: white;
         border-radius: 16px;
         padding: 1.5rem;
@@ -186,8 +186,8 @@
     .audicao-input:focus,
     .audicao-textarea:focus {
         outline: none;
-        border-color: #b07a84;
-        box-shadow: 0 0 0 3px rgba(176, 122, 132, 0.15);
+        border-color: var(--cor-principal, #b07a84);
+        box-shadow: 0 0 0 3px rgba(var(--cor-principal-rgb, 176, 122, 132), 0.15);
     }
 
     .audicao-textarea {
@@ -231,7 +231,7 @@
     }
 
     .audicao-submit {
-        background: #b07a84;
+        background: var(--cor-principal, #b07a84);
         color: white;
         padding: 0.9rem 2rem;
         border: none;

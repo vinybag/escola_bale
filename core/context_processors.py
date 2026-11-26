@@ -11,9 +11,34 @@ def marca(request):
     o que permite "clonar" o sistema para outra escola só trocando o
     .env do deploy, sem tocar em nenhum template.
     """
-    return {
+    contexto = {
         'SITE_NAME': settings.SITE_NAME,
+        'TEMA_ESCOLA_CSS': '',
+        'LOGO_ESCOLA_URL': '',
+        'LOGO_PLACEHOLDER': False,
     }
+
+    # Só as telas das famílias e do site público usam estes dois: a administração não muda.
+    if request.path.startswith(('/admin-dashboard/', '/static/', '/media/')):
+        return contexto
+
+    try:
+        from core.aparencia import css_do_tema
+        from core.models import ConfiguracaoEscola
+
+        config = ConfiguracaoEscola.objects.filter(pk=1).only('cor_principal', 'logo_tipo', 'logo_versao').first()
+
+        if config is not None:
+            contexto['TEMA_ESCOLA_CSS'] = css_do_tema(config.cor_principal)
+
+            if config.logo_tipo:
+                contexto['LOGO_ESCOLA_URL'] = f'/escola/logo/?v={config.logo_versao}'
+
+        contexto['LOGO_PLACEHOLDER'] = bool(getattr(settings, 'DEMO_MODE', False)) and not contexto['LOGO_ESCOLA_URL']
+    except Exception:  # banco ainda sem as colunas novas, etc.: segue com o visual padrão
+        pass
+
+    return contexto
 
 
 def demonstracao(request):

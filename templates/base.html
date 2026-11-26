@@ -11,13 +11,13 @@
     <link rel="shortcut icon" type="image/png" href="{% static 'favicon.png' %}">
     
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    {% include 'core/_tema.html' %}
 </head>
 <body>
     <nav class="navbar">
         <div class="container">
             <a href="/" class="logo">
-                {% load static %}
-                <img src="{% static 'img/logo.png' %}" alt="Logo Escola de Balé">
+                {% include 'core/_logo.html' %}
             </a>
             <ul class="nav-links">
                 {% if user.is_authenticated %}

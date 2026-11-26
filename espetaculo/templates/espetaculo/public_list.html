@@ -15,7 +15,7 @@
     {% if tem_filmagens %}
         <div style="margin: 0 0 2rem 0; text-align: center;">
             <a href="{% url 'espetaculo:minhas_filmagens' %}"
-               style="display: inline-block; padding: 0.7rem 1.4rem; background: #b07a84; color: white; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.95rem;">
+               style="display: inline-block; padding: 0.7rem 1.4rem; background: var(--cor-principal, #b07a84); color: white; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.95rem;">
                 Minhas filmagens
             </a>
         </div>
@@ -61,10 +61,10 @@
                              alt="{{ espetaculo.titulo }}"
                              loading="lazy"
                              style="max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; object-position: center; display: block;"
-                             onerror="this.style.display='none'; this.parentNode.innerHTML='<div style=&quot;width:100%;height:220px;background:linear-gradient(135deg,#2c3e50,#b07a84);display:flex;align-items:center;justify-content:center;color:#fff;font-size:3rem;&quot;>🎭</div>';">
+                             onerror="this.style.display='none'; this.parentNode.innerHTML='<div style=&quot;width:100%;height:220px;background:linear-gradient(135deg,#2c3e50,var(--cor-principal, #b07a84));display:flex;align-items:center;justify-content:center;color:#fff;font-size:3rem;&quot;>🎭</div>';">
                     </div>
                 {% else %}
-                    <div style="height: 220px; background: linear-gradient(135deg, #2c3e50, #b07a84); display: flex; align-items: center; justify-content: center;">
+                    <div style="height: 220px; background: linear-gradient(135deg, #2c3e50, var(--cor-principal, #b07a84)); display: flex; align-items: center; justify-content: center;">
                         <span style="font-size: 3rem;">🎭</span>
                     </div>
                 {% endif %}
@@ -77,7 +77,7 @@
                                 Evento
                             </span>
                         {% else %}
-                            <span style="display: inline-block; padding: 0.35rem 0.7rem; border-radius: 999px; background: #f7eef1; color: #b07a84; font-size: 0.78rem; font-weight: 700;">
+                            <span style="display: inline-block; padding: 0.35rem 0.7rem; border-radius: 999px; background: #f7eef1; color: var(--cor-principal, #b07a84); font-size: 0.78rem; font-weight: 700;">
                                 Espetáculo
                             </span>
                         {% endif %}
@@ -109,7 +109,7 @@
 
 
                     {% if espetaculo.subtitulo %}
-                        <p style="color: #b07a84; margin: 0 0 1rem 0;">{{ espetaculo.subtitulo }}</p>
+                        <p style="color: var(--cor-principal, #b07a84); margin: 0 0 1rem 0;">{{ espetaculo.subtitulo }}</p>
                     {% endif %}
 
 
@@ -126,7 +126,7 @@
 
                     <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: auto;">
                         <a href="{% url 'espetaculo:detalhes_publico' espetaculo.pk %}"
-                           style="display: inline-block; background: #b07a84; color: white; padding: 0.75rem 1.2rem; border-radius: 5px; text-decoration: none; font-weight: 600;">
+                           style="display: inline-block; background: var(--cor-principal, #b07a84); color: white; padding: 0.75rem 1.2rem; border-radius: 5px; text-decoration: none; font-weight: 600;">
                             Saiba mais
                         </a>
 

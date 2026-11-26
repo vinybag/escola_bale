@@ -39,12 +39,12 @@
             </div>
             
             <button type="submit" 
-                    style="width: 100%; padding: 0.75rem; background: linear-gradient(135deg, #2c3e50, #b07a84); color: white; border: none; border-radius: 5px; font-size: 1rem; font-weight: 600; cursor: pointer; margin-bottom: 1rem;">
+                    style="width: 100%; padding: 0.75rem; background: linear-gradient(135deg, #2c3e50, var(--cor-principal, #b07a84)); color: white; border: none; border-radius: 5px; font-size: 1rem; font-weight: 600; cursor: pointer; margin-bottom: 1rem;">
                 Validar código
             </button>
             
             <div style="text-align: center;">
-                <a href="{% url 'esqueci_senha' %}" style="color: #b07a84; text-decoration: none; font-size: 0.875rem;">
+                <a href="{% url 'esqueci_senha' %}" style="color: var(--cor-principal, #b07a84); text-decoration: none; font-size: 0.875rem;">
                     Não recebi o código
                 </a>
             </div>

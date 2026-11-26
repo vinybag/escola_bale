@@ -13,7 +13,7 @@ body {
 
 /* ==================== NAVBAR ==================== */
 .navbar {
-    background: #b07a84;
+    background: var(--cor-principal, #b07a84);
     color: white;
     padding: 1rem 0;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
@@ -63,7 +63,7 @@ body {
 }
 
 .btn-login {
-    background: #d9b3b8 !important;
+    background: var(--cor-principal-borda, #d9b3b8) !important;
     color: #333 !important;
     padding: 0.6rem 1.2rem !important;
     border-radius: 8px;
@@ -71,12 +71,12 @@ body {
 }
 
 .btn-login:hover {
-    background: #e0c0c3 !important;
+    background: var(--cor-principal-clara, #e0c0c3) !important;
 }
 
 /* ==================== HERO ==================== */
 .hero {
-    background: linear-gradient(135deg, #e0c0c3 0%, #b07a84 100%);
+    background: linear-gradient(135deg, var(--cor-principal-clara, #e0c0c3) 0%, var(--cor-principal, #b07a84) 100%);
     color: white;
     padding: 5rem 0;
     text-align: center;
@@ -119,17 +119,17 @@ body {
 }
 
 .btn-primary {
-    background: #b07a84;
+    background: var(--cor-principal, #b07a84);
     color: white !important;
 }
 
 .btn-primary:hover {
-    background: #9d6a74;
+    background: var(--cor-principal-escura, #9d6a74);
 }
 
 .btn-secondary {
     background: white;
-    color: #b07a84 !important;
+    color: var(--cor-principal, #b07a84) !important;
     border: 2px solid white;
 }
 
@@ -154,19 +154,19 @@ body {
 }
 
 .contato {
-    background: #faf8f9;
+    background: var(--cor-fundo-suave, #faf8f9);
 }
 
 .sobre h2, .contato h2 {
     text-align: center;
     margin-bottom: 1rem;
-    color: #b07a84;
+    color: var(--cor-principal, #b07a84);
     font-size: 2.2rem;
     font-weight: 600;
 }
 
 .sobre h3 {
-    color: #b07a84;
+    color: var(--cor-principal, #b07a84);
     margin-top: 3rem;
     margin-bottom: 2rem;
     text-align: center;
@@ -189,22 +189,22 @@ body {
 }
 
 .turma-card {
-    background: #faf8f9;
+    background: var(--cor-fundo-suave, #faf8f9);
     padding: 2rem;
     border-radius: 12px;
     text-align: center;
-    border: 2px solid #e0c0c3;
+    border: 2px solid var(--cor-principal-clara, #e0c0c3);
     transition: all 0.3s;
 }
 
 .turma-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 8px 20px rgba(176, 122, 132, 0.2);
-    border-color: #b07a84;
+    box-shadow: 0 8px 20px rgba(var(--cor-principal-rgb, 176, 122, 132), 0.2);
+    border-color: var(--cor-principal, #b07a84);
 }
 
 .turma-card h4 {
-    color: #b07a84;
+    color: var(--cor-principal, #b07a84);
     margin-bottom: 0.8rem;
     font-size: 1.3rem;
 }
@@ -240,7 +240,7 @@ body {
 
 form h1 {
     text-align: center;
-    color: #b07a84;
+    color: var(--cor-principal, #b07a84);
     margin-bottom: 30px;
     font-weight: 600;
 }
@@ -262,21 +262,21 @@ input,
 select {
     padding: 10px 12px;
     border-radius: 8px;
-    border: 1px solid #d9b3b8;
+    border: 1px solid var(--cor-principal-borda, #d9b3b8);
     font-size: 14px;
 }
 
 input:focus,
 select:focus {
     outline: none;
-    border-color: #b07a84;
-    box-shadow: 0 0 0 2px rgba(176,122,132,0.2);
+    border-color: var(--cor-principal, #b07a84);
+    box-shadow: 0 0 0 2px rgba(var(--cor-principal-rgb, 176, 122, 132),0.2);
 }
 
 button[type="submit"] {
     margin-top: 20px;
     padding: 12px;
-    background-color: #e0c0c3;
+    background-color: var(--cor-principal-clara, #e0c0c3);
     color: #333;
     font-size: 15px;
     font-weight: 600;
@@ -298,7 +298,7 @@ button[type="submit"]:active {
 .alerta-erro {
     background-color: #f8d7dc;
     color: #8a2c3b;
-    border-left: 6px solid #b07a84;
+    border-left: 6px solid var(--cor-principal, #b07a84);
     padding: 14px 16px;
     border-radius: 10px;
     margin-bottom: 25px;
@@ -313,20 +313,20 @@ button[type="submit"]:active {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #faf8f9 0%, #e0c0c3 100%);
+    background: linear-gradient(135deg, var(--cor-fundo-suave, #faf8f9) 0%, var(--cor-principal-clara, #e0c0c3) 100%);
 }
 
 .auth-box {
     background: white;
     padding: 2.5rem;
     border-radius: 16px;
-    box-shadow: 0 15px 30px rgba(176, 122, 132, 0.15);
+    box-shadow: 0 15px 30px rgba(var(--cor-principal-rgb, 176, 122, 132), 0.15);
     max-width: 400px;
     width: 100%;
 }
 
 .auth-box h2 {
-    color: #b07a84;
+    color: var(--cor-principal, #b07a84);
     margin-bottom: 0.5rem;
     text-align: center;
 }
@@ -351,20 +351,20 @@ button[type="submit"]:active {
 .form-group input {
     width: 100%;
     padding: 0.8rem;
-    border: 1px solid #d9b3b8;
+    border: 1px solid var(--cor-principal-borda, #d9b3b8);
     border-radius: 8px;
 }
 
 .form-group input:focus {
     outline: none;
-    border-color: #b07a84;
-    box-shadow: 0 0 0 2px rgba(176,122,132,0.2);
+    border-color: var(--cor-principal, #b07a84);
+    box-shadow: 0 0 0 2px rgba(var(--cor-principal-rgb, 176, 122, 132),0.2);
 }
 
 .auth-box button {
     width: 100%;
     padding: 0.9rem;
-    background-color: #b07a84;
+    background-color: var(--cor-principal, #b07a84);
     color: white;
     font-size: 15px;
     font-weight: 600;
@@ -375,7 +375,7 @@ button[type="submit"]:active {
 }
 
 .auth-box button:hover {
-    background-color: #9d6a74;
+    background-color: var(--cor-principal-escura, #9d6a74);
     transform: translateY(-1px);
 }
 
@@ -386,7 +386,7 @@ button[type="submit"]:active {
 }
 
 .auth-link a {
-    color: #b07a84;
+    color: var(--cor-principal, #b07a84);
     text-decoration: none;
     font-weight: 600;
 }
@@ -403,7 +403,7 @@ button[type="submit"]:active {
 
 .dashboard h1 {
     margin-bottom: 2rem;
-    color: #b07a84;
+    color: var(--cor-principal, #b07a84);
 }
 
 .dashboard-grid {
@@ -417,12 +417,12 @@ button[type="submit"]:active {
     background: white;
     padding: 2rem;
     border-radius: 12px;
-    box-shadow: 0 5px 15px rgba(176, 122, 132, 0.1);
-    border: 1px solid #e0c0c3;
+    box-shadow: 0 5px 15px rgba(var(--cor-principal-rgb, 176, 122, 132), 0.1);
+    border: 1px solid var(--cor-principal-clara, #e0c0c3);
 }
 
 .card h3 {
-    color: #b07a84;
+    color: var(--cor-principal, #b07a84);
     margin-bottom: 1.5rem;
     font-size: 1.4rem;
 }
@@ -437,14 +437,14 @@ button[type="submit"]:active {
 }
 
 .quick-links a {
-    color: #b07a84;
+    color: var(--cor-principal, #b07a84);
     text-decoration: none;
     font-size: 1.1rem;
     transition: color 0.3s;
 }
 
 .quick-links a:hover {
-    color: #9d6a74;
+    color: var(--cor-principal-escura, #9d6a74);
     text-decoration: underline;
 }
 
@@ -455,15 +455,15 @@ button[type="submit"]:active {
 
 .alunas-list li {
     padding: 1rem;
-    background: #faf8f9;
+    background: var(--cor-fundo-suave, #faf8f9);
     margin-bottom: 0.8rem;
     border-radius: 8px;
-    border-left: 4px solid #b07a84;
+    border-left: 4px solid var(--cor-principal, #b07a84);
 }
 
 /* ==================== FOOTER ==================== */
 footer {
-    background: #b07a84;
+    background: var(--cor-principal, #b07a84);
     color: white;
     text-align: center;
     padding: 2rem 0;
@@ -491,7 +491,7 @@ footer {
 .alert-error {
     background-color: #f8d7dc;
     color: #8a2c3b;
-    border-left: 4px solid #b07a84;
+    border-left: 4px solid var(--cor-principal, #b07a84);
 }
 
 .alert-warning {
@@ -516,12 +516,12 @@ footer {
     align-items: center;
     margin-bottom: 1rem;
     padding-bottom: 1rem;
-    border-bottom: 2px solid #e0c0c3;
+    border-bottom: 2px solid var(--cor-principal-clara, #e0c0c3);
 }
 
 .mensalidade-header h3 {
     margin: 0;
-    color: #b07a84;
+    color: var(--cor-principal, #b07a84);
 }
 
 .status-badge {
@@ -557,7 +557,7 @@ footer {
 }
 
 .aviso-card {
-    border-left: 4px solid #b07a84;
+    border-left: 4px solid var(--cor-principal, #b07a84);
 }
 
 .aviso-header {
@@ -569,11 +569,11 @@ footer {
 
 .aviso-header h3 {
     margin: 0;
-    color: #b07a84;
+    color: var(--cor-principal, #b07a84);
 }
 
 .tipo-badge {
-    background: #e0c0c3;
+    background: var(--cor-principal-clara, #e0c0c3);
     padding: 0.3rem 0.8rem;
     border-radius: 15px;
     font-size: 0.85rem;
@@ -582,7 +582,7 @@ footer {
 }
 
 .aviso-data {
-    background: #faf8f9;
+    background: var(--cor-fundo-suave, #faf8f9);
     padding: 0.8rem;
     border-radius: 8px;
     margin-top: 1rem;
@@ -688,14 +688,14 @@ footer {
 }
 
 .metodo-card {
-    border: 2px solid #e0c0c3;
+    border: 2px solid var(--cor-principal-clara, #e0c0c3);
     transition: all 0.3s;
 }
 
 .metodo-card:hover {
-    border-color: #b07a84;
+    border-color: var(--cor-principal, #b07a84);
     transform: translateY(-5px);
-    box-shadow: 0 8px 20px rgba(176, 122, 132, 0.2);
+    box-shadow: 0 8px 20px rgba(var(--cor-principal-rgb, 176, 122, 132), 0.2);
 }
 
 .metodo-header {

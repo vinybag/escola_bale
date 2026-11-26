@@ -61,12 +61,12 @@
             </div>
             
             <button type="submit" 
-                    style="width: 100%; padding: 0.75rem; background: linear-gradient(135deg, #2c3e50, #b07a84); color: white; border: none; border-radius: 5px; font-size: 1rem; font-weight: 600; cursor: pointer; margin-bottom: 1rem;">
+                    style="width: 100%; padding: 0.75rem; background: linear-gradient(135deg, #2c3e50, var(--cor-principal, #b07a84)); color: white; border: none; border-radius: 5px; font-size: 1rem; font-weight: 600; cursor: pointer; margin-bottom: 1rem;">
                 Alterar Senha
             </button>
             
             <div style="text-align: center;">
-                <a href="{% url 'dashboard' %}" style="color: #b07a84; text-decoration: none;">
+                <a href="{% url 'dashboard' %}" style="color: var(--cor-principal, #b07a84); text-decoration: none;">
                     ← Voltar ao Dashboard
                 </a>
             </div>

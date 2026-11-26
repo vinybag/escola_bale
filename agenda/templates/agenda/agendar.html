@@ -69,7 +69,7 @@
                     padding: 1rem;
                     border-radius: 5px;
                     margin-bottom: 1.5rem;
-                    border-left: 4px solid #b07a84;
+                    border-left: 4px solid var(--cor-principal, #b07a84);
                 ">
                     <strong>
                         Campanha de aulas experimentais gratuitas ativa!
@@ -85,7 +85,7 @@
                 padding: 1rem;
                 border-radius: 5px;
                 margin-bottom: 1.5rem;
-                border-left: 4px solid #b07a84;
+                border-left: 4px solid var(--cor-principal, #b07a84);
             ">
                 <strong>
                     Aula experimental no valor de
@@ -276,7 +276,7 @@
                             <span
                                 id="select-arrow"
                                 style="
-                                    color: #b07a84;
+                                    color: var(--cor-principal, #b07a84);
                                     transition: transform 0.3s;
                                 "
                             >
@@ -363,7 +363,7 @@
                                         {% if item.gratuita %}
                                             <span style="
                                                 font-size: 0.7rem;
-                                                background: #b07a84;
+                                                background: var(--cor-principal, #b07a84);
                                                 color: white;
                                                 padding: 0.2rem 0.55rem;
                                                 border-radius: 10px;
@@ -448,7 +448,7 @@
                     <button
                         type="submit"
                         style="
-                            background: #b07a84;
+                            background: var(--cor-principal, #b07a84);
                             color: white;
                             padding: 0.75rem 2rem;
                             border: none;
@@ -527,7 +527,7 @@ options.forEach(option => {
         if (gratuita) {
             avisoTurma.style.background = '#f5eee9';
             avisoTurma.style.color = '#76564f';
-            avisoTurma.style.borderLeft = '4px solid #b07a84';
+            avisoTurma.style.borderLeft = '4px solid var(--cor-principal, #b07a84)';
 
             avisoTurma.innerHTML =
                 '🎉 Esta turma participa da campanha de aula '

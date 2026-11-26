@@ -68,7 +68,7 @@
 
     .agmaq-field select:focus {
         outline: none;
-        border-color: #b07a84;
+        border-color: var(--cor-principal, #b07a84);
     }
 
     .agmaq-horarios {
@@ -83,7 +83,7 @@
         border-radius: 5px;
         border: 1px solid #e8c8d2;
         background: #f7eef1;
-        color: #b07a84;
+        color: var(--cor-principal, #b07a84);
         font-weight: 700;
         font-size: 0.88rem;
         cursor: pointer;
@@ -98,11 +98,11 @@
 
     .agmaq-horario-btn:hover:not(:disabled) {
         transform: translateY(-1px);
-        box-shadow: 0 4px 10px rgba(176, 122, 132, 0.2);
+        box-shadow: 0 4px 10px rgba(var(--cor-principal-rgb, 176, 122, 132), 0.2);
     }
 
     .agmaq-horario-btn.selecionado {
-        background: #b07a84;
+        background: var(--cor-principal, #b07a84);
         color: #ffffff;
         border-color: transparent;
     }
@@ -159,7 +159,7 @@
         width: 100%;
         min-height: 48px;
         margin-top: 1.25rem;
-        background: #b07a84;
+        background: var(--cor-principal, #b07a84);
         color: #ffffff;
         border: none;
         border-radius: 5px;

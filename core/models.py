@@ -42,6 +42,16 @@ class ConfiguracaoEscola(models.Model):
         verbose_name='E-mail de contato exibido no site',
     )
 
+    # Aparência das telas de quem tem login (famílias) e do site público.
+    cor_principal = models.CharField(
+        max_length=7, blank=True, default='',
+        verbose_name='Cor principal',
+        help_text='Vazio = cor padrão do sistema. Formato #RRGGBB.',
+    )
+    logo_dados = models.BinaryField(null=True, blank=True, editable=False)
+    logo_tipo = models.CharField(max_length=30, blank=True, default='')
+    logo_versao = models.PositiveIntegerField(default=0)
+
     class Meta:
         verbose_name = 'Configuração da escola'
         verbose_name_plural = 'Configuração da escola'

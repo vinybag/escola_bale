@@ -6,6 +6,8 @@ urlpatterns = [
     path('', views.home, name='home'),
     path('sobre/', views.sobre, name='sobre'),
 
+    path('escola/logo/', views.logo_escola, name='logo_escola'),
+
     # Demonstração (só funciona com DEMO_MODE ligado)
     path('demo/entrar/<str:quem>/', demo.entrar, name='demo_entrar'),
 

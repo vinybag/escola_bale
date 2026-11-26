@@ -165,5 +165,71 @@
             </button>
         </form>
     </div>
+
+    <div class="config-main" style="margin-top: 1.5rem;" id="aparencia">
+        <h3 style="margin: 0 0 0.35rem 0; color: #4a235f;">Aparência: logo e cor</h3>
+        <p style="margin: 0 0 1.5rem 0; color: #6f6f78;">
+            Vale para as telas das famílias (quem tem login) e para o site público.
+            A área da administração não muda.
+        </p>
+
+        <div class="config-field">
+            <label>Logo da escola</label>
+            <div style="display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap; margin-bottom: 0.9rem;">
+                <div style="min-width: 160px; min-height: 70px; padding: 0.6rem 1rem; border: 1px dashed #d9cbe4; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: #faf7fc;">
+                    {% if tem_logo %}<img src="{{ logo_url }}" alt="Logo atual" style="max-height: 64px; max-width: 220px;">{% else %}<span style="color: #8a8390;">Usando a logo padrão do sistema</span>{% endif %}
+                </div>
+            </div>
+            <form method="post" action="{% url 'admin_dashboard:configuracoes_aparencia' %}" enctype="multipart/form-data" style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center;">
+                {% csrf_token %}
+                <input type="hidden" name="acao" value="logo">
+                <input type="file" name="logo" accept="image/png,image/jpeg,image/webp" class="config-input" style="max-width: 360px;">
+                <button type="submit" style="background: #6b2d8f; color: white; border: none; padding: 0.7rem 1.3rem; border-radius: 10px; cursor: pointer; font-weight: 700;">Enviar logo</button>
+            </form>
+            <small>PNG, JPG ou WebP, até 2 MB. Funciona melhor com fundo transparente (PNG), em formato horizontal.</small>
+            {% if tem_logo %}
+            <form method="post" action="{% url 'admin_dashboard:configuracoes_aparencia' %}" style="margin-top: 0.75rem;">
+                {% csrf_token %}
+                <input type="hidden" name="acao" value="remover_logo">
+                <button type="submit" style="background: #f3f0f8; color: #4a235f; border: 1px solid #e2d6f0; padding: 0.5rem 1rem; border-radius: 10px; cursor: pointer; font-weight: 600;">Remover logo</button>
+            </form>
+            {% endif %}
+        </div>
+
+        <form method="post" action="{% url 'admin_dashboard:configuracoes_aparencia' %}">
+            {% csrf_token %}
+            <input type="hidden" name="acao" value="cor">
+            <div class="config-field">
+                <label>Cor principal</label>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.75rem;">
+                    {% for p in paletas %}
+                    <label style="display: flex; align-items: center; gap: 0.6rem; padding: 0.7rem 0.85rem; border: 2px solid {% if p.ativa and not cor_propria_ativa %}#6b2d8f{% else %}#e8def0{% endif %}; border-radius: 12px; cursor: pointer; font-weight: 600; margin: 0;">
+                        <input type="radio" name="paleta" value="{{ p.cor }}" {% if p.ativa and not cor_propria_ativa %}checked{% endif %}>
+                        <span style="width: 22px; height: 22px; border-radius: 50%; background: {{ p.mostrar }}; display: inline-block; border: 1px solid rgba(0,0,0,.1);"></span>
+                        {{ p.nome }}
+                    </label>
+                    {% endfor %}
+                    <label style="display: flex; align-items: center; gap: 0.6rem; padding: 0.7rem 0.85rem; border: 2px solid {% if cor_propria_ativa %}#6b2d8f{% else %}#e8def0{% endif %}; border-radius: 12px; cursor: pointer; font-weight: 600; margin: 0;">
+                        <input type="radio" name="paleta" value="propria" {% if cor_propria_ativa %}checked{% endif %}>
+                        Cor própria
+                        <input type="color" name="cor_propria_seletor" value="{% if cor_propria_ativa %}{{ config.cor_principal }}{% else %}#7b4fa0{% endif %}" id="seletor-cor" style="width: 36px; height: 30px; border: none; padding: 0; background: none;">
+                    </label>
+                </div>
+                <input type="hidden" name="cor_propria" id="cor-propria" value="{% if cor_propria_ativa %}{{ config.cor_principal }}{% else %}#7b4fa0{% endif %}">
+                <small>Botões, destaques e bordas das telas das famílias usam esta cor, e os tons mais claros e escuros são calculados sozinhos. Cores muito claras são recusadas, porque o texto branco não ficaria legível.</small>
+            </div>
+            <button type="submit" style="background: linear-gradient(135deg, #6b2d8f 0%, #7e3aa5 100%); color: white; border: none; padding: 0.85rem 1.6rem; border-radius: 10px; cursor: pointer; font-weight: 700;">Salvar cor</button>
+        </form>
+        <script>
+            (function () {
+                var seletor = document.getElementById('seletor-cor');
+                var oculto = document.getElementById('cor-propria');
+                seletor.addEventListener('input', function () {
+                    oculto.value = seletor.value;
+                    document.querySelector('input[name=paleta][value=propria]').checked = true;
+                });
+            })();
+        </script>
+    </div>
 </div>
 {% endblock %}

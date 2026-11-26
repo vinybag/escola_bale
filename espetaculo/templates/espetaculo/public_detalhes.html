@@ -6,7 +6,7 @@
 {% block content %}
 <div style="max-width: 900px; margin: 0 auto; padding: 2rem 1rem 3rem;">
 
-    <a href="{% url 'espetaculo:lista_publica' %}" style="color: #b07a84; text-decoration: none;">
+    <a href="{% url 'espetaculo:lista_publica' %}" style="color: var(--cor-principal, #b07a84); text-decoration: none;">
         ← Voltar para espetáculos
     </a>
 
@@ -25,7 +25,7 @@
                 <h1 style="color: #2c3e50; margin: 0 0 0.5rem 0;">{{ espetaculo.titulo }}</h1>
 
                 {% if espetaculo.subtitulo %}
-                    <h2 style="color: #b07a84; font-size: 1.25rem; margin: 0;">{{ espetaculo.subtitulo }}</h2>
+                    <h2 style="color: var(--cor-principal, #b07a84); font-size: 1.25rem; margin: 0;">{{ espetaculo.subtitulo }}</h2>
                 {% endif %}
             </div>
 
@@ -35,7 +35,7 @@
                         Evento
                     </span>
                 {% else %}
-                    <span style="padding: 0.45rem 0.85rem; border-radius: 999px; background: #f7eef1; color: #b07a84; font-size: 0.9rem; font-weight: 600;">
+                    <span style="padding: 0.45rem 0.85rem; border-radius: 999px; background: #f7eef1; color: var(--cor-principal, #b07a84); font-size: 0.9rem; font-weight: 600;">
                         Espetáculo
                     </span>
                 {% endif %}
@@ -92,7 +92,7 @@
                 {% endif %}
 
                 <a href="{% url 'espetaculo:audicao_rosa_branca' %}"
-                   style="display: inline-block; background: #b07a84; color: white; padding: 0.85rem 1.75rem; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 1rem;">
+                   style="display: inline-block; background: var(--cor-principal, #b07a84); color: white; padding: 0.85rem 1.75rem; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 1rem;">
                     🌹 Inscrever-se na audição
                 </a>
             </div>

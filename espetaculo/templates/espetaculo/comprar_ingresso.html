@@ -5,7 +5,7 @@
 {% block content %}
 <div style="max-width: 760px; margin: 0 auto; padding: 2rem 1rem 3rem;">
 
-    <a href="{% url 'espetaculo:evento_detalhe_publico' evento.id %}" style="color: #b07a84; text-decoration: none;">
+    <a href="{% url 'espetaculo:evento_detalhe_publico' evento.id %}" style="color: var(--cor-principal, #b07a84); text-decoration: none;">
         ← Voltar para o evento
     </a>
 
@@ -104,7 +104,7 @@
             </div>
 
             <button type="submit"
-                    style="margin-top: 1.5rem; width: 100%; padding: 1rem; border: none; border-radius: 10px; background: #b07a84; color: white; font-weight: 700; font-size: 1rem; cursor: pointer;">
+                    style="margin-top: 1.5rem; width: 100%; padding: 1rem; border: none; border-radius: 10px; background: var(--cor-principal, #b07a84); color: white; font-weight: 700; font-size: 1rem; cursor: pointer;">
                 Gerar PIX
             </button>
         </form>
